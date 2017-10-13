@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EBot.Commands.E621
 {
-    class PostObject
+    class EPost
     {
         public int id;
         public string tags;

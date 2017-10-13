@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Tweetinvi;
 
-namespace EBotDiscord.Listeners.Warframe
+namespace EBot.Listeners.Warframe
 {
     class Twitter
     {

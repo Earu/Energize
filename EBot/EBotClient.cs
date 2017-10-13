@@ -65,7 +65,7 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        public async void TryConnect()
+        public async Task TryConnect()
         {
             try
             {

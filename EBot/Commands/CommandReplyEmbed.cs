@@ -3,6 +3,7 @@ using DSharpPlus.Entities;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EBot.Commands
 {
@@ -10,10 +11,12 @@ namespace EBot.Commands
     {
 
         private BotLog _Log;
+        private CommandsHandler _Handler;
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
+        public CommandsHandler Handler { get => this._Handler; set => this._Handler = value; }
 
-        public async void Send(DiscordMessage msg,string header="",string content="",DiscordColor color=new DiscordColor())
+        public async Task Send(DiscordMessage msg,string header="",string content="",DiscordColor color=new DiscordColor())
         {
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
             builder.Color = color;
@@ -26,16 +29,12 @@ namespace EBot.Commands
             }
             catch
             {
-                builder.Color = new DiscordColor(220, 110, 110);
-                builder.Title = "Uh?!";
-                builder.Description = "Looks like something went wrong!";
-                await msg.RespondAsync(null, false, builder.Build());
                 _Log.Nice("EmbedReply", ConsoleColor.Red, "Couldn't reply to => [ " + msg.Author.Username + ": " + msg.Content + " ]");
             }
 
         }
 
-        public async void Send(DiscordChannel chan,string header="",string content="",DiscordColor color=new DiscordColor())
+        public async Task Send(DiscordChannel chan,string header="",string content="",DiscordColor color=new DiscordColor())
         {
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
             builder.Color = color;
@@ -48,41 +47,56 @@ namespace EBot.Commands
             }
             catch
             {
-                builder.Color = new DiscordColor(220, 110, 110);
-                builder.Title = "Uh?!";
-                builder.Description = "Looks like something went wrong!";
-                await chan.SendMessageAsync(null, false, builder.Build());
                 this._Log.Nice("EmbedReply", ConsoleColor.Red, "Couldn't send message to => [ " + chan.Guild.Name + " " + chan.Name +" ]");
             }
         }
 
-        public async void Send(DiscordMessage msg,DiscordEmbed embed = null)
+        public async Task Send(DiscordMessage msg,DiscordEmbed embed = null)
         {
-            await msg.RespondAsync(null, false, embed);
+            try { 
+                await msg.RespondAsync(null, false, embed);
+            }
+            catch
+            {
+                this._Log.Nice("EmbedReply", ConsoleColor.Red, "Couldn't send message to => [ " + msg.Channel.Guild.Name + " " + msg.Channel.Name +" ]");
+            }
         }
 
-
-        public async void Normal(DiscordMessage msg,string header,string content)
+        public async Task RespondByDM(DiscordMessage msg,string header="",string content="",DiscordColor color=new DiscordColor())
         {
-            this.Send(msg, header, content, new DiscordColor(175, 175, 175));
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+            try
+            {
+                DiscordDmChannel chan = await this._Handler.Client.CreateDmAsync(msg.Author);
+                await Send(chan,header,content,color);
+            }
+            catch
+            {
+                this._Log.Nice("DM", ConsoleColor.Red, "Couldn't send a DM to " + msg.Author.Username + "#" + msg.Author.Discriminator);
+            }
         }
 
-        public async void Warning(DiscordMessage msg,string header,string content)
+        public async Task Normal(DiscordMessage msg,string header,string content)
         {
-            this.Send(msg, header, content, new DiscordColor(220,180,80));
+            await this.Send(msg, header, content, new DiscordColor(175, 175, 175));
         }
 
-        public async void Danger(DiscordMessage msg, string header, string content)
+        public async Task Warning(DiscordMessage msg,string header,string content)
         {
-            this.Send(msg, header, content, new DiscordColor(220, 110, 110));
+            await this.Send(msg, header, content, new DiscordColor(220,180,80));
         }
 
-        public async void Good(DiscordMessage msg, string header, string content)
+        public async Task Danger(DiscordMessage msg, string header, string content)
         {
-            this.Send(msg, header, content, new DiscordColor(110, 220, 110));
+            await this.Send(msg, header, content, new DiscordColor(220, 110, 110));
         }
 
-        public async void Disconnect(DiscordClient client)
+        public async Task Good(DiscordMessage msg, string header, string content)
+        {
+            await this.Send(msg, header, content, new DiscordColor(110, 220, 110));
+        }
+
+        public async Task Disconnect(DiscordClient client)
         {
             IReadOnlyDictionary<ulong, DiscordGuild> guilds = client.Guilds;
             foreach (KeyValuePair<ulong, DiscordGuild> guild in guilds)

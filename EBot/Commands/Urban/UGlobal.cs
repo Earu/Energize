@@ -4,11 +4,11 @@ using System.Text;
 
 namespace EBot.Commands.Urban
 {
-    class GlobalObject
+    class UGlobal
     {
         public string[] tags;
         public string result_type;
-        public WordObject[] list;
+        public UWord[] list;
         public string[] sounds;
     }
 }

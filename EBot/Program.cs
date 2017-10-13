@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using DSharpPlus;
-using EBotDiscord;
+﻿using System.Threading.Tasks;
 
 namespace EBot
 {
@@ -15,9 +12,11 @@ namespace EBot
 
         static async Task MainAsync(string[] args)
         {
-            EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "$^");
-            client.TryConnect();
+            await EBotCredentials.Load();
 
+            EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "$^");
+
+            await client.TryConnect();
             await Task.Delay(-1);
         }
     }

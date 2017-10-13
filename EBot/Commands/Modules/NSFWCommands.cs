@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
@@ -20,14 +21,14 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async void SearchE621(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task SearchE621(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             if (msg.Channel.IsNSFW)
             {
                 Random rand = new Random();
                 string body = await HTTP.Fetch("https://e621.net/post/index.json",this.Log);
-                List<E621.PostObject> posts = JsonConvert.DeserializeObject<List<E621.PostObject>>(body);
-                E621.PostObject post;
+                List<E621.EPost> posts = JsonConvert.DeserializeObject<List<E621.EPost>>(body);
+                E621.EPost post;
 
                 if (string.IsNullOrWhiteSpace(args[0]))
                 {
@@ -40,7 +41,7 @@ namespace EBot.Commands.Modules
 
                 if (post is null)
                 {
-                    embedrep.Danger(msg, "Nooo", "Seems like I couldn't find anything!");
+                    await embedrep.Danger(msg, "Nooo", "Seems like I couldn't find anything!");
                 }
                 else
                 {
@@ -50,16 +51,16 @@ namespace EBot.Commands.Modules
                     embed.Title = "E621";
                     embed.Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*";
 
-                    embedrep.Send(msg, embed.Build());
+                    await embedrep.Send(msg, embed.Build());
                 }
             }
             else
             {
-                embedrep.Danger(msg, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
+                await embedrep.Danger(msg, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
             }
         }
 
-        private void RandNSFW(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task RandNSFW(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             List<string> cache = this.Handler.GetURLCache("nsfw");
             Random rand = new Random();
@@ -67,7 +68,7 @@ namespace EBot.Commands.Modules
             {
                 if (cache.Count == 0)
                 {
-                    embedrep.Danger(msg, "Aaah", "Looks like I haven't saved anything yet!");
+                    await embedrep.Danger(msg, "Aaah", "Looks like I haven't saved anything yet!");
                 }
                 else
                 {
@@ -77,19 +78,19 @@ namespace EBot.Commands.Modules
                     embed.ImageUrl = url;
                     embed.Title = "RandNSFW";
 
-                    embedrep.Send(msg, embed.Build());
+                    await embedrep.Send(msg, embed.Build());
                 }
             }
             else
             {
-                embedrep.Danger(msg, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
+                await embedrep.Danger(msg, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
             }
         }
 
         public void Load()
         {
-            this.Handler.LoadCommand("randnsfw", this.RandNSFW, "[NSFW] Display one of the many nsfw image saved");
-            this.Handler.LoadCommand("e621", this.SearchE621, "[NSFW] Search pictures on e621");
+            this.Handler.LoadCommand("randnsfw", this.RandNSFW, "[NSFW] Display one of the many nsfw image saved",this.Name);
+            this.Handler.LoadCommand("e621", this.SearchE621, "[NSFW] Search pictures on e621",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
@@ -22,19 +23,19 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async void ASCII(CommandReplyEmbed embedrep ,DiscordMessage msg, List<string> args)
+        private async Task ASCII(CommandReplyEmbed embedrep ,DiscordMessage msg, List<string> args)
         {
 
             if (string.IsNullOrWhiteSpace(args[0]))
             {
-                embedrep.Danger(msg, "Nope", "You didn't provide any word or sentence!");
+                await embedrep.Danger(msg, "Nope", "You didn't provide any word or sentence!");
             }
             else
             {
                 string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + args[0],Log);
                 if (body.Length > 2000)
                 {
-                    embedrep.Danger(msg, "ASCII", "The word or sentence you provided is too long!");
+                    await embedrep.Danger(msg, "ASCII", "The word or sentence you provided is too long!");
                 }
                 else
                 {
@@ -44,7 +45,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private void Describe(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Describe(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string[] adjs = CommandsData.Adjectives;
             string[] nouns = CommandsData.Nouns;
@@ -87,10 +88,10 @@ namespace EBot.Commands.Modules
                     break;
                 }
             }
-            embedrep.Good(msg, "Description", Social.Action.PingUser(toping) + " is " + (isvowel ? "an" : "a") + " " + result);
+            await embedrep.Good(msg, "Description", Social.Action.PingUser(toping) + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
-        private void Letters(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Letters(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string input = args[0];
             string indicator = ":regional_indicator_";
@@ -107,14 +108,14 @@ namespace EBot.Commands.Modules
                     result += "\t";
                 }
             }
-            embedrep.Good(msg, msg.Author.Username, result);
+            await embedrep.Good(msg, msg.Author.Username, result);
         }
 
-        private void HeightBalls(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task HeightBalls(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             if (string.IsNullOrWhiteSpace(args[0]))
             {
-                embedrep.Danger(msg, "Nope", "You didn't provide any word or sentence!");
+                await embedrep.Danger(msg, "Nope", "You didn't provide any word or sentence!");
             }
             else
             {
@@ -122,16 +123,16 @@ namespace EBot.Commands.Modules
                 string[] answers = CommandsData.HeightBallAnswers;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
-                embedrep.Good(msg, msg.Author.Username,answer);
+                await embedrep.Good(msg, msg.Author.Username,answer);
 
             }
         }
 
-        private void Pick(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Pick(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             if (string.IsNullOrWhiteSpace(args[0]))
             {
-                embedrep.Danger(msg, "Nope", "You didn't provide any/enough word(s)!");
+                await embedrep.Danger(msg, "Nope", "You didn't provide any/enough word(s)!");
             }
             else
             {
@@ -140,17 +141,17 @@ namespace EBot.Commands.Modules
                 string choice = args[rand.Next(0, args.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
 
-                embedrep.Good(msg, msg.Author.Username, answer);
+                await embedrep.Good(msg, msg.Author.Username, answer);
             }
         }
 
         public void Load()
         {
-            this.Handler.LoadCommand("describe", this.Describe, "Describes a person!");
-            this.Handler.LoadCommand("letters", this.Letters, "Use discord emojis to display a sentence");
-            this.Handler.LoadCommand("ascii", this.ASCII, "Display ascii art of the given word/sentence");
-            this.Handler.LoadCommand("8ball", this.HeightBalls, "Fast positive or negative answer to a question asked");
-            this.Handler.LoadCommand("pick", this.Pick, "Chooses for you among the choices provided");
+            this.Handler.LoadCommand("describe", this.Describe, "Describes a person!",this.Name);
+            this.Handler.LoadCommand("letters", this.Letters, "Use discord emojis to display a sentence", this.Name);
+            this.Handler.LoadCommand("ascii", this.ASCII, "Display ascii art of the given word/sentence", this.Name);
+            this.Handler.LoadCommand("8ball", this.HeightBalls, "Fast positive or negative answer to a question asked", this.Name);
+            this.Handler.LoadCommand("pick", this.Pick, "Chooses for you among the choices provided", this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
