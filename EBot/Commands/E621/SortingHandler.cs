@@ -6,17 +6,17 @@ namespace EBot.Commands.E621
 {
     class SortingHandler
     {
-        private List<PostObject> _Posts;
+        private List<EPost> _Posts;
 
-        public SortingHandler(List<PostObject> posts)
+        public SortingHandler(List<EPost> posts)
         {
             this._Posts = posts;
         }
 
-        public List<PostObject> GetBelowScore(int score)
+        public List<EPost> GetBelowScore(int score)
         {
-            List<PostObject> results = new List<PostObject>();
-            foreach (E621.PostObject p in this._Posts)
+            List<EPost> results = new List<EPost>();
+            foreach (E621.EPost p in this._Posts)
             {
                 if (p.fav_count < score)
                 {
@@ -26,10 +26,10 @@ namespace EBot.Commands.E621
             return results;
         }
 
-        public List<PostObject> GetOverScore(int score)
+        public List<EPost> GetOverScore(int score)
         {
-            List<PostObject> results = new List<PostObject>();
-            foreach (E621.PostObject p in this._Posts)
+            List<EPost> results = new List<EPost>();
+            foreach (E621.EPost p in this._Posts)
             {
                 if (p.fav_count > score)
                 {
@@ -39,10 +39,10 @@ namespace EBot.Commands.E621
             return results;
         }
 
-        public List<PostObject> GetScore(int score)
+        public List<EPost> GetScore(int score)
         {
-            List<PostObject> results = new List<PostObject>();
-            foreach (E621.PostObject p in this._Posts)
+            List<EPost> results = new List<EPost>();
+            foreach (E621.EPost p in this._Posts)
             {
                 if (p.fav_count == score)
                 {
@@ -52,10 +52,10 @@ namespace EBot.Commands.E621
             return results;
         }
 
-        public List<PostObject> GetTags(string tag)
+        public List<EPost> GetTags(string tag)
         {
-            List<PostObject> results = new List<PostObject>();
-            foreach (E621.PostObject p in this._Posts)
+            List<EPost> results = new List<EPost>();
+            foreach (E621.EPost p in this._Posts)
             {
                 if (p.tags.ToLower().Contains(tag.ToLower()))
                 {
@@ -65,10 +65,10 @@ namespace EBot.Commands.E621
             return results;
         }
 
-        public List<PostObject> GetRatings(string rating)
+        public List<EPost> GetRatings(string rating)
         {
-            List<PostObject> results = new List<PostObject>();
-            foreach (E621.PostObject p in this._Posts)
+            List<EPost> results = new List<EPost>();
+            foreach (E621.EPost p in this._Posts)
             {
                 if (p.rating.ToLower().Contains(rating.ToLower()))
                 {
@@ -78,13 +78,13 @@ namespace EBot.Commands.E621
             return results;
         }
 
-        public static PostObject GetRandom(List<PostObject> posts)
+        public static EPost GetRandom(List<EPost> posts)
         {
             Random rand = new Random();
             return posts.Count == 0 ? null: posts[rand.Next(0, posts.Count)];
         }
 
-        public PostObject GetRandom()
+        public EPost GetRandom()
         {
             Random rand = new Random();
             return this._Posts.Count == 0 ? null : this._Posts[rand.Next(0, this._Posts.Count)];

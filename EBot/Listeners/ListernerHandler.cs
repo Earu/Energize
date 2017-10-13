@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBotDiscord.Listeners
+namespace EBot.Listeners
 {
     class ListernerHandler
     {

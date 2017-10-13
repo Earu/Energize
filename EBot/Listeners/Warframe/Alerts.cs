@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBotDiscord.Listeners.Warframe
+namespace EBot.Listeners.Warframe
 {
     class Alerts
     {

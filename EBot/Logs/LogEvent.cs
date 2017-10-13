@@ -1,5 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
+using EBot;
 using System;
 
 namespace EBot.Logs
@@ -19,7 +20,11 @@ namespace EBot.Logs
             this._Client.Ready += async e =>
             {
                 Console.WriteLine("\n\t---------\\\\\\\\ Done initializing ////---------\n");
-                await this._Client.UpdateStatusAsync(new Game(this._Prefix + "help"));
+                Game game = new Game(this._Prefix + "help");
+                game.StreamType = GameStreamType.Twitch;
+                game.Url = EBotCredentials.TWITCH_URL;
+
+                await this._Client.UpdateStatusAsync(game,UserStatus.Online); //fancy streaming mode
             };
 
             this._Client.GuildAvailable += async e =>

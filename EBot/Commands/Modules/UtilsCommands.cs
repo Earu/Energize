@@ -2,6 +2,7 @@
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
@@ -18,7 +19,7 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private void Ping(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Ping(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             DateTimeOffset createtimestamp = msg.CreationTimestamp;
             DateTimeOffset timestamp = msg.Timestamp;
@@ -26,11 +27,11 @@ namespace EBot.Commands.Modules
             int diff = (createtimestamp.Millisecond - timestamp.Millisecond) / 10;
 
 
-            embedrep.Good(msg, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
+            await embedrep.Good(msg, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
                 ":clock1: Bot: " + this.Handler.Client.Ping + "ms");
         }
 
-        private void Help(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Help(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string arg = args[0];
             if (!string.IsNullOrWhiteSpace(arg))
@@ -39,28 +40,38 @@ namespace EBot.Commands.Modules
                 bool retrieved = this.Handler.CommandsHelp.TryGetValue(arg.ToLower().Trim(), out desc);
                 if (retrieved)
                 {
-                    embedrep.Warning(msg, "Help", "***" + arg + "*** : " + desc);
+                    await embedrep.Warning(msg, "Help", "***" + arg + "*** : " + desc);
                 }
                 else
                 {
-                    embedrep.Danger(msg, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                    await embedrep.Danger(msg, "Help", "Couldn't find documentation for \"" + arg + "\"");
                 }
             }
             else
             {
-                string final = "";
-                foreach (KeyValuePair<string, string> cmd in this.Handler.CommandsHelp)
+                await embedrep.Good(msg, "Help", "Check your private messages " + Social.Action.PingUser(msg.Author));
+
+                foreach (KeyValuePair<string, List<string>> module in this.Handler.ModuleCmds)
                 {
-                    final += "***" + cmd.Key + "*** :" + "\n" + cmd.Value + "\n";
+                    string name = module.Key;
+                    List<string> cmds = module.Value;
+                    string result = "";
+
+                    foreach(string cmd in cmds)
+                    {
+                        string help = this.Handler.CommandsHelp[cmd];
+                        result += "**" + cmd + "**: " + help + "\n";
+                    }
+
+                    await embedrep.RespondByDM(msg, name, result, new DiscordColor(127, 255, 127));
                 }
-                embedrep.Warning(msg, "Help", final);
             }
         }
 
-        private async void Say(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Say(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string tosay = string.Join(",", args.ToArray());
-            embedrep.Good(msg, msg.Author.Username, tosay);
+            await embedrep.Good(msg, msg.Author.Username, tosay);
             try
             {
                 await msg.DeleteAsync();
@@ -73,9 +84,9 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("say", this.Say, "Makes the bot say something!");
-            this.Handler.LoadCommand("ping", this.Ping, "Pings the bot");
-            this.Handler.LoadCommand("help", this.Help, "Shows help for each command");
+            this.Handler.LoadCommand("say", this.Say, "Makes the bot say something!",this.Name);
+            this.Handler.LoadCommand("ping", this.Ping, "Pings the bot",this.Name);
+            this.Handler.LoadCommand("help", this.Help, "Shows help for each command",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

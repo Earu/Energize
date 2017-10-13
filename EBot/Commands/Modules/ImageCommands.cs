@@ -5,7 +5,8 @@ using DSharpPlus.Entities;
 using EBot.Logs;
 using EBot.Commands.Utils;
 using SixLabors.ImageSharp;
-using EBotDiscord.Commands.Utils;
+using EBot.Commands.Utils;
+using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
@@ -21,7 +22,7 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private void Avatar(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Avatar(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             DiscordUser user = msg.Author;
             if (!string.IsNullOrWhiteSpace(args[0]))
@@ -35,10 +36,10 @@ namespace EBot.Commands.Modules
             embed.ImageUrl = url;
             embed.Title = "Avatar";
 
-            embedrep.Send(msg, embed.Build());
+            await embedrep.Send(msg, embed.Build());
         }
 
-        private async void BlackWhite(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task BlackWhite(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL(msg.Channel) : args[0];
             string path = null;
@@ -60,11 +61,11 @@ namespace EBot.Commands.Modules
 
             if(path == null)
             {
-                embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
+                await embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
             }
         }
 
-        private async void Wew(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Wew(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL(msg.Channel) : args[0];
             string path = null;
@@ -101,14 +102,14 @@ namespace EBot.Commands.Modules
 
             if (path == null)
             {
-                embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
+                await embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
             }
         }
 
         public void Load()
         {
-            this.Handler.LoadCommand("avatar", this.Avatar, "Display your avatar or the avatar of the person you mentionned");
-            this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white");
+            this.Handler.LoadCommand("avatar", this.Avatar, "Display your avatar or the avatar of the person you mentionned",this.Name);
+            this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
