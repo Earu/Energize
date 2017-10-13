@@ -9,21 +9,37 @@ namespace EBot.Commands
 {
     class CommandsHandler
     {
-        public delegate void CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
+        public delegate Task CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
 
         private DiscordClient _Client;
         private BotLog _Log;
         private string _Prefix;
         private CommandSource _Source;
-        private CommandReplyEmbed _EmbedReply = new CommandReplyEmbed();
-        private Dictionary<string,CommandCallback> _Cmds = new Dictionary<string,CommandCallback>();
-        private Dictionary<string,string> _CmdsHelp = new Dictionary<string,string>();
-        private Dictionary<string, bool> _CmdsLoaded = new Dictionary<string, bool>();
-        private Dictionary<string, string> _CmdAliases = new Dictionary<string, string>();
-        private Dictionary<DiscordChannel, string> _LastChannelPictureURL = new Dictionary<DiscordChannel, string>();
-        private List<string> _PictureURLCacheAll = new List<string>();
-        private List<string> _PictureURLCacheSFW = new List<string>();
-        private List<string> _PictureURLCacheNSFW = new List<string>();
+        private CommandReplyEmbed _EmbedReply;
+        private Dictionary<string, CommandCallback> _Cmds;
+        private Dictionary<string, string> _CmdsHelp;
+        private Dictionary<string, bool> _CmdsLoaded;
+        private Dictionary<string, string> _CmdAliases;
+        private Dictionary<string, List<string>> _ModuleCmds;
+        private Dictionary<DiscordChannel, string> _LastChannelPictureURL;
+        private List<string> _PictureURLCacheAll;
+        private List<string> _PictureURLCacheSFW;
+        private List<string> _PictureURLCacheNSFW;
+
+        public CommandsHandler()
+        {
+            this._EmbedReply = new CommandReplyEmbed();
+            this._EmbedReply.Handler = this;
+            this._Cmds = new Dictionary<string, CommandCallback>();
+            this._CmdsHelp = new Dictionary<string, string>();
+            this._CmdsLoaded = new Dictionary<string, bool>();
+            this._CmdAliases = new Dictionary<string, string>();
+            this._ModuleCmds = new Dictionary<string, List<string>>();
+            this._LastChannelPictureURL = new Dictionary<DiscordChannel, string>();
+            this._PictureURLCacheAll = new List<string>();
+            this._PictureURLCacheSFW = new List<string>();
+            this._PictureURLCacheNSFW = new List<string>();
+        }
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
         public CommandSource Source { get => this._Source; set => this._Source = value; }
@@ -32,6 +48,7 @@ namespace EBot.Commands
         public DiscordClient Client { get => this._Client; set => this._Client = value; }
         public Dictionary<string,CommandCallback> Commands { get => this._Cmds; }
         public Dictionary<string, string> CommandsHelp { get => this._CmdsHelp; }
+        public Dictionary<string, List<string>> ModuleCmds { get => this._ModuleCmds; }
 
         public string GetLastPictureURL(DiscordChannel chan)
         {
@@ -82,9 +99,12 @@ namespace EBot.Commands
             }
         }
 
-        private static void DefaultCallback(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args){}
+        private static async Task DefaultCallback(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            await embedrep.Normal(msg, null, "Hello world!");
+        }
 
-        public void LoadCommand(string name,CommandCallback callback=null,string desc="No description provided")
+        public void LoadCommand(string name,CommandCallback callback=null,string desc="No description provided",string modulename = "none")
         {
             try
             {
@@ -100,10 +120,22 @@ namespace EBot.Commands
                     {
                         callback = DefaultCallback;
                     }
+
                     this._Cmds.Add(name, callback);
                     this._CmdsHelp.Add(name, desc);
                     this._CmdsLoaded.Add(name, true);
                     this._CmdAliases.Add(name, name);
+
+                    if (!this._ModuleCmds.ContainsKey(modulename)) {
+                        this._ModuleCmds.Add(modulename, new List<string>());
+                    }
+
+                    List<string> modulecmds;
+                    if(this._ModuleCmds.TryGetValue(modulename,out modulecmds))
+                    {
+                        modulecmds.Add(name);
+                    }
+
                 }
             }catch(Exception e)
             {
@@ -112,13 +144,13 @@ namespace EBot.Commands
             }
         }
 
-        public void LoadCommand(string[] names,CommandCallback callback = null, string desc = "No description provided")
+        public void LoadCommand(string[] names,CommandCallback callback = null, string desc = "No description provided",string modulename = "none")
         {
             for(int i = 0; i < names.Length; i++)
             {
                 if (i == 0)
                 {
-                    this.LoadCommand(names[i], callback, desc);
+                    this.LoadCommand(names[i], callback, desc, modulename);
                 }
                 else
                 {
@@ -179,7 +211,7 @@ namespace EBot.Commands
             this._Log.Nice("Commands", ConsoleColor.Cyan, log);
         }
 
-        private void MainCall(DiscordMessage msg)
+        private async Task MainCall(DiscordMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -195,12 +227,12 @@ namespace EBot.Commands
 
                         if (fetched)
                         {
-                            callback(this._EmbedReply,msg, args);
+                            await callback(this._EmbedReply,msg, args);
                             this.LogCommand(msg, cmd, args);
                         }
                         else
                         {
-                            this._EmbedReply.Danger(msg, "Uh oh", "Something went very wrong, please contact Earu#9037");
+                            await this._EmbedReply.Danger(msg, "Uh oh", "Something went very wrong, please contact Earu#9037");
                             this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
                         }
                     }
@@ -257,7 +289,7 @@ namespace EBot.Commands
             }
         }
 
-        private void GetImageURLS(DiscordMessage msg)
+        private async Task GetImageURLS(DiscordMessage msg)
         {
             List<string> urls = new List<string>();
 
@@ -299,13 +331,13 @@ namespace EBot.Commands
         {
             this._Client.MessageCreated += async e =>
             {
-                this.GetImageURLS(e.Message);
+                await this.GetImageURLS(e.Message);
             };
 
             this._Source.LoadCommands(this,this.Log);
             this._Client.MessageCreated += async e =>
             {
-                this.MainCall(e.Message);
+                await this.MainCall(e.Message);
             };
 
         }

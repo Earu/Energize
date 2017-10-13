@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EBot.Commands.Urban
 {
-    public class WordObject
+    public class UWord
     {
         public int defid;
         public string word;

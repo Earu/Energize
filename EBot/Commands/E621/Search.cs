@@ -7,13 +7,13 @@ namespace EBot.Commands.E621
 {
     class Search
     {
-        public static List<PostObject> Find(string search,List<PostObject> posts)
+        public static List<EPost> Find(string search,List<EPost> posts)
         {
             SortingHandler sorter = new SortingHandler(posts);
-            List<PostObject> results = new List<PostObject>();
-            List<PostObject> tags = sorter.GetTags(search);
-            List<PostObject> ratings = sorter.GetRatings(search);
-            foreach(PostObject p in posts)
+            List<EPost> results = new List<EPost>();
+            List<EPost> tags = sorter.GetTags(search);
+            List<EPost> ratings = sorter.GetRatings(search);
+            foreach(EPost p in posts)
             {
                 if (p.author.ToLower().Contains(search.ToLower()))
                 {
@@ -27,20 +27,20 @@ namespace EBot.Commands.E621
                     }
                 }
             }
-            foreach(PostObject p in tags)
+            foreach(EPost p in tags)
             {
                 results.Add(p);
             }
-            foreach (PostObject p in ratings)
+            foreach (EPost p in ratings)
             {
                 results.Add(p);
             }
             return results;
         }
 
-        public static PostObject Handle(List<PostObject> initposts,List<string> args)
+        public static EPost Handle(List<EPost> initposts,List<string> args)
         {
-            List<PostObject> posts = Find(args[0],initposts);
+            List<EPost> posts = Find(args[0],initposts);
             SortingHandler sorter = new SortingHandler(posts);
 
             if (args.Count > 1 && !string.IsNullOrWhiteSpace(args[1]))
@@ -56,20 +56,20 @@ namespace EBot.Commands.E621
                         if (arg.Contains("over"))
                         {
                             bool parsed = int.TryParse(args[3], out score);
-                            List<PostObject> results = sorter.GetOverScore(score);
+                            List<EPost> results = sorter.GetOverScore(score);
                             return parsed ? SortingHandler.GetRandom(results) : null;
 
                         }
                         else if (arg.Contains("below"))
                         {
                             bool parsed = int.TryParse(args[3], out score);
-                            List<PostObject> results = sorter.GetBelowScore(score);
+                            List<EPost> results = sorter.GetBelowScore(score);
                             return parsed ? SortingHandler.GetRandom(results) : null;
                         }
                         else
                         {
                             bool parsed = int.TryParse(arg, out score);
-                            List<PostObject> results = sorter.GetScore(score);
+                            List<EPost> results = sorter.GetScore(score);
                             return parsed ? SortingHandler.GetRandom(results) : null;
                         }
                     }

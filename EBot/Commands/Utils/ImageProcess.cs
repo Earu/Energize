@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Net;
 using EBot.Logs;
 using System.Collections.Generic;
-using EBotDiscord.Commands.Utils;
+using EBot.Commands.Utils;
 
 namespace EBot.Commands.Utils
 {
