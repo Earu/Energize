@@ -9,7 +9,7 @@ namespace EBot.Commands.Social
     {
         public static string PingUser(DiscordUser user)
         {
-            return "<@" + user.Id + ">";
+            return user.Mention;
         }
 
         static private string[] _Hugs =
@@ -42,7 +42,7 @@ namespace EBot.Commands.Social
             string users = "";
             foreach (DiscordUser user in to)
             {
-                users += PingUser(user) + " and ";
+                users += user.Mention + " and ";
             }
             users = users.Remove(users.Length - 5);
             action = action.Replace("<user>", users);

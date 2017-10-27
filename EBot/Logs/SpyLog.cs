@@ -5,7 +5,7 @@ using System.Text;
 
 namespace EBot.Logs
 {
-    class SpyLog
+    public class SpyLog
     {
         private DiscordClient _Client;
         private BotLog _Log;

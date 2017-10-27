@@ -1,12 +1,11 @@
 ﻿using EBot.Logs;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EBot.Commands.Utils
+namespace EBot.Utils
 {
     class HTTP
     {
@@ -28,7 +27,7 @@ namespace EBot.Commands.Utils
             catch(Exception e)
             {
                 log.Nice("HTTP", ConsoleColor.Red, "Couldn't fetch URL body");
-                log.Error(e.ToString());
+                log.Danger(e.ToString());
 
                 return "";
             }

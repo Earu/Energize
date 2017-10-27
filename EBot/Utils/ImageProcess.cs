@@ -1,13 +1,10 @@
 ﻿using System;
-using SixLabors.ImageSharp;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
-using EBot.Logs;
-using System.Collections.Generic;
-using EBot.Commands.Utils;
+using ImageMagick;
 
-namespace EBot.Commands.Utils
+namespace EBot.Utils
 {
     class ImageProcess
     {
@@ -64,54 +61,20 @@ namespace EBot.Commands.Utils
 
         public static void Resize(string path,int width=500,int height=500)
         {
-            using (Image<Rgba32> image = Image.Load(path))
+            using (MagickImage image = new MagickImage(path))
             {
-                image.Mutate(x => x.Resize(width,height));
-                image.Save(path);
+                image.AdaptiveResize(width, height);
+                image.Write(path);
             }
         }
 
         public static void MakeBlackWhite(string path)
         {
-            using(Image<Rgba32> image = Image.Load(path))
+            using (MagickImage image = new MagickImage(path))
             {
-                image.Mutate(x => x.BlackWhite());
-                image.Save(path);
+                image.Grayscale(PixelIntensityMethod.Average);
+                image.Write(path);
             }
-        }
-
-        public static Dictionary<string,ImagePoint> GetBounds(string path)
-        {
-            Dictionary<string, ImagePoint> results = new Dictionary<string,ImagePoint>();
-            List<ImagePoint> all = new List<ImagePoint>();
-
-            using (Image<Rgba32> img = Image.Load(path))
-            {
-                for(int  i = 0; i < img.Height; i++)
-                {
-                    for(int j = 0; j < img.Width; j++)
-                    {
-                        Rgba32 px = img[j, i];
-                        if(px.A == 0)
-                        {
-                            all.Add(new ImagePoint(j,i));
-                        }
-                    }
-                }
-
-                if (all.Count > 0)
-                {
-                    results["Mins"] = all[0];
-                    results["Maxs"] = all[all.Count - 1];
-                }
-                else
-                {
-                    results["Mins"] = new ImagePoint(0, 0);
-                    results["Maxs"] = new ImagePoint(0, 0);
-                }
-            }
-
-            return results;
         }
 
         public static async Task<string> Create(int width,int height)
@@ -130,11 +93,8 @@ namespace EBot.Commands.Utils
                     await outp.WriteAsync(buffer, 0, br);
                 } while (br != 0);
             }
-            
-            using (Image<Rgba32> img = Image.Load(file))
-            {
-                img.Mutate(x => x.Resize(width, height));
-            }
+
+            Resize(file, width, height);
 
             return file;
         }

@@ -1,4 +1,4 @@
-﻿class CommandsData
+﻿public class CommandsData
 {
     static private string[] _Adjectives =
     {

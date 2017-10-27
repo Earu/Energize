@@ -2,12 +2,11 @@
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class SocialCommands
+    class SocialCommands : ICommandModule
     {
         private string Name = "Social";
         private CommandsHandler Handler;
