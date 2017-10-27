@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBot.Commands.Utils
+namespace EBot.Utils
 {
     class ImagePoint
     {

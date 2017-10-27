@@ -1,11 +1,10 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
-using EBot;
 using System;
 
 namespace EBot.Logs
 {
-    class LogEvent
+    public class LogEvent
     {
         private DiscordClient _Client;
         private string _Prefix;
@@ -20,7 +19,7 @@ namespace EBot.Logs
             this._Client.Ready += async e =>
             {
                 Console.WriteLine("\n\t---------\\\\\\\\ Done initializing ////---------\n");
-                Game game = new Game(this._Prefix + "help");
+                DiscordGame game = new DiscordGame(this._Prefix + "help");
                 game.StreamType = GameStreamType.Twitch;
                 game.Url = EBotCredentials.TWITCH_URL;
 
@@ -46,6 +45,7 @@ namespace EBot.Logs
             {
                 this._Log.Nice("Guild", ConsoleColor.Red, "Left " + e.Guild.Name + " || ID => [" + e.Guild.Id + "]");
             };
+
         }
     }
 }

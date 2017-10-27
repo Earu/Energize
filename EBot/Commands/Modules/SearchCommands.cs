@@ -1,15 +1,13 @@
 ﻿using DSharpPlus.Entities;
-using EBot.Commands.Utils;
+using EBot.Utils;
 using EBot.Logs;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class SearchCommands
+    class SearchCommands : ICommandModule
     {
         private string Name = "Search";
         private CommandsHandler Handler;
@@ -30,26 +28,49 @@ namespace EBot.Commands.Modules
             }
             else
             {
+                int page = 0;
+                if (args.Count > 1)
+                {
+                    if (!string.IsNullOrWhiteSpace(args[1]))
+                    {
+                        int temp;
+                        if (int.TryParse(args[1].Trim(), out temp))
+                        {
+                            page = temp - 1;
+                        }
+                    }
+                }
+
                 search = args[0];
                 string body = await HTTP.Fetch("http://api.urbandictionary.com/v0/define?term=" + search,this.Log);
-                body = JsonConvert.DeserializeObject(body).ToString();
-                Urban.UGlobal global = JsonConvert.DeserializeObject<Urban.UGlobal>(body);
+                Urban.UGlobal global = JSON.Deserialize<Urban.UGlobal>(body, this.Log);
 
-                if (global.list.Length == 0)
+                if (global == null)
                 {
-                    await embedrep.Danger(msg, "Arf!", "Looks like I couldn't find anything!");
+                    await embedrep.Danger(msg, "Err", "There was no data to use for this!");
                 }
                 else
                 {
-                    for (int i = 0; i < 3 && i < global.list.Length; i++)
+                    if (global.list.Length == 0)
                     {
-                        Urban.UWord wordobj = global.list[i];
-                        bool hasexample = string.IsNullOrWhiteSpace(wordobj.example);
-                        string smalldef = wordobj.definition.Length > 300 ? wordobj.definition.Remove(300) + "..." : wordobj.definition;
-                        await embedrep.Good(msg, "#" + (i + 1),
-                            "**" + wordobj.permalink + "**\n\n"
-                            + smalldef + (!hasexample ? "\n\nExample:\n\n*" + wordobj.example + "*" : "") + "\n\n" +
-                            ":thumbsup: x" + wordobj.thumbs_up + "\t :thumbsdown: x" + wordobj.thumbs_down);
+                        await embedrep.Danger(msg, "Arf!", "Looks like I couldn't find anything!");
+                    }
+                    else
+                    {
+                        if(global.list.Length-1 >= page && page >= 0)
+                        {
+                            Urban.UWord wordobj = global.list[page];
+                            bool hasexample = string.IsNullOrWhiteSpace(wordobj.example);
+                            string smalldef = wordobj.definition.Length > 300 ? wordobj.definition.Remove(300) + "..." : wordobj.definition;
+                            await embedrep.Good(msg, "Definition #" + (page + 1),
+                                "**" + wordobj.permalink + "**\n\n"
+                                + smalldef + (!hasexample ? "\n\nExample:\n\n*" + wordobj.example + "*" : "") + "\n\n" +
+                                ":thumbsup: x" + wordobj.thumbs_up + "\t :thumbsdown: x" + wordobj.thumbs_down);
+                        }
+                        else
+                        {
+                            await embedrep.Danger(msg, "uh", "No result for definition n°" + (page+1));
+                        }
                     }
                 }
             }

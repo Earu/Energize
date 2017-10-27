@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EBot.Commands
 {
-    class CommandReplyEmbed
+    public class CommandReplyEmbed
     {
 
         private BotLog _Log;

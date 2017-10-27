@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using DSharpPlus.Entities;
 using EBot.Logs;
-using EBot.Commands.Utils;
-using SixLabors.ImageSharp;
-using EBot.Commands.Utils;
+using EBot.Utils;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class ImageCommands
+    class ImageCommands : ICommandModule
     {
         private string Name = "Image";
         private CommandsHandler Handler;
@@ -51,12 +48,18 @@ namespace EBot.Commands.Modules
 
             if(path != null)
             {
-                ImageProcess.Resize(path);
-                ImageProcess.MakeBlackWhite(path);
+                try
+                {
+                    ImageProcess.Resize(path);
+                    ImageProcess.MakeBlackWhite(path);
 
-                await msg.Channel.SendFileAsync(path);
+                    await msg.Channel.SendFileAsync(path);
 
-                ImageProcess.DeleteImage(path);
+                    ImageProcess.DeleteImage(path);
+                }catch(Exception e)
+                {
+                    BotLog.Debug(e.ToString());
+                }
             }
 
             if(path == null)
@@ -78,26 +81,7 @@ namespace EBot.Commands.Modules
 
             if (path != null)
             {
-                Image<Rgba32> mask = Image.Load(maskpath);
-                Image<Rgba32> provided = Image.Load(path);
-
-                string basepath = await ImageProcess.Create(mask.Width, mask.Height);
-                Image<Rgba32> img = Image.Load(basepath);
-
-                Dictionary<string, ImagePoint> bounds = ImageProcess.GetBounds(maskpath);
-                ImageProcess.Resize(path,bounds["Maxs"].X - bounds["Mins"].X, bounds["Maxs"].Y - bounds["Mins"].Y);
-
-                int diffx = bounds["Mins"].X;
-                int diffy = bounds["Mins"].Y;
-
-                img[50, 50].PackFromRgba32(new Rgba32(0, 0, 0));
-                img[50, 50].CreatePixelOperations();
-                img.Save(basepath);
-
-                await msg.Channel.SendFileAsync(basepath);
-
-                ImageProcess.DeleteImage(path);
-                ImageProcess.DeleteImage(basepath);
+                await embedrep.Good(msg, "WIP", "Sorry this command is under work!");
             }
 
             if (path == null)
@@ -109,7 +93,7 @@ namespace EBot.Commands.Modules
         public void Load()
         {
             this.Handler.LoadCommand("avatar", this.Avatar, "Display your avatar or the avatar of the person you mentionned",this.Name);
-            this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
+            //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
@@ -118,7 +102,7 @@ namespace EBot.Commands.Modules
         public void Unload()
         {
             this.Handler.UnloadCommand("avatar");
-            this.Handler.UnloadCommand("blackwhite");
+            //this.Handler.UnloadCommand("blackwhite");
             //this.Handler.UnloadCommand("wew");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);

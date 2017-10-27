@@ -1,16 +1,15 @@
 ﻿using DSharpPlus.Entities;
-using EBot.Commands.Utils;
+using EBot.Utils;
 using EBot.Logs;
-using Newtonsoft.Json;
+using EBot.MachineLearning;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class FunCommands
+    class FunCommands : ICommandModule
     {
 
         private string Name = "Fun";
@@ -145,6 +144,25 @@ namespace EBot.Commands.Modules
             }
         }
 
+        private async Task Markov(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            if (!string.IsNullOrWhiteSpace(args[0]))
+            {
+                string sentence = string.Join(",", args.ToArray());
+
+                try
+                {
+                    string generated = await MarkovHandler.Generate(sentence);
+                    await embedrep.Good(msg, msg.Author.Username, generated);
+                }
+                catch(Exception e)
+                {
+                    await embedrep.Danger(msg, "Markov", "Something went wrong:\n" + e.ToString());
+                }
+            }
+            
+        }
+
         public void Load()
         {
             this.Handler.LoadCommand("describe", this.Describe, "Describes a person!",this.Name);
@@ -152,6 +170,7 @@ namespace EBot.Commands.Modules
             this.Handler.LoadCommand("ascii", this.ASCII, "Display ascii art of the given word/sentence", this.Name);
             this.Handler.LoadCommand("8ball", this.HeightBalls, "Fast positive or negative answer to a question asked", this.Name);
             this.Handler.LoadCommand("pick", this.Pick, "Chooses for you among the choices provided", this.Name);
+            this.Handler.LoadCommand("m", this.Markov, "Wild reaction from the bot",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
@@ -163,6 +182,7 @@ namespace EBot.Commands.Modules
             this.Handler.UnloadCommand("ascii");
             this.Handler.UnloadCommand("8ball");
             this.Handler.UnloadCommand("pick");
+            this.Handler.UnloadCommand("m");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
         }
