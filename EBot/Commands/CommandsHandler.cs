@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EBot.Commands
 {
-    class CommandsHandler
+    public class CommandsHandler
     {
         public delegate Task CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
 
@@ -21,10 +21,7 @@ namespace EBot.Commands
         private Dictionary<string, bool> _CmdsLoaded;
         private Dictionary<string, string> _CmdAliases;
         private Dictionary<string, List<string>> _ModuleCmds;
-        private Dictionary<DiscordChannel, string> _LastChannelPictureURL;
-        private List<string> _PictureURLCacheAll;
-        private List<string> _PictureURLCacheSFW;
-        private List<string> _PictureURLCacheNSFW;
+        private Dictionary<string, string> _LastChannelPictureURL;
 
         public CommandsHandler()
         {
@@ -35,10 +32,7 @@ namespace EBot.Commands
             this._CmdsLoaded = new Dictionary<string, bool>();
             this._CmdAliases = new Dictionary<string, string>();
             this._ModuleCmds = new Dictionary<string, List<string>>();
-            this._LastChannelPictureURL = new Dictionary<DiscordChannel, string>();
-            this._PictureURLCacheAll = new List<string>();
-            this._PictureURLCacheSFW = new List<string>();
-            this._PictureURLCacheNSFW = new List<string>();
+            this._LastChannelPictureURL = new Dictionary<string, string>();
         }
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
@@ -52,37 +46,15 @@ namespace EBot.Commands
 
         public string GetLastPictureURL(DiscordChannel chan)
         {
+            string index = chan.Guild.Id.ToString() + chan.Id.ToString();
             string url;
-            if(this._LastChannelPictureURL.TryGetValue(chan,out url))
+            if(this._LastChannelPictureURL.TryGetValue(index,out url))
             {
                 return url;
             }
             else
             {
                 return "";
-            }
-        }
-
-        public List<string> GetURLCache(string what)
-        {
-            switch (what)
-            {
-                case "nsfw":
-                    {
-                        return this._PictureURLCacheNSFW;
-                    }
-                case "sfw":
-                    {
-                        return this._PictureURLCacheSFW;
-                    }
-                case "all":
-                    {
-                        return this._PictureURLCacheAll;
-                    }
-                default:
-                    {
-                        return this._PictureURLCacheSFW;
-                    }
             }
         }
 
@@ -99,11 +71,6 @@ namespace EBot.Commands
             }
         }
 
-        private static async Task DefaultCallback(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
-        {
-            await embedrep.Normal(msg, null, "Hello world!");
-        }
-
         public void LoadCommand(string name,CommandCallback callback=null,string desc="No description provided",string modulename = "none")
         {
             try
@@ -118,7 +85,10 @@ namespace EBot.Commands
                 {
                     if (callback == null)
                     {
-                        callback = DefaultCallback;
+                        callback = async (CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args) => 
+                        {
+                            await embedrep.Normal(msg, null, "Hello world!");
+                        };
                     }
 
                     this._Cmds.Add(name, callback);
@@ -221,20 +191,33 @@ namespace EBot.Commands
                 {
                     if (this.IsCmdLoaded(cmd))
                     {
-                        List<string> args = this.GetCmdArgs(content);
-                        CommandCallback callback;
-                        bool fetched = this._Cmds.TryGetValue(cmd, out callback);
+                        Task cmdthread = new Task(async () =>
+                        {
+                            List<string> args = this.GetCmdArgs(content);
+                            CommandCallback callback;
+                            bool fetched = this._Cmds.TryGetValue(cmd, out callback);
 
-                        if (fetched)
-                        {
-                            await callback(this._EmbedReply,msg, args);
-                            this.LogCommand(msg, cmd, args);
-                        }
-                        else
-                        {
-                            await this._EmbedReply.Danger(msg, "Uh oh", "Something went very wrong, please contact Earu#9037");
-                            this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
-                        }
+                            if (fetched)
+                            {
+                                try
+                                {
+                                    await callback(this._EmbedReply, msg, args);
+                                    this.LogCommand(msg, cmd, args);
+                                }catch(Exception e)
+                                {
+                                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [\t" + string.Join("\t",args.ToArray()) + "]");
+                                    this._Log.Danger(e.ToString());
+
+                                    await this._EmbedReply.Danger(msg, "*Cough*","The command " + cmd + "generated an error, skipping!");
+                                }
+                            }
+                            else
+                            {
+                                this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
+                            }
+                        });
+
+                        cmdthread.Start();
                     }
                     else
                     {
@@ -248,44 +231,16 @@ namespace EBot.Commands
         {
             if (urls.Count > 0)
             {
+                string index = msg.Channel.Guild.ToString() + msg.Channel.Id.ToString();
                 string lasturl = urls[urls.Count - 1];
 
-                if (this._LastChannelPictureURL.ContainsKey(msg.Channel))
+                if (this._LastChannelPictureURL.ContainsKey(index))
                 {
-                    this._LastChannelPictureURL.Remove(msg.Channel);
+                    this._LastChannelPictureURL.Remove(index);
                 }
-                this._LastChannelPictureURL.Add(msg.Channel, lasturl);
+                this._LastChannelPictureURL.Add(index, lasturl);
 
-                if (msg.Channel.IsNSFW)
-                {
-                    foreach (string url in urls)
-                    {
-                        if (!this._PictureURLCacheNSFW.Contains(url))
-                        {
-                            this._PictureURLCacheNSFW.Add(url);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (string url in urls)
-                    {
-                        if (!this._PictureURLCacheSFW.Contains(url))
-                        {
-                            this._PictureURLCacheSFW.Add(url);
-                        }
-                    }
-                }
-
-                foreach (string url in urls)
-                {
-                    if (!this._PictureURLCacheAll.Contains(url))
-                    {
-                        this._PictureURLCacheAll.Add(url);
-                    }
-                }
-
-                this._Log.Nice("PictureCache", ConsoleColor.Gray, "Cache updated");
+                this._Log.Nice("PictureCache", ConsoleColor.Gray, "(" + msg.Channel.Guild.Name + ") Updated cache for channel [\t" + msg.Channel.Name + "\t]");
             }
         }
 
@@ -329,18 +284,21 @@ namespace EBot.Commands
 
         public void Initialize()
         {
-            this._Client.MessageCreated += async e =>
+            Task ithread = new Task(() =>
             {
-                await this.GetImageURLS(e.Message);
-            };
+                this._Client.MessageCreated += async e =>
+                {
+                    await this.GetImageURLS(e.Message);
+                };
+            });
 
-            this._Source.LoadCommands(this,this.Log);
+            this._Source.LoadCommands(this, this.Log);
             this._Client.MessageCreated += async e =>
             {
                 await this.MainCall(e.Message);
             };
 
+            ithread.Start();
         }
-
     }
 }

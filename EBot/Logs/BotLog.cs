@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace EBot.Logs
 {
-    class BotLog
+    public class BotLog
     {
         private string _Prefix = "> ";
 

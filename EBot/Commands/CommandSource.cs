@@ -3,7 +3,7 @@ using EBot.Logs;
 
 namespace EBot.Commands
 {
-    class CommandSource
+    public class CommandSource
     {
         UtilsCommands _Utils;
         SocialCommands _Social;
@@ -22,6 +22,7 @@ namespace EBot.Commands
             this._Image = new ImageCommands();
             this._Fun = new FunCommands();
             this._Warframe = new WarframeCommands();
+
             Setup(handler, log);
         }
 

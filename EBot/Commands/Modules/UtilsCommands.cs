@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class UtilsCommands
+    class UtilsCommands : ICommandModule
     {
         private string Name = "Util";
         private CommandsHandler Handler;

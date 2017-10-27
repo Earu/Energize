@@ -1,15 +1,14 @@
 ﻿using DSharpPlus.Entities;
-using EBot.Commands.Utils;
+using EBot.Utils;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using EBot.Commands.Warframe;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class WarframeCommands
+    class WarframeCommands : ICommandModule
     {
         private string Name = "Warframe";
         private CommandsHandler Handler;
@@ -24,38 +23,47 @@ namespace EBot.Commands.Modules
         public async Task Alerts(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", this.Log);
-            WGlobal global = JsonConvert.DeserializeObject<WGlobal>(body);
+            WGlobal global = JSON.Deserialize<WGlobal>(body,this.Log);
 
-            for (int i = 0;i < global.Alerts.Length; i++)
+            if (global == null)
             {
-                WAlert alert = global.Alerts[i];
-                WMission minfo = alert.MissionInfo;
-                WReward mreward = minfo.missionReward;
+                await embedrep.Danger(msg, "Err", "Looks like I couldn't access date for that!");
+            }
+            else
+            {
 
-                DateTime endtime = DateTime.Now.Date.AddTicks(alert.Expiry.date.numberLong);
-                DateTime offset = new DateTime().AddHours(5); //canada time offset (server hosted in germany)
-                DateTime nowtime = new DateTime(DateTime.Now.Subtract(offset).Ticks);
-
-                string showrewards = "";
- 
-                if (mreward.items != null)
+                for (int i = 0; i < global.Alerts.Length; i++)
                 {
-                    showrewards = "**Items**: \n";
-                    for (int j = 0; j < mreward.items.Length; j++)
-                    {
-                        string[] dirs = mreward.items[j].Split("/");
-                        string name = dirs[dirs.Length - 1];
+                    WAlert alert = global.Alerts[i];
+                    WMission minfo = alert.MissionInfo;
+                    WReward mreward = minfo.missionReward;
 
-                        showrewards += "\t\t" + name + "\n";
+                    DateTime endtime = DateTime.Now.Date.AddTicks(alert.Expiry.date.numberLong);
+                    DateTime offset = new DateTime().AddHours(5); //canada time offset (server hosted in germany)
+                    DateTime nowtime = new DateTime(DateTime.Now.Subtract(offset).Ticks);
+
+                    string showrewards = "";
+
+                    if (mreward.items != null)
+                    {
+                        showrewards = "**Items**: \n";
+                        for (int j = 0; j < mreward.items.Length; j++)
+                        {
+                            string[] dirs = mreward.items[j].Split("/");
+                            string name = dirs[dirs.Length - 1];
+
+                            showrewards += "\t\t" + name + "\n";
+                        }
                     }
+
+                    await embedrep.Good(msg, "Warframe Alert #" + (i + 1),
+                          "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
+                        + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
+                        + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"
+                        + showrewards
+                    );
                 }
 
-                await embedrep.Good(msg, "Warframe Alert #" + (i + 1),
-                      "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
-                    + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
-                    + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"
-                    + showrewards
-                );
             }
 
         }
