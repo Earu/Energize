@@ -92,7 +92,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("avatar", this.Avatar, "Display your avatar or the avatar of the person you mentionned",this.Name);
+            this.Handler.LoadCommand("avatar", this.Avatar, "^avatar \"@user\"",this.Name);
             //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 

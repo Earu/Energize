@@ -9,20 +9,22 @@ namespace EBot.Utils
 {
     class HTTP
     {
+        private static string UserAgent = "EBot Discord(Earu's Bot)";
+
         public static async Task<string> Fetch(string Url,BotLog log)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
                 request.Method = "GET";
-                request.Headers[HttpRequestHeader.UserAgent] = "EBot Discord(Earu's Bot)";
-                WebResponse answer = await request.GetResponseAsync();
-                StreamReader reader = new StreamReader(answer.GetResponseStream(), Encoding.UTF8);
-                string result = reader.ReadToEnd();
-                reader.Dispose();
-                answer.Dispose();
+                request.Headers[HttpRequestHeader.UserAgent] = UserAgent;
 
-                return result;
+                using (WebResponse answer = await request.GetResponseAsync())
+                using (StreamReader reader = new StreamReader(answer.GetResponseStream(), Encoding.UTF8))
+                {
+                    string result = reader.ReadToEnd();
+                    return result;
+                }
             }
             catch(Exception e)
             {

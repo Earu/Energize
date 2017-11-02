@@ -20,6 +20,8 @@ namespace EBot
         private ulong BotIDMain;
         [DataMember]
         private ulong BotIDDev;
+        [DataMember]
+        private string GoogleAPIKey;
 
         public static string TOKEN_MAIN;
         public static string TOKEN_DEV;
@@ -27,6 +29,7 @@ namespace EBot
         public static ulong OWNER_ID;
         public static ulong BOT_ID_MAIN;
         public static ulong BOT_ID_DEV;
+        public static string GOOGLE_API_KEY;
 
         public static async Task Load()
         {
@@ -41,6 +44,7 @@ namespace EBot
                 BOT_ID_MAIN = credentials.BotIDMain;
                 BOT_ID_DEV = credentials.BotIDDev;
                 OWNER_ID = credentials.OwnerID;
+                GOOGLE_API_KEY = credentials.GoogleAPIKey;
             }
         }
     }
