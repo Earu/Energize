@@ -70,7 +70,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("walerts",this.Alerts, "Gets the ongoing alerts",this.Name);
+            this.Handler.LoadCommand("walerts",this.Alerts, "^walerts",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

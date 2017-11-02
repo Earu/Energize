@@ -161,10 +161,28 @@ namespace EBot.Commands
             return result;
         }
 
-        private void LogCommand(DiscordMessage msg,string cmd,List<string> args)
+        private void LogCommand(DiscordMessage msg, string cmd, List<string> args,bool isdm,bool isdeleted=false)
         {
 
-            string log = "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") " + msg.Author.Username + " used <" + cmd + ">";
+            string log = "";
+            ConsoleColor color = ConsoleColor.Blue;
+            string head = "DMCommands";
+            string action = "used";
+
+            if (!isdm)
+            {
+                log += "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                color = ConsoleColor.Cyan;
+                head = "Commands";
+            }
+
+            if (isdeleted)
+            {
+                color = ConsoleColor.Yellow;
+                action = "deleted";
+            }
+            
+            log += msg.Author.Username + " " + action + " <" + cmd + ">";
             if (!string.IsNullOrWhiteSpace(args[0]))
             {
                 log += "  => [\t";
@@ -178,7 +196,8 @@ namespace EBot.Commands
             {
                 log += " with no args";
             }
-            this._Log.Nice("Commands", ConsoleColor.Cyan, log);
+
+            this._Log.Nice(head,color, log);
         }
 
         private async Task MainCall(DiscordMessage msg)
@@ -202,13 +221,13 @@ namespace EBot.Commands
                                 try
                                 {
                                     await callback(this._EmbedReply, msg, args);
-                                    this.LogCommand(msg, cmd, args);
+                                    this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate);
                                 }catch(Exception e)
                                 {
                                     this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [\t" + string.Join("\t",args.ToArray()) + "]");
                                     this._Log.Danger(e.ToString());
 
-                                    await this._EmbedReply.Danger(msg, "*Cough*","The command " + cmd + "generated an error, skipping!");
+                                    await this._EmbedReply.Danger(msg, "*Cough*","The command \"" + cmd + "\" generated an error, skipping!");
                                 }
                             }
                             else
@@ -239,8 +258,6 @@ namespace EBot.Commands
                     this._LastChannelPictureURL.Remove(index);
                 }
                 this._LastChannelPictureURL.Add(index, lasturl);
-
-                this._Log.Nice("PictureCache", ConsoleColor.Gray, "(" + msg.Channel.Guild.Name + ") Updated cache for channel [\t" + msg.Channel.Name + "\t]");
             }
         }
 
@@ -282,13 +299,41 @@ namespace EBot.Commands
 
         }
 
+        private async Task GetDeletedCommandMessages(DiscordMessage msg)
+        {
+            string content = msg.Content;
+            if (!msg.Author.IsBot)
+            {
+                string cmd = this.GetAliasOriginCmd(this.GetCmd(content));
+                if (content.StartsWith(this._Prefix))
+                {
+                    if (this.IsCmdLoaded(cmd))
+                    {
+                        string user = msg.Author.Mention;
+                        List<string> args = this.GetCmdArgs(content);
+
+                        await this._EmbedReply.Send(msg.Channel,"Sneaky!",user + " deleted a command message \"" + cmd + "\" :eyes:",new DiscordColor(220, 180, 80));
+                        this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate, true);
+                    }
+                }
+            }
+        }
+
         public void Initialize()
         {
-            Task ithread = new Task(() =>
+            Task imgthread = new Task(() =>
             {
                 this._Client.MessageCreated += async e =>
                 {
                     await this.GetImageURLS(e.Message);
+                };
+            });
+
+            Task dcmdsthread = new Task(() =>
+            {
+                this._Client.MessageDeleted += async e =>
+                {
+                    await this.GetDeletedCommandMessages(e.Message);
                 };
             });
 
@@ -298,7 +343,8 @@ namespace EBot.Commands
                 await this.MainCall(e.Message);
             };
 
-            ithread.Start();
+            imgthread.Start();
+            dcmdsthread.Start();
         }
     }
 }

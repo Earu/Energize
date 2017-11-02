@@ -1,7 +1,9 @@
 ﻿using DSharpPlus.Entities;
 using EBot.Logs;
+using EBot.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
@@ -82,11 +84,79 @@ namespace EBot.Commands.Modules
             }
         }
 
+        private async Task Server(CommandReplyEmbed embedrep, DiscordMessage msg,List<string> args)
+        {
+            if (!msg.Channel.IsPrivate)
+            {
+                DiscordGuild guild = msg.Channel.Guild;
+
+                string info = "";
+                info += "**ID**: " + guild.Id + "\n";
+                info += "**Owner**: " + guild.Owner.Username + "#" + guild.Owner.Discriminator + "\n";
+                info += "**Members**: " + guild.MemberCount + "\n";
+                info += "**Region**: " + guild.RegionId + "\n";
+                info += "\n\n---- Emojis ----\n";
+
+                int count = 0;
+                foreach(DiscordEmoji emoji in guild.Emojis)
+                {
+                    info += "<:" + emoji.Name + ":" + emoji.Id + ">  ";
+                    count++;
+                    if(count >= 10)
+                    {
+                        info += "\n";
+                        count = 0;
+                    }
+                }
+
+                DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+                builder.WithThumbnailUrl(guild.IconUrl);
+                builder.WithDescription(info);
+                builder.WithTitle(guild.Name);
+                builder.WithColor(new DiscordColor(110, 220, 110));
+
+                await embedrep.Send(msg, builder.Build());
+            }
+            else
+            {
+                await embedrep.Danger(msg, "Hey!", "You can't do that in a DM channel!");
+            }
+        }
+
+        private async Task Info(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            using (StreamReader reader = File.OpenText("External/info.json"))
+            {
+                string json = await reader.ReadToEndAsync();
+                EBotAPI api = JSON.Deserialize<EBotAPI>(json, this.Log);
+
+                string info = "";
+                info += "**Name**: " + api.Name + "\n";
+                info += "**Prefix**: " + api.Prefix + "\n";
+                info += "**Commands**: " + api.CommandAmount + "\n";
+                info += "**Servers**: " + api.GuildAmount + "\n";
+                info += "**Users**: " + api.UserAmount + "\n";
+                info += "**Owner**: " + api.Owner + "\n";
+                info += "\n\n---- Invite link ----\n";
+                info += "https://discordapp.com/oauth2/authorize?client_id=" + api.ID + "&scope=bot&permissions=0";
+
+                DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+                builder.WithTitle("Info");
+                builder.WithThumbnailUrl(api.Avatar);
+                builder.WithDescription(info);
+                builder.WithColor(new DiscordColor(110, 220, 110));
+
+                await embedrep.Send(msg, builder.Build());
+            }
+        }
+
         public void Load()
         {
-            this.Handler.LoadCommand("say", this.Say, "Makes the bot say something!",this.Name);
-            this.Handler.LoadCommand("ping", this.Ping, "Pings the bot",this.Name);
-            this.Handler.LoadCommand("help", this.Help, "Shows help for each command",this.Name);
+            this.Handler.LoadCommand("say", this.Say, "^say \"sentence\"",this.Name);
+            this.Handler.LoadCommand("ping", this.Ping, "^ping",this.Name);
+            this.Handler.LoadCommand("help", this.Help, "^help \"command|nothing\"",this.Name);
+            this.Handler.LoadCommand("server", this.Server, "^server", this.Name);
+            this.Handler.LoadCommand("info", this.Info, "^info", this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

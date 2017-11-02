@@ -68,9 +68,9 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand(new string[]{ "hug","hugs"}, this.Hug, "hug the users you mentionned",this.Name);
-            this.Handler.LoadCommand("boop", this.Boop, "boop the users you mentionned",this.Name);
-            this.Handler.LoadCommand("slap", this.Slap, "slap the users you mentionned",this.Name);
+            this.Handler.LoadCommand(new string[]{ "hug","hugs"}, this.Hug, "^hug \"@user1\",\"@user2\",\"@user3\",...", this.Name);
+            this.Handler.LoadCommand("boop", this.Boop, "^boop \"@user1\",\"@user2\",\"@user3\",...", this.Name);
+            this.Handler.LoadCommand("slap", this.Slap, "^slap \"@user1\",\"@user2\",\"@user3\",...", this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

@@ -1,4 +1,5 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
 using EBot.Commands;
 using EBot.Logs;
 using EBot.MachineLearning;
@@ -100,10 +101,19 @@ namespace EBot
                     {
                         if (!e.Message.Author.IsBot && !e.Message.Channel.IsNSFW)
                         {
-                            MarkovHandler.Learn(e.Message.Content);
+                            await MarkovHandler.Learn(e.Message.Content);
                         }
                     };
                 });
+
+                this._Discord.Ready += async e =>
+                {
+                    DiscordGame game = new DiscordGame(this._Prefix + "help");
+                    game.StreamType = GameStreamType.Twitch;
+                    game.Url = EBotCredentials.TWITCH_URL;
+
+                    await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
+                };
 
                 apithread.Start();
                 markovthread.Start();
