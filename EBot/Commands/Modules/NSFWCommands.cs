@@ -67,7 +67,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("e621", this.SearchE621, "[NSFW] Search pictures on e621",this.Name);
+            this.Handler.LoadCommand("e621", this.SearchE621, "^e621 \"search\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

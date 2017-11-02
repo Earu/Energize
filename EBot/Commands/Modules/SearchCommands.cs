@@ -76,9 +76,14 @@ namespace EBot.Commands.Modules
             }
         }
 
+        private async Task Google(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            string apikey = EBotCredentials.GOOGLE_API_KEY;
+        }
+
         public void Load()
         {
-            this.Handler.LoadCommand("urban", this.SearchUrban, "Look up a definition in urban dictionary",this.Name);
+            this.Handler.LoadCommand("urban", this.SearchUrban, "^urban \"search\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

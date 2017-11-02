@@ -12,6 +12,9 @@ namespace EBot
     public class EBotAPI
     {
         [DataMember]
+        public ulong ID;
+
+        [DataMember]
         public int UserAmount;
 
         [DataMember]
@@ -65,7 +68,8 @@ namespace EBot
             api.Status = GetStatus(bot.Presence.Status);
             api.OwnerStatus = GetStatus(owner.Presence.Status);
             api.Avatar = bot.AvatarUrl;
-            api.OwnerAvatar = owner.AvatarUrl;
+	        api.OwnerAvatar = owner.AvatarUrl;
+            api.ID = bot.Id;
 
             string json = JSON.Serialize(api,client.Log);
             await File.WriteAllTextAsync("External/info.json", json);

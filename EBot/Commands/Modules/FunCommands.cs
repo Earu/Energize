@@ -165,12 +165,12 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("describe", this.Describe, "Describes a person!",this.Name);
-            this.Handler.LoadCommand("letters", this.Letters, "Use discord emojis to display a sentence", this.Name);
-            this.Handler.LoadCommand("ascii", this.ASCII, "Display ascii art of the given word/sentence", this.Name);
-            this.Handler.LoadCommand("8ball", this.HeightBalls, "Fast positive or negative answer to a question asked", this.Name);
-            this.Handler.LoadCommand("pick", this.Pick, "Chooses for you among the choices provided", this.Name);
-            this.Handler.LoadCommand("m", this.Markov, "Wild reaction from the bot",this.Name);
+            this.Handler.LoadCommand("describe", this.Describe, "^describe \"@user\"",this.Name);
+            this.Handler.LoadCommand("letters", this.Letters, "^letters \"sentence\"", this.Name);
+            this.Handler.LoadCommand("ascii", this.ASCII, "^ascii \"sentence\"", this.Name);
+            this.Handler.LoadCommand("8ball", this.HeightBalls, "^8ball \"question\"", this.Name);
+            this.Handler.LoadCommand("pick", this.Pick, "^pick \"choice1\",\"choice2\",\"choice3\",...", this.Name);
+            this.Handler.LoadCommand("m", this.Markov, "^m \"sentence\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
