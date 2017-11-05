@@ -74,14 +74,6 @@ namespace EBot.Commands.Modules
         {
             string tosay = string.Join(",", args.ToArray());
             await embedrep.Good(msg, msg.Author.Username, tosay);
-            try
-            {
-                await msg.DeleteAsync();
-            }
-            catch
-            {
-                this.Log.Nice("Commands", ConsoleColor.Red, "<say> couldn't remove the user message!");
-            }
         }
 
         private async Task Server(CommandReplyEmbed embedrep, DiscordMessage msg,List<string> args)

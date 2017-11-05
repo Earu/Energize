@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace EBot.Utils
 {
@@ -11,13 +12,15 @@ namespace EBot.Utils
     {
         private static string UserAgent = "EBot Discord(Earu's Bot)";
 
-        public static async Task<string> Fetch(string Url,BotLog log)
+        public static async Task<string> Fetch(string url,BotLog log,string useragent=null,Action<HttpWebRequest> callback=null)
         {
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "GET";
-                request.Headers[HttpRequestHeader.UserAgent] = UserAgent;
+                request.Timeout = 1000 * 60;
+                request.Headers[HttpRequestHeader.UserAgent] = useragent != null ? useragent : UserAgent;
+                callback?.Invoke(request);
 
                 using (WebResponse answer = await request.GetResponseAsync())
                 using (StreamReader reader = new StreamReader(answer.GetResponseStream(), Encoding.UTF8))

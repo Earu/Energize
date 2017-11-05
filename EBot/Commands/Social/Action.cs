@@ -40,11 +40,12 @@ namespace EBot.Commands.Social
             action = action.Replace("<origin>", PingUser(from));
             action = action.Replace("<action>", act);
             string users = "";
-            foreach (DiscordUser user in to)
+            for(int i = 0; i < to.Count && i < 3; i++)
             {
+                DiscordUser user = to[i];
                 users += user.Mention + " and ";
             }
-            users = users.Remove(users.Length - 5);
+            users = users.Remove(users.Length - 4);
             action = action.Replace("<user>", users);
 
             return action;
