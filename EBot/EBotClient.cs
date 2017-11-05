@@ -82,29 +82,83 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
+        public async Task Ask(DiscordMessage msg,bool ismention,bool isprefix)
+        {
+            string mention = "<@" + EBotCredentials.BOT_ID_MAIN + ">";
+            DiscordChannel chan = msg.Channel;
+            string username = msg.Author.Username;
+            string input = msg.Content;
+
+            if (ismention)
+            {
+                if (isprefix)
+                {
+                    input = input.Remove(0, mention.Length + 1);
+                }
+                else
+                {
+                    input = input.Replace(mention, "EBot");
+                }
+            }
+            else
+            {
+                if (isprefix)
+                {
+                    input = input.Remove(0, 5);
+                }
+            }
+
+            string result = await ChatBot.Ask(chan, input, this._Log);
+
+            await this._Handler.EmbedReply.Normal(msg, username, result);
+        }
+
+        public async Task OnChat(DiscordMessage msg)
+        {
+            string mention = "<@" + EBotCredentials.BOT_ID_MAIN + "> ";
+            bool answered = false;
+
+            if (msg.Content.StartsWith(mention))
+            {
+                answered = true;
+                await this.Ask(msg, true, true);
+            }
+            else if (msg.Content.ToLower().StartsWith("ebot "))
+            {
+                answered = true;
+                await this.Ask(msg, false, true);
+            }
+
+            if (!answered)
+            {
+                if (msg.Content.Contains(mention) || msg.Content.ToLower().Contains("ebot"))
+                {
+                    answered = true;
+                    await this.Ask(msg, true, false);
+                }
+            }
+
+            if (answered)
+            {
+                string name = "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                this._Log.Nice("ChatBot", ConsoleColor.DarkGreen, name + "Answered " + msg.Author.Username + "#" + msg.Author.Discriminator);
+            }
+
+            if (!msg.Author.IsBot && !msg.Channel.IsNSFW)
+            {
+                await MarkovHandler.Learn(msg.Content);
+            }
+        }
+
         public async Task TryConnect()
         {
             try
             {
                 await this._Discord.ConnectAsync();
 
-                Task apithread = new Task(() =>
-                {
-                    this._Discord.Heartbeated += async e => {
-                        await EBotAPI.SaveAsync(this);
-                    };
-                });
-
-                Task markovthread = new Task(() =>
-                {
-                    this._Discord.MessageCreated += async e =>
-                    {
-                        if (!e.Message.Author.IsBot && !e.Message.Channel.IsNSFW)
-                        {
-                            await MarkovHandler.Learn(e.Message.Content);
-                        }
-                    };
-                });
+                this._Discord.Heartbeated += async e => {
+                    EBotAPI.SaveAsync(this).RunSynchronously();
+                };
 
                 this._Discord.Ready += async e =>
                 {
@@ -115,8 +169,10 @@ namespace EBot
                     await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
                 };
 
-                apithread.Start();
-                markovthread.Start();
+                this._Discord.MessageCreated += async e =>
+                {
+                    this.OnChat(e.Message).RunSynchronously();
+                };
             }
             catch (Exception e)
             {

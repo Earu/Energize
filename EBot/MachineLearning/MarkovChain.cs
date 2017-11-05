@@ -66,6 +66,11 @@ namespace EBot.MachineLearning
                 }
                 else
                 {
+                    if(count < 2) //happens sometimes
+                    {
+                        results.Add(current);
+                    }
+
                     break;
                 }
             }

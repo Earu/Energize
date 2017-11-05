@@ -25,7 +25,10 @@ namespace EBot.Commands
 
             try
             {
-                await msg.RespondAsync(null, false, builder.Build());
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    await msg.RespondAsync(null, false, builder.Build());
+                }
             }
             catch
             {
@@ -43,7 +46,10 @@ namespace EBot.Commands
 
             try
             {
-                await chan.SendMessageAsync(null, false, builder.Build());
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    await chan.SendMessageAsync(null, false, builder.Build());
+                }
             }
             catch
             {
@@ -53,7 +59,8 @@ namespace EBot.Commands
 
         public async Task Send(DiscordMessage msg,DiscordEmbed embed = null)
         {
-            try { 
+            try
+            { 
                 await msg.RespondAsync(null, false, embed);
             }
             catch
@@ -93,7 +100,8 @@ namespace EBot.Commands
 
         public async Task Good(DiscordMessage msg, string header, string content)
         {
-            await this.Send(msg, header, content, new DiscordColor(110, 220, 110));
+            //110, 220, 110
+            await this.Send(msg, header, content, new DiscordColor());
         }
 
         public async Task Disconnect(DiscordClient client)
