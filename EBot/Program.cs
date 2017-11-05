@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace EBot
 {
@@ -14,7 +15,7 @@ namespace EBot
         {
             await EBotCredentials.Load();
 
-            EBotClient client = new EBotClient(EBotCredentials.TOKEN_MAIN, "^");
+            EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "$^");
 
             await client.TryConnect();
             await Task.Delay(-1);

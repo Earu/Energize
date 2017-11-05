@@ -10,6 +10,7 @@ namespace EBot.Commands
     public class CommandsHandler
     {
         public delegate Task CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
+        public delegate Task CommandMainCall(DiscordMessage msg);
 
         private DiscordClient _Client;
         private BotLog _Log;
@@ -163,7 +164,6 @@ namespace EBot.Commands
 
         private void LogCommand(DiscordMessage msg, string cmd, List<string> args,bool isdm,bool isdeleted=false)
         {
-
             string log = "";
             ConsoleColor color = ConsoleColor.Blue;
             string head = "DMCommands";
@@ -200,7 +200,34 @@ namespace EBot.Commands
             this._Log.Nice(head,color, log);
         }
 
-        private async Task MainCall(DiscordMessage msg)
+        private async Task CommandCall(DiscordMessage msg,string cmd)
+        {
+            List<string> args = this.GetCmdArgs(msg.Content);
+            CommandCallback callback;
+            bool fetched = this._Cmds.TryGetValue(cmd, out callback);
+
+            if (fetched)
+            {
+                try
+                {
+                    await callback(this._EmbedReply, msg, args);
+                    this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate);
+                }
+                catch (Exception e)
+                {
+                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [\t" + string.Join("\t", args.ToArray()) + "]");
+                    this._Log.Danger(e.ToString());
+
+                    await this._EmbedReply.Danger(msg, "*Cough*", "The command \"" + cmd + "\" generated an error, skipping!");
+                }
+            }
+            else
+            {
+                this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
+            }
+        }
+
+        private void MainCall(DiscordMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -210,33 +237,7 @@ namespace EBot.Commands
                 {
                     if (this.IsCmdLoaded(cmd))
                     {
-                        Task cmdthread = new Task(async () =>
-                        {
-                            List<string> args = this.GetCmdArgs(content);
-                            CommandCallback callback;
-                            bool fetched = this._Cmds.TryGetValue(cmd, out callback);
-
-                            if (fetched)
-                            {
-                                try
-                                {
-                                    await callback(this._EmbedReply, msg, args);
-                                    this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate);
-                                }catch(Exception e)
-                                {
-                                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [\t" + string.Join("\t",args.ToArray()) + "]");
-                                    this._Log.Danger(e.ToString());
-
-                                    await this._EmbedReply.Danger(msg, "*Cough*","The command \"" + cmd + "\" generated an error, skipping!");
-                                }
-                            }
-                            else
-                            {
-                                this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
-                            }
-                        });
-
-                        cmdthread.Start();
+                        this.CommandCall(msg, cmd).RunSynchronously();
                     }
                     else
                     {
@@ -261,7 +262,7 @@ namespace EBot.Commands
             }
         }
 
-        private async Task GetImageURLS(DiscordMessage msg)
+        private void GetImageURLS(DiscordMessage msg)
         {
             List<string> urls = new List<string>();
 
@@ -321,30 +322,21 @@ namespace EBot.Commands
 
         public void Initialize()
         {
-            Task imgthread = new Task(() =>
+            this._Client.MessageCreated += async e =>
             {
-                this._Client.MessageCreated += async e =>
-                {
-                    await this.GetImageURLS(e.Message);
-                };
-            });
+                this.GetImageURLS(e.Message);
+            };
 
-            Task dcmdsthread = new Task(() =>
+            this._Client.MessageDeleted += async e =>
             {
-                this._Client.MessageDeleted += async e =>
-                {
-                    await this.GetDeletedCommandMessages(e.Message);
-                };
-            });
+                this.GetDeletedCommandMessages(e.Message).RunSynchronously();
+            };
 
             this._Source.LoadCommands(this, this.Log);
             this._Client.MessageCreated += async e =>
             {
-                await this.MainCall(e.Message);
+                this.MainCall(e.Message);
             };
-
-            imgthread.Start();
-            dcmdsthread.Start();
         }
     }
 }
