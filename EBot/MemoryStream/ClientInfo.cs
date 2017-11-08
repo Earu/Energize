@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EBot.MemoryStream
 {
-    public class EBotInfo
+    public class ClientInfo
     {
         private EBotClient _Client;
 
@@ -39,12 +39,12 @@ namespace EBot.MemoryStream
             return Enum.GetName(typeof(UserStatus), status);
         }
 
-        public EBotInfo(EBotClient client)
+        public ClientInfo(EBotClient client)
         {
             this._Client = client;
         }
 
-        public async Task<EBotInfo> Initialize()
+        public async Task<ClientInfo> Initialize()
         {
             DiscordUser owner = await this._Client.Discord.GetUserAsync(EBotCredentials.OWNER_ID);
             DiscordUser bot = await this._Client.Discord.GetUserAsync(EBotCredentials.BOT_ID_MAIN);
