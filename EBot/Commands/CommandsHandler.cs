@@ -10,7 +10,6 @@ namespace EBot.Commands
     public class CommandsHandler
     {
         public delegate Task CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
-        public delegate Task CommandMainCall(DiscordMessage msg);
 
         private DiscordClient _Client;
         private BotLog _Log;
@@ -88,7 +87,7 @@ namespace EBot.Commands
                     {
                         callback = async (CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args) => 
                         {
-                            await embedrep.Normal(msg, null, "Hello world!");
+                            await embedrep.Good(msg, null, "Hello world!");
                         };
                     }
 
@@ -157,8 +156,7 @@ namespace EBot.Commands
 
         private string GetAliasOriginCmd(string alias)
         {
-            string result = "";
-            this._CmdAliases.TryGetValue(alias, out result);
+            this._CmdAliases.TryGetValue(alias, out string result);
             return result;
         }
 
@@ -185,12 +183,7 @@ namespace EBot.Commands
             log += msg.Author.Username + " " + action + " <" + cmd + ">";
             if (!string.IsNullOrWhiteSpace(args[0]))
             {
-                log += "  => [\t";
-                foreach (string arg in args)
-                {
-                    log += arg + "\t";
-                }
-                log += "]";
+                log += "  => [" + string.Join(',',args) + " ]";
             }
             else
             {
@@ -203,8 +196,7 @@ namespace EBot.Commands
         private async Task CommandCall(DiscordMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
-            CommandCallback callback;
-            bool fetched = this._Cmds.TryGetValue(cmd, out callback);
+            bool fetched = this._Cmds.TryGetValue(cmd, out CommandCallback callback);
 
             if (fetched)
             {
@@ -215,15 +207,15 @@ namespace EBot.Commands
                 }
                 catch (Exception e)
                 {
-                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [\t" + string.Join("\t", args.ToArray()) + "]");
+                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [" + string.Join(',', args) + " ]");
                     this._Log.Danger(e.ToString());
 
-                    await this._EmbedReply.Danger(msg, "*Cough*", "The command \"" + cmd + "\" generated an error, skipping!");
+                    await this._EmbedReply.Danger(msg,msg.Author.Username, "Something went wrong, skipping!");
                 }
             }
             else
             {
-                this._Log.Nice("Commands", ConsoleColor.Red, "Couldn't retrieve callback for <" + cmd + ">");
+                this._Log.Nice("Commands", ConsoleColor.Red, "No callback for <" + cmd + ">");
             }
         }
 

@@ -7,26 +7,21 @@ namespace EBot.Commands.Social
 {
     class Action
     {
-        public static string PingUser(DiscordUser user)
-        {
-            return user.Mention;
-        }
-
-        static private string[] _Hugs =
+        private static string[] _Hugs =
         {
             "<origin> comes up close to <user> and <action>s them",
             "<origin> sneaks behind <user> and <action>s them",
             "<origin> gives <user> a warm friendly <action>"
         };
 
-        static private string[] _Boops =
+        private static string[] _Boops =
         {
             "<user> got <action>ed by <origin>",
             "<origin> proceeds to gently <action> <user>",
             "<origin> ropes down toward <user> and sneakily <action>s them"
         };
 
-        static private string[] _Slaps =
+        private static string[] _Slaps =
         {
             "<origin> <action>s <user> booty hard",
             "<origin> gets mad and <action>s <user> in the face",
@@ -37,7 +32,7 @@ namespace EBot.Commands.Social
         {
             Random rand = new Random();
             string action = sentences[rand.Next(0, sentences.Length)];
-            action = action.Replace("<origin>", PingUser(from));
+            action = action.Replace("<origin>",from.Mention);
             action = action.Replace("<action>", act);
             string users = "";
             for(int i = 0; i < to.Count && i < 3; i++)

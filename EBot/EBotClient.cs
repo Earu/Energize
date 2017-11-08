@@ -3,15 +3,16 @@ using DSharpPlus.Entities;
 using EBot.Commands;
 using EBot.Logs;
 using EBot.MachineLearning;
-using EBot.Utils;
+using EBot.MemoryStream;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace EBot
 {
     public class EBotClient
     {
+        public static EBotClient CLIENT;
+
         private string _Prefix;
         private DiscordClient _Discord;
         private CommandsHandler _Handler;
@@ -37,26 +38,6 @@ namespace EBot
                 TokenType = TokenType.Bot,
             });
 
-            string json = File.ReadAllText("External/info.json");
-            EBotAPI api = JSON.Deserialize<EBotAPI>(json,this._Log);
-
-            string name, owner;
-            if(api == null)
-            {
-                name = "name";
-                owner = "owner";
-            }
-            else
-            {
-                name = api.Name;
-                owner = api.Owner;
-            }
-
-            this._Log.Nice("Init", ConsoleColor.Yellow, "Using config [ \n\t Token: " + token
-            + "\n\t Username: " + name
-            + "\n\t Owner: " + name
-            + "\n]");
-
             this._Handler.Client = this._Discord;
             this._Handler.Log = this._Log;
             this._Handler.Prefix = this._Prefix;
@@ -72,6 +53,8 @@ namespace EBot
             this._Event.Prefix = this._Prefix;
             this._Event.Log = this._Log;
             this._Event.InitEvents();
+
+            CLIENT = this;
         }
 
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
@@ -82,7 +65,7 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        public async Task Ask(DiscordMessage msg,bool ismention,bool isprefix)
+        private async Task AskAsync(DiscordMessage msg,bool ismention,bool isprefix)
         {
             string mention = "<@" + EBotCredentials.BOT_ID_MAIN + ">";
             DiscordChannel chan = msg.Channel;
@@ -113,7 +96,7 @@ namespace EBot
             await this._Handler.EmbedReply.Normal(msg, username, result);
         }
 
-        public async Task OnChat(DiscordMessage msg)
+        private async Task OnChatAsync(DiscordMessage msg)
         {
             string mention = "<@" + EBotCredentials.BOT_ID_MAIN + "> ";
             bool answered = false;
@@ -121,12 +104,12 @@ namespace EBot
             if (msg.Content.StartsWith(mention))
             {
                 answered = true;
-                await this.Ask(msg, true, true);
+                await this.AskAsync(msg, true, true);
             }
             else if (msg.Content.ToLower().StartsWith("ebot "))
             {
                 answered = true;
-                await this.Ask(msg, false, true);
+                await this.AskAsync(msg, false, true);
             }
 
             if (!answered)
@@ -134,7 +117,7 @@ namespace EBot
                 if (msg.Content.Contains(mention) || msg.Content.ToLower().Contains("ebot"))
                 {
                     answered = true;
-                    await this.Ask(msg, true, false);
+                    await this.AskAsync(msg, true, false);
                 }
             }
 
@@ -150,28 +133,33 @@ namespace EBot
             }
         }
 
-        public async Task TryConnect()
+        public async Task ConnectAsync()
         {
             try
             {
                 await this._Discord.ConnectAsync();
 
-                this._Discord.Heartbeated += async e => {
-                    EBotAPI.SaveAsync(this).RunSynchronously();
-                };
-
                 this._Discord.Ready += async e =>
                 {
-                    DiscordGame game = new DiscordGame(this._Prefix + "help");
-                    game.StreamType = GameStreamType.Twitch;
-                    game.Url = EBotCredentials.TWITCH_URL;
+                    DiscordGame game = new DiscordGame(this._Prefix + "help")
+                    {
+                        StreamType = GameStreamType.Twitch,
+                        Url = EBotCredentials.TWITCH_URL
+                    };
 
                     await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
+                    EBotMemoryStream.Initialize(this);
                 };
 
                 this._Discord.MessageCreated += async e =>
                 {
-                    this.OnChat(e.Message).RunSynchronously();
+                    this.OnChatAsync(e.Message).RunSynchronously();
+                };
+
+                this._Discord.Heartbeated += async e =>
+                {
+                    //I know its bad, temp solution
+                    GC.Collect();
                 };
             }
             catch (Exception e)

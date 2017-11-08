@@ -18,10 +18,12 @@ namespace EBot.Commands
 
         public async Task Send(DiscordMessage msg,string header="",string content="",DiscordColor color=new DiscordColor())
         {
-            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
-            builder.Color = color;
-            builder.Title = header;
-            builder.Description = content;
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder
+            {
+                Color = color,
+                Title = header,
+                Description = content
+            };
 
             try
             {
@@ -39,10 +41,12 @@ namespace EBot.Commands
 
         public async Task Send(DiscordChannel chan,string header="",string content="",DiscordColor color=new DiscordColor())
         {
-            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
-            builder.Color = color;
-            builder.Title = header;
-            builder.Description = content;
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder
+            {
+                Color = color,
+                Title = header,
+                Description = content
+            };
 
             try
             {

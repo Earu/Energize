@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using EBot.Logs;
+using EBot.MemoryStream;
 using EBot.Utils;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,6 @@ namespace EBot.Commands.Modules
         private string Name = "Util";
         private CommandsHandler Handler;
         private BotLog Log;
-
 
         public void Setup(CommandsHandler handler,BotLog log)
         {
@@ -38,8 +38,7 @@ namespace EBot.Commands.Modules
             string arg = args[0];
             if (!string.IsNullOrWhiteSpace(arg))
             {
-                string desc = "";
-                bool retrieved = this.Handler.CommandsHelp.TryGetValue(arg.ToLower().Trim(), out desc);
+                bool retrieved = this.Handler.CommandsHelp.TryGetValue(arg.ToLower().Trim(), out string desc);
                 if (retrieved)
                 {
                     await embedrep.Warning(msg, "Help", "***" + arg + "*** : " + desc);
@@ -51,7 +50,7 @@ namespace EBot.Commands.Modules
             }
             else
             {
-                await embedrep.Good(msg, "Help", "Check your private messages " + Social.Action.PingUser(msg.Author));
+                await embedrep.Good(msg, "Help", "Check your public messages " + msg.Author.Mention);
 
                 foreach (KeyValuePair<string, List<string>> module in this.Handler.ModuleCmds)
                 {
@@ -65,7 +64,7 @@ namespace EBot.Commands.Modules
                         result += "**" + cmd + "**: " + help + "\n";
                     }
 
-                    await embedrep.RespondByDM(msg, name, result, new DiscordColor(127, 255, 127));
+                    await embedrep.RespondByDM(msg, name, result, new DiscordColor());
                 }
             }
         }
@@ -87,17 +86,21 @@ namespace EBot.Commands.Modules
                 info += "**Owner**: " + guild.Owner.Username + "#" + guild.Owner.Discriminator + "\n";
                 info += "**Members**: " + guild.MemberCount + "\n";
                 info += "**Region**: " + guild.RegionId + "\n";
-                info += "\n\n---- Emojis ----\n";
 
-                int count = 0;
-                foreach(DiscordEmoji emoji in guild.Emojis)
+                if (guild.Emojis.Count > 0)
                 {
-                    info += "<:" + emoji.Name + ":" + emoji.Id + ">  ";
-                    count++;
-                    if(count >= 10)
+                    info += "\n\n---- Emojis ----\n";
+
+                    int count = 0;
+                    foreach (DiscordEmoji emoji in guild.Emojis)
                     {
-                        info += "\n";
-                        count = 0;
+                        info += "<:" + emoji.Name + ":" + emoji.Id + ">  ";
+                        count++;
+                        if (count >= 10)
+                        {
+                            info += "\n";
+                            count = 0;
+                        }
                     }
                 }
 
@@ -105,7 +108,7 @@ namespace EBot.Commands.Modules
                 builder.WithThumbnailUrl(guild.IconUrl);
                 builder.WithDescription(info);
                 builder.WithTitle(guild.Name);
-                builder.WithColor(new DiscordColor(110, 220, 110));
+                builder.WithColor(new DiscordColor());
 
                 await embedrep.Send(msg, builder.Build());
             }
@@ -117,38 +120,39 @@ namespace EBot.Commands.Modules
 
         private async Task Info(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
-            using (StreamReader reader = File.OpenText("External/info.json"))
-            {
-                string json = await reader.ReadToEndAsync();
-                EBotAPI api = JSON.Deserialize<EBotAPI>(json, this.Log);
+            EBotInfo info = await EBotMemoryStream.GetClientInfo();
 
-                string info = "";
-                info += "**Name**: " + api.Name + "\n";
-                info += "**Prefix**: " + api.Prefix + "\n";
-                info += "**Commands**: " + api.CommandAmount + "\n";
-                info += "**Servers**: " + api.GuildAmount + "\n";
-                info += "**Users**: " + api.UserAmount + "\n";
-                info += "**Owner**: " + api.Owner + "\n";
-                info += "\n\n---- Invite link ----\n";
-                info += "https://discordapp.com/oauth2/authorize?client_id=" + api.ID + "&scope=bot&permissions=0";
+            string desc = "";
+            desc += "**Name**: " + info.Name + "\n";
+            desc += "**Prefix**: " + info.Prefix + "\n";
+            desc += "**Commands**: " + info.CommandAmount + "\n";
+            desc += "**Servers**: " + info.GuildAmount + "\n";
+            desc += "**Users**: " + info.UserAmount + "\n";
+            desc += "**Owner**: " + info.Owner + "\n";
 
-                DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
-                builder.WithTitle("Info");
-                builder.WithThumbnailUrl(api.Avatar);
-                builder.WithDescription(info);
-                builder.WithColor(new DiscordColor(110, 220, 110));
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+            builder.WithTitle("Info");
+            builder.WithThumbnailUrl(info.Avatar);
+            builder.WithDescription(desc);
+            builder.WithColor(new DiscordColor());
 
-                await embedrep.Send(msg, builder.Build());
-            }
+            await embedrep.Send(msg, builder.Build());
+        }
+
+        private async Task Invite(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotCredentials.BOT_ID_MAIN + "&scope=bot&permissions=0";
+            await embedrep.Good(msg, msg.Author.Username, invite);
         }
 
         public void Load()
         {
-            this.Handler.LoadCommand("say", this.Say, "^say \"sentence\"",this.Name);
-            this.Handler.LoadCommand("ping", this.Ping, "^ping",this.Name);
-            this.Handler.LoadCommand("help", this.Help, "^help \"command|nothing\"",this.Name);
+            this.Handler.LoadCommand("say", this.Say, "^say \"sentence\"", this.Name);
+            this.Handler.LoadCommand("ping", this.Ping, "^ping", this.Name);
+            this.Handler.LoadCommand("help", this.Help, "^help \"command|nothing\"", this.Name);
             this.Handler.LoadCommand("server", this.Server, "^server", this.Name);
             this.Handler.LoadCommand("info", this.Info, "^info", this.Name);
+            this.Handler.LoadCommand("invite", this.Invite, "^invite", this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
@@ -158,6 +162,9 @@ namespace EBot.Commands.Modules
             this.Handler.UnloadCommand("say");
             this.Handler.UnloadCommand("ping");
             this.Handler.UnloadCommand("help");
+            this.Handler.UnloadCommand("server");
+            this.Handler.UnloadCommand("info");
+            this.Handler.UnloadCommand("invite");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
         }
