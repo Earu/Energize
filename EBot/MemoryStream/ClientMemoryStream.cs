@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EBot.MemoryStream
 {
-    public class EBotMemoryStream
+    public class ClientMemoryStream
     {
         public delegate Task RequestCallback(StreamWriter writer, StreamReader reader);
         private static EBotClient _Client;
