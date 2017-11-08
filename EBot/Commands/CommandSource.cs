@@ -5,13 +5,13 @@ namespace EBot.Commands
 {
     public class CommandSource
     {
-        UtilsCommands _Utils;
-        SocialCommands _Social;
-        NSFWCommands _NSFW;
-        SearchCommands _Search;
-        ImageCommands _Image;
-        FunCommands _Fun;
-        WarframeCommands _Warframe;
+        private UtilsCommands _Utils;
+        private SocialCommands _Social;
+        private NSFWCommands _NSFW;
+        private SearchCommands _Search;
+        private ImageCommands _Image;
+        private FunCommands _Fun;
+        private WarframeCommands _Warframe;
 
         public CommandSource(CommandsHandler handler,BotLog log)
         {

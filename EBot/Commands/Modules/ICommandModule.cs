@@ -10,6 +10,5 @@ namespace EBot.Commands.Modules
         void Setup(CommandsHandler handler, BotLog log);
         void Load();
         void Unload();
-
     }
 }
