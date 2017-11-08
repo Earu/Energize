@@ -1,15 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace EBot
 {
     class Program
     {
-        
-        static void Main(string[] args)
-        {
-            MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
+        static void Main(string[] args) => MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 
         static async Task MainAsync(string[] args)
         {
@@ -17,7 +12,7 @@ namespace EBot
 
             EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "$^");
 
-            await client.TryConnect();
+            await client.ConnectAsync();
             await Task.Delay(-1);
         }
     }

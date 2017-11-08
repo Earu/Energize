@@ -20,7 +20,7 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        public async Task Alerts(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Alerts(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", this.Log);
             WGlobal global = JSON.Deserialize<WGlobal>(body,this.Log);

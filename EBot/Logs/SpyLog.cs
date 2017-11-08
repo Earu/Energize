@@ -8,8 +8,8 @@ namespace EBot.Logs
 {
     public class SpyLog
     {
-        private DiscordClient _Client;
-        private BotLog _Log;
+        public DiscordClient _Client;
+        public BotLog _Log;
         
         public DiscordClient Client { get => this._Client; set => this._Client = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }

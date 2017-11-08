@@ -1,6 +1,6 @@
 ﻿public class CommandsData
 {
-    static private string[] _Adjectives =
+    static public string[] _Adjectives =
     {
         "aback" , "abaft" , "abandoned" , "abashed" , "aberrant" , "abhorrent" , "abiding" , "abject" , "ablaze" , "able" , "abnormal" , "aboard" , "aboriginal" , "abortive" , "abounding" , "abrasive" , "abrupt" , "absent" , "absorbed" , "absorbing" , "abstracted" , "absurd" , "abundant" , "abusive" , "acceptable" , "accessible" ,
         "accidental" , "accurate" , "acid" , "acidic" , "acoustic" , "acrid" , "actually" , "ad" , "hoc" , "adamant" , "adaptable" , "addicted" , "adhesive" , "adjoining" , "adorable" , "adventurous" , "afraid" , "aggressive" , "agonizing" , "agreeable" , "ahead" , "ajar" , "alcoholic" , "alert" , "alike" , "alive" , "alleged" , "alluring" , "aloof" ,
@@ -36,7 +36,7 @@
         "oafish" , "obedient" , "obeisant" , "obese" , "obnoxious" , "obscene" , "obsequious" , "observant" , "obsolete" , "obtainable" , "oceanic" , "odd" , "offbeat" , "old" , "old-fashioned" , "omniscient" , "one" , "onerous" , "open" , "opposite" , "optimal" , "orange" , "ordinary" , "organic" , "ossified" , "outgoing" , "outrageous" , 
         "outstanding" , "oval" , "overconfident" , "overjoyed" , "overrated" , "overt" , "overwrought",
         "painful" , "painstaking" , "pale" , "paltry" , "panicky" , "panoramic" , "parallel" , "parched" , "parsimonious" , "past" , "pastoral" , "pathetic" , "peaceful" , "penitent" , "perfect" , "periodic" , "permissible" , "perpetual" , "petite" , "petite" , "phobic" , "physical" , "picayune" , "pink" , "piquant" , "placid" , "plain" , 
-        "plant" , "plastic" , "plausible" , "pleasant" , "plucky" , "pointless" , "poised" , "polite" , "political" , "poor" , "possessive" , "possible" , "powerful" , "precious" , "premium" , "present" , "pretty" , "previous" , "pricey" , "prickly" , "private" , "probable" , "productive" , "profuse" , "protective" , "proud" , "psychedelic" , 
+        "plant" , "plastic" , "plausible" , "pleasant" , "plucky" , "pointless" , "poised" , "polite" , "political" , "poor" , "possessive" , "possible" , "powerful" , "precious" , "premium" , "present" , "pretty" , "previous" , "pricey" , "prickly" , "public" , "probable" , "productive" , "profuse" , "protective" , "proud" , "psychedelic" , 
         "psychotic" , "public" , "puffy" , "pumped" , "puny" , "purple" , "purring" , "pushy" , "puzzled" , "puzzling",
         "quack" , "quaint" , "quarrelsome" , "questionable" , "quick" , "quickest" , "quiet" , "quirky" , "quixotic" , "quizzical",
         "rabid" , "racial" , "ragged" , "rainy" , "rambunctious" , "rampant" , "rapid" , "rare" , "raspy" , "ratty" , "ready" , "real" , "rebel" , "receptive" , "recondite" , "red" , "redundant" , "reflective" , "regular" , "relieved" , "remarkable" , "reminiscent" , "repulsive" , "resolute" , "resonant" , "responsible" , "rhetorical" , "rich" , 
@@ -56,7 +56,7 @@
         "wild" , "willing" , "windy" , "wiry" , "wise" , "wistful" , "witty" , "woebegone" , "womanly" , "wonderful" , "wooden" , "woozy" , "workable" , "worried" , "worthless" , "wrathful" , "wretched" , "wrong" , "wry"
     };
 
-    static private string[] _Nouns =
+    static public string[] _Nouns =
     {
         "A-frame" , "Aard-vark" , "Aard-wolf" , "Aber-de-vine" , "About-face" , "About-sledge" , "Aboveboard" , "Abraham-man" , "Abram-man" , "Absey-book" ,
         "Ace-in-the-hole" , "Ack-ack" , "Acorn-shell" , "Acre-foot" , "Acted-upon" , "Acting-up" , "Actino-chemistry" , "Active-wear" , "Add-in" , "Add-ins" ,
@@ -256,7 +256,7 @@
         "Pre-production" , "Pre-raphaelite" , "Pre-registered" , "Pre-release" , "Pre-sale" , "Pre-sales" , "Pre-scheduled" , "Pre-schooler" , "Pre-stocked" , "Pre-testing" , "Pre-training" , "Pre-trial" ,
         "Pre-verification" , "President-elect" , "Press-up" , "Pricking-up" , "Printout" , "Prisoner-of-war" , "Prittle-prattle" , "Profit-taking" , "Prompt-book" , "Prompt-note" , "Prong-hoe" , "Proofread" ,
         "Prospect" , "Pseudo-bulb" , "Pseudo-china" , "Pseudo-cone" , "Pseudo-cumene" , "Pseudo-dipteral" , "Pseudo-galena" , "Pseudo-heart" , "Pseudo-symmetry" , "Pseuso-peripteral" , "Psitta-co-fulvine" ,
-        "Public-school" , "Public-sector" , "Puddle-ball" , "Puddle-bar" , "Puff-leg" , "Puff-up" , "Pull-in" , "Pull-on" , "Push-pull" , "Put-down" , "Put-downs" , "Put-off" , "Put-put" , "Putter-on" , "Qua-bird" ,
+        "public-school" , "public-sector" , "Puddle-ball" , "Puddle-bar" , "Puff-leg" , "Puff-up" , "Pull-in" , "Pull-on" , "Push-pull" , "Put-down" , "Put-downs" , "Put-off" , "Put-put" , "Putter-on" , "Qua-bird" ,
         "Quarrelsome" , "Quarry-man" , "Quarter-deck" , "Quarter-point" , "Quarterback" , "Quartermaster" , "Quater-cousin" , "Question-mark" , "Quick-fix" , "Quick-wittedness" , "Quicksand" , "Quicksilver" ,
         "Rabble-rout" , "Racehorse" , "Rack-rent" , "Rack-renter" , "Racket-tail" , "Racquetball" , "Radio-flagellata" , "Railroad" , "Railway" , "Rainbow" , "Raincheck" , "Raincoat" , "Raindrop" , "Rainstorm" ,
         "Rainwater" , "Rake-vein" , "Ramble" , "Rank-and-file" , "Raree-show" , "Rat-tail" , "Rattlesnake" , "Rattletrap" , "Raven's-duck" , "Rawhide" , "Re-audit" , "Re-creation" , "Re-demption" , "Re-drafted" ,
@@ -341,9 +341,9 @@
         "Uptight" , "Uptime" , "Uptown" , "Upturn" , "Upward" , "Upwardly-mobile" , "Upwind" , "Uran-ocher" , "Uran-ochre" 
     };
 
-    static private string[] _Vowels = { "a", "e", "i", "o", "u" };
+    static public string[] _Vowels = { "a", "e", "i", "o", "u" };
 
-    static private string[] _HeightBallAnswers =
+    static public string[] _HeightBallAnswers =
     {
         "Yes.",
         "No.",
@@ -364,7 +364,7 @@
         "That sweet lady at the bar confirmed this!"
     };
 
-    static private string[] _PickAnswers =
+    static public string[] _PickAnswers =
     {
         "I pick \"<answer>\"",
         "I choose \"<answer>\"",

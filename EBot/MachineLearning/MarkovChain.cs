@@ -7,7 +7,7 @@ namespace EBot.MachineLearning
 {
     public class MarkovChain
     {
-        public string _Path = "External/Markov/";
+        private string _Path = "External/Markov/";
 
         public async Task Learn(string sentence)
         {
@@ -59,18 +59,18 @@ namespace EBot.MachineLearning
                 if (File.Exists(path))
                 {
                     string[] words = await File.ReadAllLinesAsync(path);
-                    int nextid = rand.Next(0,words.Length-1);
-                    current = words[nextid];
+                    string temp = words[rand.Next(0, words.Length - 1)];
 
+                    while(current == temp)
+                    {
+                        temp = words[rand.Next(0, words.Length - 1)];
+                    }
+
+                    current = temp;
                     results.Add(current);
                 }
                 else
                 {
-                    if(count < 2) //happens sometimes
-                    {
-                        results.Add(current);
-                    }
-
                     break;
                 }
             }

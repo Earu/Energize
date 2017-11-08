@@ -10,7 +10,6 @@ namespace EBot.Commands.E621
         public string tags;
         public bool? locked_tags;
         public string description;
-        //public DateTimeOffset created_at;
         public int creator_id;
         public string author;
         public int change;

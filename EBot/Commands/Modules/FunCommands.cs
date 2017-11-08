@@ -87,7 +87,7 @@ namespace EBot.Commands.Modules
                     break;
                 }
             }
-            await embedrep.Good(msg, "Description", Social.Action.PingUser(toping) + " is " + (isvowel ? "an" : "a") + " " + result);
+            await embedrep.Good(msg, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
         private async Task Letters(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
