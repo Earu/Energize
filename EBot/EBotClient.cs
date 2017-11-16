@@ -5,6 +5,7 @@ using EBot.Logs;
 using EBot.MachineLearning;
 using EBot.MemoryStream;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EBot
@@ -37,6 +38,9 @@ namespace EBot
                 Token = token,
                 TokenType = TokenType.Bot,
             });
+
+            this._Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
+            this._Log.Notify("Initializing");
 
             this._Handler.Client = this._Discord;
             this._Handler.Log = this._Log;
@@ -83,13 +87,6 @@ namespace EBot
                     input = input.Replace(mention, "EBot");
                 }
             }
-            else
-            {
-                if (isprefix)
-                {
-                    input = input.Remove(0, 5);
-                }
-            }
 
             string result = await ChatBot.Ask(chan, input, this._Log);
 
@@ -106,15 +103,19 @@ namespace EBot
                 answered = true;
                 await this.AskAsync(msg, true, true);
             }
-            else if (msg.Content.ToLower().StartsWith("ebot "))
-            {
-                answered = true;
-                await this.AskAsync(msg, false, true);
-            }
 
             if (!answered)
             {
-                if (msg.Content.Contains(mention) || msg.Content.ToLower().Contains("ebot"))
+                bool mentionned = false;
+                foreach(DiscordUser user in msg.MentionedUsers)
+                {
+                    if(user.Id == EBotCredentials.BOT_ID_MAIN)
+                    {
+                        mentionned = true;
+                    }
+                }
+
+                if (mentionned)
                 {
                     answered = true;
                     await this.AskAsync(msg, true, false);
@@ -148,7 +149,7 @@ namespace EBot
                     };
 
                     await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
-                    EBotMemoryStream.Initialize(this);
+                    ClientMemoryStream.Initialize(this);
                 };
 
                 this._Discord.MessageCreated += async e =>
@@ -156,11 +157,16 @@ namespace EBot
                     this.OnChatAsync(e.Message).RunSynchronously();
                 };
 
-                this._Discord.Heartbeated += async e =>
+                Timer gctimer = new Timer(arg =>
                 {
-                    //I know its bad, temp solution
+                    long mb = GC.GetTotalMemory(false)/1024/1024; //b to mb
                     GC.Collect();
-                };
+                    this._Log.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
+                });
+
+                int hour = 1000 * 60 * 60;
+                gctimer.Change(hour, hour);
+                
             }
             catch (Exception e)
             {

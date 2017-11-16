@@ -4,7 +4,10 @@ namespace EBot
 {
     class Program
     {
-        static void Main(string[] args) => MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+        static void Main(string[] args)
+        {
+            MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
         static async Task MainAsync(string[] args)
         {

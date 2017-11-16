@@ -31,7 +31,7 @@ namespace EBot.Commands.Modules
             DiscordEmbedBuilder embed = new DiscordEmbedBuilder();
             embed.Color = new DiscordColor(110, 220, 110);
             embed.ImageUrl = url;
-            embed.Title = "Avatar";
+            embed.Title = "Avatar - " + msg.Author.Username;
 
             await embedrep.Send(msg, embed.Build());
         }
@@ -92,7 +92,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("avatar", this.Avatar, "^avatar \"@user\"",this.Name);
+            this.Handler.LoadCommand("avatar", this.Avatar, "Get a user's avatar","avatar \"@user\"",this.Name);
             //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 
