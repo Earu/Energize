@@ -4,7 +4,6 @@ using NLua;
 using NLua.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace EBot.Utils
 {
@@ -14,15 +13,15 @@ namespace EBot.Utils
 
         private static string SafeCode(string code)
         {
-            return @"local succ,err,printstack = sandbox([[" + code + @"]])
-                if succ then
-                    if printstack ~= '' then
-                        return printstack,err
+            return @"local result = sandbox([[" + code.TrimStart() + @"]])
+                if result.Success then
+                    if result.PrintStack ~= '' then
+                        return result.PrintStack,unpack(result.Varargs)
                     else
-                        return err
+                        return unpack(result.Varargs)
                     end
                 else
-                    error(err,0)
+                    error(result.Error,0)
                 end";
         }
 
