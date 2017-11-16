@@ -159,10 +159,10 @@ namespace EBot.Commands.Modules
 
             if (success)
             {
-                string display = string.Join(',', returns);
+                string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
                 {
-                    await embedrep.Good(msg, "Lua", "```\nnil\n```");
+                    await embedrep.Good(msg, "Lua", ":ok_hand:");
                 }
                 else
                 {
