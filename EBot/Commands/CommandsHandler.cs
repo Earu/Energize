@@ -16,22 +16,16 @@ namespace EBot.Commands
         private string _Prefix;
         private CommandSource _Source;
         private CommandReplyEmbed _EmbedReply;
-        private Dictionary<string, CommandCallback> _Cmds;
-        private Dictionary<string, string> _CmdsHelp;
-        private Dictionary<string, bool> _CmdsLoaded;
-        private Dictionary<string, string> _CmdAliases;
-        private Dictionary<string, List<string>> _ModuleCmds;
+        private Dictionary<string,  Command> _Cmds;
         private Dictionary<string, string> _LastChannelPictureURL;
 
         public CommandsHandler()
         {
-            this._EmbedReply = new CommandReplyEmbed();
-            this._EmbedReply.Handler = this;
-            this._Cmds = new Dictionary<string, CommandCallback>();
-            this._CmdsHelp = new Dictionary<string, string>();
-            this._CmdsLoaded = new Dictionary<string, bool>();
-            this._CmdAliases = new Dictionary<string, string>();
-            this._ModuleCmds = new Dictionary<string, List<string>>();
+            this._EmbedReply = new CommandReplyEmbed
+            {
+                Handler = this
+            };
+            this._Cmds = new Dictionary<string, Command>();
             this._LastChannelPictureURL = new Dictionary<string, string>();
         }
 
@@ -40,106 +34,58 @@ namespace EBot.Commands
         public CommandReplyEmbed EmbedReply { get => this._EmbedReply; set => this._EmbedReply = value; }
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
         public DiscordClient Client { get => this._Client; set => this._Client = value; }
-        public Dictionary<string,CommandCallback> Commands { get => this._Cmds; }
-        public Dictionary<string, string> CommandsHelp { get => this._CmdsHelp; }
-        public Dictionary<string, List<string>> ModuleCmds { get => this._ModuleCmds; }
+        public Dictionary<string,Command> Commands { get => this._Cmds; }
 
         public string GetLastPictureURL(DiscordChannel chan)
         {
             string index = chan.Guild.Id.ToString() + chan.Id.ToString();
-            string url;
-            if(this._LastChannelPictureURL.TryGetValue(index,out url))
-            {
-                return url;
-            }
-            else
-            {
-                return "";
-            }
+            return this._LastChannelPictureURL.TryGetValue(index, out string url) ? url : "";
         }
 
         private bool IsCmdLoaded(string cmd)
         {
-            bool result = true;
-            if (this._Cmds.ContainsKey(cmd) && this._CmdsLoaded.TryGetValue(cmd,out result))
+            return this._Cmds.ContainsKey(cmd) ? this._Cmds[cmd].Loaded : false;
+        }
+
+        public void LoadCommand(string name,CommandCallback callback=null,string help=null, string usage=null,string modulename=null)
+        {
+            if (this._Cmds.ContainsKey(name))
             {
-                return result;
+                this._Cmds.Remove(name);
             }
             else
             {
-                return false;
+                if (callback == null)
+                {
+                    callback = async (CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args) => 
+                    {
+                        await embedrep.Good(msg, null, "Hello world!");
+                    };
+                }
+
+                Command cmd = new Command(name, callback, help, usage, modulename);
+
+                this._Cmds.Add(name,cmd);
             }
         }
 
-        public void LoadCommand(string name,CommandCallback callback=null,string desc="No description provided",string modulename = "none")
+        public void LoadCommand(string[] names,CommandCallback callback=null,string help=null,string usage=null,string modulename=null)
         {
-            try
+            string cmd = names[0];
+            this.LoadCommand(cmd, callback, help, usage, modulename);
+
+            for (uint i = 1; i < names.Length; i++)
             {
-                if (this._Cmds.ContainsKey(name))
-                {
-                    this._Cmds.Remove(name);
-                    this._CmdsHelp.Remove(name);
-                    this._CmdsLoaded.Remove(name);
-                }
-                else
-                {
-                    if (callback == null)
-                    {
-                        callback = async (CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args) => 
-                        {
-                            await embedrep.Good(msg, null, "Hello world!");
-                        };
-                    }
-
-                    this._Cmds.Add(name, callback);
-                    this._CmdsHelp.Add(name, desc);
-                    this._CmdsLoaded.Add(name, true);
-                    this._CmdAliases.Add(name, name);
-
-                    if (!this._ModuleCmds.ContainsKey(modulename)) {
-                        this._ModuleCmds.Add(modulename, new List<string>());
-                    }
-
-                    List<string> modulecmds;
-                    if(this._ModuleCmds.TryGetValue(modulename,out modulecmds))
-                    {
-                        modulecmds.Add(name);
-                    }
-
-                }
-            }catch(Exception e)
-            {
-                this._Log.Nice("Commands", ConsoleColor.Red, "Failed to register " + name);
-                this._Log.Danger(e.ToString());
-            }
-        }
-
-        public void LoadCommand(string[] names,CommandCallback callback = null, string desc = "No description provided",string modulename = "none")
-        {
-            for(int i = 0; i < names.Length; i++)
-            {
-                if (i == 0)
-                {
-                    this.LoadCommand(names[i], callback, desc, modulename);
-                }
-                else
-                {
-                    if (this._CmdAliases.ContainsKey(names[i]))
-                    {
-                        this._CmdAliases.Remove(names[i]);
-                    }
-                    this._CmdAliases.Add(names[i], names[0]);
-                }
+                Command.AddAlias(cmd,names[i]);
             }
         }
 
         public void UnloadCommand(string name)
         {
-            if (this._CmdsLoaded.ContainsKey(name))
+            if (this._Cmds.ContainsKey(name))
             {
-                this._CmdsLoaded.Remove(name);
+                this._Cmds[name].Loaded = false;
             }
-            this._CmdsLoaded.Add(name, false);
             this._Log.Nice("Commands", ConsoleColor.Red, "Unloaded " + name);
         }
 
@@ -156,7 +102,7 @@ namespace EBot.Commands
 
         private string GetAliasOriginCmd(string alias)
         {
-            this._CmdAliases.TryGetValue(alias, out string result);
+            Command.Aliases.TryGetValue(alias, out string result);
             return result;
         }
 
@@ -196,13 +142,13 @@ namespace EBot.Commands
         private async Task CommandCall(DiscordMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
-            bool fetched = this._Cmds.TryGetValue(cmd, out CommandCallback callback);
+            bool success = this._Cmds.TryGetValue(cmd, out Command retrieved);
 
-            if (fetched)
+            if (success)
             {
                 try
                 {
-                    await callback(this._EmbedReply, msg, args);
+                    await retrieved.Run(this._EmbedReply, msg, args);
                     this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate);
                 }
                 catch (Exception e)

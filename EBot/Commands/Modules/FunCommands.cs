@@ -107,10 +107,10 @@ namespace EBot.Commands.Modules
                     result += "\t";
                 }
             }
-            await embedrep.Good(msg, msg.Author.Username, result);
+            await embedrep.Good(msg,"Letters", result);
         }
 
-        private async Task HeightBalls(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task EightBalls(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             if (string.IsNullOrWhiteSpace(args[0]))
             {
@@ -122,7 +122,7 @@ namespace EBot.Commands.Modules
                 string[] answers = CommandsData.HeightBallAnswers;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
-                await embedrep.Good(msg, msg.Author.Username,answer);
+                await embedrep.Good(msg,"8ball",answer);
 
             }
         }
@@ -140,7 +140,7 @@ namespace EBot.Commands.Modules
                 string choice = args[rand.Next(0, args.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
 
-                await embedrep.Good(msg, msg.Author.Username, answer);
+                await embedrep.Good(msg,"Pick", answer);
             }
         }
 
@@ -153,7 +153,7 @@ namespace EBot.Commands.Modules
                 try
                 {
                     string generated = await MarkovHandler.Generate(sentence);
-                    await embedrep.Good(msg, msg.Author.Username, generated);
+                    await embedrep.Good(msg,"Markov", generated);
                 }
                 catch(Exception e)
                 {
@@ -165,12 +165,12 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("describe", this.Describe, "^describe \"@user\"",this.Name);
-            this.Handler.LoadCommand("letters", this.Letters, "^letters \"sentence\"", this.Name);
-            this.Handler.LoadCommand("ascii", this.ASCII, "^ascii \"sentence\"", this.Name);
-            this.Handler.LoadCommand("8ball", this.HeightBalls, "^8ball \"question\"", this.Name);
-            this.Handler.LoadCommand("pick", this.Pick, "^pick \"choice1\",\"choice2\",\"choice3\",...", this.Name);
-            this.Handler.LoadCommand("m", this.Markov, "^m \"sentence\"",this.Name);
+            this.Handler.LoadCommand("describe", this.Describe, "Random description of a user","describe \"@user\"",this.Name);
+            this.Handler.LoadCommand("letters", this.Letters, "Transforms a sentence into letter emojis","letters \"sentence\"", this.Name);
+            this.Handler.LoadCommand("ascii", this.ASCII, "Transforms a sentence into ascii art","ascii \"sentence\"", this.Name);
+            this.Handler.LoadCommand("8ball", this.EightBalls, "Yes or no answer to a question","8ball \"question\"", this.Name);
+            this.Handler.LoadCommand("pick", this.Pick, "Picks a choice among those given","pick \"choice1\",\"choice2\",\"choice3\",...", this.Name);
+            this.Handler.LoadCommand("m", this.Markov, "Generate a random sentence based on user input","m \"sentence\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

@@ -35,9 +35,8 @@ namespace EBot.Commands.Social
             action = action.Replace("<origin>",from.Mention);
             action = action.Replace("<action>", act);
             string users = "";
-            for(int i = 0; i < to.Count && i < 3; i++)
+            foreach(DiscordUser user in to)
             {
-                DiscordUser user = to[i];
                 users += user.Mention + " and ";
             }
             users = users.Remove(users.Length - 4);

@@ -18,6 +18,8 @@ namespace EBot.Commands
 
         public async Task Send(DiscordMessage msg,string header="",string content="",DiscordColor color=new DiscordColor())
         {
+            string username = msg.Author.Username;
+            header = header.Trim() == username ? username : username + " - " + header.Trim();
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder
             {
                 Color = color,

@@ -1,8 +1,6 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EBot.Logs
 {
@@ -14,6 +12,19 @@ namespace EBot.Logs
         public DiscordClient Client { get => this._Client; set => this._Client = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
 
+        private void LogMessage(DiscordMessage msg)
+        {
+            string log = "";
+
+            if (!msg.Channel.IsPrivate)
+            {
+                log += "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+            }
+            log += msg.Author.Username + "#" + msg.Author.Discriminator + " => [ " + msg.Content + " ]";
+
+            this._Log.Nice("SpyLog", ConsoleColor.Yellow, log);
+        }
+
         public void WatchWords(string[] tospy)
         {
             this._Client.MessageCreated += async e =>
@@ -24,7 +35,7 @@ namespace EBot.Logs
                     string used = tospy[i];
                     if (content.ToLower().Contains(used))
                     {
-                        this._Log.Warning("[SpyLog] >> " + e.Message.Author.Username + ": " + content);
+                        this.LogMessage(e.Message);                        
                     }
                 }
             };

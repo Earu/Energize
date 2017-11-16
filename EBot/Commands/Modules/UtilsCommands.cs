@@ -38,10 +38,10 @@ namespace EBot.Commands.Modules
             string arg = args[0];
             if (!string.IsNullOrWhiteSpace(arg))
             {
-                bool retrieved = this.Handler.CommandsHelp.TryGetValue(arg.ToLower().Trim(), out string desc);
+                bool retrieved = this.Handler.Commands.TryGetValue(arg.ToLower().Trim(), out Command cmd);
                 if (retrieved)
                 {
-                    await embedrep.Warning(msg, "Help", "***" + arg + "*** : " + desc);
+                    await embedrep.Warning(msg, "Help [ " + arg + " ]", cmd.GetHelp());
                 }
                 else
                 {
@@ -50,29 +50,35 @@ namespace EBot.Commands.Modules
             }
             else
             {
-                await embedrep.Good(msg, "Help", "Check your public messages " + msg.Author.Mention);
-
-                foreach (KeyValuePair<string, List<string>> module in this.Handler.ModuleCmds)
+                if (!msg.Channel.IsPrivate)
                 {
-                    string name = module.Key;
-                    List<string> cmds = module.Value;
-                    string result = "";
-
-                    foreach(string cmd in cmds)
-                    {
-                        string help = this.Handler.CommandsHelp[cmd];
-                        result += "**" + cmd + "**: " + help + "\n";
-                    }
-
-                    await embedrep.RespondByDM(msg, name, result, new DiscordColor());
+                    await embedrep.Good(msg, "Help", "Check your private messages " + msg.Author.Mention);
                 }
+
+                Dictionary<string,Command> cmds = this.Handler.Commands;
+                string result = "``";
+                uint count = 0;
+                foreach (KeyValuePair<string,Command> cmd in cmds)
+                {
+                    result += cmd.Key + ",";
+                    count++;
+                    if(count > 5)
+                    {
+                        result += "\n";
+                        count = 0;
+                    }
+                }
+                result = result.Remove(result.Length - 2);
+                result += "``";
+
+                await embedrep.RespondByDM(msg, "Help [ all ]", result, new DiscordColor());
             }
         }
 
         private async Task Say(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
         {
             string tosay = string.Join(",", args.ToArray());
-            await embedrep.Good(msg, msg.Author.Username, tosay);
+            await embedrep.Good(msg,"Say", tosay);
         }
 
         private async Task Server(CommandReplyEmbed embedrep, DiscordMessage msg,List<string> args)
@@ -120,7 +126,7 @@ namespace EBot.Commands.Modules
 
         private async Task Info(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
-            EBotInfo info = await EBotMemoryStream.GetClientInfo();
+            ClientInfo info = await ClientMemoryStream.GetClientInfo();
 
             string desc = "";
             desc += "**Name**: " + info.Name + "\n";
@@ -142,17 +148,49 @@ namespace EBot.Commands.Modules
         private async Task Invite(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
         {
             string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotCredentials.BOT_ID_MAIN + "&scope=bot&permissions=0";
-            await embedrep.Good(msg, msg.Author.Username, invite);
+            await embedrep.Good(msg, "Invite", invite);
+        }
+
+        private async Task Lua(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            string code = string.Join(',', args);
+            List<Object> returns = new List<object>();
+            bool success = LuaEnv.Run(msg,code,out returns,out string error,this.Log);
+
+            if (success)
+            {
+                string display = string.Join(',', returns);
+                if (string.IsNullOrWhiteSpace(display))
+                {
+                    await embedrep.Good(msg, "Lua", "```\nnil\n```");
+                }
+                else
+                {
+                    await embedrep.Good(msg, "Lua","```\n" + display + "\n```");
+                }
+            }
+            else
+            {
+                await embedrep.Danger(msg,"Lua",error);
+            }
+        }
+
+        private async Task LuaReset(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        {
+            LuaEnv.Reset(msg.Channel);
+            await embedrep.Good(msg, "LuaReset", "Lua state was reset for this channel");
         }
 
         public void Load()
         {
-            this.Handler.LoadCommand("say", this.Say, "^say \"sentence\"", this.Name);
-            this.Handler.LoadCommand("ping", this.Ping, "^ping", this.Name);
-            this.Handler.LoadCommand("help", this.Help, "^help \"command|nothing\"", this.Name);
-            this.Handler.LoadCommand("server", this.Server, "^server", this.Name);
-            this.Handler.LoadCommand("info", this.Info, "^info", this.Name);
-            this.Handler.LoadCommand("invite", this.Invite, "^invite", this.Name);
+            this.Handler.LoadCommand("say", this.Say, "Makes the bot say something","say \"sentence\"", this.Name);
+            this.Handler.LoadCommand("ping", this.Ping, "Pings the bot","ping", this.Name);
+            this.Handler.LoadCommand("help", this.Help, "This command","help \"command|nothing\"", this.Name);
+            this.Handler.LoadCommand("server", this.Server, "Get the information relative to the discord server","server", this.Name);
+            this.Handler.LoadCommand("info", this.Info, "Get information relative to the bot","info", this.Name);
+            this.Handler.LoadCommand("invite", this.Invite, "Get the invite link of the bot","invite", this.Name);
+            this.Handler.LoadCommand("l", this.Lua, "Run lua code","l luacode", this.Name);
+            this.Handler.LoadCommand("lr", this.LuaReset, "Reset the lua state of the channel","lr", this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
@@ -165,6 +203,8 @@ namespace EBot.Commands.Modules
             this.Handler.UnloadCommand("server");
             this.Handler.UnloadCommand("info");
             this.Handler.UnloadCommand("invite");
+            this.Handler.UnloadCommand("l");
+            this.Handler.UnloadCommand("lr");
 
             this.Log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
         }

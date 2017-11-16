@@ -83,7 +83,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("urban", this.SearchUrban, "^urban \"search\"",this.Name);
+            this.Handler.LoadCommand("urban", this.SearchUrban, "Lookup a definition on urban dictionnary","urban \"search\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

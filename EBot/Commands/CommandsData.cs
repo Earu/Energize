@@ -1,6 +1,6 @@
 ﻿public class CommandsData
 {
-    static public string[] _Adjectives =
+    static private string[] _Adjectives =
     {
         "aback" , "abaft" , "abandoned" , "abashed" , "aberrant" , "abhorrent" , "abiding" , "abject" , "ablaze" , "able" , "abnormal" , "aboard" , "aboriginal" , "abortive" , "abounding" , "abrasive" , "abrupt" , "absent" , "absorbed" , "absorbing" , "abstracted" , "absurd" , "abundant" , "abusive" , "acceptable" , "accessible" ,
         "accidental" , "accurate" , "acid" , "acidic" , "acoustic" , "acrid" , "actually" , "ad" , "hoc" , "adamant" , "adaptable" , "addicted" , "adhesive" , "adjoining" , "adorable" , "adventurous" , "afraid" , "aggressive" , "agonizing" , "agreeable" , "ahead" , "ajar" , "alcoholic" , "alert" , "alike" , "alive" , "alleged" , "alluring" , "aloof" ,
@@ -56,7 +56,7 @@
         "wild" , "willing" , "windy" , "wiry" , "wise" , "wistful" , "witty" , "woebegone" , "womanly" , "wonderful" , "wooden" , "woozy" , "workable" , "worried" , "worthless" , "wrathful" , "wretched" , "wrong" , "wry"
     };
 
-    static public string[] _Nouns =
+    static private string[] _Nouns =
     {
         "A-frame" , "Aard-vark" , "Aard-wolf" , "Aber-de-vine" , "About-face" , "About-sledge" , "Aboveboard" , "Abraham-man" , "Abram-man" , "Absey-book" ,
         "Ace-in-the-hole" , "Ack-ack" , "Acorn-shell" , "Acre-foot" , "Acted-upon" , "Acting-up" , "Actino-chemistry" , "Active-wear" , "Add-in" , "Add-ins" ,
@@ -341,9 +341,9 @@
         "Uptight" , "Uptime" , "Uptown" , "Upturn" , "Upward" , "Upwardly-mobile" , "Upwind" , "Uran-ocher" , "Uran-ochre" 
     };
 
-    static public string[] _Vowels = { "a", "e", "i", "o", "u" };
+    static private string[] _Vowels = { "a", "e", "i", "o", "u" };
 
-    static public string[] _HeightBallAnswers =
+    static private string[] _HeightBallAnswers =
     {
         "Yes.",
         "No.",
@@ -364,7 +364,7 @@
         "That sweet lady at the bar confirmed this!"
     };
 
-    static public string[] _PickAnswers =
+    static private string[] _PickAnswers =
     {
         "I pick \"<answer>\"",
         "I choose \"<answer>\"",
