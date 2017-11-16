@@ -52,7 +52,7 @@ namespace EBot.Commands.Modules
                         DiscordEmbedBuilder embed = new DiscordEmbedBuilder();
                         embed.Color = new DiscordColor(110, 220, 110);
                         embed.ImageUrl = post.sample_url;
-                        embed.Title = "E621";
+                        embed.Title = "E621 - " + msg.Author.Username;
                         embed.Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*";
 
                         await embedrep.Send(msg, embed.Build());
@@ -67,7 +67,7 @@ namespace EBot.Commands.Modules
 
         public void Load()
         {
-            this.Handler.LoadCommand("e621", this.SearchE621, "^e621 \"search\"",this.Name);
+            this.Handler.LoadCommand("e621", this.SearchE621, "Browse e621","e621 \"search\"",this.Name);
 
             this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }

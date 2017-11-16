@@ -41,8 +41,7 @@ namespace EBot.MachineLearning
 
         public static async Task<string> Ask(DiscordChannel chan,string sentence,BotLog log)
         {
-            CookieContainer cookie;
-            if(!_Cookies.TryGetValue(chan,out cookie))
+            if (!_Cookies.TryGetValue(chan, out CookieContainer cookie))
             {
                 cookie = new CookieContainer();
                 _Cookies.Add(chan, cookie);

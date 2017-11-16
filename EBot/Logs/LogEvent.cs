@@ -18,27 +18,27 @@ namespace EBot.Logs
         {
             this._Client.Ready += async e =>
             {
-                Console.WriteLine("\n\t---------\\\\\\\\ Done initializing ////---------\n");
+                this._Log.Notify("Done Initializing");
             };
 
             this._Client.GuildAvailable += async e =>
             {
-                this._Log.Nice("Guild",ConsoleColor.Magenta,"Online on " + e.Guild.Name + " || ID => [" + e.Guild.Id + "]");
+                this._Log.Nice("Guild",ConsoleColor.Magenta,"Online on " + e.Guild.Name + " || ID => [ " + e.Guild.Id + " ]");
             };
 
             this._Client.GuildUnavailable += async e =>
             {
-                this._Log.Nice("Guild", ConsoleColor.Red, "Offline from " + e.Guild.Name + " || ID => [" + e.Guild.Id + "]");
+                this._Log.Nice("Guild", ConsoleColor.Red, "Offline from " + e.Guild.Name + " || ID => [ " + e.Guild.Id + " ]");
             };
 
             this._Client.GuildCreated += async e =>
             {
-                this._Log.Nice("Guild", ConsoleColor.Magenta, "Joined " + e.Guild.Name + " || ID => [" + e.Guild.Id + "]");
+                this._Log.Nice("Guild", ConsoleColor.Magenta, "Joined " + e.Guild.Name + " || ID => [ " + e.Guild.Id + " ]");
             };
 
             this._Client.GuildDeleted += async e =>
             {
-                this._Log.Nice("Guild", ConsoleColor.Red, "Left " + e.Guild.Name + " || ID => [" + e.Guild.Id + "]");
+                this._Log.Nice("Guild", ConsoleColor.Red, "Left " + e.Guild.Name + " || ID => [ " + e.Guild.Id + " ]");
             };
 
         }

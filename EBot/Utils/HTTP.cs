@@ -18,7 +18,7 @@ namespace EBot.Utils
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "GET";
                 request.Timeout = 1000 * 60;
-                request.Headers[HttpRequestHeader.UserAgent] = useragent != null ? useragent : UserAgent;
+                request.Headers[HttpRequestHeader.UserAgent] = useragent ?? UserAgent;
                 callback?.Invoke(request);
 
                 using (WebResponse answer = await request.GetResponseAsync())
@@ -28,10 +28,20 @@ namespace EBot.Utils
                     return result;
                 }
             }
-            catch(Exception e)
+            catch(WebException e)
             {
-                log.Nice("HTTP", ConsoleColor.Red, "Couldn't fetch URL body");
-                log.Danger(e.ToString());
+                if(e.Status == WebExceptionStatus.Timeout)
+                {
+                    log.Nice("HTTP", ConsoleColor.Red, "Request timed out for [ " + url + " ]");
+                }
+                else if(e.Status == WebExceptionStatus.ConnectFailure)
+                {
+                    log.Nice("HTTP", ConsoleColor.Red, "(404) Couln't reach [ " + url + " ]");
+                }
+                else
+                {
+                    log.Nice("HTTP", ConsoleColor.Red, "Unknown error [ " + url + " ]\n" + e.ToString());
+                }
 
                 return "";
             }

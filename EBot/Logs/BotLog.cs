@@ -70,6 +70,11 @@ namespace EBot.Logs
             Console.WriteLine(msg);
         }
 
+        public void Notify(string msg)
+        {
+            Console.WriteLine("\n\t---------\\\\\\\\ " + msg + " ////---------\n");
+        }
+
         public static void Debug(string msg)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
