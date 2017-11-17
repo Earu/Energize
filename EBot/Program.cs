@@ -13,7 +13,7 @@ namespace EBot
         {
             await EBotCredentials.Load();
 
-            EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "$^");
+            EBotClient client = new EBotClient(EBotCredentials.TOKEN_DEV, "_");
 
             await client.ConnectAsync();
             await Task.Delay(-1);

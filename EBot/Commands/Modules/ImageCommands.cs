@@ -28,10 +28,12 @@ namespace EBot.Commands.Modules
             }
 
             string url = user.AvatarUrl;
-            DiscordEmbedBuilder embed = new DiscordEmbedBuilder();
-            embed.Color = new DiscordColor(110, 220, 110);
-            embed.ImageUrl = url;
-            embed.Title = "Avatar - " + msg.Author.Username;
+            DiscordEmbedBuilder embed = new DiscordEmbedBuilder
+            {
+                Color = new DiscordColor(),
+                ImageUrl = url,
+                Title = "Avatar - " + msg.Author.Username
+            };
 
             await embedrep.Send(msg, embed.Build());
         }
