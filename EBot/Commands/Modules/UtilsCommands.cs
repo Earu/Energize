@@ -162,7 +162,7 @@ namespace EBot.Commands.Modules
                 string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
                 {
-                    await embedrep.Good(msg, "Lua", ":ok_hand:");
+                    await embedrep.Good(msg, "Lua", "```\nnil\n```");
                 }
                 else
                 {

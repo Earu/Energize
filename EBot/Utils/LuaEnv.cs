@@ -13,7 +13,8 @@ namespace EBot.Utils
 
         private static string SafeCode(string code)
         {
-            return @"local result = sandbox([[" + code.TrimStart() + @"]])
+            code = code.TrimStart();
+            return @"local result = sandbox([[" + code + @"]])
                 if result.Success then
                     if result.PrintStack ~= '' then
                         return result.PrintStack,unpack(result.Varargs)
@@ -76,8 +77,12 @@ namespace EBot.Utils
 
         public static void Reset(DiscordChannel chan)
         {
-            _States[chan].Close();
-            _States[chan].Dispose();
+            if (_States.ContainsKey(chan))
+            {
+                _States[chan].DoString("collectgarbage()");
+                _States[chan].Close();
+                _States[chan].Dispose();
+            }
             _States[chan] = CreateState(chan);
         }
     }
