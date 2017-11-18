@@ -4,6 +4,7 @@ using EBot.Commands;
 using EBot.Logs;
 using EBot.MachineLearning;
 using EBot.MemoryStream;
+using EBot.Utils;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -150,6 +151,7 @@ namespace EBot
 
                     await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
                     ClientMemoryStream.Initialize(this);
+                    LuaEnv.Initialize(this);
                 };
 
                 this._Discord.MessageCreated += async e =>
