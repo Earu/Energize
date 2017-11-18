@@ -7,7 +7,6 @@ table.getkeys = function(tab)
     end
     return keys
 end
-ENV.table.getkeys = table.getkeys
 
 table.copy = function(t,lookup_table)
 	if t == nil then return nil end
@@ -31,11 +30,9 @@ table.copy = function(t,lookup_table)
     
     return copy
 end
-ENV.table.copy = table.copy
 
 table.empty = function(t)
     for k,v in pairs(t) do
         t[k] = nil
     end
 end
-ENV.table.empty = table.empty
