@@ -33,19 +33,23 @@ gettableaddress = function(tbl)
     return address
 end
 
+local getmeta = getmetatable
+local setmeta = setmetatable
+local protecteds = {}
+
+local protect = function(tbl)
+    protecteds[gettableaddress(tbl)] = true
+end
+
+local isprotected = function(tbl)
+    return protecteds[gettableaddress(tbl)]
+end
+
 setup = function()
     local placeholder = function(...)
         print('nope.')
     end
-    local getmeta = getmetatable
-    local setmeta = setmetatable
-    local protecteds = {}
-    local protect = function(tbl)
-        protecteds[gettableaddress(tbl)] = true
-    end
-    local isprotected = function(tbl)
-        return protecteds[gettableaddress(tbl)]
-    end
+
     local ENV = {}
     
     ENV.assert   = assert
@@ -70,11 +74,13 @@ setup = function()
     ENV.math      = math
     ENV.string    = string
     ENV.os        = os
+    ENV.event     = event
     protect(ENV.coroutine)
     protect(ENV.table)
     protect(ENV.math)
     protect(ENV.string)
     protect(ENV.os)
+    protect(ENV.event)
 
     ENV.string.dump  = placeholder
     ENV.os.execute   = placeholder
@@ -103,30 +109,16 @@ end
     Sandbox untrusted scripts
 ]]--
 ENV = setup()
-sandbox = function(script)
-    local result = {
+
+safefunc = function(resulttbl,func,...)
+    local resulttbl = resulttbl or {
         Success = true,
         Error = "",
         Varargs = {},
         PrintStack = "",
     }
 
-    if script:byte(1) == 27 then 
-        result.Success = false
-        result.Error = "HAX!"
-
-        return result
-    end
-    
-    local script, message = loadstring(script)
-    if not script then 
-        result.Success = false
-        result.Error = message
-        
-        return result
-    end
-    
-    setfenv(script,ENV)
+    setfenv(func,ENV)
     
     local t = os.time()
     debug.sethook(function()
@@ -136,7 +128,7 @@ sandbox = function(script)
             error("My god what are you doing?!",0)
         end
     end,"l",2)
-    local retrieved = { pcall(script) }
+    local retrieved = { pcall(func,...) }
     debug.sethook()
 
     local succ,err = retrieved[1],retrieved[2]
@@ -162,11 +154,38 @@ sandbox = function(script)
         printstack = printstack .. "\n"
     end
     table.empty(PRINT_PILE)
-
-    result.Success = succ
-    result.Error = err
-    result.Varargs = varargs
-    result.PrintStack = printstack
     
-    return result
+    resulttbl.Success = succ
+    resulttbl.Error = err
+    resulttbl.Varargs = varargs
+    resulttbl.PrintStack = printstack
+
+    return resulttbl
+end
+
+sandbox = function(script)
+    local result = {
+        Success = true,
+        Error = "",
+        Varargs = {},
+        PrintStack = "",
+    }
+
+    if script:byte(1) == 27 then 
+        result.Success = false
+        result.Error = "HAX!"
+
+        return result
+    end
+    
+    local script,message = loadstring(script)
+
+    if not script then 
+        result.Success = false
+        result.Error = message
+        
+        return result
+    end
+    
+    return safefunc(result,script)
 end

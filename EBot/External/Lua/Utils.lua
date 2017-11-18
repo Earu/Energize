@@ -1,17 +1,14 @@
 isnumber = function(what)
     return type(what) == "number"
 end
-ENV.isnumber = isnumber
 
 istable = function(what)
     return type(what) == "table"
 end
-ENV.istable = istable
 
 isstring = function(what)
     return type(what) == "string"
 end
-ENV.isstring = isstring
 
 printtable = function( t, indent, done )
     done = done or {}
@@ -39,4 +36,3 @@ printtable = function( t, indent, done )
     end
 
 end
-ENV.printtable = printtable
