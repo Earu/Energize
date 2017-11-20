@@ -52,21 +52,26 @@ setup = function()
 
     local ENV = {}
     
-    ENV.assert   = assert
-    ENV.error    = error
-    ENV.ipairs   = ipairs
-    ENV.next     = next
-    ENV.pairs    = pairs
-    ENV.select   = select
-    ENV.tonumber = tonumber
-    ENV.tostring = tostring 
-    ENV.unpack   = unpack
-    ENV._VERSION = _VERSION
-    ENV.xpcall   = xpcall
-    ENV.pcall    = pcall
-    ENV.print    = print
-    ENV.type     = type
-    ENV._G       = ENV
+    ENV.assert     = assert
+    ENV.error      = error
+    ENV.ipairs     = ipairs
+    ENV.next       = next
+    ENV.pairs      = pairs
+    ENV.select     = select
+    ENV.tonumber   = tonumber
+    ENV.tostring   = tostring 
+    ENV.unpack     = unpack
+    ENV._VERSION   = _VERSION
+    ENV.xpcall     = xpcall
+    ENV.pcall      = pcall
+    ENV.print      = print
+    ENV.type       = type
+    ENV.istable    = istable
+    ENV.isstring   = isstring
+    ENV.isnumber   = isnumber
+    ENV.printtable = printtable
+    ENV._G         = ENV
+    ENV.STATE = _G
     protect(ENV)
 
     ENV.coroutine = coroutine

@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.WebSocket;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
@@ -18,13 +18,14 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task Hug(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Hug(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             Social.Action action = new Social.Action();
             string result = "";
-            if (!string.IsNullOrWhiteSpace(args[0]) && !string.IsNullOrWhiteSpace(msg.MentionedUsers[0].Username))
+            IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+            if (!string.IsNullOrWhiteSpace(args[0]) && users.Count > 0)
             {
-                result = action.Hug(msg.Author, msg.MentionedUsers);
+                result = action.Hug(msg.Author, users);
                 await embedrep.Good(msg, "Hug!", result);
             }
             else
@@ -34,13 +35,14 @@ namespace EBot.Commands.Modules
 
         }
 
-        private async Task Boop(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Boop(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             Social.Action action = new Social.Action();
             string result = "";
-            if (!string.IsNullOrWhiteSpace(args[0]) && !string.IsNullOrWhiteSpace(msg.MentionedUsers[0].Username))
+            IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+            if (!string.IsNullOrWhiteSpace(args[0]) && users.Count > 0)
             {
-                result = action.Boop(msg.Author, msg.MentionedUsers);
+                result = action.Boop(msg.Author, users);
                 await embedrep.Good(msg, "Boop!", result);
             }
             else
@@ -50,13 +52,14 @@ namespace EBot.Commands.Modules
 
         }
 
-        private async Task Slap(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Slap(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             Social.Action action = new Social.Action();
             string result = "";
-            if (!string.IsNullOrWhiteSpace(args[0]) && !string.IsNullOrWhiteSpace(msg.MentionedUsers[0].Username))
+            IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+            if (!string.IsNullOrWhiteSpace(args[0]) && users.Count > 0)
             {
-                result = action.Slap(msg.Author, msg.MentionedUsers);
+                result = action.Slap(msg.Author, (msg.MentionedUsers as IReadOnlyList<SocketUser>));
                 await embedrep.Good(msg, "Slap!", result);
             }
             else

@@ -1,24 +1,28 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using Discord;
+using Discord.WebSocket;
 using System;
+using Discord.Rest;
 
 namespace EBot.Logs
 {
     public class SpyLog
     {
-        public DiscordClient _Client;
-        public BotLog _Log;
+        private DiscordRestClient _RESTClient;
+        private DiscordSocketClient _Client;
+        private BotLog _Log;
         
-        public DiscordClient Client { get => this._Client; set => this._Client = value; }
+        public DiscordSocketClient Client { get => this._Client; set => this._Client = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
+        public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
 
-        private void LogMessage(DiscordMessage msg)
+        private void LogMessage(SocketMessage msg)
         {
             string log = "";
 
-            if (!msg.Channel.IsPrivate)
+            if (msg.Channel is IDMChannel)
             {
-                log += "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                IGuildChannel chan = msg.Channel as IGuildChannel;
+                log += "(" + chan.Guild.Name + " - #" + msg.Channel.Name + ") ";
             }
             log += msg.Author.Username + "#" + msg.Author.Discriminator + " => [ " + msg.Content + " ]";
 
@@ -27,15 +31,15 @@ namespace EBot.Logs
 
         public void WatchWords(string[] tospy)
         {
-            this._Client.MessageCreated += async e =>
+            this._Client.MessageReceived += async msg =>
             {
-                string content = e.Message.Content;
+                string content = msg.Content;
                 for (int i = 0; i < tospy.Length; i++)
                 {
                     string used = tospy[i];
                     if (content.ToLower().Contains(used))
                     {
-                        this.LogMessage(e.Message);                        
+                        this.LogMessage(msg);                        
                     }
                 }
             };

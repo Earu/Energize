@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -47,7 +47,7 @@ namespace EBot.Commands
         public bool Loaded { get => this._Loaded; set => this._Loaded = value; }
         public string Cmd { get => this._Name; set => this._Name = value; }
 
-        public async Task Run(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        public async Task Run(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             await this._Callback(embedrep, msg, args);
         }
