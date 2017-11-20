@@ -1,10 +1,11 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord;
+using Discord.Rest;
+using Discord.WebSocket;
 using EBot.Logs;
 using EBot.MemoryStream;
 using EBot.Utils;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
@@ -21,19 +22,19 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task Ping(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Ping(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
-            DateTimeOffset createtimestamp = msg.CreationTimestamp;
+            DateTimeOffset createtimestamp = msg.CreatedAt;
             DateTimeOffset timestamp = msg.Timestamp;
 
-            int diff = (createtimestamp.Millisecond - timestamp.Millisecond) / 10;
+            int diff = timestamp.Millisecond / 10;
 
 
             await embedrep.Good(msg, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
-                ":clock1: Bot: " + this.Handler.Client.Ping + "ms");
+                ":clock1: Bot: " + this.Handler.Client.Latency + "ms");
         }
 
-        private async Task Help(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Help(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             string arg = args[0];
             if (!string.IsNullOrWhiteSpace(arg))
@@ -50,7 +51,7 @@ namespace EBot.Commands.Modules
             }
             else
             {
-                if (!msg.Channel.IsPrivate)
+                if (!(msg.Channel is IDMChannel))
                 {
                     await embedrep.Good(msg, "Help", "Check your private messages " + msg.Author.Mention);
                 }
@@ -71,34 +72,35 @@ namespace EBot.Commands.Modules
                 result = result.Remove(result.Length - 2);
                 result += "``";
 
-                await embedrep.RespondByDM(msg, "Help [ all ]", result, new DiscordColor());
+                await embedrep.RespondByDM(msg, "Help [ all ]", result, new Color());
             }
         }
 
-        private async Task Say(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Say(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             string tosay = string.Join(",", args.ToArray());
             await embedrep.Good(msg,"Say", tosay);
         }
 
-        private async Task Server(CommandReplyEmbed embedrep, DiscordMessage msg,List<string> args)
+        private async Task Server(CommandReplyEmbed embedrep, SocketMessage msg,List<string> args)
         {
-            if (!msg.Channel.IsPrivate)
+            if (msg.Channel is IGuildChannel)
             {
-                DiscordGuild guild = msg.Channel.Guild;
+                SocketGuild guild = (msg.Channel as IGuildChannel).Guild as SocketGuild;
+                RestUser owner = await this.Handler.RESTClient.GetUserAsync(guild.OwnerId);
 
                 string info = "";
                 info += "**ID**: " + guild.Id + "\n";
-                info += "**Owner**: " + guild.Owner.Username + "#" + guild.Owner.Discriminator + "\n";
+                info += "**Owner**: " + (owner == null ? "NULL\n" : owner.Username + "#" + owner.Discriminator + "\n");
                 info += "**Members**: " + guild.MemberCount + "\n";
-                info += "**Region**: " + guild.RegionId + "\n";
+                info += "**Region**: " + guild.VoiceRegionId + "\n";
 
-                if (guild.Emojis.Count > 0)
+                if (guild.Emotes.Count > 0)
                 {
                     info += "\n\n---- Emojis ----\n";
 
                     int count = 0;
-                    foreach (DiscordEmoji emoji in guild.Emojis)
+                    foreach (Emote emoji in guild.Emotes)
                     {
                         info += "<:" + emoji.Name + ":" + emoji.Id + ">  ";
                         count++;
@@ -110,11 +112,12 @@ namespace EBot.Commands.Modules
                     }
                 }
 
-                DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+                EmbedBuilder builder = new EmbedBuilder();
                 builder.WithThumbnailUrl(guild.IconUrl);
                 builder.WithDescription(info);
-                builder.WithTitle(guild.Name);
-                builder.WithColor(new DiscordColor());
+                builder.WithFooter(guild.Name);
+                builder.WithColor(new Color());
+                builder.WithAuthor(msg.Author);
 
                 await embedrep.Send(msg, builder.Build());
             }
@@ -124,7 +127,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task Info(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Info(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             ClientInfo info = await ClientMemoryStream.GetClientInfo();
 
@@ -136,22 +139,23 @@ namespace EBot.Commands.Modules
             desc += "**Users**: " + info.UserAmount + "\n";
             desc += "**Owner**: " + info.Owner + "\n";
 
-            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
-            builder.WithTitle("Info");
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithFooter("Info");
             builder.WithThumbnailUrl(info.Avatar);
             builder.WithDescription(desc);
-            builder.WithColor(new DiscordColor());
+            builder.WithColor(new Color());
+            builder.WithAuthor(msg.Author);
 
             await embedrep.Send(msg, builder.Build());
         }
 
-        private async Task Invite(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Invite(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotCredentials.BOT_ID_MAIN + "&scope=bot&permissions=0";
             await embedrep.Good(msg, "Invite", invite);
         }
 
-        private async Task Lua(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Lua(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             string code = string.Join(',', args);
             List<Object> returns = new List<object>();
@@ -162,11 +166,11 @@ namespace EBot.Commands.Modules
                 string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
                 {
-                    await embedrep.Good(msg, "Lua", "```\nnil\n```");
+                    await embedrep.Good(msg, "Lua", ":ok_hand: (nil or no value was returned)");
                 }
                 else
                 {
-                    await embedrep.Good(msg, "Lua","```\n" + display + "\n```");
+                    await embedrep.Good(msg, "Lua",display);
                 }
             }
             else
@@ -175,9 +179,9 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task LuaReset(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task LuaReset(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
-            LuaEnv.Reset(msg.Channel);
+            LuaEnv.Reset((msg.Channel as SocketChannel));
             await embedrep.Good(msg, "LuaReset", "Lua state was reset for this channel");
         }
 

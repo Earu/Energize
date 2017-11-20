@@ -1,6 +1,4 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
-using EBot.Commands;
+﻿using EBot.Commands;
 using EBot.Logs;
 using EBot.MachineLearning;
 using EBot.MemoryStream;
@@ -8,6 +6,9 @@ using EBot.Utils;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord.WebSocket;
+using Discord;
+using Discord.Rest;
 
 namespace EBot
 {
@@ -16,34 +17,35 @@ namespace EBot
         public static EBotClient CLIENT;
 
         private string _Prefix;
-        private DiscordClient _Discord;
+        private DiscordSocketClient _Discord;
+        private DiscordRestClient _DiscordREST;
         private CommandsHandler _Handler;
         private CommandSource _Source;
         private BotLog _Log;
         private LogEvent _Event;
         private SpyLog _Spy;
+        private string _Token;
 
         public EBotClient(string token,string prefix)
         {
             Console.Clear();
             Console.Title = "EBot's Logs";
 
+            this._Token = token;
             this._Prefix = prefix;
             this._Log = new BotLog();
             this._Event = new LogEvent();
             this._Spy = new SpyLog();
             this._Handler = new CommandsHandler();
             this._Source = new CommandSource(this._Handler,this._Log);
-            this._Discord = new DiscordClient(new DiscordConfiguration
-            {
-                Token = token,
-                TokenType = TokenType.Bot,
-            });
+            this._Discord = new DiscordSocketClient();
+            this._DiscordREST = new DiscordRestClient();
 
             this._Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
             this._Log.Notify("Initializing");
 
             this._Handler.Client = this._Discord;
+            this._Handler._RESTClient = this._DiscordREST;
             this._Handler.Log = this._Log;
             this._Handler.Prefix = this._Prefix;
             this._Handler.Source = this._Source;
@@ -51,10 +53,12 @@ namespace EBot
             this._Handler.Initialize();
 
             this._Spy.Client = this._Discord;
+            this._Spy.RESTClient = this._DiscordREST;
             this._Spy.Log = this._Log;
             this._Spy.WatchWords(new string[] { "yara", "earu" });
 
             this._Event.Client = this._Discord;
+            this._Event.RESTClient = this._DiscordREST;
             this._Event.Prefix = this._Prefix;
             this._Event.Log = this._Log;
             this._Event.InitEvents();
@@ -63,17 +67,18 @@ namespace EBot
         }
 
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
-        public DiscordClient Discord { get => this._Discord; set => this._Discord = value; }
+        public DiscordSocketClient Discord { get => this._Discord; set => this._Discord = value; }
+        public DiscordRestClient DiscordREST { get => this._DiscordREST; set => this._DiscordREST = value; }
         public CommandsHandler Handler { get => this._Handler; set => this._Handler = value; }
         public CommandSource Source { get => this._Source; set => this._Source = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        private async Task AskAsync(DiscordMessage msg,bool ismention,bool isprefix)
+        private async Task AskAsync(SocketMessage msg,bool ismention,bool isprefix)
         {
             string mention = "<@" + EBotCredentials.BOT_ID_MAIN + ">";
-            DiscordChannel chan = msg.Channel;
+            SocketChannel chan = msg.Channel as SocketChannel;
             string username = msg.Author.Username;
             string input = msg.Content;
 
@@ -94,7 +99,7 @@ namespace EBot
             await this._Handler.EmbedReply.Normal(msg, username, result);
         }
 
-        private async Task OnChatAsync(DiscordMessage msg)
+        private async Task OnChatAsync(SocketMessage msg)
         {
             string mention = "<@" + EBotCredentials.BOT_ID_MAIN + "> ";
             bool answered = false;
@@ -108,7 +113,7 @@ namespace EBot
             if (!answered)
             {
                 bool mentionned = false;
-                foreach(DiscordUser user in msg.MentionedUsers)
+                foreach(SocketUser user in msg.MentionedUsers)
                 {
                     if(user.Id == EBotCredentials.BOT_ID_MAIN)
                     {
@@ -125,11 +130,12 @@ namespace EBot
 
             if (answered)
             {
-                string name = "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                SocketGuildChannel chan = msg.Channel as SocketGuildChannel;
+                string name = "(" + chan.Guild.Name + " - #" + msg.Channel.Name + ") ";
                 this._Log.Nice("ChatBot", ConsoleColor.DarkGreen, name + "Answered " + msg.Author.Username + "#" + msg.Author.Discriminator);
             }
 
-            if (!msg.Author.IsBot && !msg.Channel.IsNSFW)
+            if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
             {
                 await MarkovHandler.Learn(msg.Content);
             }
@@ -139,24 +145,21 @@ namespace EBot
         {
             try
             {
-                await this._Discord.ConnectAsync();
+                await this._Discord.LoginAsync(TokenType.Bot,_Token,true);
+                await this._Discord.StartAsync();
+                await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
 
-                this._Discord.Ready += async e =>
+                this._Discord.Ready += async () =>
                 {
-                    DiscordGame game = new DiscordGame(this._Prefix + "help")
-                    {
-                        StreamType = GameStreamType.Twitch,
-                        Url = EBotCredentials.TWITCH_URL
-                    };
-
-                    await this._Discord.UpdateStatusAsync(game, UserStatus.Online); //fancy streaming mode
+                    await this._Discord.SetStatusAsync(UserStatus.Online);
+                    await this._Discord.SetGameAsync(this._Prefix + "help", EBotCredentials.TWITCH_URL, StreamType.Twitch);
                     ClientMemoryStream.Initialize(this);
-                    LuaEnv.Initialize(this);
+                    await LuaEnv.Initialize(this);
                 };
 
-                this._Discord.MessageCreated += async e =>
+                this._Discord.MessageReceived += async msg =>
                 {
-                    this.OnChatAsync(e.Message).RunSynchronously();
+                    this.OnChatAsync(msg).RunSynchronously();
                 };
 
                 Timer gctimer = new Timer(arg =>

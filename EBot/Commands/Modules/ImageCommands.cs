@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using DSharpPlus.Entities;
 using EBot.Logs;
 using EBot.Utils;
 using System.Threading.Tasks;
+using Discord.WebSocket;
+using Discord;
 
 namespace EBot.Commands.Modules
 {
@@ -19,28 +20,28 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task Avatar(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Avatar(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
-            DiscordUser user = msg.Author;
+            SocketUser user = msg.Author;
             if (!string.IsNullOrWhiteSpace(args[0]))
             {
-                user = msg.MentionedUsers[0];
+                IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+                user = users[0];
             }
 
-            string url = user.AvatarUrl;
-            DiscordEmbedBuilder embed = new DiscordEmbedBuilder
-            {
-                Color = new DiscordColor(),
-                ImageUrl = url,
-                Title = "Avatar - " + msg.Author.Username
-            };
+            string url = user.GetAvatarUrl(ImageFormat.Png,512);
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithAuthor(msg.Author);
+            builder.WithColor(new Color());
+            builder.WithImageUrl(url);
+            builder.WithFooter("Avatar");
 
-            await embedrep.Send(msg, embed.Build());
+            await embedrep.Send(msg, builder.Build());
         }
 
-        private async Task BlackWhite(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task BlackWhite(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
-            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL(msg.Channel) : args[0];
+            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL((msg.Channel as SocketChannel)) : args[0];
             string path = null;
 
             if (!string.IsNullOrWhiteSpace(url)) //if getlastpicture returns nothing
@@ -70,9 +71,9 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task Wew(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Wew(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
-            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL(msg.Channel) : args[0];
+            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL((msg.Channel as SocketChannel)) : args[0];
             string path = null;
             string maskpath = "Masks/wew.png";
 

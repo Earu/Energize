@@ -1,23 +1,25 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using Discord;
+using Discord.WebSocket;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.Rest;
 
 namespace EBot.Commands
 {
     public class CommandsHandler
     {
-        public delegate Task CommandCallback(CommandReplyEmbed embedrep, DiscordMessage msg, List<String> args);
+        public delegate Task CommandCallback(CommandReplyEmbed embedrep, SocketMessage msg, List<String> args);
 
-        private DiscordClient _Client;
+        private DiscordSocketClient _Client;
         private BotLog _Log;
         private string _Prefix;
         private CommandSource _Source;
         private CommandReplyEmbed _EmbedReply;
         private Dictionary<string,  Command> _Cmds;
         private Dictionary<string, string> _LastChannelPictureURL;
+        public DiscordRestClient _RESTClient;
 
         public CommandsHandler()
         {
@@ -33,12 +35,13 @@ namespace EBot.Commands
         public CommandSource Source { get => this._Source; set => this._Source = value; }
         public CommandReplyEmbed EmbedReply { get => this._EmbedReply; set => this._EmbedReply = value; }
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
-        public DiscordClient Client { get => this._Client; set => this._Client = value; }
+        public DiscordSocketClient Client { get => this._Client; set => this._Client = value; }
         public Dictionary<string,Command> Commands { get => this._Cmds; }
+        public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
 
-        public string GetLastPictureURL(DiscordChannel chan)
+        public string GetLastPictureURL(SocketChannel chan)
         {
-            string index = chan.Guild.Id.ToString() + chan.Id.ToString();
+            string index = chan.Id.ToString();
             return this._LastChannelPictureURL.TryGetValue(index, out string url) ? url : "";
         }
 
@@ -57,7 +60,7 @@ namespace EBot.Commands
             {
                 if (callback == null)
                 {
-                    callback = async (CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args) => 
+                    callback = async (CommandReplyEmbed embedrep, SocketMessage msg, List<string> args) => 
                     {
                         await embedrep.Good(msg, null, "Hello world!");
                     };
@@ -106,16 +109,17 @@ namespace EBot.Commands
             return result;
         }
 
-        private void LogCommand(DiscordMessage msg, string cmd, List<string> args,bool isdm,bool isdeleted=false)
+        private void LogCommand(SocketMessage msg, string cmd, List<string> args,bool isdm,bool isdeleted=false)
         {
             string log = "";
             ConsoleColor color = ConsoleColor.Blue;
             string head = "DMCommands";
             string action = "used";
 
-            if (!isdm)
+            if (!(msg.Channel is IDMChannel))
             {
-                log += "(" + msg.Channel.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                IGuildChannel chan = msg.Channel as IGuildChannel;
+                log += "(" + chan.Guild.Name + " - #" + msg.Channel.Name + ") ";
                 color = ConsoleColor.Cyan;
                 head = "Commands";
             }
@@ -139,7 +143,7 @@ namespace EBot.Commands
             this._Log.Nice(head,color, log);
         }
 
-        private async Task CommandCall(DiscordMessage msg,string cmd)
+        private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
             bool success = this._Cmds.TryGetValue(cmd, out Command retrieved);
@@ -149,7 +153,7 @@ namespace EBot.Commands
                 try
                 {
                     await retrieved.Run(this._EmbedReply, msg, args);
-                    this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate);
+                    this.LogCommand(msg, cmd, args, (msg.Channel is IGuildChannel));
                 }
                 catch (Exception e)
                 {
@@ -165,7 +169,7 @@ namespace EBot.Commands
             }
         }
 
-        private void MainCall(DiscordMessage msg)
+        private void MainCall(SocketMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -185,11 +189,11 @@ namespace EBot.Commands
             }
         }
 
-        private void CacheURLs(DiscordMessage msg,List<string> urls)
+        private void CacheURLs(SocketMessage msg,List<string> urls)
         {
             if (urls.Count > 0)
             {
-                string index = msg.Channel.Guild.ToString() + msg.Channel.Id.ToString();
+                string index = msg.Channel.Id.ToString();
                 string lasturl = urls[urls.Count - 1];
 
                 if (this._LastChannelPictureURL.ContainsKey(index))
@@ -200,33 +204,33 @@ namespace EBot.Commands
             }
         }
 
-        private void GetImageURLS(DiscordMessage msg)
+        private void GetImageURLS(SocketMessage msg)
         {
             List<string> urls = new List<string>();
 
-            IReadOnlyList<DiscordAttachment> attachs = msg.Attachments;
-            foreach (DiscordAttachment attach in attachs)
+            IReadOnlyCollection<Attachment> attachs = msg.Attachments;
+            foreach (Attachment attach in attachs)
             {
-                if(attach.FileName.EndsWith(".jpg") || attach.FileName.EndsWith(".jpeg") || attach.FileName.EndsWith(".png"))
+                if(attach.Filename.EndsWith(".jpg") || attach.Filename.EndsWith(".jpeg") || attach.Filename.EndsWith(".png"))
                 {
                     urls.Add(attach.Url);
                 }
             }
 
-            IReadOnlyList<DiscordEmbed> embeds = msg.Embeds;
-            foreach(DiscordEmbed embed in embeds)
+            IReadOnlyCollection<Embed> embeds = msg.Embeds;
+            foreach(Embed embed in embeds)
             {
-                if (embed.Type == "image")
+                if (embed.Type == EmbedType.Image)
                 {
-                    string url = embed.Thumbnail.Url.ToString();
+                    string url = embed.Url;
                     if (!string.IsNullOrWhiteSpace(url))
                     {
                         urls.Add(url);
                     }
 
-                }else if(embed.Type == "rich")
+                }else if(embed.Type == EmbedType.Rich)
                 {
-                    string url = embed.Image.Url.ToString();
+                    string url = embed.Url;
                     if (!string.IsNullOrWhiteSpace(url))
                     {
                         urls.Add(url);
@@ -238,7 +242,7 @@ namespace EBot.Commands
 
         }
 
-        private async Task GetDeletedCommandMessages(DiscordMessage msg)
+        private async Task GetDeletedCommandMessages(SocketMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -251,8 +255,8 @@ namespace EBot.Commands
                         string user = msg.Author.Mention;
                         List<string> args = this.GetCmdArgs(content);
 
-                        await this._EmbedReply.Send(msg.Channel,"Sneaky!",user + " deleted a command message \"" + cmd + "\" :eyes:",new DiscordColor(220, 180, 80));
-                        this.LogCommand(msg, cmd, args, msg.Channel.IsPrivate, true);
+                        await this._EmbedReply.Send(msg.Channel,"Sneaky!",user + " deleted a command message \"" + cmd + "\" :eyes:",new Color(220, 180, 80));
+                        this.LogCommand(msg, cmd, args, (msg.Channel is IGuildChannel), true);
                     }
                 }
             }
@@ -260,20 +264,21 @@ namespace EBot.Commands
 
         public void Initialize()
         {
-            this._Client.MessageCreated += async e =>
+            this._Client.MessageReceived += async msg =>
             {
-                this.GetImageURLS(e.Message);
+                this.GetImageURLS(msg);
             };
 
-            this._Client.MessageDeleted += async e =>
+            this._Client.MessageDeleted += async (msg,chan) =>
             {
-                this.GetDeletedCommandMessages(e.Message).RunSynchronously();
+                SocketMessage mess = (await msg.DownloadAsync()) as SocketMessage;
+                this.GetDeletedCommandMessages(mess).RunSynchronously();
             };
 
             this._Source.LoadCommands(this, this.Log);
-            this._Client.MessageCreated += async e =>
+            this._Client.MessageReceived += async msg =>
             {
-                this.MainCall(e.Message);
+                this.MainCall(msg);
             };
         }
     }

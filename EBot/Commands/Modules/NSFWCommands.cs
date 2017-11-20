@@ -1,9 +1,10 @@
-﻿using DSharpPlus.Entities;
-using EBot.Utils;
+﻿using EBot.Utils;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
+using Discord;
 
 namespace EBot.Commands.Modules
 {
@@ -19,9 +20,9 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task SearchE621(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task SearchE621(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
-            if (msg.Channel.IsNSFW)
+            if (msg.Channel.IsNsfw)
             {
                 Random rand = new Random();
                 string body = await HTTP.Fetch("https://e621.net/post/index.json",this.Log);
@@ -49,11 +50,13 @@ namespace EBot.Commands.Modules
                     }
                     else
                     {
-                        DiscordEmbedBuilder embed = new DiscordEmbedBuilder();
-                        embed.Color = new DiscordColor(110, 220, 110);
-                        embed.ImageUrl = post.sample_url;
-                        embed.Title = "E621 - " + msg.Author.Username;
-                        embed.Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*";
+                        EmbedBuilder embed = new EmbedBuilder
+                        {
+                            Color = new Color(110, 220, 110),
+                            ImageUrl = post.sample_url,
+                            Title = "E621 - " + msg.Author.Username,
+                            Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*"
+                        };
 
                         await embedrep.Send(msg, embed.Build());
                     }

@@ -1,10 +1,10 @@
-﻿using DSharpPlus.Entities;
-using EBot.Utils;
+﻿using EBot.Utils;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
 using EBot.Commands.Warframe;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace EBot.Commands.Modules
 {
@@ -20,7 +20,7 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task Alerts(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Alerts(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", this.Log);
             WGlobal global = JSON.Deserialize<WGlobal>(body,this.Log);
