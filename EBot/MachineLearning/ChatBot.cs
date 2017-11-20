@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.WebSocket;
 using EBot.Logs;
 using EBot.Utils;
 using HtmlAgilityPack;
@@ -14,7 +14,7 @@ namespace EBot.MachineLearning
     class ChatBot
     {
         private static string _URL = "http://www.a-i.com/alan1/webface1_ctrl.asp?";
-        private static Dictionary<DiscordChannel, CookieContainer> _Cookies = new Dictionary<DiscordChannel, CookieContainer>();
+        private static Dictionary<SocketChannel, CookieContainer> _Cookies = new Dictionary<SocketChannel, CookieContainer>();
         private static string[] _SentencesEnd = {
             "owo",
             "-w-",
@@ -39,7 +39,7 @@ namespace EBot.MachineLearning
             "***ROARAWRAR***",
         };
 
-        public static async Task<string> Ask(DiscordChannel chan,string sentence,BotLog log)
+        public static async Task<string> Ask(SocketChannel chan,string sentence,BotLog log)
         {
             if (!_Cookies.TryGetValue(chan, out CookieContainer cookie))
             {

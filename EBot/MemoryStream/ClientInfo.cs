@@ -1,4 +1,6 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord;
+using Discord.Rest;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,12 +48,14 @@ namespace EBot.MemoryStream
 
         public async Task<ClientInfo> Initialize()
         {
-            DiscordUser owner = await this._Client.Discord.GetUserAsync(EBotCredentials.OWNER_ID);
-            DiscordUser bot = await this._Client.Discord.GetUserAsync(EBotCredentials.BOT_ID_MAIN);
+            RestApplication app = await this._Client.Discord.GetApplicationInfoAsync();
+            IUser owner = app.Owner;
+            SocketUser bot = this._Client.Discord.GetUser(app.Id);
+
             int useramount = 0;
-            foreach (KeyValuePair<ulong, DiscordGuild> guild in this._Client.Discord.Guilds)
+            foreach (SocketGuild guild in this._Client.Discord.Guilds)
             {
-                useramount = useramount + guild.Value.MemberCount;
+                useramount = useramount + guild.MemberCount;
             }
 
             this._GuildAmount = _Client.Discord.Guilds.Count;
@@ -60,10 +64,10 @@ namespace EBot.MemoryStream
             this._Prefix = _Client.Prefix;
             this._Owner = owner.Username + "#" + owner.Discriminator;
             this._Name = bot.Username + "#" + bot.Discriminator;
-            this._Status = GetStatus(bot.Presence.Status);
-            this._OwnerStatus = GetStatus(owner.Presence.Status);
-            this._Avatar = bot.AvatarUrl;
-            this._OwnerAvatar = owner.AvatarUrl;
+            this._Status = GetStatus(bot.Status);
+            this._OwnerStatus = GetStatus(owner.Status);
+            this._Avatar = bot.GetAvatarUrl(ImageFormat.Png,1024);
+            this._OwnerAvatar = owner.GetAvatarUrl(ImageFormat.Png, 1024);
             this._ID = bot.Id;
 
             return this;

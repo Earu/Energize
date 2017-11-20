@@ -1,9 +1,9 @@
-﻿using DSharpPlus.Entities;
-using EBot.Utils;
+﻿using EBot.Utils;
 using EBot.Logs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace EBot.Commands.Modules
 {
@@ -19,7 +19,7 @@ namespace EBot.Commands.Modules
             this. Log = log;
         }
 
-        private async Task SearchUrban(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task SearchUrban(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             string search = "";
             if (string.IsNullOrWhiteSpace(args[0]))
@@ -33,8 +33,7 @@ namespace EBot.Commands.Modules
                 {
                     if (!string.IsNullOrWhiteSpace(args[1]))
                     {
-                        int temp;
-                        if (int.TryParse(args[1].Trim(), out temp))
+                        if (int.TryParse(args[1].Trim(), out int temp))
                         {
                             page = temp - 1;
                         }
@@ -76,7 +75,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task Google(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Google(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             string apikey = EBotCredentials.GOOGLE_API_KEY;
         }

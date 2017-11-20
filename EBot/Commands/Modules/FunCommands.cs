@@ -1,11 +1,11 @@
-﻿using DSharpPlus.Entities;
-using EBot.Utils;
+﻿using EBot.Utils;
 using EBot.Logs;
 using EBot.MachineLearning;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace EBot.Commands.Modules
 {
@@ -22,7 +22,7 @@ namespace EBot.Commands.Modules
             this.Log = log;
         }
 
-        private async Task ASCII(CommandReplyEmbed embedrep ,DiscordMessage msg, List<string> args)
+        private async Task ASCII(CommandReplyEmbed embedrep ,SocketMessage msg, List<string> args)
         {
 
             if (string.IsNullOrWhiteSpace(args[0]))
@@ -38,20 +38,21 @@ namespace EBot.Commands.Modules
                 }
                 else
                 {
-                    await msg.RespondAsync("```\n" + body + "\n```");
+                    await msg.Channel.SendMessageAsync("```\n" + body + "\n```");
                 }
 
             }
         }
 
-        private async Task Describe(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Describe(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             string[] adjs = CommandsData.Adjectives;
             string[] nouns = CommandsData.Nouns;
-            DiscordUser toping = msg.Author;
-            if (!string.IsNullOrWhiteSpace(args[0]) && msg.MentionedUsers[0] != null)
+            SocketUser toping = msg.Author;
+            if (!string.IsNullOrWhiteSpace(args[0]) && msg.MentionedUsers.Count > 0)
             {
-                toping = msg.MentionedUsers[0];
+                IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+                toping = users[0];
             }
 
             Random random = new Random();
@@ -90,7 +91,7 @@ namespace EBot.Commands.Modules
             await embedrep.Good(msg, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
-        private async Task Letters(CommandReplyEmbed embedrep, DiscordMessage msg, List<string> args)
+        private async Task Letters(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
         {
             string input = args[0];
             string indicator = ":regional_indicator_";
@@ -110,7 +111,7 @@ namespace EBot.Commands.Modules
             await embedrep.Good(msg,"Letters", result);
         }
 
-        private async Task EightBalls(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task EightBalls(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             if (string.IsNullOrWhiteSpace(args[0]))
             {
@@ -127,7 +128,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task Pick(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Pick(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             if (string.IsNullOrWhiteSpace(args[0]))
             {
@@ -144,7 +145,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        private async Task Markov(CommandReplyEmbed embedrep,DiscordMessage msg,List<string> args)
+        private async Task Markov(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
         {
             if (!string.IsNullOrWhiteSpace(args[0]))
             {

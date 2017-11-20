@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,14 +28,14 @@ namespace EBot.Commands.Social
             "<origin> <action>s <user> into another dimension!"
         };
 
-        private string Global(DiscordUser from, IReadOnlyList<DiscordUser> to, string act, string[] sentences)
+        private string Global(SocketUser from, IReadOnlyList<SocketUser> to, string act, string[] sentences)
         {
             Random rand = new Random();
             string action = sentences[rand.Next(0, sentences.Length)];
             action = action.Replace("<origin>",from.Mention);
             action = action.Replace("<action>", act);
             string users = "";
-            foreach(DiscordUser user in to)
+            foreach(SocketUser user in to)
             {
                 users += user.Mention + " and ";
             }
@@ -45,17 +45,17 @@ namespace EBot.Commands.Social
             return action;
         }
 
-        public string Hug(DiscordUser from,IReadOnlyList<DiscordUser> to)
+        public string Hug(SocketUser from,IReadOnlyList<SocketUser> to)
         {
             return Global(from, to, "hug",_Hugs);
         }
 
-        public string Boop(DiscordUser from, IReadOnlyList<DiscordUser> to)
+        public string Boop(SocketUser from, IReadOnlyList<SocketUser> to)
         {
             return Global(from, to, "boop",_Boops);
         }
 
-        public string Slap(DiscordUser from, IReadOnlyList<DiscordUser> to)
+        public string Slap(SocketUser from, IReadOnlyList<SocketUser> to)
         {
             return Global(from, to, "slap",_Slaps);
         }
