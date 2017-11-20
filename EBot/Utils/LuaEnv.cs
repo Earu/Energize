@@ -23,6 +23,18 @@ namespace EBot.Utils
         {
             _Client = client;
             _App = await client.Discord.GetApplicationInfoAsync();
+            
+            try
+            {
+                if (!Directory.Exists(_Path))
+                {
+                    Directory.CreateDirectory(_Path);
+                }
+            }
+            catch (Exception ex)
+            {
+                BotLog.Debug(ex.Message);
+            }
 
             foreach (string filepath in Directory.GetFiles(_Path))
             {
