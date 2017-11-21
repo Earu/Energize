@@ -45,76 +45,78 @@ local isprotected = function(tbl)
     return protecteds[gettableaddress(tbl)]
 end
 
-setup = function()
-    local placeholder = function(...)
-        print('nope.')
-    end
+local placeholder = function(...)
+    print('nope.')
+end
 
-    local ENV = {}
-    
-    ENV.assert     = assert
-    ENV.error      = error
-    ENV.ipairs     = ipairs
-    ENV.next       = next
-    ENV.pairs      = pairs
-    ENV.select     = select
-    ENV.tonumber   = tonumber
-    ENV.tostring   = tostring 
-    ENV.unpack     = unpack
-    ENV._VERSION   = _VERSION
-    ENV.xpcall     = xpcall
-    ENV.pcall      = pcall
-    ENV.print      = print
-    ENV.type       = type
-    ENV.istable    = istable
-    ENV.isstring   = isstring
-    ENV.isnumber   = isnumber
-    ENV.printtable = printtable
-    ENV._G         = ENV
-    ENV.STATE = _G
-    protect(ENV)
+ENV = {}
+ENV.assert     = assert
+ENV.error      = error
+ENV.ipairs     = ipairs
+ENV.next       = next
+ENV.pairs      = pairs
+ENV.select     = select
+ENV.tonumber   = tonumber
+ENV.tostring   = tostring 
+ENV.unpack     = unpack
+ENV._VERSION   = _VERSION
+ENV.xpcall     = xpcall
+ENV.pcall      = pcall
+ENV.print      = print
+ENV.type       = type
+ENV.istable    = istable
+ENV.isstring   = isstring
+ENV.isnumber   = isnumber
+ENV.printtable = printtable
+ENV._G         = ENV
+protect(ENV)
 
-    ENV.coroutine = coroutine
-    ENV.table     = table
-    ENV.math      = math
-    ENV.string    = string
-    ENV.os        = os
-    ENV.event     = event
-    protect(ENV.coroutine)
-    protect(ENV.table)
-    protect(ENV.math)
-    protect(ENV.string)
-    protect(ENV.os)
-    protect(ENV.event)
+ENV.coroutine = coroutine
+ENV.table     = table
+ENV.math      = math
+ENV.string    = string
+ENV.os        = os
+ENV.event     = event
+protect(ENV.coroutine)
+protect(ENV.table)
+protect(ENV.math)
+protect(ENV.string)
+protect(ENV.os)
+protect(ENV.event)
 
-    ENV.string.dump  = placeholder
-    ENV.os.execute   = placeholder
-    ENV.os.date      = placeholder
-    ENV.os.difftime  = placeholder
-    ENV.os.exit      = placeholder
-    ENV.os.getenv    = placeholder
-    ENV.os.remove    = placeholder
-    ENV.os.rename    = placeholder
-    ENV.os.setlocale = placeholder
-    ENV.os.tmpname   = placeholder
+ENV.string.dump  = placeholder
+ENV.os.execute   = placeholder
+ENV.os.date      = placeholder
+ENV.os.difftime  = placeholder
+ENV.os.exit      = placeholder
+ENV.os.getenv    = placeholder
+ENV.os.remove    = placeholder
+ENV.os.rename    = placeholder
+ENV.os.setlocale = placeholder
+ENV.os.tmpname   = placeholder
 
-    ENV.getmetatable = getmeta
-    ENV.setmetatable = function(t1,t2)
-        if isprotected(t1) then
-            error("I'm sorry, Dave. I'm afraid I can't do that",0)
-        else
-            return setmeta(t1,t2)
+ENV.getmetatable = getmeta
+
+local secured = {}
+ENV.setmetatable = function(t1,t2)
+    if isprotected(t1) then
+        error("I'm sorry, Dave. I'm afraid I can't do that",0)
+    else
+        if t2.__tostring and not secured[t2] then
+            local old = t2.__tostring
+            t2.__tostring = function(...)
+                safefunc(nil,old,...)
+            end
+            secured[t2] = true
         end
+        return setmeta(t1,t2)
     end
-    
-    return readonlytable(ENV)
 end
 
 --[[
     Sandbox untrusted scripts
 ]]--
-ENV = setup()
-
+local env = readonlytable(ENV)
 safefunc = function(resulttbl,func,...)
     local resulttbl = resulttbl or {
         Success = true,
@@ -123,7 +125,7 @@ safefunc = function(resulttbl,func,...)
         PrintStack = "",
     }
 
-    setfenv(func,ENV)
+    setfenv(func,env)
     
     local t = os.time()
     debug.sethook(function()

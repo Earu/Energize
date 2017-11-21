@@ -11,37 +11,29 @@ namespace EBot.Commands.Modules
     class ImageCommands : ICommandModule
     {
         private string Name = "Image";
-        private CommandsHandler Handler;
-        private BotLog Log;
 
-        public void Setup(CommandsHandler handler, BotLog log)
+        private async Task Avatar(CommandContext ctx)
         {
-            this.Handler = handler;
-            this.Log = log;
-        }
-
-        private async Task Avatar(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
-        {
-            SocketUser user = msg.Author;
-            if (!string.IsNullOrWhiteSpace(args[0]))
+            SocketUser user = ctx.Message.Author;
+            if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                IReadOnlyList<SocketUser> users = msg.MentionedUsers as IReadOnlyList<SocketUser>;
+                IReadOnlyList<SocketUser> users = ctx.Message.MentionedUsers as IReadOnlyList<SocketUser>;
                 user = users[0];
             }
 
             string url = user.GetAvatarUrl(ImageFormat.Png,512);
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithAuthor(msg.Author);
+            builder.WithAuthor(ctx.Message.Author);
             builder.WithColor(new Color());
             builder.WithImageUrl(url);
             builder.WithFooter("Avatar");
 
-            await embedrep.Send(msg, builder.Build());
+            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
-        private async Task BlackWhite(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
+        private async Task BlackWhite(CommandContext ctx)
         {
-            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL((msg.Channel as SocketChannel)) : args[0];
+            string url = string.IsNullOrWhiteSpace(ctx.Arguments[0]) ? ctx.LastPictureURL : ctx.Arguments[0];
             string path = null;
 
             if (!string.IsNullOrWhiteSpace(url)) //if getlastpicture returns nothing
@@ -56,7 +48,7 @@ namespace EBot.Commands.Modules
                     ImageProcess.Resize(path);
                     ImageProcess.MakeBlackWhite(path);
 
-                    await msg.Channel.SendFileAsync(path);
+                    await ctx.Message.Channel.SendFileAsync(path);
 
                     ImageProcess.DeleteImage(path);
                 }catch(Exception e)
@@ -67,13 +59,13 @@ namespace EBot.Commands.Modules
 
             if(path == null)
             {
-                await embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
             }
         }
 
-        private async Task Wew(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
+        private async Task Wew(CommandContext ctx)
         {
-            string url = string.IsNullOrWhiteSpace(args[0]) ? Handler.GetLastPictureURL((msg.Channel as SocketChannel)) : args[0];
+            string url = string.IsNullOrWhiteSpace(ctx.Arguments[0]) ? ctx.LastPictureURL : ctx.Arguments[0];
             string path = null;
             string maskpath = "Masks/wew.png";
 
@@ -84,31 +76,31 @@ namespace EBot.Commands.Modules
 
             if (path != null)
             {
-                await embedrep.Good(msg, "WIP", "Sorry this command is under work!");
+                await ctx.EmbedReply.Good(ctx.Message, "WIP", "Sorry this command is under work!");
             }
 
             if (path == null)
             {
-                await embedrep.Danger(msg, "Ugh", "There's no valid url to use!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
             }
         }
 
-        public void Load()
+        public void Load(CommandHandler handler,BotLog log)
         {
-            this.Handler.LoadCommand("avatar", this.Avatar, "Get a user's avatar","avatar \"@user\"",this.Name);
+            handler.LoadCommand("avatar", this.Avatar, "Get a user's avatar","avatar \"@user\"",this.Name);
             //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
 
-        public void Unload()
+        public void Unload(CommandHandler handler,BotLog log)
         {
-            this.Handler.UnloadCommand("avatar");
+            handler.UnloadCommand("avatar");
             //this.Handler.UnloadCommand("blackwhite");
             //this.Handler.UnloadCommand("wew");
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
     }
 }

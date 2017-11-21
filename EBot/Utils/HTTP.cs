@@ -38,6 +38,11 @@ namespace EBot.Utils
                 {
                     log.Nice("HTTP", ConsoleColor.Red, "(404) Couln't reach [ " + url + " ]");
                 }
+                else if(e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    log.Nice("HTTP", ConsoleColor.Red, "Protocol error (most likely 403) [ " + url + " ]");
+                    log.Danger(e.Message);
+                }
                 else
                 {
                     log.Nice("HTTP", ConsoleColor.Red, "Unknown error [ " + url + " ]\n" + e.ToString());

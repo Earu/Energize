@@ -7,8 +7,7 @@ namespace EBot.Commands.Modules
 {
     interface ICommandModule
     {
-        void Setup(CommandsHandler handler, BotLog log);
-        void Load();
-        void Unload();
+        void Load(CommandHandler handler,BotLog log);
+        void Unload(CommandHandler handler,BotLog log);
     }
 }
