@@ -11,42 +11,34 @@ namespace EBot.Commands.Modules
     class NSFWCommands : ICommandModule
     {
         private string Name = "NSFW";
-        private CommandsHandler Handler;
-        private BotLog Log;
 
-        public void Setup(CommandsHandler handler, BotLog log)
+        private async Task SearchE621(CommandContext ctx)
         {
-            this.Handler = handler;
-            this.Log = log;
-        }
-
-        private async Task SearchE621(CommandReplyEmbed embedrep, SocketMessage msg, List<string> args)
-        {
-            if (msg.Channel.IsNsfw)
+            if (ctx.Message.Channel.IsNsfw)
             {
                 Random rand = new Random();
-                string body = await HTTP.Fetch("https://e621.net/post/index.json",this.Log);
-                List<E621.EPost> posts = JSON.Deserialize<List<E621.EPost>>(body,this.Log);
+                string body = await HTTP.Fetch("https://e621.net/post/index.json",ctx.Log);
+                List<E621.EPost> posts = JSON.Deserialize<List<E621.EPost>>(body,ctx.Log);
                 E621.EPost post;
 
                 if(posts == null)
                 {
-                    await embedrep.Danger(msg, "Err", "There was no data to use sorry!");
+                    await ctx.EmbedReply.Danger(ctx.Message, "Err", "There was no data to use sorry!");
                 }
                 else
                 {
-                    if (string.IsNullOrWhiteSpace(args[0]))
+                    if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
                     {
                         post = E621.SortingHandler.GetRandom(posts);
                     }
                     else
                     {
-                        post = E621.Search.Handle(posts, args);
+                        post = E621.Search.Handle(posts, ctx.Arguments);
                     }
 
                     if (post == null)
                     {
-                        await embedrep.Danger(msg, "Nooo", "Seems like I couldn't find anything!");
+                        await ctx.EmbedReply.Danger(ctx.Message, "Nooo", "Seems like I couldn't find anything!");
                     }
                     else
                     {
@@ -54,32 +46,32 @@ namespace EBot.Commands.Modules
                         {
                             Color = new Color(110, 220, 110),
                             ImageUrl = post.sample_url,
-                            Title = "E621 - " + msg.Author.Username,
+                            Title = "E621",
                             Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*"
                         };
 
-                        await embedrep.Send(msg, embed.Build());
+                        await ctx.EmbedReply.Send(ctx.Message, embed.Build());
                     }
                 }
             }
             else
             {
-                await embedrep.Danger(msg, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
+                await ctx.EmbedReply.Danger(ctx.Message, "Hum no.", "Haha, did you really believe it would be that easy? :smirk:");
             }
         }
 
-        public void Load()
+        public void Load(CommandHandler handler,BotLog log)
         {
-            this.Handler.LoadCommand("e621", this.SearchE621, "Browse e621","e621 \"search\"",this.Name);
+            handler.LoadCommand("e621", this.SearchE621, "Browse e621","e621 \"search\"",this.Name);
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
 
-        public void Unload()
+        public void Unload(CommandHandler handler,BotLog log)
         {
-            this.Handler.UnloadCommand("e621");
+            handler.UnloadCommand("e621");
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
     }
 }
