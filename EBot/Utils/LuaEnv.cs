@@ -21,6 +21,18 @@ namespace EBot.Utils
         public static async Task Initialize(EBotClient client)
         {
             _App = await client.Discord.GetApplicationInfoAsync();
+            
+            try
+            {
+                if (!Directory.Exists(_Path))
+                {
+                    Directory.CreateDirectory(_Path);
+                }
+            }
+            catch (Exception ex)
+            {
+                BotLog.Debug(ex.Message);
+            }
 
             if (!Directory.Exists(_Path))
             {
