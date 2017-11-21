@@ -11,23 +11,15 @@ namespace EBot.Commands.Modules
     class WarframeCommands : ICommandModule
     {
         private string Name = "Warframe";
-        private CommandsHandler Handler;
-        private BotLog Log;
 
-        public void Setup(CommandsHandler handler, BotLog log)
+        private async Task Alerts(CommandContext ctx)
         {
-            this.Handler = handler;
-            this.Log = log;
-        }
-
-        private async Task Alerts(CommandReplyEmbed embedrep,SocketMessage msg,List<string> args)
-        {
-            string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", this.Log);
-            WGlobal global = JSON.Deserialize<WGlobal>(body,this.Log);
+            string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", ctx.Log);
+            WGlobal global = JSON.Deserialize<WGlobal>(body,ctx.Log);
 
             if (global == null)
             {
-                await embedrep.Danger(msg, "Err", "Looks like I couldn't access date for that!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Err", "Looks like I couldn't access date for that!");
             }
             else
             {
@@ -56,7 +48,7 @@ namespace EBot.Commands.Modules
                         }
                     }
 
-                    await embedrep.Good(msg, "Warframe Alert #" + (i + 1),
+                    await ctx.EmbedReply.Good(ctx.Message, "Warframe Alert #" + (i + 1),
                           "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
                         + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
                         + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"
@@ -68,18 +60,18 @@ namespace EBot.Commands.Modules
 
         }
 
-        public void Load()
+        public void Load(CommandHandler handler,BotLog log)
         {
-            this.Handler.LoadCommand("walerts",this.Alerts, "Gets the ongoing alerts information","walerts",this.Name);
+            handler.LoadCommand("walerts",this.Alerts, "Gets the ongoing alerts information","walerts",this.Name);
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
         }
 
-        public void Unload()
+        public void Unload(CommandHandler handler,BotLog log)
         {
-            this.Handler.UnloadCommand("walerts");
+            handler.UnloadCommand("walerts");
 
-            this.Log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
         }
     }
 }

@@ -19,12 +19,13 @@ namespace EBot
         private string _Prefix;
         private DiscordSocketClient _Discord;
         private DiscordRestClient _DiscordREST;
-        private CommandsHandler _Handler;
+        private CommandHandler _Handler;
         private CommandSource _Source;
         private BotLog _Log;
         private LogEvent _Event;
         private SpyLog _Spy;
         private string _Token;
+        private bool _HasInitialized;
 
         public EBotClient(string token,string prefix)
         {
@@ -36,10 +37,11 @@ namespace EBot
             this._Log = new BotLog();
             this._Event = new LogEvent();
             this._Spy = new SpyLog();
-            this._Handler = new CommandsHandler();
+            this._Handler = new CommandHandler();
             this._Source = new CommandSource(this._Handler,this._Log);
             this._Discord = new DiscordSocketClient();
             this._DiscordREST = new DiscordRestClient();
+            this._HasInitialized = false;
 
             this._Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
             this._Log.Notify("Initializing");
@@ -69,7 +71,7 @@ namespace EBot
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
         public DiscordSocketClient Discord { get => this._Discord; set => this._Discord = value; }
         public DiscordRestClient DiscordREST { get => this._DiscordREST; set => this._DiscordREST = value; }
-        public CommandsHandler Handler { get => this._Handler; set => this._Handler = value; }
+        public CommandHandler Handler { get => this._Handler; set => this._Handler = value; }
         public CommandSource Source { get => this._Source; set => this._Source = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
         public LogEvent Event { get => this._Event; set => this._Event = value; }
@@ -79,7 +81,6 @@ namespace EBot
         {
             string mention = "<@" + EBotCredentials.BOT_ID_MAIN + ">";
             SocketChannel chan = msg.Channel as SocketChannel;
-            string username = msg.Author.Username;
             string input = msg.Content;
 
             if (ismention)
@@ -96,7 +97,7 @@ namespace EBot
 
             string result = await ChatBot.Ask(chan, input, this._Log);
 
-            await this._Handler.EmbedReply.Normal(msg, username, result);
+            await this._Handler.EmbedReply.Normal(msg, "ChatBot", result);
         }
 
         private async Task OnChatAsync(SocketMessage msg)
@@ -148,13 +149,18 @@ namespace EBot
                 await this._Discord.LoginAsync(TokenType.Bot,_Token,true);
                 await this._Discord.StartAsync();
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
+                await LuaEnv.Initialize(this);
 
                 this._Discord.Ready += async () =>
                 {
                     await this._Discord.SetStatusAsync(UserStatus.Online);
                     await this._Discord.SetGameAsync(this._Prefix + "help", EBotCredentials.TWITCH_URL, StreamType.Twitch);
-                    ClientMemoryStream.Initialize(this);
-                    await LuaEnv.Initialize(this);
+
+                    if (!this._HasInitialized)
+                    {
+                        ClientMemoryStream.Initialize(this);
+                        this._HasInitialized = true;
+                    }
                 };
 
                 this._Discord.MessageReceived += async msg =>

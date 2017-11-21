@@ -8,9 +8,9 @@ using Discord.Rest;
 
 namespace EBot.Commands
 {
-    public class CommandsHandler
+    public class CommandHandler
     {
-        public delegate Task CommandCallback(CommandReplyEmbed embedrep, SocketMessage msg, List<String> args);
+        public delegate Task CommandCallback(CommandContext ctx);
 
         private DiscordSocketClient _Client;
         private BotLog _Log;
@@ -21,7 +21,7 @@ namespace EBot.Commands
         private Dictionary<string, string> _LastChannelPictureURL;
         public DiscordRestClient _RESTClient;
 
-        public CommandsHandler()
+        public CommandHandler()
         {
             this._EmbedReply = new CommandReplyEmbed
             {
@@ -60,9 +60,9 @@ namespace EBot.Commands
             {
                 if (callback == null)
                 {
-                    callback = async (CommandReplyEmbed embedrep, SocketMessage msg, List<string> args) => 
+                    callback = async (CommandContext ctx) => 
                     {
-                        await embedrep.Good(msg, null, "Hello world!");
+                        await ctx.EmbedReply.Good(ctx.Message, null, "Hello world!");
                     };
                 }
 
@@ -143,6 +143,25 @@ namespace EBot.Commands
             this._Log.Nice(head,color, log);
         }
 
+        private CommandContext CreateCmdContext(SocketMessage msg,string cmd,List<string> args)
+        {
+            CommandContext ctx = new CommandContext
+            {
+                Client = this._Client,
+                RESTClient = this._RESTClient,
+                Prefix = this._Prefix,
+                EmbedReply = this._EmbedReply,
+                Message = msg,
+                Command = cmd,
+                Arguments = args,
+                LastPictureURL = this._LastChannelPictureURL.TryGetValue(msg.Channel.ToString(), out string last) ? last : "",
+                Log = this._Log,
+                Commands = this._Cmds
+            };
+
+            return ctx;
+        }
+
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
@@ -152,7 +171,7 @@ namespace EBot.Commands
             {
                 try
                 {
-                    await retrieved.Run(this._EmbedReply, msg, args);
+                    await retrieved.Run(this.CreateCmdContext(msg,cmd,args));
                     this.LogCommand(msg, cmd, args, (msg.Channel is IGuildChannel));
                 }
                 catch (Exception e)
@@ -275,7 +294,7 @@ namespace EBot.Commands
                 this.GetDeletedCommandMessages(mess).RunSynchronously();
             };
 
-            this._Source.LoadCommands(this, this.Log);
+            this._Source.LoadCommands();
             this._Client.MessageReceived += async msg =>
             {
                 this.MainCall(msg);

@@ -11,10 +11,10 @@ namespace EBot.Commands
     {
 
         private BotLog _Log;
-        private CommandsHandler _Handler;
+        private CommandHandler _Handler;
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
-        public CommandsHandler Handler { get => this._Handler; set => this._Handler = value; }
+        public CommandHandler Handler { get => this._Handler; set => this._Handler = value; }
 
         public async Task Send(SocketMessage msg,string header="",string content="",Color color=new Color())
         {

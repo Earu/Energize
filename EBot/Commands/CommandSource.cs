@@ -12,8 +12,10 @@ namespace EBot.Commands
         private ImageCommands _Image;
         private FunCommands _Fun;
         private WarframeCommands _Warframe;
+        private CommandHandler _Handler;
+        private BotLog _Log;
 
-        public CommandSource(CommandsHandler handler,BotLog log)
+        public CommandSource(CommandHandler handler,BotLog log)
         {
             this._Utils = new UtilsCommands();
             this._Social = new SocialCommands();
@@ -22,41 +24,30 @@ namespace EBot.Commands
             this._Image = new ImageCommands();
             this._Fun = new FunCommands();
             this._Warframe = new WarframeCommands();
-
-            Setup(handler, log);
+            this._Handler = handler;
+            this._Log = log;
         }
 
-        private void Setup(CommandsHandler handler,BotLog log)
+        public void LoadCommands()
         {
-            this._Utils.Setup(handler, log);
-            this._Social.Setup(handler, log);
-            this._NSFW.Setup(handler, log);
-            this._Search.Setup(handler, log);
-            this._Image.Setup(handler, log);
-            this._Fun.Setup(handler, log);
-            this._Warframe.Setup(handler, log);
+            this._Utils.Load(_Handler,_Log);
+            this._Social.Load(_Handler, _Log);
+            this._NSFW.Load(_Handler, _Log);
+            this._Search.Load(_Handler, _Log);
+            this._Image.Load(_Handler, _Log);
+            this._Fun.Load(_Handler, _Log);
+            this._Warframe.Load(_Handler, _Log);
         }
 
-        public void LoadCommands(CommandsHandler handler,BotLog log)
+        public void UnloadCommands()
         {
-            this._Utils.Load();
-            this._Social.Load();
-            this._NSFW.Load();
-            this._Search.Load();
-            this._Image.Load();
-            this._Fun.Load();
-            this._Warframe.Load();
-        }
-
-        public void UnloadCommands(CommandsHandler handler,BotLog log)
-        {
-            this._Utils.Unload();
-            this._Social.Unload();
-            this._NSFW.Unload();
-            this._Search.Unload();
-            this._Image.Unload();
-            this._Fun.Unload();
-            this._Warframe.Unload();
+            this._Utils.Unload(_Handler, _Log);
+            this._Social.Unload(_Handler, _Log);
+            this._NSFW.Unload(_Handler, _Log);
+            this._Search.Unload(_Handler, _Log);
+            this._Image.Unload(_Handler, _Log);
+            this._Fun.Unload(_Handler, _Log);
+            this._Warframe.Unload(_Handler, _Log);
         }
     }
 }

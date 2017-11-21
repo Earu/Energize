@@ -14,15 +14,18 @@ namespace EBot.Utils
     class LuaEnv
     {
         private static string _Path = "External/Lua/SavedScripts";
-        private static EBotClient _Client;
         private static RestApplication _App;
-        private static Dictionary<SocketChannel, Lua> _States = new Dictionary<SocketChannel, Lua>();
+        private static Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
         private static string ScriptSeparator = "\n-- GEN --\n";
 
         public static async Task Initialize(EBotClient client)
         {
-            _Client = client;
             _App = await client.Discord.GetApplicationInfoAsync();
+
+            if (!Directory.Exists(_Path))
+            {
+                Directory.CreateDirectory(_Path);
+            }
 
             foreach (string filepath in Directory.GetFiles(_Path))
             {
@@ -31,18 +34,93 @@ namespace EBot.Utils
                 string id = dir[dir.Length - 1];
                 id = id.Remove(id.Length - 4);
                 ulong chanid = ulong.Parse(id);
-                SocketChannel chan = _Client.Discord.GetChannel(chanid);
 
-                Lua state = CreateState(chan);
+                Lua state = CreateState(chanid);
                 string script = File.ReadAllText(path);
-                string[] parts = script.Split(ScriptSeparator);
+                string[] parts = script.Split(ScriptSeparator,StringSplitOptions.RemoveEmptyEntries);
                 foreach(string part in parts)
                 {
-                    state["SCRIPT"] = part;
-                    state.DoString("sandbox(SCRIPT)");
-                    state["SCRIPT"] = null;
+                    state["PART"] = part.Trim();
+                    state.DoString(@"sandbox(PART)");
+                    state["PART"] = null;
                 }
             }
+
+            client.Discord.UserJoined += async user =>
+            {
+                IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
+                foreach(SocketGuildChannel chan in channels)
+                {
+                    if (_States.ContainsKey(chan.Id))
+                    {
+                        Lua state = _States[chan.Id];
+                        state["USER"] = user as SocketUser;
+                        Object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
+                        state["USER"] = null;
+                        await client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                    }
+                }
+            };
+
+            client.Discord.UserLeft += async user =>
+            {
+                IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
+                foreach (SocketGuildChannel chan in channels)
+                {
+                    if (_States.ContainsKey(chan.Id))
+                    {
+                        Lua state = _States[chan.Id];
+                        state["USER"] = user as SocketUser;
+                        Object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
+                        state["USER"] = null;
+                        await client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                    }
+
+                }
+            };
+
+            client.Discord.MessageReceived += async msg =>
+            {
+                if (_States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
+                {
+                    Lua state = _States[msg.Channel.Id];
+                    state["USER"] = msg.Author;
+                    state["MESSAGE"] = msg;
+                    Object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
+                    state["USER"] = null;
+                    state["MESSAGE"] = null;
+                    await client.Handler.EmbedReply.Send((msg.Channel as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                }
+            };
+
+            client.Discord.MessageDeleted += async (msg, c) =>
+            {
+                IMessage mess = await msg.GetOrDownloadAsync();
+                if (_States.ContainsKey(mess.Channel.Id) && mess.Author.Id != _App.Id)
+                {
+                    Lua state = _States[c.Id];
+                    state["MESSAGE"] = mess as SocketMessage;
+                    state["USER"] = mess.Author as SocketUser;
+                    Object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
+                    state["USER"] = null;
+                    state["MESSAGE"] = null;
+                    await client.Handler.EmbedReply.Send((mess.Channel as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                }
+            };
+
+            client.Discord.MessageUpdated += async (cache, msg, c) =>
+            {
+                if (_States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
+                {
+                    Lua state = _States[c.Id];
+                    state["USER"] = msg.Author as SocketUser;
+                    state["MESSAGE"] = msg as SocketMessage;
+                    Object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
+                    state["USER"] = null;
+                    state["MESSAGE"] = null;
+                    await client.Handler.EmbedReply.Send(c, "Lua Event", returns[0].ToString());
+                }
+            };
         }
 
         private static string SafeCode(Lua state,string code)
@@ -61,100 +139,13 @@ namespace EBot.Utils
                 end";
         }
 
-        private static Lua CreateState(SocketChannel chan)
+        private static Lua CreateState(ulong chanid)
         {
-            try
-            {
-                Lua state = new Lua();
-                state.DoFile("External/Lua/Init.lua");
-                if (chan is IGuildChannel)
-                {
-                    IGuildChannel c = chan as IGuildChannel;
-                    state.DoString(@"
-                    ENV.CHANNEL_ID   = tonumber([[" + chan.Id.ToString() + @"]])
-                    ENV.CHANNEL_NAME = [[" + c.Name + @"]]
-                    ENV.GUILD_ID     = tonumber([[" + c.GuildId + @"]])
-                    ENV.GUILD_NAME   = [[" + c.Guild.Name + @"]]
-                ", "Startup");
+            Lua state = new Lua();
+            string sandbox = File.ReadAllText("./External/Lua/Init.lua");
+            state.DoString(sandbox);
 
-                    _Client.Discord.UserJoined += async user =>
-                    {
-                        if (user.Guild == c.Guild)
-                        {
-                            state["USER"] = user as SocketUser;
-                            Object[] returns = state.DoString(@"return event.fire('OnMemberAdded',USER)");
-                            state["USER"] = null;
-                            await _Client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "LuaEvent", returns[0].ToString());
-                        }
-                    };
-
-                    _Client.Discord.UserLeft += async user =>
-                    {
-                        if (user.Guild == c.Guild)
-                        {
-                            state["USER"] = user as SocketUser;
-                            Object[] returns = state.DoString(@"return event.fire('OnMemberRemoved',USER)");
-                            state["USER"] = null;
-                            await _Client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "LuaEvent", returns[0].ToString());
-                        }
-                    };
-                }
-                else
-                {
-                    IDMChannel c = chan as IDMChannel;
-                    state.DoString(@"
-                    ENV.CHANNEL_ID   = tonumber([[" + c.Id.ToString() + @"]])
-                    ENV.CHANNEL_NAME = [[" + c.Name + @"]]
-                ", "Startup");
-                }
-
-                _Client.Discord.MessageReceived += async msg =>
-                {
-                    if ((msg.Channel as SocketChannel) == chan && msg.Author.Id != _App.Id)
-                    {
-                        state["USER"] = msg.Author;
-                        state["MESSAGE"] = msg;
-                        Object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
-                        state["USER"] = null;
-                        state["MESSAGE"] = null;
-                        await _Client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "LuaEvent", returns[0].ToString());
-                    }
-                };
-
-                _Client.Discord.MessageDeleted += async (msg, c) =>
-                {
-                    IMessage mess = await msg.DownloadAsync();
-                    if ((c as SocketChannel) == chan && mess.Author.Id != _App.Id)
-                    {
-                        state["MESSAGE"] = mess as SocketMessage;
-                        state["USER"] = mess.Author as SocketUser;
-                        Object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
-                        state["USER"] = null;
-                        state["MESSAGE"] = null;
-                        await _Client.Handler.EmbedReply.Send(c, "LuaEvent", returns[0].ToString());
-                    }
-                };
-
-                _Client.Discord.MessageUpdated += async (cache, msg, c) =>
-                {
-                    if ((c as SocketChannel) == chan && msg.Author.Id != _App.Id)
-                    {
-                        state["USER"] = msg.Author as SocketUser;
-                        state["MESSAGE"] = msg as SocketMessage;
-                        Object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
-                        state["USER"] = null;
-                        state["MESSAGE"] = null;
-                        await _Client.Handler.EmbedReply.Send(c, "LuaEvent", returns[0].ToString());
-                    }
-                };
-
-                return state;
-            }catch(LuaException e)
-            {
-                BotLog.Debug(e.Message);
-            }
-
-            return new Lua();
+            return state;
         }
 
         private static void Save(SocketChannel chan,string code)
@@ -167,9 +158,9 @@ namespace EBot.Utils
         public static bool Run(SocketMessage msg,string code,out List<Object> returns,out string error,BotLog log)
         {
             SocketChannel chan = msg.Channel as SocketChannel;
-            if (!_States.ContainsKey(chan) || _States[chan] == null)
+            if (!_States.ContainsKey(chan.Id) || _States[chan.Id] == null)
             {
-                _States[chan] = CreateState(chan);
+                _States[chan.Id] = CreateState(chan.Id);
             }
 
             Save(chan, code);
@@ -178,7 +169,7 @@ namespace EBot.Utils
 
             try
             {
-                Lua state = _States[chan];
+                Lua state = _States[chan.Id];
                 code = SafeCode(state,code);
 
                 Object[] parts = state.DoString(code,"SANDBOX");
@@ -201,17 +192,17 @@ namespace EBot.Utils
             return success;
         }
 
-        public static void Reset(SocketChannel chan)
+        public static void Reset(ulong chanid)
         {
-            if (_States.ContainsKey(chan))
+            if (_States.ContainsKey(chanid))
             {
-                _States[chan].DoString("collectgarbage()");
-                _States[chan].Close();
-                _States[chan].Dispose();
-                string path = _Path + "/" + chan.Id + ".lua";
+                _States[chanid].DoString("collectgarbage()");
+                _States[chanid].Close();
+                _States[chanid].Dispose();
+                string path = _Path + "/" + chanid + ".lua";
                 File.Delete(path);
             }
-            _States[chan] = null;
+            _States[chanid] = null;
         }
     }
 }
