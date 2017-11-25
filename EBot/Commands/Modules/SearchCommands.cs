@@ -1,22 +1,20 @@
 ﻿using EBot.Utils;
 using EBot.Logs;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace EBot.Commands.Modules
 {
-    class SearchCommands : ICommandModule
+    [CommandModule(Name="Search")]
+    class SearchCommands : CommandModule,ICommandModule
     {
-        private string Name = "Search";
-
+        [Command(Name="urban",Help="Searches for a definition on urban dictionnary",Usage="urban <search>")]
         private async Task SearchUrban(CommandContext ctx)
         {
             string search = "";
             if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Urban", "No entry to look for was given");
+                ctx.EmbedReply.Danger(ctx.Message, "Urban", "No entry to look for was given");
             }
             else
             {
@@ -38,13 +36,13 @@ namespace EBot.Commands.Modules
 
                 if (global == null)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Err", "There was no data to use for this!");
+                    ctx.EmbedReply.Danger(ctx.Message, "Urban", "There was no data to use for this!");
                 }
                 else
                 {
                     if (global.list.Length == 0)
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message, "Arf!", "Looks like I couldn't find anything!");
+                        ctx.EmbedReply.Danger(ctx.Message, "Urban", "Looks like I couldn't find anything!");
                     }
                     else
                     {
@@ -53,14 +51,14 @@ namespace EBot.Commands.Modules
                             Urban.UWord wordobj = global.list[page];
                             bool hasexample = string.IsNullOrWhiteSpace(wordobj.example);
                             string smalldef = wordobj.definition.Length > 300 ? wordobj.definition.Remove(300) + "..." : wordobj.definition;
-                            await ctx.EmbedReply.Good(ctx.Message, "Definition #" + (page + 1),
+                            ctx.EmbedReply.Good(ctx.Message, "Definition " + (page + 1) + "/" + global.list.Length,
                                 "**" + wordobj.permalink + "**\n\n"
                                 + smalldef + (!hasexample ? "\n\nExample:\n\n*" + wordobj.example + "*" : "") + "\n\n" +
                                 ":thumbsup: x" + wordobj.thumbs_up + "\t :thumbsdown: x" + wordobj.thumbs_down);
                         }
                         else
                         {
-                            await ctx.EmbedReply.Danger(ctx.Message, "uh", "No result for definition n°" + (page+1));
+                            ctx.EmbedReply.Danger(ctx.Message, "Urban", "No result for definition n°" + (page+1));
                         }
                     }
                 }
@@ -72,18 +70,11 @@ namespace EBot.Commands.Modules
             string apikey = EBotCredentials.GOOGLE_API_KEY;
         }
 
-        public void Load(CommandHandler handler,BotLog log)
+        public void Initialize(CommandHandler handler,BotLog log)
         {
-            handler.LoadCommand("urban", this.SearchUrban, "Lookup a definition on urban dictionnary","urban \"search\"",this.Name);
+            handler.LoadCommand(this.SearchUrban);
 
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
-        }
-
-        public void Unload(CommandHandler handler,BotLog log)
-        {
-            handler.UnloadCommand("urban");
-
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

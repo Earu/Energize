@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace EBot.Commands.Modules
 {
-    class UtilsCommands : ICommandModule
+    [CommandModule(Name="Utils")]
+    class UtilsCommands : CommandModule,ICommandModule
     {
-        private string Name = "Util";
-
+        [Command(Name="ping",Help="Pings the bot",Usage="ping <nothing>")]
         private async Task Ping(CommandContext ctx)
         {
             DateTimeOffset createtimestamp = ctx.Message.CreatedAt;
@@ -22,59 +22,68 @@ namespace EBot.Commands.Modules
             int diff = timestamp.Millisecond / 10;
 
 
-            await ctx.EmbedReply.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
+            ctx.EmbedReply.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
                 ":clock1: Bot: " + ctx.Client.Latency + "ms");
         }
 
+        [Command(Name="help",Help="This command",Usage="help <command|nothing>")]
         private async Task Help(CommandContext ctx)
         {
             string arg = ctx.Arguments[0];
             if (!string.IsNullOrWhiteSpace(arg))
             {
                 bool retrieved = ctx.Commands.TryGetValue(arg.ToLower().Trim(), out Command cmd);
-                if (retrieved)
+                if (retrieved && cmd.Loaded)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg + " ]", cmd.GetHelp());
+                    ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg + " ]", cmd.GetHelp());
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                    ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
                 }
             }
             else
             {
-                if (!(ctx.Message.Channel is IDMChannel))
+                if (!ctx.IsPrivate)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Help", "Check your private messages " + ctx.Message.Author.Mention);
+                    ctx.EmbedReply.Good(ctx.Message, "Help", "Check your private messages " + ctx.Message.Author.Mention);
                 }
 
                 string result = "";
                 foreach (KeyValuePair<string,List<Command>> module in Command.Modules)
                 {
-                    List<Command> cmds = module.Value;
-                    result += "**" + module.Key.ToUpper() + ":**\n";
-                    result += "``";
-                    foreach(Command cmd in cmds)
+                    if (Command.IsLoadedModule(module.Key))
                     {
-                        result += cmd.Cmd + ",";
+                        List<Command> cmds = module.Value;
+                        result += "**" + module.Key.ToUpper() + ":**\n";
+                        result += "``";
+                        foreach (Command cmd in cmds)
+                        {
+                            if (cmd.Loaded)
+                            {
+                                result += cmd.Cmd + ",";
+                            }
+                        }
+                        result = result.Remove(result.Length - 1);
+                        result += "``\n\n";
                     }
-                    result = result.Remove(result.Length - 1);
-                    result += "``\n\n";
                 }
 
-                await ctx.EmbedReply.RespondByDM(ctx.Message, "Help [ all ]", result, new Color());
+                await ctx.EmbedReply.RespondByDM(ctx.Message, "Help [ all ]", result);
             }
         }
 
+        [Command(Name="say",Help="Makes me say something",Usage="say <sentence>")]
         private async Task Say(CommandContext ctx)
         {
             string tosay = string.Join(",", ctx.Arguments);
-            await ctx.EmbedReply.Good(ctx.Message,"Say", tosay);
+            ctx.EmbedReply.Good(ctx.Message,"Say", tosay);
         }
 
+        [Command(Name="server",Help="Gets information about the server",Usage="server <nothing>")]
         private async Task Server(CommandContext ctx)
         {
-            if (ctx.Message.Channel is IGuildChannel)
+            if (!ctx.IsPrivate)
             {
                 SocketGuild guild = (ctx.Message.Channel as IGuildChannel).Guild as SocketGuild;
                 RestUser owner = await ctx.RESTClient.GetUserAsync(guild.OwnerId);
@@ -106,17 +115,18 @@ namespace EBot.Commands.Modules
                 builder.WithThumbnailUrl(guild.IconUrl);
                 builder.WithDescription(info);
                 builder.WithFooter(guild.Name);
-                builder.WithColor(new Color());
+                builder.WithColor(ctx.EmbedReply.ColorGood);
                 builder.WithAuthor(ctx.Message.Author);
             
-                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                ctx.EmbedReply.Send(ctx.Message, builder.Build());
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Hey!", "You can't do that in a DM channel!");
+                ctx.EmbedReply.Danger(ctx.Message, "Server", "You can't do that in a DM channel!");
             }
         }
 
+        [Command(Name="info",Help="Gets information relative to the bot",Usage="info <nothing>")]
         private async Task Info(CommandContext ctx)
         {
             ClientInfo info = await ClientMemoryStream.GetClientInfo();
@@ -133,18 +143,20 @@ namespace EBot.Commands.Modules
             builder.WithFooter("Info");
             builder.WithThumbnailUrl(info.Avatar);
             builder.WithDescription(desc);
-            builder.WithColor(new Color());
+            builder.WithColor(ctx.EmbedReply.ColorGood);
             builder.WithAuthor(ctx.Message.Author);
 
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
+        [Command(Name="invite",Help="Gets the invite link for the bot",Usage="invite <nothing>")]
         private async Task Invite(CommandContext ctx)
         {
             string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotCredentials.BOT_ID_MAIN + "&scope=bot&permissions=0";
-            await ctx.EmbedReply.Good(ctx.Message, "Invite", invite);
+            ctx.EmbedReply.Good(ctx.Message, "Invite", invite);
         }
 
+        [Command(Name="l",Help="Runs lua code",Usage="l <code>")]
         private async Task Lua(CommandContext ctx)
         {
             string code = string.Join(',', ctx.Arguments);
@@ -156,51 +168,152 @@ namespace EBot.Commands.Modules
                 string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Lua", ":ok_hand: (nil or no value was returned)");
+                    ctx.EmbedReply.Good(ctx.Message, "Lua", ":ok_hand: (nil or no value was returned)");
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Lua",display);
+                    ctx.EmbedReply.Good(ctx.Message, "Lua",display);
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Lua",error);
+                ctx.EmbedReply.Danger(ctx.Message,"Lua",error);
             }
         }
 
+        [Command(Name="lr",Help="Reset the lua state of the channel",Usage="lr <nothing>")]
         private async Task LuaReset(CommandContext ctx)
         {
-            LuaEnv.Reset(ctx.Message.Channel.Id);
-            await ctx.EmbedReply.Good(ctx.Message, "LuaReset", "Lua state was reset for this channel");
+            LuaEnv.Reset(ctx.Message.Channel.Id,ctx.Log);
+            ctx.EmbedReply.Good(ctx.Message, "Lua Reset", "Lua state was reset for this channel");
         }
 
-        public void Load(CommandHandler handler,BotLog log)
+        [Command(Name="unload",Help="Unloads a module or a command, owner only",Usage="unload <cmd|module>")]
+        private async Task UnloadCommand(CommandContext ctx)
         {
-            handler.LoadCommand("say", this.Say, "Makes the bot say something","say \"sentence\"", this.Name);
-            handler.LoadCommand("ping", this.Ping, "Pings the bot","ping", this.Name);
-            handler.LoadCommand("help", this.Help, "This command","help \"command|nothing\"", this.Name);
-            handler.LoadCommand("server", this.Server, "Get the information relative to the discord server","server", this.Name);
-            handler.LoadCommand("info", this.Info, "Get information relative to the bot","info", this.Name);
-            handler.LoadCommand("invite", this.Invite, "Get the invite link of the bot","invite", this.Name);
-            handler.LoadCommand("l", this.Lua, "Run lua code","l luacode", this.Name);
-            handler.LoadCommand("lr", this.LuaReset, "Reset the lua state of the channel","lr", this.Name);
+            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
+            if(ctx.Message.Author.Id == app.Owner.Id)
+            {
+                bool success = false;
+                if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+                {
+                    string arg = ctx.Arguments[0].Trim();
+                    if (Command.Modules.ContainsKey(arg))
+                    {
+                        foreach(Command cmd in Command.Modules[arg])
+                        {
+                            ctx.Handler.UnloadCommand(cmd.Callback);
+                        }
 
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+                        Command.SetLoadedModule(arg, false);
+
+                        ctx.EmbedReply.Good(ctx.Message, "Unload", "Successfully unloaded module \"" + arg + "\"");
+                        success = true;
+                    }
+                    else
+                    {
+                        foreach(KeyValuePair<string,List<Command>> module in Command.Modules)
+                        {
+                            foreach(Command cmd in module.Value)
+                            {
+                                if (cmd.Cmd == arg)
+                                {
+                                    ctx.Handler.UnloadCommand(cmd.Callback);
+
+                                    ctx.EmbedReply.Good(ctx.Message, "Unload", "Unloaded command \"" + arg + "\"");
+                                    success = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!success)
+                    {
+                        ctx.EmbedReply.Danger(ctx.Message, "Unload", "No command or module with that name was found!");
+                    }
+                }
+                else
+                {
+                    ctx.EmbedReply.Danger(ctx.Message, "Unload", "You must provide a command or a module to unload!");
+                }
+            }
+            else
+            {
+                ctx.EmbedReply.Danger(ctx.Message, "Unload", "You are not the owner of this bot!");
+            }
         }
 
-        public void Unload(CommandHandler handler,BotLog log)
+        [Command(Name="load",Help="Loads a module or a command, owner only",Usage="load <cmd|module>")]
+        private async Task LoadCommand(CommandContext ctx)
         {
-            handler.UnloadCommand("say");
-            handler.UnloadCommand("ping");
-            handler.UnloadCommand("help");
-            handler.UnloadCommand("server");
-            handler.UnloadCommand("info");
-            handler.UnloadCommand("invite");
-            handler.UnloadCommand("l");
-            handler.UnloadCommand("lr");
+            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
+            if (ctx.Message.Author.Id == app.Owner.Id)
+            {
+                bool success = false;
+                if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+                {
+                    string arg = ctx.Arguments[0].Trim();
+                    if (Command.Modules.ContainsKey(arg))
+                    {
+                        foreach (Command cmd in Command.Modules[arg])
+                        {
+                            ctx.Handler.LoadCommand(cmd.Callback);
+                        }
 
-            log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
+                        Command.SetLoadedModule(arg, true);
+
+                        ctx.EmbedReply.Good(ctx.Message, "Load", "Successfully loaded module \"" + arg + "\"");
+                        success = true;
+                    }
+                    else
+                    {
+                        foreach (KeyValuePair<string, List<Command>> module in Command.Modules)
+                        {
+                            foreach (Command cmd in module.Value)
+                            {
+                                if (cmd.Cmd == arg)
+                                {
+                                    ctx.Handler.LoadCommand(cmd.Callback);
+
+                                    ctx.EmbedReply.Good(ctx.Message, "Load", "Loaded command \"" + arg + "\"");
+                                    success = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!success)
+                    {
+                        ctx.EmbedReply.Danger(ctx.Message, "Load", "No command or module with that name was found!");
+                    }
+                }
+                else
+                {
+                    ctx.EmbedReply.Danger(ctx.Message, "Load", "You must provide a command or a module to unload!");
+                }
+            }
+            else
+            {
+                ctx.EmbedReply.Danger(ctx.Message, "Load", "You are not the owner of this bot!");
+            }
+        }
+
+        public void Initialize(CommandHandler handler,BotLog log)
+        {
+            handler.LoadCommand(this.Say);
+            handler.LoadCommand(this.Ping);
+            handler.LoadCommand(this.Help);
+            handler.LoadCommand(this.Server);
+            handler.LoadCommand(this.Info);
+            handler.LoadCommand(this.Invite);
+            handler.LoadCommand(this.Lua);
+            handler.LoadCommand(this.LuaReset);
+            handler.LoadCommand(this.LoadCommand);
+            handler.LoadCommand(this.UnloadCommand);
+
+            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

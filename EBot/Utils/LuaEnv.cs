@@ -21,18 +21,6 @@ namespace EBot.Utils
         public static async Task Initialize(EBotClient client)
         {
             _App = await client.Discord.GetApplicationInfoAsync();
-            
-            try
-            {
-                if (!Directory.Exists(_Path))
-                {
-                    Directory.CreateDirectory(_Path);
-                }
-            }
-            catch (Exception ex)
-            {
-                BotLog.Debug(ex.Message);
-            }
 
             if (!Directory.Exists(_Path))
             {
@@ -69,7 +57,7 @@ namespace EBot.Utils
                         state["USER"] = user as SocketUser;
                         Object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
                         state["USER"] = null;
-                        await client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                        client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
                     }
                 }
             };
@@ -85,7 +73,7 @@ namespace EBot.Utils
                         state["USER"] = user as SocketUser;
                         Object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
                         state["USER"] = null;
-                        await client.Handler.EmbedReply.Send((chan as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                        client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
                     }
 
                 }
@@ -101,22 +89,21 @@ namespace EBot.Utils
                     Object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    await client.Handler.EmbedReply.Send((msg.Channel as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                    client.Handler.EmbedReply.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
             client.Discord.MessageDeleted += async (msg, c) =>
             {
-                IMessage mess = await msg.GetOrDownloadAsync();
-                if (_States.ContainsKey(mess.Channel.Id) && mess.Author.Id != _App.Id)
+                if (msg.HasValue && _States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
                 {
                     Lua state = _States[c.Id];
-                    state["MESSAGE"] = mess as SocketMessage;
-                    state["USER"] = mess.Author as SocketUser;
+                    state["MESSAGE"] = msg.Value as SocketMessage;
+                    state["USER"] = msg.Value.Author as SocketUser;
                     Object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    await client.Handler.EmbedReply.Send((mess.Channel as ISocketMessageChannel), "Lua Event", returns[0].ToString());
+                    client.Handler.EmbedReply.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
@@ -130,7 +117,31 @@ namespace EBot.Utils
                     Object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    await client.Handler.EmbedReply.Send(c, "Lua Event", returns[0].ToString());
+                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                }
+            };
+
+            client.Discord.ReactionAdded += async (cache,c,react) => 
+            {
+                if(_States.ContainsKey(c.Id) && react.UserId != _App.Id)
+                {
+                    Lua state = _States[c.Id];
+                    state["REACTION"] = react;
+                    Object[] returns = state.DoString(@"return even.fire('OnReactionAdded',REACTION)");
+                    state["REACTION"] = null;
+                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                }
+            };
+
+            client.Discord.ReactionRemoved += async (cache, c, react) =>
+            {
+                if (_States.ContainsKey(c.Id) && react.UserId != _App.Id)
+                {
+                    Lua state = _States[c.Id];
+                    state["REACTION"] = react;
+                    Object[] returns = state.DoString(@"return even.fire('OnReactionRemoved',REACTION)");
+                    state["REACTION"] = null;
+                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
         }
@@ -204,11 +215,18 @@ namespace EBot.Utils
             return success;
         }
 
-        public static void Reset(ulong chanid)
+        public static void Reset(ulong chanid,BotLog log)
         {
             if (_States.ContainsKey(chanid))
             {
-                _States[chanid].DoString("collectgarbage()");
+                try
+                {
+                    _States[chanid].DoString("collectgarbage()");
+                }
+                catch
+                {
+                    log.Nice("LuaEnv", ConsoleColor.Red, "The state couldn't call collectgarbage()");
+                }
                 _States[chanid].Close();
                 _States[chanid].Dispose();
                 string path = _Path + "/" + chanid + ".lua";

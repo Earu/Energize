@@ -2,7 +2,6 @@
 using EBot.Logs;
 using EBot.MachineLearning;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord.WebSocket;
@@ -11,41 +10,40 @@ using Discord;
 
 namespace EBot.Commands.Modules
 {
-    class FunCommands : ICommandModule
+    [CommandModule(Name="Fun")]
+    class FunCommands : CommandModule,ICommandModule
     {
-
-        private string Name = "Fun";
-
+        [Command(Name="ascii",Help="Makes a text/sentence ascii art",Usage="ascii <sentence>")]
         private async Task ASCII(CommandContext ctx)
         {
             if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Nope", "You didn't provide any word or sentence!");
+                ctx.EmbedReply.Danger(ctx.Message, "ASCII", "You didn't provide any word or sentence!");
             }
             else
             {
                 string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Arguments[0],ctx.Log);
                 if (body.Length > 2000)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
+                    ctx.EmbedReply.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
                 }
                 else
                 {
-                    await ctx.Message.Channel.SendMessageAsync("```\n" + body + "\n```");
+                    ctx.EmbedReply.Good(ctx.Message,"ASCII","```\n" + body + "\n```");
                 }
 
             }
         }
 
+        [Command(Name="describe",Help="Does a description of a user",Usage="describe <@user>")]
         private async Task Describe(CommandContext ctx)
         {
             string[] adjs = CommandsData.Adjectives;
             string[] nouns = CommandsData.Nouns;
             SocketUser toping = ctx.Message.Author;
-            if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]) && ctx.Message.MentionedUsers.Count > 0)
+            if (ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
-                IReadOnlyList<SocketUser> users = ctx.Message.MentionedUsers as IReadOnlyList<SocketUser>;
-                toping = users[0];
+                toping = user;
             }
 
             Random random = new Random();
@@ -81,9 +79,10 @@ namespace EBot.Commands.Modules
                     break;
                 }
             }
-            await ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
+            ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
+        [Command(Name="letters",Help="Transforms a sentence into letter emotes",Usage="letters <sentence>")]
         private async Task Letters(CommandContext ctx)
         {
             string input = ctx.Arguments[0];
@@ -101,14 +100,15 @@ namespace EBot.Commands.Modules
                     result += "\t";
                 }
             }
-            await ctx.EmbedReply.Good(ctx.Message,"Letters", result);
+            ctx.EmbedReply.Good(ctx.Message,"Letters", result);
         }
 
+        [Command(Name="8ball",Help="Gives a negative or positive answer to a question",Usage="8ball <question>")]
         private async Task EightBalls(CommandContext ctx)
         {
             if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Nope", "You didn't provide any word or sentence!");
+                ctx.EmbedReply.Danger(ctx.Message, "8ball", "You didn't provide any word or sentence!");
             }
             else
             {
@@ -116,16 +116,16 @@ namespace EBot.Commands.Modules
                 string[] answers = CommandsData.HeightBallAnswers;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
-                await ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
-
+                ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
             }
         }
 
+        [Command(Name="pick",Help="Picks a choice among those given",Usage="pick <choice>,<choice>,<choice|nothing>,...")]
         private async Task Pick(CommandContext ctx)
         {
             if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Nope", "You didn't provide any/enough word(s)!");
+                ctx.EmbedReply.Danger(ctx.Message, "Pick", "You didn't provide any/enough word(s)!");
             }
             else
             {
@@ -134,38 +134,36 @@ namespace EBot.Commands.Modules
                 string choice = ctx.Arguments[rand.Next(0, ctx.Arguments.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
 
-                await ctx.EmbedReply.Good(ctx.Message,"Pick", answer);
+                ctx.EmbedReply.Good(ctx.Message,"Pick", answer);
             }
         }
 
+        [Command(Name="m",Help="Generates a random sentence based on input",Usage="m <input|nothing>")]
         private async Task Markov(CommandContext ctx)
         {
-            if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+            string sentence = string.Join(",", ctx.Arguments);
+            try
             {
-                string sentence = string.Join(",", ctx.Arguments);
-
-                try
-                {
-                    string generated = await MarkovHandler.Generate(sentence);
-                    await ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
-                }
-                catch(Exception e)
-                {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Markov", "Something went wrong:\n" + e.ToString());
-                }
+                string generated = MarkovHandler.Generate(sentence);
+                ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
             }
-            
+            catch(Exception e)
+            {
+                ctx.EmbedReply.Danger(ctx.Message, "Markov", "Something went wrong:\n" + e.ToString());
+            }
         }
 
+        [Command(Name="chuck",Help="Gets a random chuck norris fact",Usage="chuck <nothing>")]
         private async Task Chuck(CommandContext ctx)
         {
             string endpoint = "https://api.chucknorris.io/jokes/random";
             string json = await HTTP.Fetch(endpoint, ctx.Log);
             FactObject fact = JSON.Deserialize<FactObject>(json, ctx.Log);
 
-            await ctx.EmbedReply.Good(ctx.Message, "Chuck Norris Fact", fact.value);
+            ctx.EmbedReply.Good(ctx.Message, "Chuck Norris Fact", fact.value);
         }
 
+        [Command(Name="meme",Help="Gets a random meme picture",Usage="meme <nothing>")]
         private async Task Meme(CommandContext ctx)
         {
             string endpoint = "https://api.imgflip.com/get_memes";
@@ -177,10 +175,12 @@ namespace EBot.Commands.Modules
             builder.WithAuthor(ctx.Message.Author);
             builder.WithImageUrl(url);
             builder.WithFooter("Meme");
+            builder.WithColor(ctx.EmbedReply.ColorGood);
 
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
+        [Command(Name="crazy",Help="Make a sentence look crazy",Usage="crazy <sentence>")]
         private async Task Crazy(CommandContext ctx)
         {
             string content = string.Join(',', ctx.Arguments);
@@ -201,37 +201,22 @@ namespace EBot.Commands.Modules
                 result += part;
             }
 
-            await ctx.EmbedReply.Good(ctx.Message, "Crazy", result);
+            ctx.EmbedReply.Good(ctx.Message, "Crazy", result);
         }
 
-        public void Load(CommandHandler handler, BotLog log)
+        public void Initialize(CommandHandler handler, BotLog log)
         {
-            handler.LoadCommand("describe", this.Describe, "Random description of a user","describe \"@user\"",this.Name);
-            handler.LoadCommand("letters", this.Letters, "Transforms a sentence into letter emojis","letters \"sentence\"", this.Name);
-            handler.LoadCommand("ascii", this.ASCII, "Transforms a sentence into ascii art","ascii \"sentence\"", this.Name);
-            handler.LoadCommand("8ball", this.EightBalls, "Yes or no answer to a question","8ball \"question\"", this.Name);
-            handler.LoadCommand("pick", this.Pick, "Picks a choice among those given","pick \"choice1\",\"choice2\",\"choice3\",...", this.Name);
-            handler.LoadCommand("m", this.Markov, "Generate a random sentence based on user input","m \"sentence\"",this.Name);
-            handler.LoadCommand("chuck", this.Chuck, "Gets a random chuck norris fact", "chuck", this.Name);
-            handler.LoadCommand("meme", this.Meme, "Gets a random meme", "meme", this.Name);
-            handler.LoadCommand("crazy", this.Crazy, "Make a sentence look crazy", "crazy \"sentence\"", this.Name);
+            handler.LoadCommand(this.Describe);
+            handler.LoadCommand(this.Letters);
+            handler.LoadCommand(this.ASCII);
+            handler.LoadCommand(this.EightBalls);
+            handler.LoadCommand(this.Pick);
+            handler.LoadCommand(this.Markov);
+            handler.LoadCommand(this.Chuck);
+            handler.LoadCommand(this.Meme);
+            handler.LoadCommand(this.Crazy);
 
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
-        }
-
-        public void Unload(CommandHandler handler, BotLog log)
-        {
-            handler.UnloadCommand("describe");
-            handler.UnloadCommand("letters");
-            handler.UnloadCommand("ascii");
-            handler.UnloadCommand("8ball");
-            handler.UnloadCommand("pick");
-            handler.UnloadCommand("m");
-            handler.UnloadCommand("chuck");
-            handler.UnloadCommand("meme");
-            handler.UnloadCommand("crazy");
-
-            log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

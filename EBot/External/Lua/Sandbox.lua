@@ -19,7 +19,7 @@ readonlytable = function(index)
         __metatable = false,
     }
 
-    return setmetatable({},meta);
+    return setmetatable({},meta)
 end
 
 local PRINT_PILE = {}
@@ -60,7 +60,6 @@ ENV.tonumber   = tonumber
 ENV.tostring   = tostring 
 ENV.unpack     = unpack
 ENV._VERSION   = _VERSION
-ENV.xpcall     = xpcall
 ENV.pcall      = pcall
 ENV.print      = print
 ENV.type       = type
@@ -71,13 +70,11 @@ ENV.printtable = printtable
 ENV._G         = ENV
 protect(ENV)
 
-ENV.coroutine = coroutine
 ENV.table     = table
 ENV.math      = math
 ENV.string    = string
 ENV.os        = os
 ENV.event     = event
-protect(ENV.coroutine)
 protect(ENV.table)
 protect(ENV.math)
 protect(ENV.string)
