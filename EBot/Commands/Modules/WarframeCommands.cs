@@ -1,17 +1,15 @@
 ﻿using EBot.Utils;
 using EBot.Logs;
 using System;
-using System.Collections.Generic;
 using EBot.Commands.Warframe;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace EBot.Commands.Modules
 {
-    class WarframeCommands : ICommandModule
+    [CommandModule(Name="Warframe")]
+    class WarframeCommands : CommandModule,ICommandModule
     {
-        private string Name = "Warframe";
-
+        [Command(Name = "walerts", Help = "Gets the warframe ongoing alerts", Usage = "walerts <nothing>")]
         private async Task Alerts(CommandContext ctx)
         {
             string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", ctx.Log);
@@ -19,12 +17,11 @@ namespace EBot.Commands.Modules
 
             if (global == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Err", "Looks like I couldn't access date for that!");
+                ctx.EmbedReply.Danger(ctx.Message, "Warframe Alerts", "Looks like I couldn't get any data!");
             }
             else
             {
-
-                for (int i = 0; i < global.Alerts.Length; i++)
+                for (uint i = 0; i < global.Alerts.Length; i++)
                 {
                     WAlert alert = global.Alerts[i];
                     WMission minfo = alert.MissionInfo;
@@ -48,30 +45,22 @@ namespace EBot.Commands.Modules
                         }
                     }
 
-                    await ctx.EmbedReply.Good(ctx.Message, "Warframe Alert #" + (i + 1),
-                          "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
+                    ctx.EmbedReply.Good(ctx.Message, "Alert " + (i + 1) + "/" + global.Alerts.Length,
+                        "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
                         + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
                         + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"
                         + showrewards
-                    );
+                      );
                 }
-
             }
 
         }
 
-        public void Load(CommandHandler handler,BotLog log)
+        public void Initialize(CommandHandler handler,BotLog log)
         {
-            handler.LoadCommand("walerts",this.Alerts, "Gets the ongoing alerts information","walerts",this.Name);
+            handler.LoadCommand(this.Alerts);
 
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
-        }
-
-        public void Unload(CommandHandler handler,BotLog log)
-        {
-            handler.UnloadCommand("walerts");
-
-            log.Nice("Module", ConsoleColor.Green, "Unloaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

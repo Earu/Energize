@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using EBot.Logs;
 using EBot.Utils;
 using System.Threading.Tasks;
@@ -8,27 +7,26 @@ using Discord;
 
 namespace EBot.Commands.Modules
 {
-    class ImageCommands : ICommandModule
+    [CommandModule(Name="Image")]
+    class ImageCommands : CommandModule,ICommandModule
     {
-        private string Name = "Image";
-
+        [Command(Name="avatar",Help="Gets the avatar of a user",Usage="avatar <@user|nothing>")]
         private async Task Avatar(CommandContext ctx)
         {
             SocketUser user = ctx.Message.Author;
-            if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+            if (ctx.TryGetUser(ctx.Arguments[0],out SocketUser u))
             {
-                IReadOnlyList<SocketUser> users = ctx.Message.MentionedUsers as IReadOnlyList<SocketUser>;
-                user = users[0];
+                user = u;
             }
 
             string url = user.GetAvatarUrl(ImageFormat.Png,512);
             EmbedBuilder builder = new EmbedBuilder();
             builder.WithAuthor(ctx.Message.Author);
-            builder.WithColor(new Color());
+            builder.WithColor(ctx.EmbedReply.ColorGood);
             builder.WithImageUrl(url);
             builder.WithFooter("Avatar");
 
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
         private async Task BlackWhite(CommandContext ctx)
@@ -59,7 +57,7 @@ namespace EBot.Commands.Modules
 
             if(path == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
+                ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
             }
         }
 
@@ -76,31 +74,22 @@ namespace EBot.Commands.Modules
 
             if (path != null)
             {
-                await ctx.EmbedReply.Good(ctx.Message, "WIP", "Sorry this command is under work!");
+                ctx.EmbedReply.Good(ctx.Message, "WIP", "Sorry this command is under work!");
             }
 
             if (path == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
+                ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
             }
         }
 
-        public void Load(CommandHandler handler,BotLog log)
+        public void Initialize(CommandHandler handler,BotLog log)
         {
-            handler.LoadCommand("avatar", this.Avatar, "Get a user's avatar","avatar \"@user\"",this.Name);
+            handler.LoadCommand(this.Avatar);
             //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
             //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
 
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
-        }
-
-        public void Unload(CommandHandler handler,BotLog log)
-        {
-            handler.UnloadCommand("avatar");
-            //this.Handler.UnloadCommand("blackwhite");
-            //this.Handler.UnloadCommand("wew");
-
-            log.Nice("Module", ConsoleColor.Green, "Loaded " + this.Name);
+            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

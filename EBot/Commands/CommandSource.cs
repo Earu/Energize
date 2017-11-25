@@ -28,26 +28,15 @@ namespace EBot.Commands
             this._Log = log;
         }
 
-        public void LoadCommands()
+        public void Initialize()
         {
-            this._Utils.Load(_Handler,_Log);
-            this._Social.Load(_Handler, _Log);
-            this._NSFW.Load(_Handler, _Log);
-            this._Search.Load(_Handler, _Log);
-            this._Image.Load(_Handler, _Log);
-            this._Fun.Load(_Handler, _Log);
-            this._Warframe.Load(_Handler, _Log);
-        }
-
-        public void UnloadCommands()
-        {
-            this._Utils.Unload(_Handler, _Log);
-            this._Social.Unload(_Handler, _Log);
-            this._NSFW.Unload(_Handler, _Log);
-            this._Search.Unload(_Handler, _Log);
-            this._Image.Unload(_Handler, _Log);
-            this._Fun.Unload(_Handler, _Log);
-            this._Warframe.Unload(_Handler, _Log);
+            this._Utils.Initialize(_Handler,_Log);
+            this._Social.Initialize(_Handler, _Log);
+            this._NSFW.Initialize(_Handler, _Log);
+            this._Search.Initialize(_Handler, _Log);
+            this._Image.Initialize(_Handler, _Log);
+            this._Fun.Initialize(_Handler, _Log);
+            this._Warframe.Initialize(_Handler, _Log);
         }
     }
 }
