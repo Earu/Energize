@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace EBot.MachineLearning
 {
@@ -9,7 +8,7 @@ namespace EBot.MachineLearning
     {
         private string _Path = "External/Markov/";
 
-        public async Task Learn(string sentence)
+        public void Learn(string sentence)
         {
             sentence = sentence.Trim().ToLower();
             string[] words = sentence.Split(new[] { ' ' });
@@ -22,28 +21,30 @@ namespace EBot.MachineLearning
                 string path = this._Path + word;
                 using (StreamWriter writer = File.AppendText(path))
                 {
-                    await writer.WriteAsync(next);
-                    await writer.WriteLineAsync();
-                    await writer.FlushAsync();
+                    writer.Write(next);
+                    writer.WriteLine();
+                    writer.Flush();
                 }
             }
         }
 
-        public async Task<List<string>> Generate()
+        public List<string> Generate()
         {
             Random rand = new Random();
             string[] files = Directory.GetFiles(this._Path);
             string word = files[rand.Next(0, files.Length - 1)];
+            string[] dirs = word.Split('/');
+            word = dirs[dirs.Length - 1];
 
-            return await Generate(word, int.MaxValue);
+            return Generate(word, int.MaxValue);
         }
 
-        public async Task<List<string>> Generate(string firstWord)
+        public List<string> Generate(string firstWord)
         {
-            return await Generate(firstWord, int.MaxValue);
+            return Generate(firstWord, int.MaxValue);
         }
 
-        public async Task<List<string>> Generate(string firstWord, int wordcount)
+        public List<string> Generate(string firstWord, int wordcount)
         {
             List<string> results = new List<string>();
             int count = 0;
@@ -58,7 +59,7 @@ namespace EBot.MachineLearning
 
                 if (File.Exists(path))
                 {
-                    string[] words = await File.ReadAllLinesAsync(path);
+                    string[] words = File.ReadAllLines(path);
                     string temp = words[rand.Next(0, words.Length - 1)];
 
                     while(current == temp)

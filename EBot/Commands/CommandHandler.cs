@@ -47,49 +47,40 @@ namespace EBot.Commands
 
         private bool IsCmdLoaded(string cmd)
         {
-            return this._Cmds.ContainsKey(cmd) ? this._Cmds[cmd].Loaded : false;
+            return this._Cmds.ContainsKey(cmd) ? this._Cmds[cmd].Loaded : true;
         }
 
-        public void LoadCommand(string name,CommandCallback callback=null,string help=null, string usage=null,string modulename=null)
+        public void LoadCommand(CommandCallback callback)
         {
+            Type cbtype = callback.Target.GetType();
+            CommandModuleAttribute matt = cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false)[0] as CommandModuleAttribute;
+            CommandAttribute att = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
+            string modulename = matt.Name;
+            string name = att.Name;
+            string help = att.Help;
+            string usage = att.Usage;
+
             if (this._Cmds.ContainsKey(name))
             {
-                this._Cmds.Remove(name);
+                this._Cmds[name].Loaded = true;
             }
             else
             {
-                if (callback == null)
-                {
-                    callback = async (CommandContext ctx) => 
-                    {
-                        await ctx.EmbedReply.Good(ctx.Message, null, "Hello world!");
-                    };
-                }
-
                 Command cmd = new Command(name, callback, help, usage, modulename);
 
                 this._Cmds.Add(name,cmd);
             }
         }
 
-        public void LoadCommand(string[] names,CommandCallback callback=null,string help=null,string usage=null,string modulename=null)
+        public void UnloadCommand(CommandCallback callback)
         {
-            string cmd = names[0];
-            this.LoadCommand(cmd, callback, help, usage, modulename);
+            CommandAttribute att = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
+            string name = att.Name;
 
-            for (uint i = 1; i < names.Length; i++)
-            {
-                Command.AddAlias(cmd,names[i]);
-            }
-        }
-
-        public void UnloadCommand(string name)
-        {
             if (this._Cmds.ContainsKey(name))
             {
                 this._Cmds[name].Loaded = false;
             }
-            this._Log.Nice("Commands", ConsoleColor.Red, "Unloaded " + name);
         }
 
         private string GetCmd(string line)
@@ -103,23 +94,17 @@ namespace EBot.Commands
             return new List<string>(str.Split(','));
         }
 
-        private string GetAliasOriginCmd(string alias)
-        {
-            Command.Aliases.TryGetValue(alias, out string result);
-            return result;
-        }
-
-        private void LogCommand(SocketMessage msg, string cmd, List<string> args,bool isdm,bool isdeleted=false)
+        private void LogCommand(CommandContext ctx,bool isdeleted=false)
         {
             string log = "";
             ConsoleColor color = ConsoleColor.Blue;
             string head = "DMCommands";
             string action = "used";
 
-            if (!(msg.Channel is IDMChannel))
+            if (!ctx.IsPrivate)
             {
-                IGuildChannel chan = msg.Channel as IGuildChannel;
-                log += "(" + chan.Guild.Name + " - #" + msg.Channel.Name + ") ";
+                IGuildChannel chan = ctx.Message.Channel as IGuildChannel;
+                log += "(" + chan.Guild.Name + " - #" + ctx.Message.Channel.Name + ") ";
                 color = ConsoleColor.Cyan;
                 head = "Commands";
             }
@@ -130,10 +115,10 @@ namespace EBot.Commands
                 action = "deleted";
             }
             
-            log += msg.Author.Username + " " + action + " <" + cmd + ">";
-            if (!string.IsNullOrWhiteSpace(args[0]))
+            log += ctx.Message.Author.Username + " " + action + " <" + ctx.Command + ">";
+            if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                log += "  => [" + string.Join(',',args) + " ]";
+                log += "  => [" + string.Join(',',ctx.Arguments) + " ]";
             }
             else
             {
@@ -145,6 +130,17 @@ namespace EBot.Commands
 
         private CommandContext CreateCmdContext(SocketMessage msg,string cmd,List<string> args)
         {
+            List<SocketGuildUser> users = new List<SocketGuildUser>();
+            if(msg.Channel is IGuildChannel)
+            {
+                IGuildChannel chan = msg.Channel as IGuildChannel;
+                foreach(SocketGuildUser u in (chan.Guild as SocketGuild).Users)
+                {
+                    users.Add(u);
+                }
+
+            }
+
             CommandContext ctx = new CommandContext
             {
                 Client = this._Client,
@@ -156,7 +152,10 @@ namespace EBot.Commands
                 Arguments = args,
                 LastPictureURL = this._LastChannelPictureURL.TryGetValue(msg.Channel.ToString(), out string last) ? last : "",
                 Log = this._Log,
-                Commands = this._Cmds
+                Commands = this._Cmds,
+                IsPrivate = msg.Channel is IDMChannel,
+                GuildCachedUsers = users,
+                Handler = this
             };
 
             return ctx;
@@ -171,15 +170,28 @@ namespace EBot.Commands
             {
                 try
                 {
-                    await retrieved.Run(this.CreateCmdContext(msg,cmd,args));
-                    this.LogCommand(msg, cmd, args, (msg.Channel is IGuildChannel));
+                    await msg.Channel.TriggerTypingAsync();
+                    CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
+                    await retrieved.Run(ctx);
+                    this.LogCommand(ctx);
+                }
+                catch (Discord.Net.HttpException e)
+                {
+                    string log = "";
+                    if(msg.Channel is IGuildChannel)
+                    {
+                        IGuildChannel chan = msg.Channel as IGuildChannel;
+                        log += log += chan.Guild.Name + " - "; 
+                    }
+                    log += "#" + msg.Channel.Name;
+                    this._Log.Nice("Commands", ConsoleColor.Red, "( " + log + " ) Reply was blocked");
                 }
                 catch (Exception e)
                 {
                     this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [" + string.Join(',', args) + " ]");
                     this._Log.Danger(e.ToString());
 
-                    await this._EmbedReply.Danger(msg,msg.Author.Username, "Something went wrong, skipping!");
+                    this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
                 }
             }
             else
@@ -193,16 +205,17 @@ namespace EBot.Commands
             string content = msg.Content;
             if (!msg.Author.IsBot)
             {
-                string cmd = this.GetAliasOriginCmd(this.GetCmd(content));
+                string cmd = this.GetCmd(content);
                 if (content.StartsWith(this._Prefix))
                 {
                     if (this.IsCmdLoaded(cmd))
                     {
-                        this.CommandCall(msg, cmd).RunSynchronously();
+                        this.CommandCall(msg, cmd);
                     }
                     else
                     {
-                        this._Log.Nice("Commands", ConsoleColor.Red, msg.Author.Username + " tried to use an invalid command <" + cmd + ">");
+                        this._Log.Nice("Commands", ConsoleColor.Red, msg.Author.Username + " tried to use an unloaded command <" + cmd + ">");
+                        this._EmbedReply.Warning(msg, "Unloaded Command", "This is not available right now!");
                     }
                 }
             }
@@ -261,12 +274,12 @@ namespace EBot.Commands
 
         }
 
-        private async Task GetDeletedCommandMessages(SocketMessage msg)
+        private void GetDeletedCommandMessages(SocketMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
             {
-                string cmd = this.GetAliasOriginCmd(this.GetCmd(content));
+                string cmd = this.GetCmd(content);
                 if (content.StartsWith(this._Prefix))
                 {
                     if (this.IsCmdLoaded(cmd))
@@ -274,8 +287,9 @@ namespace EBot.Commands
                         string user = msg.Author.Mention;
                         List<string> args = this.GetCmdArgs(content);
 
-                        await this._EmbedReply.Send(msg.Channel,"Sneaky!",user + " deleted a command message \"" + cmd + "\" :eyes:",new Color(220, 180, 80));
-                        this.LogCommand(msg, cmd, args, (msg.Channel is IGuildChannel), true);
+                        this._EmbedReply.Warning(msg,"Sneaky!", "Deletion of a command message (" + cmd + ") :eyes:");
+                        CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
+                        this.LogCommand(ctx, true);
                     }
                 }
             }
@@ -283,21 +297,20 @@ namespace EBot.Commands
 
         public void Initialize()
         {
-            this._Client.MessageReceived += async msg =>
-            {
-                this.GetImageURLS(msg);
-            };
-
+            PaginableMessage.Initialize(this._Client);
             this._Client.MessageDeleted += async (msg,chan) =>
             {
-                SocketMessage mess = (await msg.DownloadAsync()) as SocketMessage;
-                this.GetDeletedCommandMessages(mess).RunSynchronously();
+                if (msg.HasValue)
+                {
+                    this.GetDeletedCommandMessages(msg.Value as SocketMessage);
+                }
             };
 
-            this._Source.LoadCommands();
+            this._Source.Initialize();
             this._Client.MessageReceived += async msg =>
             {
                 this.MainCall(msg);
+                this.GetImageURLS(msg);
             };
         }
     }

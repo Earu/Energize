@@ -39,7 +39,11 @@ namespace EBot
             this._Spy = new SpyLog();
             this._Handler = new CommandHandler();
             this._Source = new CommandSource(this._Handler,this._Log);
-            this._Discord = new DiscordSocketClient();
+            this._Discord = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                MessageCacheSize = 1000,
+            });
+
             this._DiscordREST = new DiscordRestClient();
             this._HasInitialized = false;
 
@@ -77,9 +81,9 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        private async Task AskAsync(SocketMessage msg,bool ismention,bool isprefix)
+        private async Task AskAsync(SocketMessage msg,bool ismention,bool isprefix,ulong id)
         {
-            string mention = "<@" + EBotCredentials.BOT_ID_MAIN + ">";
+            string mention = "<@" + id + ">";
             SocketChannel chan = msg.Channel as SocketChannel;
             string input = msg.Content;
 
@@ -95,20 +99,22 @@ namespace EBot
                 }
             }
 
+            await msg.Channel.TriggerTypingAsync();
             string result = await ChatBot.Ask(chan, input, this._Log);
 
-            await this._Handler.EmbedReply.Normal(msg, "ChatBot", result);
+            this._Handler.EmbedReply.Normal(msg, "ChatBot", result);
         }
 
         private async Task OnChatAsync(SocketMessage msg)
         {
-            string mention = "<@" + EBotCredentials.BOT_ID_MAIN + "> ";
+            ulong id = (await _DiscordREST.GetApplicationInfoAsync()).Id;
+            string mention = "<@" + id + "> ";
             bool answered = false;
 
             if (msg.Content.StartsWith(mention))
             {
                 answered = true;
-                await this.AskAsync(msg, true, true);
+                await this.AskAsync(msg, true, true,id);
             }
 
             if (!answered)
@@ -116,7 +122,7 @@ namespace EBot
                 bool mentionned = false;
                 foreach(SocketUser user in msg.MentionedUsers)
                 {
-                    if(user.Id == EBotCredentials.BOT_ID_MAIN)
+                    if(user.Id == id)
                     {
                         mentionned = true;
                     }
@@ -125,7 +131,7 @@ namespace EBot
                 if (mentionned)
                 {
                     answered = true;
-                    await this.AskAsync(msg, true, false);
+                    await this.AskAsync(msg, true, false,id);
                 }
             }
 
@@ -138,7 +144,7 @@ namespace EBot
 
             if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
             {
-                await MarkovHandler.Learn(msg.Content);
+                MarkovHandler.Learn(msg.Content);
             }
         }
 
@@ -153,13 +159,23 @@ namespace EBot
 
                 this._Discord.Ready += async () =>
                 {
-                    await this._Discord.SetStatusAsync(UserStatus.Online);
-                    await this._Discord.SetGameAsync(this._Prefix + "help", EBotCredentials.TWITCH_URL, StreamType.Twitch);
-
                     if (!this._HasInitialized)
                     {
                         ClientMemoryStream.Initialize(this);
                         this._HasInitialized = true;
+
+                        Timer statustimer = new Timer(async arg =>
+                        {
+                            await this._Discord.SetStatusAsync(UserStatus.Offline);
+                            await this._Discord.SetStatusAsync(UserStatus.Online);
+                            //so status update properly
+
+                            ClientInfo info = await ClientMemoryStream.GetClientInfo();
+                            string gname = this._Prefix + "help w/ " + info.UserAmount + " users";
+                            await this._Discord.SetGameAsync(gname, EBotCredentials.TWITCH_URL, StreamType.Twitch);
+                        });
+
+                        statustimer.Change(0, 1000 * 60 * 5);
                     }
                 };
 

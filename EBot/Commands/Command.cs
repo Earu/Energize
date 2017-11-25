@@ -10,7 +10,7 @@ namespace EBot.Commands
     public class Command
     {
         private static Dictionary<string,List<Command>> _Modules = new Dictionary<string, List<Command>>();
-        private static Dictionary<string, string> _Aliases = new Dictionary<string, string>();
+        private static Dictionary<string, bool> _ModulesLoaded = new Dictionary<string, bool>();
 
         private string _Name;
         private CommandCallback _Callback;
@@ -37,15 +37,29 @@ namespace EBot.Commands
                 _Modules[modulename] = new List<Command>();
             }
 
-            _Modules[modulename].Add(this);
-            _Aliases[cmd] = cmd;
+            this.AddToModule(this, modulename);
         }
 
         public static Dictionary<string,List<Command>> Modules { get => _Modules; }
-        public static Dictionary<string, string> Aliases { get => _Aliases; set => _Aliases = value; }
 
         public bool Loaded { get => this._Loaded; set => this._Loaded = value; }
         public string Cmd { get => this._Name; set => this._Name = value; }
+        public CommandCallback Callback { get => this._Callback; }
+
+        public static bool IsLoadedModule(string module)
+        {
+            if (!_ModulesLoaded.ContainsKey(module))
+            {
+                _ModulesLoaded[module] = true;
+            }
+
+            return _ModulesLoaded[module];
+        }
+
+        public static void SetLoadedModule(string module,bool state)
+        {
+            _ModulesLoaded[module] = state;
+        }
 
         public async Task Run(CommandContext ctx)
         {
@@ -62,10 +76,18 @@ namespace EBot.Commands
             return help;
         }
 
-        public static void AddAlias(string origin,string alias)
+        private void AddToModule(Command cmd,string modulename)
         {
-            _Aliases[alias] = origin;
-        }
+            foreach(Command c in _Modules[modulename])
+            {
+                if(c.Cmd == cmd.Cmd)
+                {
+                    _Modules[modulename].Remove(c);
+                    break;
+                }
+            }
 
+            _Modules[modulename].Add(cmd);
+        }
     }
 }

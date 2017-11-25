@@ -1,33 +1,11 @@
 ﻿using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace EBot.Commands.Social
 {
     class Action
     {
-        private static string[] _Hugs =
-        {
-            "<origin> comes up close to <user> and <action>s them",
-            "<origin> sneaks behind <user> and <action>s them",
-            "<origin> gives <user> a warm friendly <action>"
-        };
-
-        private static string[] _Boops =
-        {
-            "<user> got <action>ed by <origin>",
-            "<origin> proceeds to gently <action> <user>",
-            "<origin> ropes down toward <user> and sneakily <action>s them"
-        };
-
-        private static string[] _Slaps =
-        {
-            "<origin> <action>s <user> booty hard",
-            "<origin> gets mad and <action>s <user> in the face",
-            "<origin> <action>s <user> into another dimension!"
-        };
-
         private string Global(SocketUser from, IReadOnlyList<SocketUser> to, string act, string[] sentences)
         {
             Random rand = new Random();
@@ -47,17 +25,82 @@ namespace EBot.Commands.Social
 
         public string Hug(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "hug",_Hugs);
+            return Global(from, to, "hug",new string[] 
+            {
+                "<origin> comes up close to <user> and <action>s them",
+                "<origin> sneaks behind <user> and <action>s them",
+                "<origin> gives <user> a warm friendly <action>"
+            });
         }
 
         public string Boop(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "boop",_Boops);
+            return Global(from, to, "boop",new string[] 
+            {
+                "<user> got <action>ed by <origin>",
+                "<origin> proceeds to gently <action> <user>",
+                "<origin> ropes down toward <user> and sneakily <action>s them"
+            });
         }
 
         public string Slap(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "slap",_Slaps);
+            return Global(from, to, "slap",new string[] 
+            {
+                "<origin> <action>s <user> booty hard",
+                "<origin> gets mad and <action>s <user> in the face",
+                "<origin> <action>s <user> into another dimension!"
+            });
+        }
+
+        public string Kiss(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "kiss",new string[] 
+            {
+                "<origin> gives a big <action> to <user>",
+                "<origin> gently <action>es <user>",
+                "<origin> <kiss>es <user>"
+            });
+        }
+
+        public string Snuggle(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "snuggle",new string[]
+            {
+                "<origin> <action>s against <user>",
+                "<origin> <action>s <user> a bit",
+                "<origin> lovely <action>s <user>"
+            });
+        }
+
+        public string Shoot(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "shoot", new string[]
+            {
+                "<origin> <action>s at <user>",
+                "<origin> pulls out a gun and <action>s <user>",
+                "<origin> takes out a rifle and <action>s <user>"
+            });
+        }
+
+        public string Pet(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "pet", new string[]
+            {
+                "<origin> comes up to <user> and <action>s their head(s)",
+                "<origin> gives <user> a gentle <action>",
+                "<origin> gets close to <user> and proceeds to <action> them"
+            });
+        }
+
+        public string Spank(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "spank", new string[]
+            {
+                "<origin> gives a large <action> to <user>",
+                "<origin> <action>s <user>, hard.",
+                "<origin> <action>s in a kinky way <user>"
+            });
         }
     }
 }
