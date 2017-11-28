@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
-using ImageMagick;
+using SixLabors.ImageSharp;
 
 namespace EBot.Utils
 {
@@ -12,9 +12,9 @@ namespace EBot.Utils
 
         private static async Task<string> GetImageExtension(string uri)
         {
-            var r = (HttpWebRequest)WebRequest.Create(uri);
+            HttpWebRequest r = WebRequest.Create(uri) as HttpWebRequest;
             r.Method = "HEAD";
-            using (var res = await r.GetResponseAsync())
+            using (WebResponse res = await r.GetResponseAsync())
             {
                 string ext = res.ContentType.Substring(6).Trim();
                 return "." + ext;
@@ -24,8 +24,8 @@ namespace EBot.Utils
         public static async Task<string> DownloadImage(string uri)
         {
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(uri);
-            using (HttpWebResponse resp = (HttpWebResponse)await req.GetResponseAsync())
+            HttpWebRequest req = WebRequest.Create(uri) as HttpWebRequest;
+            using (HttpWebResponse resp = (await req.GetResponseAsync()) as HttpWebResponse)
             {
 
                 if ((resp.StatusCode == HttpStatusCode.OK || resp.StatusCode == HttpStatusCode.Moved || resp.StatusCode == HttpStatusCode.Redirect) 
@@ -61,20 +61,16 @@ namespace EBot.Utils
 
         public static void Resize(string path,int width=500,int height=500)
         {
-            using (MagickImage image = new MagickImage(path))
+            using (Image<Rgba32> image = Image.Load(path))
             {
-                image.AdaptiveResize(width, height);
-                image.Write(path);
+                image.Mutate(x => x.Resize(width, height));
+                image.Save(path);
             }
         }
 
-        public static void MakeBlackWhite(string path)
+        public static Image<Rgba32> Get(string path)
         {
-            using (MagickImage image = new MagickImage(path))
-            {
-                image.Grayscale(PixelIntensityMethod.Average);
-                image.Write(path);
-            }
+            return Image.Load(path);
         }
 
         public static async Task<string> Create(int width,int height)

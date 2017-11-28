@@ -2,9 +2,10 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using EBot.Logs;
+using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Reflection;
 
 namespace EBot.Commands
 {
@@ -37,6 +38,30 @@ namespace EBot.Commands
         public bool IsPrivate { get => this._IsPrivate; set => this._IsPrivate = value; }
         public List<SocketGuildUser> GuildCachedUsers { get => this._GuildCachedUsers; set => this._GuildCachedUsers = value; }
         public CommandHandler Handler { get => this._Handler; set => this._Handler = value; }
+        public bool HasArguments {
+            get => (!string.IsNullOrWhiteSpace(this._Args[0])) && this._Args.Count > 0;
+        }
+        public string Input
+        {
+            get => string.Join(',', this._Args).Trim();
+        }
+        public string AuthorMention
+        {
+            get => this._Message.Author.Mention;
+        }
+
+        public bool IsNSFW()
+        {
+            ISocketMessageChannel chan = this._Message.Channel;
+            if (chan.IsNsfw || chan.Name.ToLower().StartsWith("nsfw"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         public bool TryGetUser(string input,out SocketUser user)
         {
@@ -65,11 +90,21 @@ namespace EBot.Commands
                     foreach (SocketGuildUser u in this._GuildCachedUsers)
                     {
                         string nick = u.Nickname ?? u.Username;
-                        if (nick.ToLower().Contains(input))
+                        if (nick != null && nick.ToLower().Contains(input))
                         {
                             user = u;
                             return true;
                         }
+                    }
+                }
+
+                if (ulong.TryParse(input, out ulong id))
+                {
+                    SocketUser u = this._Client.GetUser(id);
+                    if (u != null)
+                    {
+                        user = u;
+                        return true;
                     }
                 }
             }

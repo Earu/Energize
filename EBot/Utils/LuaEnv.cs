@@ -18,7 +18,7 @@ namespace EBot.Utils
         private static Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
         private static string ScriptSeparator = "\n-- GEN --\n";
 
-        public static async Task Initialize(EBotClient client)
+        public static async Task InitializeAsync(EBotClient client)
         {
             _App = await client.Discord.GetApplicationInfoAsync();
 
@@ -57,7 +57,7 @@ namespace EBot.Utils
                         state["USER"] = user as SocketUser;
                         Object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
                         state["USER"] = null;
-                        client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
+                        await client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
                     }
                 }
             };
@@ -73,7 +73,7 @@ namespace EBot.Utils
                         state["USER"] = user as SocketUser;
                         Object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
                         state["USER"] = null;
-                        client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
+                        await client.Handler.EmbedReply.Good(chan, "Lua Event", returns[0].ToString());
                     }
 
                 }
@@ -89,7 +89,7 @@ namespace EBot.Utils
                     Object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    client.Handler.EmbedReply.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
+                    await client.Handler.EmbedReply.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
@@ -103,7 +103,7 @@ namespace EBot.Utils
                     Object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    client.Handler.EmbedReply.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
+                    await client.Handler.EmbedReply.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
@@ -117,7 +117,7 @@ namespace EBot.Utils
                     Object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
                     state["USER"] = null;
                     state["MESSAGE"] = null;
-                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                    await client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
@@ -129,7 +129,7 @@ namespace EBot.Utils
                     state["REACTION"] = react;
                     Object[] returns = state.DoString(@"return even.fire('OnReactionAdded',REACTION)");
                     state["REACTION"] = null;
-                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                    await client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
 
@@ -141,7 +141,7 @@ namespace EBot.Utils
                     state["REACTION"] = react;
                     Object[] returns = state.DoString(@"return even.fire('OnReactionRemoved',REACTION)");
                     state["REACTION"] = null;
-                    client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                    await client.Handler.EmbedReply.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
                 }
             };
         }

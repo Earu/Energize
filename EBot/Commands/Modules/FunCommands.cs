@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using EBot.Commands.Chuck;
 using Discord;
+using System.Linq;
 
 namespace EBot.Commands.Modules
 {
@@ -16,20 +17,20 @@ namespace EBot.Commands.Modules
         [Command(Name="ascii",Help="Makes a text/sentence ascii art",Usage="ascii <sentence>")]
         private async Task ASCII(CommandContext ctx)
         {
-            if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+            if (ctx.HasArguments)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "ASCII", "You didn't provide any word or sentence!");
+                await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "You didn't provide any word or sentence!");
             }
             else
             {
-                string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Arguments[0],ctx.Log);
+                string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Input,ctx.Log);
                 if (body.Length > 2000)
                 {
-                    ctx.EmbedReply.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
+                    await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
                 }
                 else
                 {
-                    ctx.EmbedReply.Good(ctx.Message,"ASCII","```\n" + body + "\n```");
+                    await ctx.EmbedReply.Good(ctx.Message,"ASCII","```\n" + body + "\n```");
                 }
 
             }
@@ -57,7 +58,7 @@ namespace EBot.Commands.Modules
                 {
                     result += adjs[random.Next(0, adjs.Length)] + " ";
                     result += nouns[random.Next(0, nouns.Length)].ToLower();
-                    result += " of ";
+                    result += " of the ";
                     result += nouns[random.Next(0, nouns.Length)].ToLower();
                 }
                 else
@@ -69,46 +70,44 @@ namespace EBot.Commands.Modules
             }
             result += nouns[random.Next(0, nouns.Length)].ToLower();
 
-            bool isvowel = false;
-            string[] vowels = CommandsData.Vowels;
-            for (int i = 0; i < vowels.Length; i++)
-            {
-                if (result.StartsWith(vowels[i]))
-                {
-                    isvowel = true;
-                    break;
-                }
-            }
-            ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
+            bool isvowel = CommandsData.Vowels.Any(x => result.StartsWith(x));
+            await ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
         [Command(Name="letters",Help="Transforms a sentence into letter emotes",Usage="letters <sentence>")]
         private async Task Letters(CommandContext ctx)
         {
-            string input = ctx.Arguments[0];
-            string indicator = ":regional_indicator_";
-            string result = "";
-            for (int i = 0; i < input.Length; i++)
+            if (ctx.HasArguments)
             {
-                string letter = input[i].ToString().ToLower();
-                if (Regex.IsMatch(letter, @"[A-Za-z]"))
+                string input = ctx.Input;
+                string indicator = ":regional_indicator_";
+                string result = "";
+                for (int i = 0; i < input.Length; i++)
                 {
-                    result += indicator + letter + ": ";
+                    string letter = input[i].ToString().ToLower();
+                    if (Regex.IsMatch(letter, @"[A-Za-z]"))
+                    {
+                        result += indicator + letter + ": ";
+                    }
+                    else if (Regex.IsMatch(letter, @"\s"))
+                    {
+                        result += "\t";
+                    }
                 }
-                else if (Regex.IsMatch(letter, @"\s"))
-                {
-                    result += "\t";
-                }
+                await ctx.EmbedReply.Good(ctx.Message, "Letters", result);
             }
-            ctx.EmbedReply.Good(ctx.Message,"Letters", result);
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "Letters", "You didn't provide any sentence");
+            }
         }
 
         [Command(Name="8ball",Help="Gives a negative or positive answer to a question",Usage="8ball <question>")]
         private async Task EightBalls(CommandContext ctx)
         {
-            if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+            if (!ctx.HasArguments)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "8ball", "You didn't provide any word or sentence!");
+                await ctx.EmbedReply.Danger(ctx.Message, "8ball", "You didn't provide any word or sentence!");
             }
             else
             {
@@ -116,16 +115,16 @@ namespace EBot.Commands.Modules
                 string[] answers = CommandsData.HeightBallAnswers;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
-                ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
+                await ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
             }
         }
 
         [Command(Name="pick",Help="Picks a choice among those given",Usage="pick <choice>,<choice>,<choice|nothing>,...")]
         private async Task Pick(CommandContext ctx)
         {
-            if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
+            if (!ctx.HasArguments)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "Pick", "You didn't provide any/enough word(s)!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Pick", "You didn't provide any/enough word(s)!");
             }
             else
             {
@@ -134,22 +133,22 @@ namespace EBot.Commands.Modules
                 string choice = ctx.Arguments[rand.Next(0, ctx.Arguments.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
 
-                ctx.EmbedReply.Good(ctx.Message,"Pick", answer);
+                await ctx.EmbedReply.Good(ctx.Message,"Pick", answer);
             }
         }
 
         [Command(Name="m",Help="Generates a random sentence based on input",Usage="m <input|nothing>")]
         private async Task Markov(CommandContext ctx)
         {
-            string sentence = string.Join(",", ctx.Arguments);
+            string sentence = ctx.Input;
             try
             {
                 string generated = MarkovHandler.Generate(sentence);
-                ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
+                await ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
             }
             catch(Exception e)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "Markov", "Something went wrong:\n" + e.ToString());
+                await ctx.EmbedReply.Danger(ctx.Message, "Markov", "Something went wrong:\n" + e.ToString());
             }
         }
 
@@ -160,7 +159,7 @@ namespace EBot.Commands.Modules
             string json = await HTTP.Fetch(endpoint, ctx.Log);
             FactObject fact = JSON.Deserialize<FactObject>(json, ctx.Log);
 
-            ctx.EmbedReply.Good(ctx.Message, "Chuck Norris Fact", fact.value);
+            await ctx.EmbedReply.Good(ctx.Message, "Chuck Norris Fact", fact.value);
         }
 
         [Command(Name="meme",Help="Gets a random meme picture",Usage="meme <nothing>")]
@@ -177,13 +176,13 @@ namespace EBot.Commands.Modules
             builder.WithFooter("Meme");
             builder.WithColor(ctx.EmbedReply.ColorGood);
 
-            ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
         [Command(Name="crazy",Help="Make a sentence look crazy",Usage="crazy <sentence>")]
         private async Task Crazy(CommandContext ctx)
         {
-            string content = string.Join(',', ctx.Arguments);
+            string content = ctx.Input;
             string result = "";
             Random rand = new Random();
             foreach(char letter in content)
@@ -201,7 +200,75 @@ namespace EBot.Commands.Modules
                 result += part;
             }
 
-            ctx.EmbedReply.Good(ctx.Message, "Crazy", result);
+            await ctx.EmbedReply.Good(ctx.Message, "Crazy", result);
+        }
+
+        [Command(Name="gname",Help="Gets a random username",Usage="gname <nothing>")]
+        private async Task GenName(CommandContext ctx)
+        {
+            Random rand = new Random();
+            if(rand.Next(1,100) < 30)
+            {
+                string endpoint = "https://randomuser.me/api/";
+                string json = await HTTP.Fetch(endpoint, ctx.Log);
+                GenName.ResultObject result = JSON.Deserialize<GenName.ResultObject>(json, ctx.Log);
+
+                if (result != null)
+                {
+                    await ctx.EmbedReply.Good(ctx.Message, "GName", result.results[0].login.username);
+                }
+                else
+                {
+                    await ctx.EmbedReply.Danger(ctx.Message, "GName", "Couldn't generate a new username");
+                }
+            }
+            else
+            {
+                string result = "";
+                result += CommandsData.Adjectives[rand.Next(0, CommandsData.Adjectives.Length - 1)];
+                result += CommandsData.Nouns[rand.Next(0, CommandsData.Nouns.Length - 1)];
+                if(rand.Next(1,100) < 30)
+                {
+                    result += rand.Next(0, 1000);
+                }
+
+                result = result.Replace("-", "").ToLower();
+
+                await ctx.EmbedReply.Good(ctx.Message, "GName", result);
+            }
+
+        }
+
+        [Command(Name="reverse",Help="Reverses a sentence",Usage="reverse <sentence>")]
+        private async Task Reverse(CommandContext ctx)
+        {
+            string input = ctx.Input;
+            if (ctx.HasArguments)
+            {
+                char[] chars = input.ToCharArray();
+                Array.Reverse(chars);
+
+                await ctx.EmbedReply.Good(ctx.Message, "Reverse", new string(chars));
+            }
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "Reverse", "You must provide a sentence");
+            }
+        }
+
+        [Command(Name="files",Help="?",Usage="?")]
+        private async Task XFiles(CommandContext ctx)
+        {
+            if (ctx.Handler.Prefix == "x")
+            {
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithColor(ctx.EmbedReply.ColorGood);
+                builder.WithAuthor(ctx.Message.Author);
+                builder.WithFooter("XFiles");
+                builder.WithImageUrl("https://i.imgur.com/kWK2BEW.png");
+
+                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            }
         }
 
         public void Initialize(CommandHandler handler, BotLog log)
@@ -215,6 +282,9 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Chuck);
             handler.LoadCommand(this.Meme);
             handler.LoadCommand(this.Crazy);
+            handler.LoadCommand(this.GenName);
+            handler.LoadCommand(this.Reverse);
+            handler.LoadCommand(this.XFiles);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

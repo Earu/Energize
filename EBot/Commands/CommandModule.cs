@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using EBot.Logs;
+using System;
 
 namespace EBot.Commands
 {
-    class CommandModule
+    public class CommandModule
     {
         public string GetModuleName()
         {
