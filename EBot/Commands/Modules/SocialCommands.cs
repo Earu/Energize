@@ -13,7 +13,7 @@ namespace EBot.Commands.Modules
     {
         private delegate string ActionCallback(SocketUser from, IReadOnlyList<SocketUser> to);
 
-        private void Action(CommandContext ctx,string what,ActionCallback callback)
+        private async Task Action(CommandContext ctx,string what,ActionCallback callback)
         {
             string result = "";
             List<SocketUser> users = new List<SocketUser>();
@@ -28,11 +28,11 @@ namespace EBot.Commands.Modules
             if (users.Count > 0)
             {
                 result = callback(ctx.Message.Author, users);
-                ctx.EmbedReply.Good(ctx.Message, what, result);
+                await ctx.EmbedReply.Good(ctx.Message, what, result);
             }
             else
             {
-                ctx.EmbedReply.Danger(ctx.Message, what, "You need to mention the persons you want to " + what.ToLower());
+                await ctx.EmbedReply.Danger(ctx.Message, what, "You need to mention the persons you want to " + what.ToLower());
             }
         }
 
@@ -40,56 +40,63 @@ namespace EBot.Commands.Modules
         private async Task Hug(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Hug", action.Hug);
+            await this.Action(ctx, "Hug", action.Hug);
         }
 
         [Command(Name = "boop", Help = "Boops people", Usage = "boop <@user>,<@user|nothing>,...")]
         private async Task Boop(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Boop", action.Boop);
+            await this.Action(ctx, "Boop", action.Boop);
         }
 
         [Command(Name = "slap", Help = "Slaps people", Usage = "slap <@user>,<@user|nothing>,...")]
         private async Task Slap(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Slap", action.Slap);
+            await this.Action(ctx, "Slap", action.Slap);
         }
 
         [Command(Name = "kiss", Help = "Kisses people", Usage = "kiss <@user>,<@user|nothing>,...")]
         private async Task Kiss(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Kiss", action.Kiss);
+            await this.Action(ctx, "Kiss", action.Kiss);
         }
 
         [Command(Name = "snuggle", Help = "Snuggles people", Usage = "snuggle <@user>,<@user|nothing>,...")]
         private async Task Snuggle(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Snuggle", action.Snuggle);
+            await this.Action(ctx, "Snuggle", action.Snuggle);
         }
 
         [Command(Name = "shoot",Help = "Shoots people", Usage = "shoot <@user>,<@user|nothing>,...")]
         private async Task Shoot(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Shoot", action.Shoot);
+            await this.Action(ctx, "Shoot", action.Shoot);
         }
 
         [Command(Name = "pet", Help = "Pets people", Usage = "pet <@user>,<@user|nothing>,...")]
         private async Task Pet(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Pet", action.Pet);
+            await this.Action(ctx, "Pet", action.Pet);
         }
 
         [Command(Name = "spank", Help = "Spanks people", Usage = "spank <@user>,<@user|nothing>,...")]
         private async Task Spank(CommandContext ctx)
         {
             Social.Action action = new Social.Action();
-            Action(ctx, "Spank", action.Spank);
+            await this.Action(ctx, "Spank", action.Spank);
+        }
+
+        [Command(Name = "yiff", Help = "Yiffs people", Usage = "yiff <@user>,<@user|nothing>,...")]
+        private async Task Yiff(CommandContext ctx)
+        {
+            Social.Action action = new Social.Action();
+            await this.Action(ctx, "Yiff", action.Yiff);
         }
 
         [Command(Name = "love", Help = "Gets a love percentage between two users", Usage = "love <@user>,<@user>")]
@@ -104,16 +111,16 @@ namespace EBot.Commands.Modules
                 string json = await HTTP.Fetch(endpoint, ctx.Log, null, req =>
                 {
                     req.Headers[System.Net.HttpRequestHeader.Accept] = "text/plain";
-                    req.Headers["X-Mashape-Key"] = EBotCredentials.MASHAPE_KEY;
+                    req.Headers["X-Mashape-Key"] = EBotConfig.MASHAPE_KEY;
                 });
 
                 LoveObject love = JSON.Deserialize<LoveObject>(json, ctx.Log);
 
-                ctx.EmbedReply.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
+                await ctx.EmbedReply.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
             }
             else
             {
-                ctx.EmbedReply.Danger(ctx.Message, "Love", "You need to mention two persons!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Love", "You need to mention two persons!");
             }
         }
 
@@ -128,6 +135,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Shoot);
             handler.LoadCommand(this.Pet);
             handler.LoadCommand(this.Spank);
+            handler.LoadCommand(this.Yiff);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

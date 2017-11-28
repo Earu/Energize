@@ -23,89 +23,155 @@ namespace EBot.Commands
         public Color ColorWarning { get => this._Warning; }
         public Color ColorDanger { get => this._Danger; }
 
-        public void Send(SocketMessage msg,string header="",string content="",Color color=new Color())
+        public async Task Send(SocketMessage msg,string header="",string content="",Color color=new Color())
         {
-            string username = msg.Author.Username;
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(color);
-            builder.WithDescription(content);
-            builder.WithFooter(header);
-            builder.WithAuthor(msg.Author);
-
-            if (!string.IsNullOrWhiteSpace(content))
+            try
             {
-                msg.Channel.SendMessageAsync("", false, builder.Build());
+                string username = msg.Author.Username;
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithColor(color);
+                builder.WithDescription(content);
+                builder.WithFooter(header);
+                builder.WithAuthor(msg.Author);
+
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    await msg.Channel.SendMessageAsync("", false, builder.Build());
+                }
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
             }
         }
 
-        public void Send(ISocketMessageChannel chan,string header="",string content="",Color color=new Color())
+        public async Task Send(ISocketMessageChannel chan,string header="",string content="",Color color=new Color())
         {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(color);
-            builder.WithDescription(content);
-            builder.WithFooter(header);
-
-            if (!string.IsNullOrWhiteSpace(content))
+            try
             {
-                chan.SendMessageAsync("", false, builder.Build());
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithColor(color);
+                builder.WithDescription(content);
+                builder.WithFooter(header);
+
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    await chan.SendMessageAsync("", false, builder.Build());
+                }
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
             }
         }
 
-        public void Send(SocketMessage msg,Embed embed = null)
+        public async Task Send(SocketMessage msg,Embed embed = null)
         {
-            msg.Channel.SendMessageAsync("", false, embed);
+            try
+            {
+                await msg.Channel.SendMessageAsync("", false, embed);
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+            }
+        }
+
+        public async Task SendRaw(SocketMessage msg,string content)
+        {
+            try
+            {
+                await msg.Channel.SendMessageAsync(content);
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+            }
+        }
+
+        public async Task Send(SocketChannel chan,Embed embed = null)
+        {
+            try
+            {
+                IMessageChannel c = chan as IMessageChannel;
+                await c.SendMessageAsync("", false, embed);
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+            }
+        }
+
+        public async Task SendRaw(SocketChannel chan,string content)
+        {
+            try
+            {
+                IMessageChannel c = chan as IMessageChannel;
+                await c.SendMessageAsync(content);
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+            }
         }
 
         public async Task RespondByDM(SocketMessage msg,string header="",string content="")
         {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(this._Good);
-            builder.WithDescription(content);
-            builder.WithFooter(header);
-            builder.WithAuthor(msg.Author);
+            try
+            {
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithColor(this._Good);
+                builder.WithDescription(content);
+                builder.WithFooter(header);
+                builder.WithAuthor(msg.Author);
 
-            IDMChannel chan = await msg.Author.GetOrCreateDMChannelAsync();
-            chan.SendMessageAsync("",false,builder.Build());
+                IDMChannel chan = await msg.Author.GetOrCreateDMChannelAsync();
+                await chan.SendMessageAsync("", false, builder.Build());
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+            }
         }
 
-        public void Normal(SocketMessage msg,string header,string content)
+        public async Task Normal(SocketMessage msg,string header,string content)
         {
-            this.Send(msg, header, content, this._Normal);
+            await this.Send(msg, header, content, this._Normal);
         }
 
-        public void Normal(SocketChannel chan, string header, string content)
+        public async Task Normal(SocketChannel chan, string header, string content)
         {
-            this.Send((chan as ISocketMessageChannel), header, content, this._Normal);
+            await this.Send((chan as ISocketMessageChannel), header, content, this._Normal);
         }
 
-        public void Warning(SocketMessage msg,string header,string content)
+        public async Task Warning(SocketMessage msg,string header,string content)
         {
-            this.Send(msg, header, content, this._Warning);
+            await this.Send(msg, header, content, this._Warning);
         }
 
-        public void Warning(SocketChannel chan, string header, string content)
+        public async Task Warning(SocketChannel chan, string header, string content)
         {
-            this.Send((chan as ISocketMessageChannel), header, content, this._Warning);
+            await this.Send((chan as ISocketMessageChannel), header, content, this._Warning);
         }
 
-        public void Danger(SocketMessage msg, string header, string content)
+        public async Task Danger(SocketMessage msg, string header, string content)
         {
-            this.Send(msg, header, content, this._Danger);
+            await this.Send(msg, header, content, this._Danger);
         }
 
-        public void Danger(SocketChannel chan, string header, string content)
+        public async Task Danger(SocketChannel chan, string header, string content)
         {
-            this.Send((chan as ISocketMessageChannel), header, content, this._Danger);
+            await this.Send((chan as ISocketMessageChannel), header, content, this._Danger);
         }
 
-        public void Good(SocketMessage msg, string header, string content)
+        public async Task Good(SocketMessage msg, string header, string content)
         {
-            this.Send(msg, header, content, this._Good);
+            await this.Send(msg, header, content, this._Good);
         }
 
-        public void Good(SocketChannel chan,string header,string content)
+        public async Task Good(SocketChannel chan,string header,string content)
         {
-            this.Send((chan as ISocketMessageChannel), header, content, this._Good);
+            await this.Send((chan as ISocketMessageChannel), header, content, this._Good);
         }
 
         public async Task Disconnect(DiscordSocketClient client)
@@ -117,6 +183,18 @@ namespace EBot.Commands
         {
             PaginableMessage page = new PaginableMessage();
             await page.Setup(msg, list, callback);
+        }
+
+        public async Task SendFile(SocketMessage msg,string path)
+        {
+            try
+            {
+                await msg.Channel.SendFileAsync(path);
+            }
+            catch
+            {
+                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a file");
+            }
         }
     }
 }

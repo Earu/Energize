@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Rest;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace EBot.Commands
 {
@@ -18,7 +20,7 @@ namespace EBot.Commands
         private CommandSource _Source;
         private CommandReplyEmbed _EmbedReply;
         private Dictionary<string,  Command> _Cmds;
-        private Dictionary<string, string> _LastChannelPictureURL;
+        private Dictionary<ulong, string> _LastChannelPictureURL;
         public DiscordRestClient _RESTClient;
 
         public CommandHandler()
@@ -28,7 +30,7 @@ namespace EBot.Commands
                 Handler = this
             };
             this._Cmds = new Dictionary<string, Command>();
-            this._LastChannelPictureURL = new Dictionary<string, string>();
+            this._LastChannelPictureURL = new Dictionary<ulong, string>();
         }
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
@@ -39,10 +41,16 @@ namespace EBot.Commands
         public Dictionary<string,Command> Commands { get => this._Cmds; }
         public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
 
-        public string GetLastPictureURL(SocketChannel chan)
+        public string GetLastPictureURL(ulong id)
         {
-            string index = chan.Id.ToString();
-            return this._LastChannelPictureURL.TryGetValue(index, out string url) ? url : "";
+            if(this._LastChannelPictureURL.TryGetValue(id,out string url))
+            {
+                return url;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private bool IsCmdLoaded(string cmd)
@@ -150,7 +158,7 @@ namespace EBot.Commands
                 Message = msg,
                 Command = cmd,
                 Arguments = args,
-                LastPictureURL = this._LastChannelPictureURL.TryGetValue(msg.Channel.ToString(), out string last) ? last : "",
+                LastPictureURL = this.GetLastPictureURL(msg.Channel.Id),
                 Log = this._Log,
                 Commands = this._Cmds,
                 IsPrivate = msg.Channel is IDMChannel,
@@ -164,9 +172,7 @@ namespace EBot.Commands
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
-            bool success = this._Cmds.TryGetValue(cmd, out Command retrieved);
-
-            if (success)
+            if (this._Cmds.TryGetValue(cmd, out Command retrieved))
             {
                 try
                 {
@@ -175,32 +181,17 @@ namespace EBot.Commands
                     await retrieved.Run(ctx);
                     this.LogCommand(ctx);
                 }
-                catch (Discord.Net.HttpException e)
-                {
-                    string log = "";
-                    if(msg.Channel is IGuildChannel)
-                    {
-                        IGuildChannel chan = msg.Channel as IGuildChannel;
-                        log += log += chan.Guild.Name + " - "; 
-                    }
-                    log += "#" + msg.Channel.Name;
-                    this._Log.Nice("Commands", ConsoleColor.Red, "( " + log + " ) Reply was blocked");
-                }
                 catch (Exception e)
                 {
                     this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [" + string.Join(',', args) + " ]");
                     this._Log.Danger(e.ToString());
 
-                    this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
+                    await this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
                 }
-            }
-            else
-            {
-                this._Log.Nice("Commands", ConsoleColor.Red, "No callback for <" + cmd + ">");
             }
         }
 
-        private void MainCall(SocketMessage msg)
+        private async Task MainCall(SocketMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -210,71 +201,54 @@ namespace EBot.Commands
                 {
                     if (this.IsCmdLoaded(cmd))
                     {
-                        this.CommandCall(msg, cmd);
+                        await this.CommandCall(msg, cmd);
                     }
                     else
                     {
                         this._Log.Nice("Commands", ConsoleColor.Red, msg.Author.Username + " tried to use an unloaded command <" + cmd + ">");
-                        this._EmbedReply.Warning(msg, "Unloaded Command", "This is not available right now!");
+                        await this._EmbedReply.Warning(msg, "Unloaded Command", "This is not available right now!");
                     }
                 }
-            }
-        }
-
-        private void CacheURLs(SocketMessage msg,List<string> urls)
-        {
-            if (urls.Count > 0)
-            {
-                string index = msg.Channel.Id.ToString();
-                string lasturl = urls[urls.Count - 1];
-
-                if (this._LastChannelPictureURL.ContainsKey(index))
-                {
-                    this._LastChannelPictureURL.Remove(index);
-                }
-                this._LastChannelPictureURL.Add(index, lasturl);
             }
         }
 
         private void GetImageURLS(SocketMessage msg)
         {
-            List<string> urls = new List<string>();
+            string url = null;
 
             IReadOnlyCollection<Attachment> attachs = msg.Attachments;
             foreach (Attachment attach in attachs)
             {
-                if(attach.Filename.EndsWith(".jpg") || attach.Filename.EndsWith(".jpeg") || attach.Filename.EndsWith(".png"))
+                if(attach.Width.HasValue)
                 {
-                    urls.Add(attach.Url);
+                    url = attach.ProxyUrl;
                 }
             }
 
             IReadOnlyCollection<Embed> embeds = msg.Embeds;
             foreach(Embed embed in embeds)
             {
-                if (embed.Type == EmbedType.Image)
+                if (embed.Image.HasValue)
                 {
-                    string url = embed.Url;
-                    if (!string.IsNullOrWhiteSpace(url))
-                    {
-                        urls.Add(url);
-                    }
-
-                }else if(embed.Type == EmbedType.Rich)
-                {
-                    string url = embed.Url;
-                    if (!string.IsNullOrWhiteSpace(url))
-                    {
-                        urls.Add(url);
-                    }
+                    url = embed.Image.Value.ProxyUrl;
                 }
             }
 
-            this.CacheURLs(msg,urls);
+            string pattern = @"(https?:\/\/.+\.(jpg|png|gifv?))";
+            MatchCollection matches = Regex.Matches(msg.Content, pattern);
+            if (matches.Count > 0)
+            {
+                url = matches[matches.Count - 1].Value;
+            }
+
+            if (url != null)
+            {
+                this._LastChannelPictureURL[msg.Channel.Id] = url;
+            }
 
         }
 
-        private void GetDeletedCommandMessages(SocketMessage msg)
+        private async Task GetDeletedCommandMessages(SocketMessage msg)
         {
             string content = msg.Content;
             if (!msg.Author.IsBot)
@@ -287,7 +261,7 @@ namespace EBot.Commands
                         string user = msg.Author.Mention;
                         List<string> args = this.GetCmdArgs(content);
 
-                        this._EmbedReply.Warning(msg,"Sneaky!", "Deletion of a command message (" + cmd + ") :eyes:");
+                        await this._EmbedReply.Warning(msg,"Sneaky!", "Deletion of a command message (" + cmd + ") :eyes:");
                         CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
                         this.LogCommand(ctx, true);
                     }
@@ -295,23 +269,27 @@ namespace EBot.Commands
             }
         }
 
+        private async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg,ISocketMessageChannel chan)
+        {
+            if (msg.HasValue)
+            {
+                await this.GetDeletedCommandMessages(msg.Value as SocketMessage);
+            }
+        }
+
+        private async Task OnMessageCreated(SocketMessage msg)
+        {
+            this.GetImageURLS(msg);
+            this.MainCall(msg).RunSynchronously();
+        }
+
         public void Initialize()
         {
             PaginableMessage.Initialize(this._Client);
-            this._Client.MessageDeleted += async (msg,chan) =>
-            {
-                if (msg.HasValue)
-                {
-                    this.GetDeletedCommandMessages(msg.Value as SocketMessage);
-                }
-            };
+            this._Client.MessageDeleted += this.OnMessageDeleted;
 
             this._Source.Initialize();
-            this._Client.MessageReceived += async msg =>
-            {
-                this.MainCall(msg);
-                this.GetImageURLS(msg);
-            };
+            this._Client.MessageReceived += this.OnMessageCreated;
         }
     }
 }

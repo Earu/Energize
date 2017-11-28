@@ -17,7 +17,7 @@ namespace EBot.Commands.Modules
 
             if (global == null)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "Warframe Alerts", "Looks like I couldn't get any data!");
+                await ctx.EmbedReply.Danger(ctx.Message, "Warframe Alerts", "Looks like I couldn't get any data!");
             }
             else
             {
@@ -45,7 +45,7 @@ namespace EBot.Commands.Modules
                         }
                     }
 
-                    ctx.EmbedReply.Good(ctx.Message, "Alert " + (i + 1) + "/" + global.Alerts.Length,
+                    await ctx.EmbedReply.Good(ctx.Message, "Alert " + (i + 1) + "/" + global.Alerts.Length,
                         "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
                         + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
                         + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"

@@ -13,7 +13,7 @@ namespace EBot.Commands.Modules
         [Command(Name="e621",Help="Browses E621",Usage="e621 <search>")]
         private async Task SearchE621(CommandContext ctx)
         {
-            if (ctx.Message.Channel.IsNsfw)
+            if (ctx.IsNSFW())
             {
                 Random rand = new Random();
                 string body = await HTTP.Fetch("https://e621.net/post/index.json",ctx.Log);
@@ -22,7 +22,7 @@ namespace EBot.Commands.Modules
 
                 if(posts == null)
                 {
-                    ctx.EmbedReply.Danger(ctx.Message, "E621", "There was no data to use sorry!");
+                    await ctx.EmbedReply.Danger(ctx.Message, "E621", "There was no data to use sorry!");
                 }
                 else
                 {
@@ -37,7 +37,7 @@ namespace EBot.Commands.Modules
 
                     if (post == null)
                     {
-                         ctx.EmbedReply.Danger(ctx.Message, "E621", "Seems like I couldn't find anything!");
+                         await ctx.EmbedReply.Danger(ctx.Message, "E621", "Seems like I couldn't find anything!");
                     }
                     else
                     {
@@ -49,13 +49,13 @@ namespace EBot.Commands.Modules
                             Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*"
                         };
 
-                        ctx.EmbedReply.Send(ctx.Message, embed.Build());
+                        await ctx.EmbedReply.Send(ctx.Message, embed.Build());
                     }
                 }
             }
             else
             {
-                ctx.EmbedReply.Danger(ctx.Message, "E621", "Haha, did you really believe it would be that easy? :smirk:");
+                await ctx.EmbedReply.Danger(ctx.Message, "E621", "Haha, did you really believe it would be that easy? :smirk:");
             }
         }
 

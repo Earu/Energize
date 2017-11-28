@@ -5,5 +5,8 @@
   "OwnerID": 0,
   "BotIDMain": 0,
   "BotIDDev": 0,
-  "GoogleAPIKey": ""
+  "GoogleAPIKey": "",
+  "MashapeKey": "",
+  "FeedbackChannelID": 0,
+  "WebSearchToken": ""
 }
