@@ -59,7 +59,7 @@ namespace EBot.Commands.Social
             {
                 "<origin> gives a big <action> to <user>",
                 "<origin> gently <action>es <user>",
-                "<origin> <kiss>es <user>"
+                "<origin> <action>es <user>"
             });
         }
 
@@ -100,6 +100,16 @@ namespace EBot.Commands.Social
                 "<origin> gives a large <action> to <user>",
                 "<origin> <action>s <user>, hard.",
                 "<origin> <action>s in a kinky way <user>"
+            });
+        }
+
+        public string Yiff(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from, to, "yiff", new string[]
+            {
+                "<origin> <action>s <user> *cringe*",
+                "<origin> wildy <action>s <user> *cringe*",
+                "With a lack of self-esteem <origin> <action>s <user> *cringe*"
             });
         }
     }

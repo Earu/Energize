@@ -4,6 +4,7 @@ using EBot.Utils;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
+using SixLabors.ImageSharp;
 
 namespace EBot.Commands.Modules
 {
@@ -26,68 +27,114 @@ namespace EBot.Commands.Modules
             builder.WithImageUrl(url);
             builder.WithFooter("Avatar");
 
-            ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
-        private async Task BlackWhite(CommandContext ctx)
+        private async Task Process(CommandContext ctx,string name,Action<Image<Rgba32>> callback)
         {
-            string url = string.IsNullOrWhiteSpace(ctx.Arguments[0]) ? ctx.LastPictureURL : ctx.Arguments[0];
+            string url = null;
             string path = null;
-
-            if (!string.IsNullOrWhiteSpace(url)) //if getlastpicture returns nothing
+            
+            if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
-                path = await ImageProcess.DownloadImage(url);
+                url = user.GetAvatarUrl(ImageFormat.Png, 512);
+            }
+            else
+            {
+                url = ctx.HasArguments ? ctx.Arguments[0] : ctx.LastPictureURL;
             }
 
-            if(path != null)
-            {
-                try
-                {
-                    ImageProcess.Resize(path);
-                    ImageProcess.MakeBlackWhite(path);
-
-                    await ctx.Message.Channel.SendFileAsync(path);
-
-                    ImageProcess.DeleteImage(path);
-                }catch(Exception e)
-                {
-                    BotLog.Debug(e.ToString());
-                }
-            }
-
-            if(path == null)
-            {
-                ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
-            }
-        }
-
-        private async Task Wew(CommandContext ctx)
-        {
-            string url = string.IsNullOrWhiteSpace(ctx.Arguments[0]) ? ctx.LastPictureURL : ctx.Arguments[0];
-            string path = null;
-            string maskpath = "Masks/wew.png";
-
-            if (!string.IsNullOrWhiteSpace(url)) //if getlastpicture returns nothing
+            if (!string.IsNullOrWhiteSpace(url)) //if LastPictureURL is null
             {
                 path = await ImageProcess.DownloadImage(url);
             }
 
             if (path != null)
             {
-                ctx.EmbedReply.Good(ctx.Message, "WIP", "Sorry this command is under work!");
+                Image<Rgba32> img = ImageProcess.Get(path);
+                callback(img);
+                img.Save(path);
+
+                await ctx.EmbedReply.SendFile(ctx.Message, path);
+
+                ImageProcess.DeleteImage(path);
             }
 
             if (path == null)
             {
-                ctx.EmbedReply.Danger(ctx.Message, "Ugh", "There's no valid url to use!");
+                await ctx.EmbedReply.Danger(ctx.Message, name, "There's no valid url to use!");
             }
+        }
+
+        [Command(Name="bw",Help="Makes a picture black and white",Usage= "bw <imageurl|user|nothing>")]
+        private async Task BlackWhite(CommandContext ctx)
+        {
+            await this. Process(ctx, "BW", img => img.Mutate(x => x.BlackWhite()));
+        }
+
+        [Command(Name="jpg",Help="Makes a picture have bad quality",Usage= "jpg <imageurl|user|nothing>")]
+        private async Task Jpg(CommandContext ctx)
+        {
+            await this.Process(ctx, "JPG", img => img.Mutate(x => x.Pixelate(5)));
+        }
+
+        [Command(Name="invert",Help="Inverts the colors of a picture",Usage= "invert <imageurl|user|nothing>")]
+        private async Task Invert(CommandContext ctx)
+        {
+            await this.Process(ctx, "Invert", img => img.Mutate(x => x.Invert()));
+        }
+
+        [Command(Name="paint",Help="Makes a picture look like a painting",Usage= "paint <imageurl|user|nothing>")]
+        private async Task Paint(CommandContext ctx)
+        {
+            await this.Process(ctx, "Paint", img => img.Mutate(x => x.OilPaint()));
+        }
+
+        [Command(Name="intensify",Help="Intensifies the colors of a picture",Usage="itensify <imageurl|user|nothing>")]
+        private async Task Intensify(CommandContext ctx)
+        {
+            await this.Process(ctx, "Intensify", img => img.Mutate(x => {
+                x.Saturation(100);
+                x.Contrast(75);
+            }));
+        }
+
+        [Command(Name="blur",Help="Blurs a picture",Usage="blur <imageurl|user|nothing>")]
+        private async Task Blur(CommandContext ctx)
+        {
+            await this.Process(ctx, "Blur", img => img.Mutate(x => x.BoxBlur()));
+        }
+          
+        [Command(Name="greenify",Help="Greenifies a picture",Usage="greenify <imageurl|user|nothing>")]
+        private async Task Greenify(CommandContext ctx)
+        {
+            await this.Process(ctx, "Greenify", img => img.Mutate(x => x.Lomograph()));
+        }
+
+        [Command(Name="deepfry",Help="Deepfries a picture",Usage="deepfry <imageurl|user|nothing>")]
+        private async Task DeepFry(CommandContext ctx)
+        {
+            await this.Process(ctx,"Deepfry",img => img.Mutate(x => {
+                x.Pixelate(3);
+                for (uint i = 0; i < 5; i++)
+                {
+                    x.Saturation(100);
+                    x.Contrast(75);
+                }
+            }));
         }
 
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.Avatar);
-            //this.Handler.LoadCommand("blackwhite", this.BlackWhite, "Make a picture black and white",this.Name);
-            //this.Handler.LoadCommand("wew", this.Wew, "provide a picture to \"wew\" at");
+            handler.LoadCommand(this.BlackWhite);
+            handler.LoadCommand(this.Jpg);
+            handler.LoadCommand(this.Invert);
+            handler.LoadCommand(this.Paint);
+            handler.LoadCommand(this.Intensify);
+            handler.LoadCommand(this.Blur);
+            handler.LoadCommand(this.Greenify);
+            handler.LoadCommand(this.DeepFry);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

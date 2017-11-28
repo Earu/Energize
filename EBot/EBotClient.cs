@@ -81,81 +81,22 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        private async Task AskAsync(SocketMessage msg,bool ismention,bool isprefix,ulong id)
-        {
-            string mention = "<@" + id + ">";
-            SocketChannel chan = msg.Channel as SocketChannel;
-            string input = msg.Content;
-
-            if (ismention)
-            {
-                if (isprefix)
-                {
-                    input = input.Remove(0, mention.Length + 1);
-                }
-                else
-                {
-                    input = input.Replace(mention, "EBot");
-                }
-            }
-
-            await msg.Channel.TriggerTypingAsync();
-            string result = await ChatBot.Ask(chan, input, this._Log);
-
-            this._Handler.EmbedReply.Normal(msg, "ChatBot", result);
-        }
-
         private async Task OnChatAsync(SocketMessage msg)
         {
-            ulong id = (await _DiscordREST.GetApplicationInfoAsync()).Id;
-            string mention = "<@" + id + "> ";
-            bool answered = false;
-
-            if (msg.Content.StartsWith(mention))
-            {
-                answered = true;
-                await this.AskAsync(msg, true, true,id);
-            }
-
-            if (!answered)
-            {
-                bool mentionned = false;
-                foreach(SocketUser user in msg.MentionedUsers)
-                {
-                    if(user.Id == id)
-                    {
-                        mentionned = true;
-                    }
-                }
-
-                if (mentionned)
-                {
-                    answered = true;
-                    await this.AskAsync(msg, true, false,id);
-                }
-            }
-
-            if (answered)
-            {
-                SocketGuildChannel chan = msg.Channel as SocketGuildChannel;
-                string name = "(" + chan.Guild.Name + " - #" + msg.Channel.Name + ") ";
-                this._Log.Nice("ChatBot", ConsoleColor.DarkGreen, name + "Answered " + msg.Author.Username + "#" + msg.Author.Discriminator);
-            }
-
             if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
             {
-                MarkovHandler.Learn(msg.Content);
+              MarkovHandler.Learn(msg.Content);
             }
         }
 
-        public async Task ConnectAsync()
+        public async Task InitializeAsync()
         {
             try
             {
                 await this._Discord.LoginAsync(TokenType.Bot,_Token,true);
                 await this._Discord.StartAsync();
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
-                await LuaEnv.Initialize(this);
+                await LuaEnv.InitializeAsync(this);
 
                 this._Discord.Ready += async () =>
                 {
@@ -172,17 +113,14 @@ namespace EBot
 
                             ClientInfo info = await ClientMemoryStream.GetClientInfo();
                             string gname = this._Prefix + "help w/ " + info.UserAmount + " users";
-                            await this._Discord.SetGameAsync(gname, EBotCredentials.TWITCH_URL, StreamType.Twitch);
+                            await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
                         });
 
-                        statustimer.Change(0, 1000 * 60 * 5);
+                        statustimer.Change(0, 1000 * 60 * 5); //5mins
                     }
                 };
 
-                this._Discord.MessageReceived += async msg =>
-                {
-                    this.OnChatAsync(msg).RunSynchronously();
-                };
+                this._Discord.MessageReceived += this.OnChatAsync;
 
                 Timer gctimer = new Timer(arg =>
                 {

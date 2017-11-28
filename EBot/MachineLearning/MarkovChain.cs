@@ -10,6 +10,12 @@ namespace EBot.MachineLearning
 
         public void Learn(string sentence)
         {
+
+            if (!Directory.Exists(_Path))
+            {
+                Directory.CreateDirectory(_Path);
+            }
+
             sentence = sentence.Trim().ToLower();
             string[] words = sentence.Split(new[] { ' ' });
 
@@ -17,14 +23,8 @@ namespace EBot.MachineLearning
             {
                 string word = words[i].ToLower();
                 string next = words[i + 1].ToLower();
-
                 string path = this._Path + word;
-                using (StreamWriter writer = File.AppendText(path))
-                {
-                    writer.Write(next);
-                    writer.WriteLine();
-                    writer.Flush();
-                }
+                File.AppendAllText(path, next + "\n");
             }
         }
 
