@@ -25,6 +25,7 @@ namespace EBot.Commands
             new SocialCommands().Initialize(this._Handler, this._Log);
             new UtilsCommands().Initialize(this._Handler, this._Log);
             new WarframeCommands().Initialize(this._Handler, this._Log);
+            new AdministrationCommands().Initialize(this._Handler, this._Log);
         }
     }
 }

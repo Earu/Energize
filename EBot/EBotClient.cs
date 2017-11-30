@@ -1,6 +1,5 @@
 ﻿using EBot.Commands;
 using EBot.Logs;
-using EBot.MachineLearning;
 using EBot.MemoryStream;
 using EBot.Utils;
 using System;
@@ -51,17 +50,16 @@ namespace EBot
             this._Log.Notify("Initializing");
 
             this._Handler.Client = this._Discord;
-            this._Handler._RESTClient = this._DiscordREST;
+            this._Handler.RESTClient = this._DiscordREST;
             this._Handler.Log = this._Log;
             this._Handler.Prefix = this._Prefix;
             this._Handler.Source = this._Source;
             this._Handler.EmbedReply.Log = this._Log;
-            this._Handler.Initialize();
+            this._Source.Initialize();
 
             this._Spy.Client = this._Discord;
             this._Spy.RESTClient = this._DiscordREST;
             this._Spy.Log = this._Log;
-            this._Spy.WatchWords(new string[] { "yara", "earu" });
 
             this._Event.Client = this._Discord;
             this._Event.RESTClient = this._DiscordREST;
@@ -81,22 +79,32 @@ namespace EBot
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
 
-        private async Task OnChatAsync(SocketMessage msg)
-        {
-            if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
-            {
-              MarkovHandler.Learn(msg.Content);
-            }
-        }
-
         public async Task InitializeAsync()
         {
             try
             {
-                await this._Discord.LoginAsync(TokenType.Bot,_Token,true);
+                await this._Discord.LoginAsync(TokenType.Bot, _Token, true);
                 await this._Discord.StartAsync();
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
                 await LuaEnv.InitializeAsync(this);
+
+                this._Discord.MessageDeleted += async (msg,chan) =>
+                {
+                    this._Handler.OnMessageDeleted(msg, chan);
+                    LuaEnv.OnMessageDeleted(msg, chan);
+                };
+
+                this._Discord.MessageReceived += async msg =>
+                {
+                    this._Spy.WatchWords(msg, new string[] { "yara", "earu", "ebot" });
+                    this._Handler.OnMessageCreated(msg);
+                    LuaEnv.OnMessageReceived(msg);
+                };
+
+                this._Discord.ReactionAdded   += LuaEnv.OnReactionAdded;
+                this._Discord.ReactionRemoved += LuaEnv.OnReactionRemoved;
+                this._Discord.UserLeft        += LuaEnv.OnUserLeft;
+                this._Discord.UserJoined      += LuaEnv.OnUserJoined;
 
                 this._Discord.Ready += async () =>
                 {
@@ -119,8 +127,6 @@ namespace EBot
                         statustimer.Change(0, 1000 * 60 * 5); //5mins
                     }
                 };
-
-                this._Discord.MessageReceived += this.OnChatAsync;
 
                 Timer gctimer = new Timer(arg =>
                 {

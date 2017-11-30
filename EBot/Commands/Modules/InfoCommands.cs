@@ -157,12 +157,40 @@ namespace EBot.Commands.Modules
             }
         }
 
+        [Command(Name="isadmin",Help="Gets wether or not a user is an admin",Usage="isadmin <user>")]
+        private async Task IsAdmin(CommandContext ctx)
+        {
+            if(!(ctx.Message.Channel is IGuildChannel))
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "IsAdmin", "You can't do that in a DM");
+                return;
+            }
+
+            if (ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
+            {
+                SocketGuildUser u = user as SocketGuildUser;
+                if (u.GuildPermissions.Administrator)
+                {
+                    await ctx.EmbedReply.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is an administrator");
+                }
+                else
+                {
+                    await ctx.EmbedReply.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is not an administrator");
+                }
+            }
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "IsAdmin", "No user was found with your input");
+            }
+        }
+
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.Server);
             handler.LoadCommand(this.Info);
             handler.LoadCommand(this.User);
             handler.LoadCommand(this.Help);
+            handler.LoadCommand(this.IsAdmin);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
