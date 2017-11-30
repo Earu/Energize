@@ -66,6 +66,7 @@ ENV.type       = type
 ENV.istable    = istable
 ENV.isstring   = isstring
 ENV.isnumber   = isnumber
+ENV.isfunction = isfunction
 ENV.printtable = printtable
 ENV._G         = ENV
 protect(ENV)
@@ -79,7 +80,7 @@ protect(ENV.table)
 protect(ENV.math)
 protect(ENV.string)
 protect(ENV.os)
-protect(ENV.event)
+--protect(ENV.event)
 
 ENV.string.dump  = placeholder
 ENV.os.execute   = placeholder

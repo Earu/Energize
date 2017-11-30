@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Discord.Rest;
 using System.Text.RegularExpressions;
 using System.Linq;
+using EBot.MachineLearning;
 
 namespace EBot.Commands
 {
@@ -21,7 +22,8 @@ namespace EBot.Commands
         private CommandReplyEmbed _EmbedReply;
         private Dictionary<string,  Command> _Cmds;
         private Dictionary<ulong, string> _LastChannelPictureURL;
-        public DiscordRestClient _RESTClient;
+        private DiscordRestClient _RESTClient;
+        private Dictionary<ulong, bool> _LogDeleted;
 
         public CommandHandler()
         {
@@ -31,6 +33,7 @@ namespace EBot.Commands
             };
             this._Cmds = new Dictionary<string, Command>();
             this._LastChannelPictureURL = new Dictionary<ulong, string>();
+            this._LogDeleted = new Dictionary<ulong, bool>();
         }
 
         public BotLog Log { get => this._Log; set => this._Log = value; }
@@ -40,6 +43,7 @@ namespace EBot.Commands
         public DiscordSocketClient Client { get => this._Client; set => this._Client = value; }
         public Dictionary<string,Command> Commands { get => this._Cmds; }
         public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
+        public Dictionary<ulong,bool> LogDeleted { get => this._LogDeleted; set => this._LogDeleted = value; }
 
         public string GetLastPictureURL(ulong id)
         {
@@ -53,7 +57,7 @@ namespace EBot.Commands
             }
         }
 
-        private bool IsCmdLoaded(string cmd)
+        public bool IsCmdLoaded(string cmd)
         {
             return this._Cmds.ContainsKey(cmd) ? this._Cmds[cmd].Loaded : true;
         }
@@ -91,7 +95,7 @@ namespace EBot.Commands
             }
         }
 
-        private string GetCmd(string line)
+        public string GetCmd(string line)
         {
             return line.Substring(this._Prefix.Length).Split(' ')[0];
         }
@@ -212,7 +216,7 @@ namespace EBot.Commands
             }
         }
 
-        private void GetImageURLS(SocketMessage msg)
+        public string GetImageURLS(SocketMessage msg)
         {
             string url = null;
 
@@ -234,18 +238,22 @@ namespace EBot.Commands
                 }
             }
 
-            string pattern = @"(https?:\/\/.+\.(jpg|png|gifv?))";
+            string pattern = @"(https?:\/\/.+\.(jpg|png|gif))";
             MatchCollection matches = Regex.Matches(msg.Content, pattern);
             if (matches.Count > 0)
             {
                 url = matches[matches.Count - 1].Value;
             }
 
-            if (url != null)
+            string giphy = @"https:\/\/giphy\.com\/gifs\/(.+-)?([A-Za-z0-9]+)\s?";
+            MatchCollection gifs = Regex.Matches(msg.Content, giphy);
+            if(gifs.Count > 0)
             {
-                this._LastChannelPictureURL[msg.Channel.Id] = url;
+                string giftoken = gifs[gifs.Count - 1].Groups[2].Value;
+                url = "https://media.giphy.com/media/" + giftoken + "/giphy.gif";
             }
 
+            return url;
         }
 
         private async Task GetDeletedCommandMessages(SocketMessage msg)
@@ -269,27 +277,37 @@ namespace EBot.Commands
             }
         }
 
-        private async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg,ISocketMessageChannel chan)
+        public async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg,ISocketMessageChannel chan)
         {
             if (msg.HasValue)
             {
-                await this.GetDeletedCommandMessages(msg.Value as SocketMessage);
+                SocketMessage mess = msg.Value as SocketMessage;
+                if (!this._LogDeleted.ContainsKey(mess.Channel.Id))
+                {
+                    this._LogDeleted[mess.Channel.Id] = true;
+                }
+
+                if (this._LogDeleted[mess.Channel.Id])
+                {
+                    await this.GetDeletedCommandMessages(msg.Value as SocketMessage);
+                }
             }
         }
 
-        private async Task OnMessageCreated(SocketMessage msg)
+        public async Task OnMessageCreated(SocketMessage msg)
         {
-            this.GetImageURLS(msg);
+            string url = this.GetImageURLS(msg);
+            if (url != null)
+            {
+                this._LastChannelPictureURL[msg.Channel.Id] = url;
+            }
+
+            if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
+            {
+                MarkovHandler.Learn(msg.Content);
+            }
+
             this.MainCall(msg).RunSynchronously();
-        }
-
-        public void Initialize()
-        {
-            PaginableMessage.Initialize(this._Client);
-            this._Client.MessageDeleted += this.OnMessageDeleted;
-
-            this._Source.Initialize();
-            this._Client.MessageReceived += this.OnMessageCreated;
         }
     }
 }

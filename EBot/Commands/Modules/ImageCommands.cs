@@ -5,12 +5,16 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using System.IO;
 
 namespace EBot.Commands.Modules
 {
-    [CommandModule(Name="Image")]
-    class ImageCommands : CommandModule,ICommandModule
+    [CommandModule(Name = "Image")]
+    class ImageCommands : CommandModule, ICommandModule
     {
+        private delegate string SaveCallback(Image<Rgba32> img, string path);
+
         [Command(Name="avatar",Help="Gets the avatar of a user",Usage="avatar <@user|nothing>")]
         private async Task Avatar(CommandContext ctx)
         {
@@ -30,7 +34,7 @@ namespace EBot.Commands.Modules
             await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
-        private async Task Process(CommandContext ctx,string name,Action<Image<Rgba32>> callback)
+        private async Task Process(CommandContext ctx,string name,Action<Image<Rgba32>> callback=null,SaveCallback savecallback=null)
         {
             string url = null;
             string path = null;
@@ -46,14 +50,28 @@ namespace EBot.Commands.Modules
 
             if (!string.IsNullOrWhiteSpace(url)) //if LastPictureURL is null
             {
-                path = await ImageProcess.DownloadImage(url);
+                try //if the input is wrong
+                {
+                    path = await ImageProcess.DownloadImage(url);
+                }
+                catch
+                {
+                    path = null;
+                }
             }
 
             if (path != null)
             {
                 Image<Rgba32> img = ImageProcess.Get(path);
-                callback(img);
-                img.Save(path);
+                callback?.Invoke(img);
+                if(savecallback == null)
+                {
+                    img.Save(path);
+                }
+                else
+                {
+                    path = savecallback(img, path);
+                }
 
                 await ctx.EmbedReply.SendFile(ctx.Message, path);
 
@@ -69,13 +87,33 @@ namespace EBot.Commands.Modules
         [Command(Name="bw",Help="Makes a picture black and white",Usage= "bw <imageurl|user|nothing>")]
         private async Task BlackWhite(CommandContext ctx)
         {
-            await this. Process(ctx, "BW", img => img.Mutate(x => x.BlackWhite()));
+            await this. Process(ctx, "BW", img => img.Mutate(x => x.Grayscale(SixLabors.ImageSharp.Processing.GrayscaleMode.Bt601)));
         }
 
         [Command(Name="jpg",Help="Makes a picture have bad quality",Usage= "jpg <imageurl|user|nothing>")]
         private async Task Jpg(CommandContext ctx)
         {
-            await this.Process(ctx, "JPG", img => img.Mutate(x => x.Pixelate(5)));
+            await this.Process(ctx, "JPG", null, (img, path) =>
+            {
+                JpegEncoder encoder = new JpegEncoder
+                {
+                    Quality = 0,
+                    IgnoreMetadata = true,
+                    Subsample = JpegSubsample.Ratio420,
+                };
+
+                using (FileStream stream =  File.OpenWrite(path)){
+                    encoder.Encode(img, stream);
+                }
+                
+                return path;
+            });
+        }
+
+        [Command(Name="pixelate",Help="pixelate a picture",Usage="pixelate <amount>")]
+        private async Task Pixelate(CommandContext ctx)
+        {
+            await this.Process(ctx, "Pixelate", img => img.Mutate(x => x.Pixelate(3)));
         }
 
         [Command(Name="invert",Help="Inverts the colors of a picture",Usage= "invert <imageurl|user|nothing>")]
@@ -114,12 +152,14 @@ namespace EBot.Commands.Modules
         [Command(Name="deepfry",Help="Deepfries a picture",Usage="deepfry <imageurl|user|nothing>")]
         private async Task DeepFry(CommandContext ctx)
         {
-            await this.Process(ctx,"Deepfry",img => img.Mutate(x => {
-                x.Pixelate(3);
+            await this.Process(ctx,"Deepfry", img => img.Mutate(x => {
+                x.Pixelate(2);
                 for (uint i = 0; i < 5; i++)
                 {
-                    x.Saturation(100);
-                    x.Contrast(75);
+                    x.Saturation(50);
+                    x.Contrast(30);
+                    x.GaussianSharpen();
+                    x.Quantize(Quantization.Octree);
                 }
             }));
         }
@@ -135,6 +175,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Blur);
             handler.LoadCommand(this.Greenify);
             handler.LoadCommand(this.DeepFry);
+            handler.LoadCommand(this.Pixelate);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

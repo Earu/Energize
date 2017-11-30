@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using EBot.Logs;
@@ -42,8 +43,8 @@ namespace EBot.Commands.Modules
         [Command(Name="invite",Help="Gets the invite link for the bot",Usage="invite <nothing>")]
         private async Task Invite(CommandContext ctx)
         {
-            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=0";
-            string server = "https://discord.gg/XZHGG7";
+            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
+            string server = "https://discord.gg/KJqhQ22";
 
             await ctx.EmbedReply.Good(ctx.Message, "Invite", "[Invite EBot](" + invite + ")\t\t\t[Join EBot's server](" + server + ")");
         }
@@ -83,51 +84,49 @@ namespace EBot.Commands.Modules
         private async Task BehaviorChange(CommandContext ctx,string name, Action<CommandCallback> callback)
         {
             RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
-            if (ctx.Message.Author.Id == app.Owner.Id)
+            if (ctx.Message.Author.Id != app.Owner.Id)
             {
-                bool success = false;
-                if (ctx.HasArguments)
-                {
-                    string arg = ctx.Arguments[0].Trim();
-                    if (Command.Modules.ContainsKey(arg))
-                    {
-                        Command.Modules[arg].ForEach(x => callback(x.Callback));
-                        Command.SetLoadedModule(arg, false);
+                await ctx.EmbedReply.Danger(ctx.Message, name, "You are not the owner of this bot!");
+                return;
+            }
 
-                        await ctx.EmbedReply.Good(ctx.Message, name, "Successfully " + name.ToLower() + "ed module \"" + arg + "\"");
-                        success = true;
-                    }
-                    else
-                    {
-                        foreach (KeyValuePair<string, List<Command>> module in Command.Modules)
-                        {
-                            foreach (Command cmd in module.Value)
-                            {
-                                if (cmd.Cmd == arg)
-                                {
-                                    callback(cmd.Callback);
+            bool success = false;
+            if (!ctx.HasArguments)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, name, "You must provide a command or a module to unload!");
+                return;
+            }
 
-                                    await ctx.EmbedReply.Good(ctx.Message, name, name + "ed command \"" + arg + "\"");
-                                    success = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+            string arg = ctx.Arguments[0].Trim();
+            if (Command.Modules.ContainsKey(arg))
+            {
+                Command.Modules[arg].ForEach(x => callback(x.Callback));
+                Command.SetLoadedModule(arg, false);
 
-                    if (!success)
-                    {
-                        await ctx.EmbedReply.Danger(ctx.Message, name, "No command or module with that name was found!");
-                    }
-                }
-                else
-                {
-                    await ctx.EmbedReply.Danger(ctx.Message, name, "You must provide a command or a module to unload!");
-                }
+                await ctx.EmbedReply.Good(ctx.Message, name, "Successfully " + name.ToLower() + "ed module \"" + arg + "\"");
+                success = true;
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "You are not the owner of this bot!");
+                foreach (KeyValuePair<string, List<Command>> module in Command.Modules)
+                {
+                    foreach (Command cmd in module.Value)
+                    {
+                        if (cmd.Cmd == arg)
+                        {
+                            callback(cmd.Callback);
+
+                            await ctx.EmbedReply.Good(ctx.Message, name, name + "ed command \"" + arg + "\"");
+                            success = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!success)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, name, "No command or module with that name was found!");
             }
         }
 
@@ -155,8 +154,17 @@ namespace EBot.Commands.Modules
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithColor(ctx.EmbedReply.ColorNormal);
                 builder.WithAuthor(ctx.Message.Author);
-                builder.WithFooter("Feedback");
-                builder.WithDescription(feedback);
+                builder.WithTimestamp(ctx.Message.CreatedAt);
+                builder.WithDescription(ctx.Input);
+                if(ctx.Message.Channel is IGuildChannel)
+                {
+                    IGuildChannel c = ctx.Message.Channel as IGuildChannel;
+                    builder.WithFooter(c.Guild.Name + "#" + c.Name + " Feedback");
+                }
+                else
+                {
+                    builder.WithFooter("DM Feedback");
+                }
 
                 await ctx.EmbedReply.Send(chan,builder.Build());
             }

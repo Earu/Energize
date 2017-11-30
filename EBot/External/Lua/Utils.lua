@@ -10,6 +10,10 @@ isstring = function(what)
     return type(what) == "string"
 end
 
+isfunction = function(what)
+    return type(what) == "function"
+end
+
 printtable = function( t, indent, done )
     done = done or {}
     indent = indent or 0

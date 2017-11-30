@@ -29,20 +29,17 @@ namespace EBot.Logs
             this._Log.Nice("SpyLog", ConsoleColor.Yellow, log);
         }
 
-        public void WatchWords(string[] tospy)
+        public void WatchWords(SocketMessage msg,string[] tospy)
         {
-            this._Client.MessageReceived += async msg =>
+            string content = msg.Content;
+            for (int i = 0; i < tospy.Length; i++)
             {
-                string content = msg.Content;
-                for (int i = 0; i < tospy.Length; i++)
+                string used = tospy[i];
+                if (content.ToLower().Contains(used))
                 {
-                    string used = tospy[i];
-                    if (content.ToLower().Contains(used))
-                    {
-                        this.LogMessage(msg);                        
-                    }
+                    this.LogMessage(msg);                        
                 }
-            };
+            }
         }
     }
 }
