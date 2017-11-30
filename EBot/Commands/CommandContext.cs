@@ -63,6 +63,27 @@ namespace EBot.Commands
             }
         }
 
+        public bool IsAdminUser()
+        {
+            if (!this._IsPrivate)
+            {
+                SocketGuildUser user = this._Message.Author as SocketGuildUser;
+                List<SocketRole> roles = user.Roles.Where(x => x != null && x.Name == "EBot").ToList();
+                if(roles.Count > 0 || user.GuildPermissions.Administrator)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public bool TryGetUser(string input,out SocketUser user)
         {
             input = input.Trim().ToLower();

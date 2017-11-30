@@ -17,6 +17,13 @@ namespace EBot.Utils
         private static RestApplication _App;
         private static Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
         private static string ScriptSeparator = "\n-- GEN --\n";
+        public static Func<SocketGuildUser,Task> OnUserLeft;
+        public static Func<SocketGuildUser, Task> OnUserJoined;
+        public static Func<SocketMessage, Task> OnMessageReceived;
+        public static Func<Cacheable<IMessage, UInt64>, ISocket​Message​Channel, Task> OnMessageDeleted;
+        public static Func<Cacheable<IMessage, ulong>, SocketMessage, ISocketMessageChannel, Task> OnMessageUpdated;
+        public static Func<Cacheable<IUserMessage, ulong>, ISocketMessageChannel, SocketReaction, Task> OnReactionAdded;
+        public static Func<Cacheable<IUserMessage, ulong>, ISocketMessageChannel, SocketReaction, Task> OnReactionRemoved;
 
         public static async Task InitializeAsync(EBotClient client)
         {
@@ -46,7 +53,7 @@ namespace EBot.Utils
                 }
             }
 
-            client.Discord.UserJoined += async user =>
+            OnUserJoined = async user =>
             {
                 IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
                 foreach(SocketGuildChannel chan in channels)
@@ -62,7 +69,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.UserLeft += async user =>
+            OnUserLeft = async user =>
             {
                 IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
                 foreach (SocketGuildChannel chan in channels)
@@ -79,7 +86,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.MessageReceived += async msg =>
+            OnMessageReceived = async msg =>
             {
                 if (_States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
                 {
@@ -93,7 +100,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.MessageDeleted += async (msg, c) =>
+            OnMessageDeleted = async (msg, c) =>
             {
                 if (msg.HasValue && _States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
                 {
@@ -107,7 +114,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.MessageUpdated += async (cache, msg, c) =>
+            OnMessageUpdated = async (cache, msg, c) =>
             {
                 if (_States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
                 {
@@ -121,7 +128,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.ReactionAdded += async (cache,c,react) => 
+            OnReactionAdded = async (cache,c,react) => 
             {
                 if(_States.ContainsKey(c.Id) && react.UserId != _App.Id)
                 {
@@ -133,7 +140,7 @@ namespace EBot.Utils
                 }
             };
 
-            client.Discord.ReactionRemoved += async (cache, c, react) =>
+            OnReactionRemoved = async (cache, c, react) =>
             {
                 if (_States.ContainsKey(c.Id) && react.UserId != _App.Id)
                 {
