@@ -53,7 +53,7 @@ namespace EBot.Commands
         public bool IsNSFW()
         {
             ISocketMessageChannel chan = this._Message.Channel;
-            if (chan.IsNsfw || chan.Name.ToLower().StartsWith("nsfw"))
+            if (chan.IsNsfw || chan.Name.ToLower().Contains("nsfw"))
             {
                 return true;
             }

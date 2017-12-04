@@ -12,6 +12,7 @@ namespace EBot
         static async Task MainAsync(string[] args)
         {
             await EBotConfig.Load();
+            await EBotData.Load();
 
             EBotClient client = new EBotClient(EBotConfig.TOKEN_DEV, "_");
 

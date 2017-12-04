@@ -10,7 +10,7 @@ using System.IO;
 
 namespace EBot.Commands.Modules
 {
-    [CommandModule(Name = "Image")]
+    [CommandModule(Name="Image")]
     class ImageCommands : CommandModule, ICommandModule
     {
         private delegate string SaveCallback(Image<Rgba32> img, string path);
@@ -34,18 +34,38 @@ namespace EBot.Commands.Modules
             await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
-        private async Task Process(CommandContext ctx,string name,Action<Image<Rgba32>> callback=null,SaveCallback savecallback=null)
+        private async Task Process(CommandContext ctx,string name,Action<Image<Rgba32>,int> callback=null,SaveCallback savecallback=null)
         {
             string url = null;
             string path = null;
+            int value = 0;
             
             if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
                 url = user.GetAvatarUrl(ImageFormat.Png, 512);
+                if(ctx.Arguments.Count > 1)
+                {
+                    if(int.TryParse(ctx.Arguments[1],out int arg))
+                    {
+                        value = arg;
+                    }
+                }
+            }
+            else if (int.TryParse(ctx.Arguments[0],out int arg))
+            {
+                value = arg;
+                url = ctx.LastPictureURL;
             }
             else
             {
                 url = ctx.HasArguments ? ctx.Arguments[0] : ctx.LastPictureURL;
+                if (ctx.Arguments.Count > 1)
+                {
+                    if (int.TryParse(ctx.Arguments[1], out int argu))
+                    {
+                        value = argu;
+                    }
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(url)) //if LastPictureURL is null
@@ -63,7 +83,8 @@ namespace EBot.Commands.Modules
             if (path != null)
             {
                 Image<Rgba32> img = ImageProcess.Get(path);
-                callback?.Invoke(img);
+                value = value > 0 ? value : 1;
+                callback?.Invoke(img,value);
                 if(savecallback == null)
                 {
                     img.Save(path);
@@ -87,7 +108,7 @@ namespace EBot.Commands.Modules
         [Command(Name="bw",Help="Makes a picture black and white",Usage= "bw <imageurl|user|nothing>")]
         private async Task BlackWhite(CommandContext ctx)
         {
-            await this. Process(ctx, "BW", img => img.Mutate(x => x.Grayscale(SixLabors.ImageSharp.Processing.GrayscaleMode.Bt601)));
+            await this. Process(ctx, "BW", (img,value) => img.Mutate(x => x.Grayscale(SixLabors.ImageSharp.Processing.GrayscaleMode.Bt601)));
         }
 
         [Command(Name="jpg",Help="Makes a picture have bad quality",Usage= "jpg <imageurl|user|nothing>")]
@@ -113,25 +134,27 @@ namespace EBot.Commands.Modules
         [Command(Name="pixelate",Help="pixelate a picture",Usage="pixelate <amount>")]
         private async Task Pixelate(CommandContext ctx)
         {
-            await this.Process(ctx, "Pixelate", img => img.Mutate(x => x.Pixelate(3)));
+            await this.Process(ctx, "Pixelate", (img, value) => {
+                img.Mutate(x => x.Pixelate(value));
+            });
         }
 
         [Command(Name="invert",Help="Inverts the colors of a picture",Usage= "invert <imageurl|user|nothing>")]
         private async Task Invert(CommandContext ctx)
         {
-            await this.Process(ctx, "Invert", img => img.Mutate(x => x.Invert()));
+            await this.Process(ctx, "Invert", (img, value) => img.Mutate(x => x.Invert()));
         }
 
         [Command(Name="paint",Help="Makes a picture look like a painting",Usage= "paint <imageurl|user|nothing>")]
         private async Task Paint(CommandContext ctx)
         {
-            await this.Process(ctx, "Paint", img => img.Mutate(x => x.OilPaint()));
+            await this.Process(ctx, "Paint", (img, value) => img.Mutate(x => x.OilPaint()));
         }
 
         [Command(Name="intensify",Help="Intensifies the colors of a picture",Usage="itensify <imageurl|user|nothing>")]
         private async Task Intensify(CommandContext ctx)
         {
-            await this.Process(ctx, "Intensify", img => img.Mutate(x => {
+            await this.Process(ctx, "Intensify", (img, value) => img.Mutate(x => {
                 x.Saturation(100);
                 x.Contrast(75);
             }));
@@ -140,19 +163,19 @@ namespace EBot.Commands.Modules
         [Command(Name="blur",Help="Blurs a picture",Usage="blur <imageurl|user|nothing>")]
         private async Task Blur(CommandContext ctx)
         {
-            await this.Process(ctx, "Blur", img => img.Mutate(x => x.BoxBlur()));
+            await this.Process(ctx, "Blur", (img, value) => img.Mutate(x => x.BoxBlur()));
         }
           
-        [Command(Name="greenify",Help="Greenifies a picture",Usage="greenify <imageurl|user|nothing>")]
+        [Command(Name="greenify",Help="Greenifies a picture",Usage="greenify <imageurl|user")]
         private async Task Greenify(CommandContext ctx)
         {
-            await this.Process(ctx, "Greenify", img => img.Mutate(x => x.Lomograph()));
+            await this.Process(ctx, "Greenify", (img, value) => img.Mutate(x => x.Lomograph()));
         }
 
         [Command(Name="deepfry",Help="Deepfries a picture",Usage="deepfry <imageurl|user|nothing>")]
         private async Task DeepFry(CommandContext ctx)
         {
-            await this.Process(ctx,"Deepfry", img => img.Mutate(x => {
+            await this.Process(ctx,"Deepfry", (img, value) => img.Mutate(x => {
                 x.Pixelate(2);
                 for (uint i = 0; i < 5; i++)
                 {
@@ -162,6 +185,19 @@ namespace EBot.Commands.Modules
                     x.Quantize(Quantization.Octree);
                 }
             }));
+        }
+
+        [Command(Name="illegal",Help="Don't.",Usage="illegal <text>")]
+        public async Task Illegal(CommandContext ctx)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithAuthor(ctx.Message.Author);
+            builder.WithImageUrl(EBotData.ILLEGAL_GIF);
+            builder.WithDescription("FUCK NO.");
+            builder.WithFooter("Illegal");
+            builder.WithColor(ctx.EmbedReply.ColorGood);
+
+            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
         public void Initialize(CommandHandler handler,BotLog log)
@@ -176,6 +212,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Greenify);
             handler.LoadCommand(this.DeepFry);
             handler.LoadCommand(this.Pixelate);
+            handler.LoadCommand(this.Illegal);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

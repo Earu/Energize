@@ -40,15 +40,6 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name="invite",Help="Gets the invite link for the bot",Usage="invite <nothing>")]
-        private async Task Invite(CommandContext ctx)
-        {
-            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
-            string server = "https://discord.gg/KJqhQ22";
-
-            await ctx.EmbedReply.Good(ctx.Message, "Invite", "[Invite EBot](" + invite + ")\t\t\t[Join EBot's server](" + server + ")");
-        }
-
         [Command(Name="l",Help="Runs lua code",Usage="l <code>")]
         private async Task Lua(CommandContext ctx)
         {
@@ -178,7 +169,6 @@ namespace EBot.Commands.Modules
         {
             handler.LoadCommand(this.Say);
             handler.LoadCommand(this.Ping);
-            handler.LoadCommand(this.Invite);
             handler.LoadCommand(this.Lua);
             handler.LoadCommand(this.LuaReset);
             handler.LoadCommand(this.LoadCommand);

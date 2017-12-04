@@ -67,7 +67,7 @@ namespace EBot.Commands
             Type cbtype = callback.Target.GetType();
             CommandModuleAttribute matt = cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false)[0] as CommandModuleAttribute;
             CommandAttribute att = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
-            string modulename = matt.Name;
+            string modulename = matt.Name.ToLower();
             string name = att.Name;
             string help = att.Help;
             string usage = att.Usage;
@@ -254,44 +254,6 @@ namespace EBot.Commands
             }
 
             return url;
-        }
-
-        private async Task GetDeletedCommandMessages(SocketMessage msg)
-        {
-            string content = msg.Content;
-            if (!msg.Author.IsBot)
-            {
-                string cmd = this.GetCmd(content);
-                if (content.StartsWith(this._Prefix))
-                {
-                    if (this.IsCmdLoaded(cmd))
-                    {
-                        string user = msg.Author.Mention;
-                        List<string> args = this.GetCmdArgs(content);
-
-                        await this._EmbedReply.Warning(msg,"Sneaky!", "Deletion of a command message (" + cmd + ") :eyes:");
-                        CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
-                        this.LogCommand(ctx, true);
-                    }
-                }
-            }
-        }
-
-        public async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg,ISocketMessageChannel chan)
-        {
-            if (msg.HasValue)
-            {
-                SocketMessage mess = msg.Value as SocketMessage;
-                if (!this._LogDeleted.ContainsKey(mess.Channel.Id))
-                {
-                    this._LogDeleted[mess.Channel.Id] = true;
-                }
-
-                if (this._LogDeleted[mess.Channel.Id])
-                {
-                    await this.GetDeletedCommandMessages(msg.Value as SocketMessage);
-                }
-            }
         }
 
         public async Task OnMessageCreated(SocketMessage msg)

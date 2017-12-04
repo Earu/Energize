@@ -39,8 +39,8 @@ namespace EBot.Commands.Modules
         [Command(Name="describe",Help="Does a description of a user",Usage="describe <@user>")]
         private async Task Describe(CommandContext ctx)
         {
-            string[] adjs = CommandsData.Adjectives;
-            string[] nouns = CommandsData.Nouns;
+            string[] adjs = EBotData.ADJECTIVES;
+            string[] nouns = EBotData.NOUNS;
             SocketUser toping = ctx.Message.Author;
             if (ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
@@ -70,7 +70,7 @@ namespace EBot.Commands.Modules
             }
             result += nouns[random.Next(0, nouns.Length)].ToLower();
 
-            bool isvowel = CommandsData.Vowels.Any(x => result.StartsWith(x));
+            bool isvowel = EBotData.VOWELS.Any(x => result.StartsWith(x));
             await ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
@@ -112,7 +112,7 @@ namespace EBot.Commands.Modules
             else
             {
                 Random rand = new Random();
-                string[] answers = CommandsData.HeightBallAnswers;
+                string[] answers = EBotData.EIGHT_BALL_ANSWERS;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
                 await ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
@@ -128,7 +128,7 @@ namespace EBot.Commands.Modules
             }
             else
             {
-                string[] answers = CommandsData.PickAnswers;
+                string[] answers = EBotData.PICK_ANSWERS;
                 Random rand = new Random();
                 string choice = ctx.Arguments[rand.Next(0, ctx.Arguments.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
@@ -225,8 +225,8 @@ namespace EBot.Commands.Modules
             else
             {
                 string result = "";
-                result += CommandsData.Adjectives[rand.Next(0, CommandsData.Adjectives.Length - 1)];
-                result += CommandsData.Nouns[rand.Next(0, CommandsData.Nouns.Length - 1)];
+                result += EBotData.ADJECTIVES[rand.Next(0, EBotData.ADJECTIVES.Length - 1)];
+                result += EBotData.NOUNS[rand.Next(0, EBotData.NOUNS.Length - 1)];
                 if(rand.Next(1,100) < 30)
                 {
                     result += rand.Next(0, 1000);

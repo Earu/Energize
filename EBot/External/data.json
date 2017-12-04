@@ -1,7 +1,5 @@
-﻿public class CommandsData
 {
-    static private string[] _Adjectives =
-    {
+    "Adjectives" : [
         "aback" , "abaft" , "abandoned" , "abashed" , "aberrant" , "abhorrent" , "abiding" , "abject" , "ablaze" , "able" , "abnormal" , "aboard" , "aboriginal" , "abortive" , "abounding" , "abrasive" , "abrupt" , "absent" , "absorbed" , "absorbing" , "abstracted" , "absurd" , "abundant" , "abusive" , "acceptable" , "accessible" ,
         "accidental" , "accurate" , "acid" , "acidic" , "acoustic" , "acrid" , "actually" , "ad" , "hoc" , "adamant" , "adaptable" , "addicted" , "adhesive" , "adjoining" , "adorable" , "adventurous" , "afraid" , "aggressive" , "agonizing" , "agreeable" , "ahead" , "ajar" , "alcoholic" , "alert" , "alike" , "alive" , "alleged" , "alluring" , "aloof" ,
         "amazing" , "ambiguous" , "ambitious" , "amuck" , "amused" , "amusing" , "ancient" , "angry" , "animated" , "annoyed" , "annoying" , "anxious" , "apathetic" , "aquatic" , "aromatic" , "arrogant" , "ashamed" , "aspiring" , "assorted" , "astonishing" , "attractive" , "auspicious" , "automatic" , "available" , "average" , "awake" , "aware" ,
@@ -54,10 +52,9 @@
         "vacuous" , "vagabond" , "vague" , "valuable" , "various" , "vast" , "vengeful" , "venomous" , "verdant" , "versed" , "victorious" , "vigorous" , "violent" , "violet" , "vivacious" , "voiceless" , "volatile" , "voracious" , "vulgar",
         "wacky" , "waggish" , "waiting" , "wakeful" , "wandering" , "wanting" , "warlike" , "warm" , "wary" , "wasteful" , "watery" , "weak" , "wealthy" , "weary" , "well-groomed" , "well-made" , "well-off" , "well-to-do" , "wet" , "whimsical" , "whispering" , "white" , "whole" , "wholesale" , "wicked" , "wide" , "wide-eyed" , "wiggly" , 
         "wild" , "willing" , "windy" , "wiry" , "wise" , "wistful" , "witty" , "woebegone" , "womanly" , "wonderful" , "wooden" , "woozy" , "workable" , "worried" , "worthless" , "wrathful" , "wretched" , "wrong" , "wry"
-    };
+    ],
 
-    static private string[] _Nouns =
-    {
+    "Nouns": [
         "A-frame" , "Aard-vark" , "Aard-wolf" , "Aber-de-vine" , "About-face" , "About-sledge" , "Aboveboard" , "Abraham-man" , "Abram-man" , "Absey-book" ,
         "Ace-in-the-hole" , "Ack-ack" , "Acorn-shell" , "Acre-foot" , "Acted-upon" , "Acting-up" , "Actino-chemistry" , "Active-wear" , "Add-in" , "Add-ins" ,
         "Add-on" , "Add-ons" , "Adder's-tongue" , "Addle-brain" , "Addle-head" , "Addle-pate" , "Addle-patedness" , "Advisable-ness" , "Aestho-physiology" , "After-care" ,
@@ -339,12 +336,11 @@
         "Uphold" , "Upkeep" , "Upland" , "Uplift" , "Uplink" , "Upload" , "Upmarket" , "Upon" , "Uppercase" , "Upperclassman" , "Uppercut" , "Uppermost" , "Upright" , "Uprising" , "Uproar" ,
         "Uproot" , "Upscale" , "Upset" , "Upshot" , "Upside" , "Upside-down" , "Upstage" , "Upstairs" , "Upstanding" , "Upstart" , "Upstate" , "Upstream" , "Upstroke" , "Uptake" , "Upthrust" ,
         "Uptight" , "Uptime" , "Uptown" , "Upturn" , "Upward" , "Upwardly-mobile" , "Upwind" , "Uran-ocher" , "Uran-ochre" 
-    };
+    ],
 
-    static private string[] _Vowels = { "a", "e", "i", "o", "u" };
+    "Vowels" : [ "a", "e", "i", "o", "u" ],
 
-    static private string[] _HeightBallAnswers =
-    {
+    "EightBallAnswers":[
         "Yes.",
         "No.",
         "You can count on it.",
@@ -362,19 +358,30 @@
         "Asked a dog, it said yap yap.",
         "Sorry folk, clearly a no there!",
         "That sweet lady at the bar confirmed this!"
-    };
+    ],
 
-    static private string[] _PickAnswers =
-    {
+    "PickAnswers":[
         "I pick \"<answer>\"",
         "I choose \"<answer>\"",
         "I'd pick \"<answer>\"",
         "\"<answer>\" seems like a good choice"
-    };
+    ],
 
-    static public string[] Adjectives { get => _Adjectives; }
-    static public string[] Nouns { get => _Nouns; }
-    static public string[] Vowels { get => _Vowels; }
-    static public string[] HeightBallAnswers { get => _HeightBallAnswers; }
-    static public string[] PickAnswers { get => _PickAnswers; }
+    "DramaFilter":[
+        "fuck","fucker","ass","dick","cunt","fag","fgt","faggot","asshole","nigger","negro",
+        "fucking","arse","bastard","bitch","motherfucker","nigga","twat","hitler","cuck",
+        "dip","dipshit","cock","whore","drama","dickhead","fuckface","dickhole","retard",
+        "retarded","dogshit","douche","douchebag","dumb","dumbass","idiot","fuccboi","fucc",
+        "furfag","mf","minge","bs","bullshit","prick","pussy","sadfuck","scumbag","scumfuck",
+        "scum","slut","smartass","shitty","wanker","ban","kick","banni","jew","racist","homophobic",
+        "mess","messing","boosted","csgo","trash","garbage","rank","elo","hacker","aimbot","aimbotter",
+        "cs","suck","sucking","skill","competitive","competition","skills","shitpost","kill","kys",
+        "kid","kiddy","kidding","skid","kids","stupid","annoying","annoy","annoys","judge","lag",
+        "lagging","laggy","noob","noobs","newbie","fucktard","spam","spamming","braindead","underage",
+        "mentally","stop","stopping","bad","worse","worst","omg","wtf","ffs"
+    ],
+
+    "ApologizeFilter": [ "sorry","sry","whoops","oops","apologize" ],
+
+    "IllegalGif": "https://i.imgur.com/G9elKgE.gif"
 }

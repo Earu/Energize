@@ -13,7 +13,7 @@ namespace EBot.Commands.Modules
     [CommandModule(Name="Info")]
     class InfoCommands : CommandModule,ICommandModule
     {
-        [Command(Name = "server", Help = "Gets information about the server", Usage = "server <nothing>")]
+        [Command(Name="server",Help="Gets information about the server",Usage="server <nothing>")]
         private async Task Server(CommandContext ctx)
         {
             if (!ctx.IsPrivate)
@@ -59,10 +59,13 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name = "info", Help = "Gets information relative to the bot", Usage = "info <nothing>")]
+        [Command(Name="info",Help="Gets information relative to the bot",Usage="info <nothing>")]
         private async Task Info(CommandContext ctx)
         {
             ClientInfo info = await ClientMemoryStream.GetClientInfo();
+            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
+            string server = "https://discord.gg/KJqhQ22";
+            string github = "https://github.com/Earu/EBot";
 
             string desc = "";
             desc += "**NAME**: " + info.Name + "\n";
@@ -71,6 +74,7 @@ namespace EBot.Commands.Modules
             desc += "**SERVERS**: " + info.GuildAmount + "\n";
             desc += "**USERS**: " + info.UserAmount + "\n";
             desc += "**OWNER**: " + info.Owner + "\n";
+            desc += "\n[**INVITE**](" + invite + ")\t\t[**SERVER**](" + server + ")\t\t[**GITHUB**](" + github + ")";
 
             EmbedBuilder builder = new EmbedBuilder();
             builder.WithFooter("Info");
@@ -82,7 +86,17 @@ namespace EBot.Commands.Modules
             await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
 
-        [Command(Name = "user", Help = "Gets information about a specific user", Usage = "user <@user|id>")]
+        [Command(Name = "invite", Help = "Gets the invite link for the bot", Usage = "invite <nothing>")]
+        private async Task Invite(CommandContext ctx)
+        {
+            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
+            string server = "https://discord.gg/KJqhQ22";
+            string github = "https://github.com/Earu/EBot";
+
+            await ctx.EmbedReply.Good(ctx.Message, "Invite", "[**INVITE**](" + invite + ")\t\t[**SERVER**](" + server + ")\t\t[**GITHUB**](" + github + ")");
+        }
+
+        [Command(Name="user",Help="Gets information about a specific user",Usage="user <@user|id>")]
         private async Task User(CommandContext ctx)
         {
             if (ctx.TryGetUser(ctx.Arguments[0], out SocketUser user))
@@ -110,20 +124,41 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name = "help", Help = "This command", Usage = "help <command|nothing>")]
+        [Command(Name="help",Help="This command",Usage="help <command|nothing>")]
         private async Task Help(CommandContext ctx)
         {
-            string arg = ctx.Arguments[0];
+            string arg = ctx.Arguments[0].Trim();
             if (ctx.HasArguments)
             {
-                bool retrieved = ctx.Commands.TryGetValue(arg.ToLower().Trim(), out Command cmd);
+                bool retrieved = ctx.Commands.TryGetValue(arg.ToLower(), out Command cmd);
                 if (retrieved && cmd.Loaded)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg + " ]", cmd.GetHelp());
+                    await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", cmd.GetHelp());
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                    if (Command.Modules.ContainsKey(arg))
+                    {
+                        string result = "";
+                        List<Command> cmds = Command.Modules[arg];
+                        result += "**COMMANDS:**\n";
+                        result += "``";
+                        foreach (Command com in cmds)
+                        {
+                            if (com.Loaded)
+                            {
+                                result += com.Cmd + ",";
+                            }
+                        }
+                        result = result.Remove(result.Length - 1);
+                        result += "``\n\n";
+
+                        await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", result);
+                    }
+                    else
+                    {
+                        await ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                    }
                 }
             }
             else
@@ -153,7 +188,7 @@ namespace EBot.Commands.Modules
                     }
                 }
 
-                await ctx.EmbedReply.RespondByDM(ctx.Message, "Help [ all ]", result);
+                await ctx.EmbedReply.RespondByDM(ctx.Message, "Help [ ALL ]", result);
             }
         }
 

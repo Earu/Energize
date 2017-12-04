@@ -20,9 +20,8 @@ namespace EBot.Commands.Modules
             }
 
             Random rand = new Random();
-            string body = await HTTP.Fetch("https://e621.net/post/index.json",ctx.Log);
+            string body = await HTTP.Fetch("https://e621.net/post/index.json?tags=" + ctx.Input,ctx.Log);
             List<E621.EPost> posts = JSON.Deserialize<List<E621.EPost>>(body,ctx.Log);
-            E621.EPost post;
 
             if(posts == null)
             {
@@ -30,31 +29,14 @@ namespace EBot.Commands.Modules
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(ctx.Arguments[0]))
-                {
-                    post = E621.SortingHandler.GetRandom(posts);
-                }
-                else
-                {
-                    post = E621.Search.Handle(posts, ctx.Arguments);
-                }
+                E621.EPost post = posts[rand.Next(0, posts.Count - 1)];
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithColor(ctx.EmbedReply.ColorGood);
+                builder.WithImageUrl(post.sample_url);
+                builder.WithAuthor(ctx.Message.Author);
+                builder.WithFooter("E621");
 
-                if (post == null)
-                {
-                        await ctx.EmbedReply.Danger(ctx.Message, "E621", "Seems like I couldn't find anything!");
-                }
-                else
-                {
-                    EmbedBuilder embed = new EmbedBuilder
-                    {
-                        Color = ctx.EmbedReply.ColorGood,
-                        ImageUrl = post.sample_url,
-                        Title = "E621",
-                        Description = post.sample_url + "\n*Width: " + post.sample_width + "\tHeight: " + post.sample_height + "*"
-                    };
-
-                    await ctx.EmbedReply.Send(ctx.Message, embed.Build());
-                }
+                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
             }
         }
 
