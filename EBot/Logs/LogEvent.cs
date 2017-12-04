@@ -1,6 +1,9 @@
 ﻿using System;
 using Discord.Rest;
 using Discord.WebSocket;
+using System.Threading.Tasks;
+using Discord;
+using System.Linq;
 
 namespace EBot.Logs
 {
@@ -10,11 +13,16 @@ namespace EBot.Logs
         private DiscordSocketClient _Client;
         private string _Prefix;
         private BotLog _Log;
-        
+
         public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
         public DiscordSocketClient Client { get => this._Client; set => this._Client = value; }
         public string Prefix { get => this._Prefix; set => this._Prefix = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
+
+        public bool AreLogsEnabled(SocketGuild guild)
+        {
+            return guild.Roles.Any(x => x.Name == "EBotLogs");
+        }
 
         public void InitEvents()
         {
@@ -42,7 +50,6 @@ namespace EBot.Logs
             {
                 this._Log.Nice("Guild", ConsoleColor.Red, "Left " + guild.Name + " || ID => [ " + guild.Id + " ]");
             };
-
         }
     }
 }

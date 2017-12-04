@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using YoutubeSearch;
 using System.Collections.Generic;
 using Discord;
+using GoogleCSE;
 
 namespace EBot.Commands.Modules
 {
@@ -117,6 +118,21 @@ namespace EBot.Commands.Modules
             {
                 await ctx.EmbedReply.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
             }
+        }
+
+        [Command(Name="g",Help="Googles a search",Usage="g <search>")]
+        private async Task Google(CommandContext ctx)
+        {
+            if (!ctx.HasArguments)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "Google", "You didn't input anything");
+                return;
+            }
+
+            GoogleSearch gs = new GoogleSearch("123",EBotConfig.GOOGLE_API_KEY);
+            List<GoogleSearchResult> results = gs.Search(ctx.Arguments[0]);
+
+            await ctx.EmbedReply.Good(ctx.Message, "Google", results[0].Url);
         }
 
         public void Initialize(CommandHandler handler,BotLog log)
