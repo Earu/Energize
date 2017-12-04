@@ -90,15 +90,15 @@ namespace EBot
 
                 this._Discord.MessageDeleted += async (msg,chan) =>
                 {
-                    this._Handler.OnMessageDeleted(msg, chan);
                     LuaEnv.OnMessageDeleted(msg, chan);
                 };
 
                 this._Discord.MessageReceived += async msg =>
                 {
-                    this._Spy.WatchWords(msg, new string[] { "yara", "earu", "ebot" });
+                    this._Spy.WatchWords(msg, new string[] { "yara", "earu" });
                     this._Handler.OnMessageCreated(msg);
                     LuaEnv.OnMessageReceived(msg);
+                    Administration.OnMessageCreated(msg, this._Handler.EmbedReply);
                 };
 
                 this._Discord.ReactionAdded   += LuaEnv.OnReactionAdded;
@@ -113,18 +113,10 @@ namespace EBot
                         ClientMemoryStream.Initialize(this);
                         this._HasInitialized = true;
 
-                        Timer statustimer = new Timer(async arg =>
-                        {
-                            await this._Discord.SetStatusAsync(UserStatus.Offline);
-                            await this._Discord.SetStatusAsync(UserStatus.Online);
-                            //so status update properly
-
-                            ClientInfo info = await ClientMemoryStream.GetClientInfo();
-                            string gname = this._Prefix + "help w/ " + info.UserAmount + " users";
-                            await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
-                        });
-
-                        statustimer.Change(0, 1000 * 60 * 5); //5mins
+                        await this._Discord.SetStatusAsync(UserStatus.Offline);
+                        await this._Discord.SetStatusAsync(UserStatus.Online);
+                        string gname = this._Prefix + "help | " + this._Prefix + "info" ;
+                        await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
                     }
                 };
 

@@ -48,6 +48,23 @@ namespace EBot.Commands.Modules
 
         }
 
+        private async Task<IRole> GetOrCreateRole(SocketGuildUser user,string name)
+        {
+            bool exist = user.Guild.Roles.Any(x => x != null && x.Name == name);
+            IRole role = null;
+
+            if (!exist)
+            {
+                role = await user.Guild.CreateRoleAsync(name);
+            }
+            else
+            {
+                role = user.Guild.Roles.Where(x => x != null && x.Name == name).First();
+            }
+
+            return role;
+        }
+
         [Command(Name="op",Help="Makes a user able to use administration commands",Usage="op <user>")]
         private async Task OP(CommandContext ctx)
         {
@@ -55,17 +72,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    bool exist = user.Guild.Roles.Any(x => x != null && x.Name == "EBot");
-                    IRole role = null;
-
-                    if (!exist)
-                    {
-                        role = await user.Guild.CreateRoleAsync("EBot");
-                    }
-                    else
-                    {
-                        role = user.Guild.Roles.Where(x => x != null && x.Name == "EBot").First();
-                    }
+                    IRole role = await this.GetOrCreateRole(user, "EBot");
 
                     await user.AddRoleAsync(role);
                     await ctx.EmbedReply.Good(ctx.Message, "OP", user.Username + "#" + user.Discriminator + " was succesfully allowed to use administration commands");
@@ -84,7 +91,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    SocketRole role = user.Guild.Roles.Where(x => x.Name == "EBot").FirstOrDefault();
+                    IRole role = await this.GetOrCreateRole(user, "EBot");
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
@@ -199,6 +206,52 @@ namespace EBot.Commands.Modules
             });
         }
 
+        [Command(Name="clearraw",Help="Clear every messages with the amount given",Usage="clearraw <amount>")]
+        private async Task ClearRaw(CommandContext ctx)
+        {
+            await this.ClearBase(ctx, (msg, todelete) =>
+            {
+                todelete.Add(msg);
+            });
+        }
+
+        private async Task<ITextChannel> GetOrCreateChannel(CommandContext ctx,string channame,string topic)
+        {
+            SocketGuildUser bot = ctx.Client.CurrentUser as SocketUser as SocketGuildUser;
+            if (!bot.GuildPermissions.ManageChannels) return null;
+
+            SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
+            SocketGuildChannel chan = user.Guild.Channels.Where(x => x.Name == channame).FirstOrDefault();
+            ITextChannel c = null;
+            if (chan == null)
+            {
+                RestTextChannel created = await user.Guild.CreateTextChannelAsync(channame);
+                OverwritePermissions everyoneperms = new OverwritePermissions(
+                    mentionEveryone: PermValue.Deny,
+                    sendMessages: PermValue.Deny,
+                    sendTTSMessages: PermValue.Deny
+                    );
+                OverwritePermissions botperm = new OverwritePermissions(
+                    sendMessages: PermValue.Allow,
+                    addReactions: PermValue.Allow
+                    );
+                await created.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, everyoneperms);
+                await created.AddPermissionOverwriteAsync(ctx.Client.CurrentUser, botperm);
+                await created.ModifyAsync(prop =>
+                {
+                    prop.Topic = topic;
+                });
+
+                c = created;
+            }
+            else
+            {
+                c = chan as SocketTextChannel;
+            }
+
+            return c;
+        }
+
         [Command(Name="shame",Help="Adds a message to the \"Hall of Shames\"\nYou can get message ids with discord developer mode",Usage="shame <messageid>")]
         private async Task Shame(CommandContext ctx)
         {
@@ -210,33 +263,12 @@ namespace EBot.Commands.Modules
 
             try
             {
-                SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
-                SocketGuildChannel chan = user.Guild.Channels.Where(x => x.Name == "hall_of_shames").FirstOrDefault();
-                ITextChannel c = null;
-                if (chan == null)
+                ITextChannel c = await this.GetOrCreateChannel(ctx, "hall_of_shames",
+                    "Channel created by EBot, share unique and funny messages using " + ctx.Prefix + "shame");
+                if(c == null)
                 {
-                    RestTextChannel created = await user.Guild.CreateTextChannelAsync("hall_of_shames");
-                    OverwritePermissions everyoneperms = new OverwritePermissions(
-                        mentionEveryone:    PermValue.Deny,
-                        sendMessages:       PermValue.Deny,
-                        sendTTSMessages:    PermValue.Deny
-                        );
-                    OverwritePermissions botperm = new OverwritePermissions(
-                        sendMessages: PermValue.Allow,
-                        addReactions: PermValue.Allow
-                        );
-                    await created.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, everyoneperms);
-                    await created.AddPermissionOverwriteAsync(ctx.Client.CurrentUser, botperm);
-                    await created.ModifyAsync(prop =>
-                    {
-                        prop.Topic = "Hall of Shames, channel created by EBot, add shameful and unique messages in there using " + ctx.Prefix + "shame";
-                    });
-
-                    c = created;
-                }
-                else
-                {
-                    c = chan as SocketTextChannel;
+                    await ctx.EmbedReply.Danger(ctx.Message, "Shame", "I couldn't find or create \"Hall of Shames\" channel");
+                    return;
                 }
 
                 if (!ctx.HasArguments)
@@ -290,6 +322,41 @@ namespace EBot.Commands.Modules
             }
         }
 
+        [Command(Name="delinvites",
+            Help="Deletes messages containing discord server invites\n"
+            + "delete the \"EBotDeleteInvites\" role to cancel that feature",
+            Usage="delinvites <nothing>")]
+        private async Task DelInvites(CommandContext ctx)
+        {
+            if (!ctx.IsAdminUser())
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "You don't have the rights to do that");
+                return;
+            }
+
+            SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
+            IRole role = await this.GetOrCreateRole(user, "EBotDeleteInvites");
+
+            if (role == null)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
+                return;
+            }
+
+            try
+            {
+                IGuildUser bot = await ctx.RESTClient.GetGuildUserAsync(user.Guild.Id, ctx.Client.CurrentUser.Id);
+                await bot.AddRoleAsync(role);
+
+                await ctx.EmbedReply.Good(ctx.Message, "DelInvites", "I will now delete every messages containing an invite link, "
+                    + "delete the \"EBotDeleteInvites\" role to remove that feature");
+            }
+            catch
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
+            }
+        }
+
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.OP);
@@ -297,6 +364,8 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Clear);
             handler.LoadCommand(this.ClearBots);
             handler.LoadCommand(this.Shame);
+            handler.LoadCommand(this.ClearRaw);
+            handler.LoadCommand(this.DelInvites);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
