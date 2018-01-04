@@ -28,15 +28,16 @@ namespace EBot.MachineLearning
             }
         }
 
-        public List<string> Generate()
+        public List<string> Generate(int? max=null)
         {
+            max = max ?? int.MaxValue;
             Random rand = new Random();
             string[] files = Directory.GetFiles(this._Path);
             string word = files[rand.Next(0, files.Length - 1)];
             string[] dirs = word.Split('/');
             word = dirs[dirs.Length - 1];
 
-            return Generate(word, int.MaxValue);
+            return Generate(word, max.Value);
         }
 
         public List<string> Generate(string firstWord)
@@ -62,9 +63,12 @@ namespace EBot.MachineLearning
                     string[] words = File.ReadAllLines(path);
                     string temp = words[rand.Next(0, words.Length - 1)];
 
-                    while(current == temp)
+                    if(words.Length > 1)
                     {
-                        temp = words[rand.Next(0, words.Length - 1)];
+                        while(current == temp)
+                        {
+                            temp = words[rand.Next(0, words.Length - 1)];
+                        }
                     }
 
                     current = temp;

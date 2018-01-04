@@ -48,23 +48,6 @@ namespace EBot.Commands.Modules
 
         }
 
-        private async Task<IRole> GetOrCreateRole(SocketGuildUser user,string name)
-        {
-            bool exist = user.Guild.Roles.Any(x => x != null && x.Name == name);
-            IRole role = null;
-
-            if (!exist)
-            {
-                role = await user.Guild.CreateRoleAsync(name);
-            }
-            else
-            {
-                role = user.Guild.Roles.Where(x => x != null && x.Name == name).First();
-            }
-
-            return role;
-        }
-
         [Command(Name="op",Help="Makes a user able to use administration commands",Usage="op <user>")]
         private async Task OP(CommandContext ctx)
         {
@@ -72,7 +55,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    IRole role = await this.GetOrCreateRole(user, "EBot");
+                    IRole role = await ctx.GetOrCreateRole(user, "EBot");
 
                     await user.AddRoleAsync(role);
                     await ctx.EmbedReply.Good(ctx.Message, "OP", user.Username + "#" + user.Discriminator + " was succesfully allowed to use administration commands");
@@ -91,7 +74,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    IRole role = await this.GetOrCreateRole(user, "EBot");
+                    IRole role = await ctx.GetOrCreateRole(user, "EBot");
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
@@ -152,7 +135,8 @@ namespace EBot.Commands.Modules
 
             try
             {
-                await ctx.Message.Channel.DeleteMessagesAsync(todelete);
+                ITextChannel chan = ctx.Message.Channel as ITextChannel;
+                await chan.DeleteMessagesAsync(todelete);
                 await ctx.EmbedReply.Good(ctx.Message, "Clear", "Cleared " + todelete.Count + " messages among " + amount);
             }
             catch
@@ -217,11 +201,8 @@ namespace EBot.Commands.Modules
 
         private async Task<ITextChannel> GetOrCreateChannel(CommandContext ctx,string channame,string topic)
         {
-            SocketGuildUser bot = ctx.Client.CurrentUser as SocketUser as SocketGuildUser;
-            if (!bot.GuildPermissions.ManageChannels) return null;
-
             SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
-            SocketGuildChannel chan = user.Guild.Channels.Where(x => x.Name == channame).FirstOrDefault();
+            SocketGuildChannel chan = user.Guild.Channels.Where(x => x != null && x.Name == channame).FirstOrDefault();
             ITextChannel c = null;
             if (chan == null)
             {
@@ -277,7 +258,7 @@ namespace EBot.Commands.Modules
                     return;
                 }
 
-                if(ulong.TryParse(ctx.Arguments[0].Trim(),out ulong mid))
+                if(ulong.TryParse(ctx.Arguments[0],out ulong mid))
                 {
                     IMessage msg = await ctx.Message.Channel.GetMessageAsync(mid);
                     if (msg != null)
@@ -288,7 +269,7 @@ namespace EBot.Commands.Modules
                         builder.WithFooter("#" + msg.Channel.Name);
                         builder.WithTimestamp(msg.CreatedAt);
                         builder.WithColor(ctx.EmbedReply.ColorNormal);
-                        string url = ctx.Handler.GetImageURLS(msg as SocketMessage);
+                        string url = ctx.Handler.GetImageURLS(msg);
                         if(url != null)
                         {
                             builder.WithImageUrl(url);
@@ -316,8 +297,9 @@ namespace EBot.Commands.Modules
                 }
 
             }
-            catch
+            catch(Exception e)
             {
+                BotLog.Debug(e.ToString());
                 await ctx.EmbedReply.Danger(ctx.Message, "Shame", "I don't have the rights to do that");
             }
         }
@@ -335,7 +317,7 @@ namespace EBot.Commands.Modules
             }
 
             SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
-            IRole role = await this.GetOrCreateRole(user, "EBotDeleteInvites");
+            IRole role = await ctx.GetOrCreateRole(user, "EBotDeleteInvites");
 
             if (role == null)
             {

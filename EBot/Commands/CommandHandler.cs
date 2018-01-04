@@ -4,10 +4,12 @@ using EBot.Logs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
 using Discord.Rest;
 using System.Text.RegularExpressions;
 using System.Linq;
 using EBot.MachineLearning;
+using EBot.MemoryStream;
 
 namespace EBot.Commands
 {
@@ -15,15 +17,15 @@ namespace EBot.Commands
     {
         public delegate Task CommandCallback(CommandContext ctx);
 
-        private DiscordSocketClient _Client;
-        private BotLog _Log;
-        private string _Prefix;
-        private CommandSource _Source;
-        private CommandReplyEmbed _EmbedReply;
-        private Dictionary<string,  Command> _Cmds;
-        private Dictionary<ulong, string> _LastChannelPictureURL;
-        private DiscordRestClient _RESTClient;
-        private Dictionary<ulong, bool> _LogDeleted;
+        private DiscordSocketClient          _Client;
+        private BotLog                       _Log;
+        private string                       _Prefix;
+        private CommandSource                _Source;
+        private CommandReplyEmbed            _EmbedReply;
+        private Dictionary<string, Command>  _Cmds;
+        private Dictionary<ulong, string>    _LastChannelPictureURL;
+        private DiscordRestClient            _RESTClient;
+        private Dictionary<ulong, bool>      _LogDeleted;
 
         public CommandHandler()
         {
@@ -36,14 +38,14 @@ namespace EBot.Commands
             this._LogDeleted = new Dictionary<ulong, bool>();
         }
 
-        public BotLog Log { get => this._Log; set => this._Log = value; }
-        public CommandSource Source { get => this._Source; set => this._Source = value; }
-        public CommandReplyEmbed EmbedReply { get => this._EmbedReply; set => this._EmbedReply = value; }
-        public string Prefix { get => this._Prefix; set => this._Prefix = value; }
-        public DiscordSocketClient Client { get => this._Client; set => this._Client = value; }
-        public Dictionary<string,Command> Commands { get => this._Cmds; }
-        public DiscordRestClient RESTClient { get => this._RESTClient; set => this._RESTClient = value; }
-        public Dictionary<ulong,bool> LogDeleted { get => this._LogDeleted; set => this._LogDeleted = value; }
+        public BotLog Log                           { get => this._Log;        set => this._Log        = value; }
+        public CommandSource Source                 { get => this._Source;     set => this._Source     = value; }
+        public CommandReplyEmbed EmbedReply         { get => this._EmbedReply; set => this._EmbedReply = value; }
+        public string Prefix                        { get => this._Prefix;     set => this._Prefix     = value; }
+        public DiscordSocketClient Client           { get => this._Client;     set => this._Client     = value; }
+        public Dictionary<string,Command> Commands  { get => this._Cmds; }
+        public DiscordRestClient RESTClient         { get => this._RESTClient; set => this._RESTClient = value; }
+        public Dictionary<ulong,bool> LogDeleted    { get => this._LogDeleted; set => this._LogDeleted = value; }
 
         public string GetLastPictureURL(ulong id)
         {
@@ -64,13 +66,14 @@ namespace EBot.Commands
 
         public void LoadCommand(CommandCallback callback)
         {
-            Type cbtype = callback.Target.GetType();
+            Type cbtype                 = callback.Target.GetType();
             CommandModuleAttribute matt = cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false)[0] as CommandModuleAttribute;
-            CommandAttribute att = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
+            CommandAttribute att        = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
+            
             string modulename = matt.Name.ToLower();
-            string name = att.Name;
-            string help = att.Help;
-            string usage = att.Usage;
+            string name       = att.Name;
+            string help       = att.Help;
+            string usage      = att.Usage;
 
             if (this._Cmds.ContainsKey(name))
             {
@@ -95,42 +98,68 @@ namespace EBot.Commands
             }
         }
 
+        public bool StartsWithBotMention(string line)
+        {
+            if(Regex.IsMatch(line,@"^<@!?" + this._Client.CurrentUser.Id + ">"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public int GetPrefixLen(string line)
+        {
+            if(this.StartsWithBotMention(line))
+            {
+                return this._Client.CurrentUser.Mention.Length;
+            }
+            else
+            {
+                return this._Prefix.Length;
+            }
+        }
+
         public string GetCmd(string line)
         {
-            return line.Substring(this._Prefix.Length).Split(' ')[0];
+            return line.Substring(this.GetPrefixLen(line)).Split(' ')[0];
         }
 
         private List<string> GetCmdArgs(string line)
         {
-            string str = line.Remove(0, this.GetCmd(line).Length + this._Prefix.Length);
-            return new List<string>(str.Split(','));
+            string str = line.Remove(0, this.GetCmd(line).Length + this.GetPrefixLen(line));
+            List<string> results = new List<string>(str.Split(','));
+            results[0] = results[0].TrimStart();
+            return results;
         }
 
         private void LogCommand(CommandContext ctx,bool isdeleted=false)
         {
-            string log = "";
-            ConsoleColor color = ConsoleColor.Blue;
-            string head = "DMCommands";
-            string action = "used";
+            string log         = "";
+            ConsoleColor color = ConsoleColor.Cyan;
+            string head        = "DMCommands";
+            string action      = "used";
 
             if (!ctx.IsPrivate)
             {
                 IGuildChannel chan = ctx.Message.Channel as IGuildChannel;
-                log += "(" + chan.Guild.Name + " - #" + ctx.Message.Channel.Name + ") ";
-                color = ConsoleColor.Cyan;
-                head = "Commands";
+                log  += "(" + chan.Guild.Name + " - #" + ctx.Message.Channel.Name + ") ";
+                color = ConsoleColor.Blue;
+                head  = "Commands";
             }
 
             if (isdeleted)
             {
-                color = ConsoleColor.Yellow;
+                color  = ConsoleColor.Yellow;
                 action = "deleted";
             }
-            
+
             log += ctx.Message.Author.Username + " " + action + " <" + ctx.Command + ">";
             if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                log += "  => [" + string.Join(',',ctx.Arguments) + " ]";
+                log += "  => [ " + string.Join(',',ctx.Arguments) + " ]";
             }
             else
             {
@@ -153,31 +182,29 @@ namespace EBot.Commands
 
             }
 
-            CommandContext ctx = new CommandContext
+            return new CommandContext
             {
-                Client = this._Client,
-                RESTClient = this._RESTClient,
-                Prefix = this._Prefix,
-                EmbedReply = this._EmbedReply,
-                Message = msg,
-                Command = cmd,
-                Arguments = args,
-                LastPictureURL = this.GetLastPictureURL(msg.Channel.Id),
-                Log = this._Log,
-                Commands = this._Cmds,
-                IsPrivate = msg.Channel is IDMChannel,
+                Client           = this._Client,
+                RESTClient       = this._RESTClient,
+                Prefix           = this._Prefix,
+                EmbedReply       = this._EmbedReply,
+                Message          = msg,
+                Command          = cmd,
+                Arguments        = args,
+                LastPictureURL   = this.GetLastPictureURL(msg.Channel.Id),
+                Log              = this._Log,
+                Commands         = this._Cmds,
+                IsPrivate        = msg.Channel is IDMChannel,
                 GuildCachedUsers = users,
-                Handler = this
+                Handler          = this
             };
-
-            return ctx;
         }
 
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
             if (this._Cmds.TryGetValue(cmd, out Command retrieved))
-            {
+            { 
                 try
                 {
                     await msg.Channel.TriggerTypingAsync();
@@ -187,7 +214,7 @@ namespace EBot.Commands
                 }
                 catch (Exception e)
                 {
-                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [" + string.Join(',', args) + " ]");
+                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [ " + string.Join(',', args) + " ]");
                     this._Log.Danger(e.ToString());
 
                     await this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
@@ -200,9 +227,9 @@ namespace EBot.Commands
             string content = msg.Content;
             if (!msg.Author.IsBot)
             {
-                string cmd = this.GetCmd(content);
-                if (content.StartsWith(this._Prefix))
+                if (content.StartsWith(this._Prefix) || this.StartsWithBotMention(content))
                 {
+                    string cmd = this.GetCmd(content);
                     if (this.IsCmdLoaded(cmd))
                     {
                         await this.CommandCall(msg, cmd);
@@ -216,12 +243,12 @@ namespace EBot.Commands
             }
         }
 
-        public string GetImageURLS(SocketMessage msg)
+        public string GetImageURLS(IMessage msg)
         {
             string url = null;
 
-            IReadOnlyCollection<Attachment> attachs = msg.Attachments;
-            foreach (Attachment attach in attachs)
+            IReadOnlyCollection<IAttachment> attachs = msg.Attachments;
+            foreach (IAttachment attach in attachs)
             {
                 if(attach.Width.HasValue)
                 {
@@ -229,8 +256,8 @@ namespace EBot.Commands
                 }
             }
 
-            IReadOnlyCollection<Embed> embeds = msg.Embeds;
-            foreach(Embed embed in embeds)
+            IReadOnlyCollection<IEmbed> embeds = msg.Embeds;
+            foreach(IEmbed embed in embeds)
             {
                 if (embed.Image.HasValue)
                 {
@@ -263,12 +290,7 @@ namespace EBot.Commands
             {
                 this._LastChannelPictureURL[msg.Channel.Id] = url;
             }
-
-            if (!msg.Author.IsBot && !msg.Channel.IsNsfw)
-            {
-                MarkovHandler.Learn(msg.Content);
-            }
-
+            
             this.MainCall(msg).RunSynchronously();
         }
     }

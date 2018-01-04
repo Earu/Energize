@@ -17,6 +17,7 @@ namespace EBot.Logs
 
         private void LogMessage(SocketMessage msg)
         {
+            if(msg.Author.IsBot) return;
             string log = "";
 
             if (msg.Channel is IDMChannel)
