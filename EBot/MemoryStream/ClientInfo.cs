@@ -50,7 +50,8 @@ namespace EBot.MemoryStream
         {
             RestApplication app = await this._Client.Discord.GetApplicationInfoAsync();
             IUser owner = app.Owner;
-            SocketUser bot = this._Client.Discord.GetUser(app.Id);
+            SocketUser bot = this._Client.Discord.CurrentUser as SocketUser;
+            owner = this._Client.Discord.GetUser(app.Owner.Id) ?? app.Owner;
 
             int useramount = 0;
             foreach (SocketGuild guild in this._Client.Discord.Guilds)

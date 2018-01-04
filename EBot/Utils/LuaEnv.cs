@@ -224,7 +224,7 @@ namespace EBot.Utils
 
         public static void Reset(ulong chanid,BotLog log)
         {
-            if (_States.ContainsKey(chanid))
+            if (_States.ContainsKey(chanid) && _States[chanid] != null)
             {
                 try
                 {

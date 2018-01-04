@@ -24,7 +24,22 @@ namespace EBot.Commands
         public Color ColorWarning { get => this._Warning; }
         public Color ColorDanger { get => this._Danger; }
 
-        public async Task<RestUserMessage> Send(SocketMessage msg,string header="",string content="",Color color=new Color())
+        public async Task BuilderWithAuthor(SocketMessage msg,EmbedBuilder builder)
+        {
+            if(msg.Channel is SocketGuildChannel)
+            {
+                SocketGuildUser author = msg.Author as SocketGuildUser;
+                string nick = author.Nickname != null ? author.Nickname + " (" + author.ToString() + ")" : author.ToString();
+                string url = author.GetAvatarUrl(ImageFormat.Auto,32);
+                builder.WithAuthor(nick,url,url);
+            }
+            else
+            {
+                builder.WithAuthor(msg.Author);
+            }
+        }
+        
+        public async Task<RestUserMessage> Send(SocketMessage msg,string header="",string content="",Color color=new Color(),string picurl=null)
         {
             try
             {
@@ -33,7 +48,12 @@ namespace EBot.Commands
                 builder.WithColor(color);
                 builder.WithDescription(content);
                 builder.WithFooter(header);
-                builder.WithAuthor(msg.Author);
+                this.BuilderWithAuthor(msg,builder);
+                
+                if(picurl != null)
+                {
+                    builder.WithThumbnailUrl(picurl);
+                }
 
                 if (!string.IsNullOrWhiteSpace(content))
                 {

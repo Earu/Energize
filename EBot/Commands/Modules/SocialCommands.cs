@@ -99,6 +99,27 @@ namespace EBot.Commands.Modules
             await this.Action(ctx, "Yiff", action.Yiff);
         }
 
+        [Command(Name="nom",Help="Nibbles people",Usage="nom <@user>,<@user|nothing>,...")]
+        private async Task Nom(CommandContext ctx)
+        {
+            Social.Action action = new Social.Action();
+            await this.Action(ctx,"Nom",action.Nom);
+        }
+
+        [Command(Name="lick",Help="Licks people",Usage="nom <@user>,<@user|nothing>,...")]
+        private async Task Lick(CommandContext ctx)
+        {
+            Social.Action action = new Social.Action();
+            await this.Action(ctx,"Lick",action.Lick);
+        }
+
+        [Command(Name="bite",Help="Bites people",Usage="bite <@user>,<@user|nothing>,...")]
+        private async Task Bite(CommandContext ctx)
+        {
+            Social.Action action = new Social.Action();
+            await this.Action(ctx,"Bite",action.Bite);
+        }
+
         [Command(Name = "love", Help = "Gets a love percentage between two users", Usage = "love <@user>,<@user>")]
         private async Task Love(CommandContext ctx)
         {
@@ -136,6 +157,9 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Pet);
             handler.LoadCommand(this.Spank);
             handler.LoadCommand(this.Yiff);
+            handler.LoadCommand(this.Nom);
+            handler.LoadCommand(this.Lick);
+            handler.LoadCommand(this.Bite);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

@@ -43,11 +43,7 @@ namespace EBot.Commands.Modules
         [Command(Name="l",Help="Runs lua code",Usage="l <code>")]
         private async Task Lua(CommandContext ctx)
         {
-            string code = ctx.Input;
-            List<Object> returns = new List<object>();
-            bool success = LuaEnv.Run(ctx.Message,code,out returns,out string error,ctx.Log);
-       
-            if (success)
+            if (LuaEnv.Run(ctx.Message,ctx.Input,out List<Object> returns,out string error,ctx.Log))
             {
                 string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
@@ -56,7 +52,14 @@ namespace EBot.Commands.Modules
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Lua",display);
+                    if(display.Length > 2000)
+                    {
+                        await ctx.EmbedReply.Danger(ctx.Message,"Lua","The output was too long to be sent");
+                    }
+                    else
+                    {
+                        await ctx.EmbedReply.Good(ctx.Message, "Lua",display);
+                    }
                 }
             }
             else
@@ -88,7 +91,7 @@ namespace EBot.Commands.Modules
                 return;
             }
 
-            string arg = ctx.Arguments[0].Trim();
+            string arg = ctx.Arguments[0];
             if (Command.Modules.ContainsKey(arg))
             {
                 Command.Modules[arg].ForEach(x => callback(x.Callback));
@@ -165,6 +168,20 @@ namespace EBot.Commands.Modules
             }
         }
 
+        /*[Command(Name="w",Help="Asks wolfram something",Usage="w <input>")]
+        private async Task Wolfram(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Wolfram","You didn't provide any input");
+                return;
+            }
+
+            string endpoint = "";
+            string result = await HTTP.Fetch(endpoint,ctx.Log);
+
+        }*/
+
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.Say);
@@ -174,6 +191,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.LoadCommand);
             handler.LoadCommand(this.UnloadCommand);
             handler.LoadCommand(this.Feedback);
+            //handler.LoadCommand(this.Wolfram);
             
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

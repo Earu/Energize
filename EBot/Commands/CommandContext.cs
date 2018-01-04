@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace EBot.Commands
 {
@@ -52,7 +53,7 @@ namespace EBot.Commands
 
         public bool IsNSFW()
         {
-            ISocketMessageChannel chan = this._Message.Channel;
+            ITextChannel chan = this._Message.Channel as ITextChannel;
             if (chan.IsNsfw || chan.Name.ToLower().Contains("nsfw"))
             {
                 return true;
@@ -132,6 +133,33 @@ namespace EBot.Commands
 
             user = null;
             return false;
+        }
+        
+        public async Task<IRole> GetOrCreateRole(SocketGuildUser user,string name)
+        {
+            bool exist = user.Guild.Roles.Any(x => x != null && x.Name == name);
+            IRole role = null;
+
+            if (!exist)
+            {
+                role = await user.Guild.CreateRoleAsync(name);
+            }
+            else
+            {
+                role = user.Guild.Roles.Where(x => x != null && x.Name == name).First();
+            }
+
+            return role;
+        }
+
+        public bool HasRole(SocketGuildUser user,string name)
+        {
+            return user.Roles.Any(x => x != null && x.Name == name);
+        }
+
+        public bool HasRoleStartingWith(SocketGuildUser user,string name)
+        {
+            return user.Roles.Any(x => x != null && x.Name.StartsWith(name));
         }
     }
 }
