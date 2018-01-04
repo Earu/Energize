@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
 using Discord.Rest;
+using EBot.MachineLearning;
 
 namespace EBot
 {
@@ -88,6 +89,15 @@ namespace EBot
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
                 await LuaEnv.InitializeAsync(this);
 
+                if (!this._HasInitialized)
+                {
+                    ClientMemoryStream.Initialize(this);
+                    this._HasInitialized = true;
+                }
+                
+                string gname = this._Prefix + "help | " + this._Prefix + "info" ;
+                await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
+
                 this._Discord.MessageDeleted += async (msg,chan) =>
                 {
                     LuaEnv.OnMessageDeleted(msg, chan);
@@ -98,27 +108,21 @@ namespace EBot
                     this._Spy.WatchWords(msg, new string[] { "yara", "earu" });
                     this._Handler.OnMessageCreated(msg);
                     LuaEnv.OnMessageReceived(msg);
-                    Administration.OnMessageCreated(msg, this._Handler.EmbedReply);
+                    Extras.InviteCheck(msg, this._Handler.EmbedReply);
+                    Extras.Hentai(msg,this._Handler.EmbedReply);
+                    Extras.Stylify(msg,this._Handler.EmbedReply);
+                    
+                    ITextChannel chan = msg.Channel as ITextChannel;
+                    if (!msg.Author.IsBot && !chan.IsNsfw)
+                    {
+                        MarkovHandler.Learn(msg.Content,msg.Channel.Id);
+                    }
                 };
 
                 this._Discord.ReactionAdded   += LuaEnv.OnReactionAdded;
                 this._Discord.ReactionRemoved += LuaEnv.OnReactionRemoved;
                 this._Discord.UserLeft        += LuaEnv.OnUserLeft;
                 this._Discord.UserJoined      += LuaEnv.OnUserJoined;
-
-                this._Discord.Ready += async () =>
-                {
-                    if (!this._HasInitialized)
-                    {
-                        ClientMemoryStream.Initialize(this);
-                        this._HasInitialized = true;
-
-                        await this._Discord.SetStatusAsync(UserStatus.Offline);
-                        await this._Discord.SetStatusAsync(UserStatus.Online);
-                        string gname = this._Prefix + "help | " + this._Prefix + "info" ;
-                        await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
-                    }
-                };
 
                 Timer gctimer = new Timer(arg =>
                 {

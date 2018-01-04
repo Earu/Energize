@@ -28,6 +28,8 @@ namespace EBot
         private ulong FeedbackChannelID;
         [DataMember]
         private string WebSearchToken;
+        [DataMember]
+        private string ServerInvite;
 
         public static string TOKEN_MAIN;
         public static string TOKEN_DEV;
@@ -39,6 +41,7 @@ namespace EBot
         public static string MASHAPE_KEY;
         public static ulong FEEDBACK_CHANNEL_ID;
         public static string WEB_SEARCH_TOKEN;
+        public static string SERVER_INVITE;
 
         public static async Task Load()
         {
@@ -57,6 +60,7 @@ namespace EBot
                 MASHAPE_KEY = config.MashapeKey;
                 FEEDBACK_CHANNEL_ID = config.FeedbackChannelID;
                 WEB_SEARCH_TOKEN = config.WebSearchToken;
+                SERVER_INVITE = config.ServerInvite;
             }
         }
     }

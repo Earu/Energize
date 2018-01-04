@@ -80,7 +80,17 @@ namespace EBot.Commands.Modules
             }
 
             VideoSearch items = new VideoSearch();
-            List<VideoInformation> videos = items.SearchQuery(ctx.Input, 1);
+            List<VideoInformation> videos = null;
+            try
+            {
+                videos = items.SearchQuery(ctx.Arguments[0], 1);
+            }
+            catch
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
+                return;
+            }
+
             if (videos.Count > 0)
             {
                 if (ctx.Arguments.Count == 2)
@@ -100,7 +110,7 @@ namespace EBot.Commands.Modules
 
                         VideoInformation video = videos[id-1];
                         await ctx.EmbedReply.SendRaw(ctx.Message, "#" + id + " out of " + videos.Count
-                            + " results for \"" + ctx.Input + "\"" + "\n" + video.Url);
+                            + " results for \"" + ctx.Arguments[0] + "\"" + "\n" + video.Url);
                     }
                     else
                     {

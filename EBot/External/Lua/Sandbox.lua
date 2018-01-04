@@ -1,3 +1,6 @@
+local DAVE_ERROR = "I'm sorry, Dave. I'm afraid I can't do that"
+local KLEINER_ERROR = "My god what are you doing?!"
+
 --[[
     Setup the env
 ]]--
@@ -11,9 +14,9 @@ readonlytable = function(index)
         __index = index,
         __newindex = function(tbl,key,value)
             if protecteds[key] then
-                error("I'm sorry, Dave. I'm afraid I can't do that",0)
+                error(DAVE_ERROR,0)
             else
-                rawset(index,key,value)
+                rawset(tbl,key,value)
             end
         end,
         __metatable = false,
@@ -68,7 +71,7 @@ ENV.isstring   = isstring
 ENV.isnumber   = isnumber
 ENV.isfunction = isfunction
 ENV.printtable = printtable
-ENV._G         = ENV
+ENV._G         = {}
 protect(ENV)
 
 ENV.table     = table
@@ -98,7 +101,7 @@ ENV.getmetatable = getmeta
 local secured = {}
 ENV.setmetatable = function(t1,t2)
     if isprotected(t1) then
-        error("I'm sorry, Dave. I'm afraid I can't do that",0)
+        error(DAVE_ERROR,0)
     else
         if t2.__tostring and not secured[t2] then
             local old = t2.__tostring
@@ -111,9 +114,12 @@ ENV.setmetatable = function(t1,t2)
     end
 end
 
+ENV._G = readonlytable(ENV)
+
 --[[
     Sandbox untrusted scripts
 ]]--
+
 local env = readonlytable(ENV)
 safefunc = function(resulttbl,func,...)
     local resulttbl = resulttbl or {
@@ -130,7 +136,7 @@ safefunc = function(resulttbl,func,...)
         local diff = os.time() - t
         if diff > 1000000 then
             t = os.time()
-            error("My god what are you doing?!",0)
+            error(KLEINER_ERROR,0)
         end
     end,"l",2)
     local retrieved = { pcall(func,...) }
@@ -182,6 +188,13 @@ sandbox = function(script)
 
         return result
     end
+
+    --[[if script:match(".*_G%s?=%s?nil") then
+        result.Success = false
+        result.Error = DAVE_ERROR
+
+        return result
+    end]]--
     
     local script,message = loadstring(script)
 

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace EBot.Commands.Modules
 {
@@ -29,7 +30,7 @@ namespace EBot.Commands.Modules
 
                 if (guild.Emotes.Count > 0)
                 {
-                    info += "\n\n**---- EMOJIS ----**\n";
+                    info += "\n\n---- EMOJIS ----\n";
 
                     int count = 0;
                     foreach (Emote emoji in guild.Emotes)
@@ -44,14 +45,7 @@ namespace EBot.Commands.Modules
                     }
                 }
 
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithThumbnailUrl(guild.IconUrl);
-                builder.WithDescription(info);
-                builder.WithFooter(guild.Name);
-                builder.WithColor(ctx.EmbedReply.ColorGood);
-                builder.WithAuthor(ctx.Message.Author);
-
-                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                await ctx.EmbedReply.Send(ctx.Message,guild.Name,info,ctx.EmbedReply.ColorGood,guild.IconUrl);
             }
             else
             {
@@ -59,41 +53,43 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name="info",Help="Gets information relative to the bot",Usage="info <nothing>")]
+        [Command(Name="info",Help="Gets information relative to the bot",Usage="info <@user|id|nothing>")]
         private async Task Info(CommandContext ctx)
         {
-            ClientInfo info = await ClientMemoryStream.GetClientInfo();
-            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
-            string server = "https://discord.gg/KJqhQ22";
-            string github = "https://github.com/Earu/EBot";
+            if(ctx.HasArguments)
+            {
+                this.User(ctx);
+            }
+            else
+            {
+                ClientInfo info = await ClientMemoryStream.GetClientInfo();
+                string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
+                string server = EBotConfig.SERVER_INVITE;
+                string github = "<https://github.com/Earu/EBot>";
 
-            string desc = "";
-            desc += "**NAME**: " + info.Name + "\n";
-            desc += "**PREFIX**: " + info.Prefix + "\n";
-            desc += "**COMMANDS**: " + info.CommandAmount + "\n";
-            desc += "**SERVERS**: " + info.GuildAmount + "\n";
-            desc += "**USERS**: " + info.UserAmount + "\n";
-            desc += "**OWNER**: " + info.Owner + "\n";
-            desc += "\n[**INVITE**](" + invite + ")\t\t[**SERVER**](" + server + ")\t\t[**GITHUB**](" + github + ")";
+                string desc = "";
+                desc += "**NAME**: " + info.Name + "\n";
+                desc += "**PREFIX**: " + info.Prefix + "\n";
+                desc += "**COMMANDS**: " + info.CommandAmount + "\n";
+                desc += "**SERVERS**: " + info.GuildAmount + "\n";
+                desc += "**USERS**: " + info.UserAmount + "\n";
+                desc += "**OWNER**: " + info.Owner + "\n";
 
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithFooter("Info");
-            builder.WithThumbnailUrl(info.Avatar);
-            builder.WithDescription(desc);
-            builder.WithColor(ctx.EmbedReply.ColorGood);
-            builder.WithAuthor(ctx.Message.Author);
-
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                await ctx.EmbedReply.Send(ctx.Message,"Info",desc,ctx.EmbedReply.ColorGood,info.Avatar);
+                await ctx.EmbedReply.SendRaw(ctx.Message,
+                    "Official server: " + EBotConfig.SERVER_INVITE + "\n"
+                    + "Invite link: " + invite + "\n"
+                    + "Github: " + github);
+            }
         }
 
         [Command(Name = "invite", Help = "Gets the invite link for the bot", Usage = "invite <nothing>")]
         private async Task Invite(CommandContext ctx)
         {
-            string invite = "https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8";
-            string server = "https://discord.gg/KJqhQ22";
-            string github = "https://github.com/Earu/EBot";
+            string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EBotConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
 
-            await ctx.EmbedReply.Good(ctx.Message, "Invite", "[**INVITE**](" + invite + ")\t\t[**SERVER**](" + server + ")\t\t[**GITHUB**](" + github + ")");
+            await ctx.EmbedReply.SendRaw(ctx.Message,"Invite link: " + invite);
+            await ctx.EmbedReply.SendRaw(ctx.Message,"Official server: " + EBotConfig.SERVER_INVITE);
         }
 
         [Command(Name="user",Help="Gets information about a specific user",Usage="user <@user|id>")]
@@ -101,22 +97,83 @@ namespace EBot.Commands.Modules
         {
             if (ctx.TryGetUser(ctx.Arguments[0], out SocketUser user))
             {
-                RestUser u = await ctx.RESTClient.GetUserAsync(user.Id);
+                IUser u = null;
+                if(user == null)
+                {
+                    u = await ctx.RESTClient.GetUserAsync(user.Id);
+                }
+                else
+                {
+                    u = user;
+                }
+
+                List<string> guildnames = new List<string>();
+                int maxguilds = 15;
+                int leftguilds = 0;
+                foreach(SocketGuild guild in ctx.Client.Guilds)
+                {
+                    if(guild.Users.Any(x => x.Id == u.Id))
+                    {
+                        if(guildnames.Count < maxguilds)
+                        {
+                            guildnames.Add(guild.Name);
+                        }
+                        else
+                        {
+                            leftguilds++;
+                        }
+                    }
+                }
+
+                string guildinfo = null;
+                if(!ctx.IsPrivate)
+                {
+                    SocketGuildChannel chan = ctx.Message.Channel as SocketGuildChannel;
+                    if(chan.Guild.Users.Any(x => x.Id == u.Id))
+                    {
+                        string guildjoindate = "";
+                        string nickname = "";
+            
+                        IGuildUser gu = u as IGuildUser;
+                        guildjoindate = gu.JoinedAt.ToString();
+                        guildjoindate = guildjoindate.Remove(guildjoindate.Length - 7);
+                        nickname = gu.Nickname ?? "none";
+
+                        List<string> rolenames = new List<string>();
+                        int maxroles = 15;
+                        int leftroles = 0;
+                        foreach(ulong id in gu.RoleIds)
+                        {
+                            if(rolenames.Count < maxroles)
+                            {
+                                IRole role = gu.Guild.GetRole(id);
+                                rolenames.Add(role.Name);
+                            }
+                            else
+                            {
+                                leftroles++;
+                            }
+                        }
+
+                        guildinfo = "\n\n--- Guild Related Info ---\n"
+                        + "**NICKNAME:** " + nickname + "\n"
+                        + "**JOINED GUILD:** " + guildjoindate + "\n"
+                        + "**ROLES:** " + string.Join(", ",rolenames) + (leftroles > 0 ? " and " + leftroles + " more..." : "");
+                    }
+                }
+
                 string created = u.CreatedAt.ToString();
                 created = created.Remove(created.Length - 7);
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(ctx.EmbedReply.ColorGood);
-                builder.WithThumbnailUrl(u.GetAvatarUrl());
-                builder.WithFooter("User");
-                builder.WithDescription(
-                    "**ID:** " + u.Id + "\n"
+                
+                string desc = "**ID:** " + u.Id + "\n"
                     + "**NAME:** " + u.Username + "#" + u.Discriminator + "\n"
                     + "**BOT:** " + (u.IsBot ? "Yes" : "No") + "\n"
                     + "**STATUS:** " + u.Status + "\n"
-                    + "**JOINED DISCORD:** " + created
-                );
+                    + "**JOINED DISCORD:** " + created + "\n"
+                    + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
+                    + (guildinfo == null ? "" : guildinfo);
 
-                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                await ctx.EmbedReply.Send(ctx.Message,"User",desc,ctx.EmbedReply.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,32));
             }
             else
             {
@@ -127,7 +184,7 @@ namespace EBot.Commands.Modules
         [Command(Name="help",Help="This command",Usage="help <command|nothing>")]
         private async Task Help(CommandContext ctx)
         {
-            string arg = ctx.Arguments[0].Trim();
+            string arg = ctx.Arguments[0];
             if (ctx.HasArguments)
             {
                 bool retrieved = ctx.Commands.TryGetValue(arg.ToLower(), out Command cmd);
@@ -158,6 +215,7 @@ namespace EBot.Commands.Modules
                     else
                     {
                         await ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                        await ctx.EmbedReply.SendRaw(ctx.Message,"Join the official server for more information: " + EBotConfig.SERVER_INVITE);
                     }
                 }
             }
@@ -192,7 +250,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name="isadmin",Help="Gets wether or not a user is an admin",Usage="isadmin <user>")]
+        [Command(Name="isadmin",Help="Gets wether or not a user is an admin",Usage="isadmin <@user|id>")]
         private async Task IsAdmin(CommandContext ctx)
         {
             if(!(ctx.Message.Channel is IGuildChannel))
@@ -219,13 +277,41 @@ namespace EBot.Commands.Modules
             }
         }
 
+        /*[Command(Name="playing",Help="Gets the amount of people playing a specific game",Usage="playing <game>")]
+        private async Task Playing(CommandContext ctx)
+        {
+            int count = 0;
+            foreach(SocketGuild guild in ctx.Client.Guilds)
+            {
+                foreach(SocketGuildUser user in guild.Users)
+                {
+                    string activity = user.Activity.Name.ToLower();
+                    if(activity.Contains(ctx.Input.ToLower()))
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            if(count > 0)
+            {
+                await ctx.EmbedReply.Good(ctx.Message,"Playing","**" + count + "** users are playing `" + ctx.Input + "`");
+            }
+            else
+            {
+                await ctx.EmbedReply.Good(ctx.Message,"Playing","Seems like nobody is playing `" + ctx.Input + "`");
+            }
+        }*/
+
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.Server);
             handler.LoadCommand(this.Info);
+            handler.LoadCommand(this.Invite);
             handler.LoadCommand(this.User);
             handler.LoadCommand(this.Help);
             handler.LoadCommand(this.IsAdmin);
+            //handler.LoadCommand(this.Playing);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

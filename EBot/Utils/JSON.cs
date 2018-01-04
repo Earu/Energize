@@ -18,7 +18,6 @@ namespace EBot.Utils
             catch
             {
                 log.Nice("JSON", ConsoleColor.Red, "Couldn't deserialize a string!");
-                log.Danger(json);
 
                 return default(T);
             }
@@ -34,7 +33,6 @@ namespace EBot.Utils
             catch
             {
                 log.Nice("JSON", ConsoleColor.Red, "Couldn't serialize a string!");
-                log.Danger(obj.ToString());
 
                 return "";
             }

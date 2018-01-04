@@ -25,7 +25,7 @@ namespace EBot.Commands.Social
 
         public string Hug(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "hug",new string[] 
+            return Global(from, to, "hug",new string[]
             {
                 "<origin> comes up close to <user> and <action>s them",
                 "<origin> sneaks behind <user> and <action>s them",
@@ -35,7 +35,7 @@ namespace EBot.Commands.Social
 
         public string Boop(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "boop",new string[] 
+            return Global(from, to, "boop",new string[]
             {
                 "<user> got <action>ed by <origin>",
                 "<origin> proceeds to gently <action> <user>",
@@ -45,7 +45,7 @@ namespace EBot.Commands.Social
 
         public string Slap(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "slap",new string[] 
+            return Global(from, to, "slap",new string[]
             {
                 "<origin> <action>s <user> booty hard",
                 "<origin> gets mad and <action>s <user> in the face",
@@ -55,7 +55,7 @@ namespace EBot.Commands.Social
 
         public string Kiss(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "kiss",new string[] 
+            return Global(from, to, "kiss",new string[]
             {
                 "<origin> gives a big <action> to <user>",
                 "<origin> gently <action>es <user>",
@@ -68,7 +68,7 @@ namespace EBot.Commands.Social
             return Global(from, to, "snuggle",new string[]
             {
                 "<origin> <action>s against <user>",
-                "<origin> <action>s <user> a bit",
+                "<origin> <action>s <user>",
                 "<origin> lovely <action>s <user>"
             });
         }
@@ -110,6 +110,36 @@ namespace EBot.Commands.Social
                 "<origin> <action>s <user> *cringe*",
                 "<origin> wildy <action>s <user> *cringe*",
                 "With a lack of self-esteem <origin> <action>s <user> *cringe*"
+            });
+        }
+
+        public string Nom(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from,to,"nom",new string[]
+            {
+                "<origin> <action>s <user>",
+                "<origin> gently <action>s <user>",
+                "<user> just have been <action>ed by <origin>"
+            });
+        }
+
+        public string Lick(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from,to,"lick",new string[]
+            {
+                "<origin> softly <action>s <user>",
+                "<origin> <action>s <user> across their faces",
+                "<origin> gives a big wet <action> to <user>"
+            });
+        }
+
+        public string Bite(SocketUser from,IReadOnlyList<SocketUser> to)
+        {
+            return Global(from,to,"bite",new string[]
+            {
+                "<origin> angrily <action>s <user>",
+                "<origin> <action>s <user> hard",
+                "With all their strength <origin> <action>s <user>"
             });
         }
     }

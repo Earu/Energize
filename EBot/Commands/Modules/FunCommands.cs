@@ -8,6 +8,9 @@ using Discord.WebSocket;
 using EBot.Commands.Chuck;
 using Discord;
 using System.Linq;
+using System.Collections.Generic;
+using System.Xml;
+using HtmlAgilityPack;
 
 namespace EBot.Commands.Modules
 {
@@ -17,7 +20,7 @@ namespace EBot.Commands.Modules
         [Command(Name="ascii",Help="Makes a text/sentence ascii art",Usage="ascii <sentence>")]
         private async Task ASCII(CommandContext ctx)
         {
-            if (ctx.HasArguments)
+            if (!ctx.HasArguments)
             {
                 await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "You didn't provide any word or sentence!");
             }
@@ -30,7 +33,7 @@ namespace EBot.Commands.Modules
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message,"ASCII","```\n" + body + "\n```");
+                    await ctx.EmbedReply.SendRaw(ctx.Message,"```\n" + body + "\n```");
                 }
 
             }
@@ -143,7 +146,22 @@ namespace EBot.Commands.Modules
             string sentence = ctx.Input;
             try
             {
+                string pattern = @"<@\!?(\d+)>";
                 string generated = MarkovHandler.Generate(sentence);
+                string[] parts = Regex.Split(generated,pattern);
+                MatchCollection matches = Regex.Matches(generated,pattern);
+                string result = "";
+                for(int i = 0; i < parts.Length; i++)
+                {
+                    if(matches.Count > i + 1 && ctx.TryGetUser(matches[i].Value,out SocketUser user))
+                    {
+                        result += parts[i] + user.Username;
+                    }
+                    else
+                    {
+                        result += parts[i];
+                    }
+                }
                 await ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
             }
             catch(Exception e)
@@ -177,30 +195,6 @@ namespace EBot.Commands.Modules
             builder.WithColor(ctx.EmbedReply.ColorGood);
 
             await ctx.EmbedReply.Send(ctx.Message, builder.Build());
-        }
-
-        [Command(Name="crazy",Help="Make a sentence look crazy",Usage="crazy <sentence>")]
-        private async Task Crazy(CommandContext ctx)
-        {
-            string content = ctx.Input;
-            string result = "";
-            Random rand = new Random();
-            foreach(char letter in content)
-            {
-                string part = letter.ToString();
-                if(rand.Next(1,100) >= 50)
-                {
-                    part = part.ToUpper();
-                }
-                else
-                {
-                    part = part.ToLower();
-                }
-
-                result += part;
-            }
-
-            await ctx.EmbedReply.Good(ctx.Message, "Crazy", result);
         }
 
         [Command(Name="gname",Help="Gets a random username",Usage="gname <nothing>")]
@@ -239,23 +233,6 @@ namespace EBot.Commands.Modules
 
         }
 
-        [Command(Name="reverse",Help="Reverses a sentence",Usage="reverse <sentence>")]
-        private async Task Reverse(CommandContext ctx)
-        {
-            string input = ctx.Input;
-            if (ctx.HasArguments)
-            {
-                char[] chars = input.ToCharArray();
-                Array.Reverse(chars);
-
-                await ctx.EmbedReply.Good(ctx.Message, "Reverse", new string(chars));
-            }
-            else
-            {
-                await ctx.EmbedReply.Danger(ctx.Message, "Reverse", "You must provide a sentence");
-            }
-        }
-
         [Command(Name="files",Help="?",Usage="?")]
         private async Task XFiles(CommandContext ctx)
         {
@@ -271,6 +248,100 @@ namespace EBot.Commands.Modules
             }
         }
 
+        [Command(Name="style",Help="Sets a typing style for yourself or use one on a sentence",Usage="style <style>,<toggle|sentence>")]
+        private async Task Style(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Style","You must either provide a sentence or \"toggle\"");
+                return;
+            }
+
+            if(ctx.Arguments.Count > 1)
+            {
+                if(!Extras.GetStyles().Any(x => x == ctx.Arguments[0]))
+                {
+                    await ctx.EmbedReply.Danger(ctx.Message,"Style","Styles available:\n`" + string.Join(",",Extras.GetStyles()) + "`");
+                    return;
+                }
+
+                if(ctx.Arguments[1].Trim() == "toggle")
+                {
+                    if(ctx.IsPrivate)
+                    {
+                        await ctx.EmbedReply.Danger(ctx.Message,"Style","You can't toggle a style in DM!");
+                        return;
+                    }
+
+                    SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
+                    string identifier = "EBotStyle: ";
+                    string rolename = identifier + ctx.Arguments[0];
+                    
+                    IGuild guild = user.Guild as IGuild;
+                    IGuildUser bot = await guild.GetUserAsync(ctx.Client.CurrentUser.Id);
+                    if(!bot.GuildPermissions.ManageMessages || !bot.GuildPermissions.ManageRoles)
+                    {
+                        await ctx.EmbedReply.Danger(ctx.Message,"Style","I dont seem to have the rights for that!");
+                        return;
+                    }
+
+                    if(ctx.HasRole(user,rolename)) //untoggle
+                    {
+                        IRole oldrole = await ctx.GetOrCreateRole(user,rolename);
+                        await user.RemoveRoleAsync(oldrole);
+
+                        await ctx.EmbedReply.Good(ctx.Message,"Style","Untoggled style");
+                        return;
+                    }
+
+                    if(ctx.HasRoleStartingWith(user,identifier)) //changes of style
+                    {
+                        IRole oldrole = user.Roles.Where(x => x.Name != null && x.Name.StartsWith(identifier)).First();
+                        await user.RemoveRoleAsync(oldrole);
+                    }
+
+                    IRole newrole = await ctx.GetOrCreateRole(user,rolename);
+                    await user.AddRoleAsync(newrole);
+
+                    await ctx.EmbedReply.Good(ctx.Message,"Style","Style applied");
+                }
+                else if(!string.IsNullOrWhiteSpace(ctx.Arguments[1]))
+                {
+                    List<string> parts = new List<string>(ctx.Arguments);
+                    parts.RemoveAt(0);
+                    
+                    string result = Extras.GetStyleResult(string.Join(",",parts),ctx.Arguments[0]);
+
+                    await ctx.EmbedReply.Good(ctx.Message,"Style",result);
+                }
+                else
+                {
+                    await ctx.EmbedReply.Danger(ctx.Message,"Style","You must provide a second argument (\"toggle\" or a sentence)");
+                }
+            }
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Style","You must provide a second argument (\"toggle\" or a sentence)");
+            }
+        }
+
+        [Command(Name="oldswear",Help="Generates old swear words and insults",Usage="oldswear <nothing>")]
+        public async Task OldInsult(CommandContext ctx)
+        {
+            string html = await HTTP.Fetch("http://www.pangloss.com/seidel/Shaker/",ctx.Log);
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            var node = doc.DocumentNode.SelectNodes("//font").FirstOrDefault();
+
+            if(node == null)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Old Insult","Seems like the website is down");
+                return;
+            }
+
+            await ctx.EmbedReply.Good(ctx.Message,"Old Insult",node.InnerText);
+        }
+
         public void Initialize(CommandHandler handler, BotLog log)
         {
             handler.LoadCommand(this.Describe);
@@ -281,10 +352,10 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Markov);
             handler.LoadCommand(this.Chuck);
             handler.LoadCommand(this.Meme);
-            handler.LoadCommand(this.Crazy);
             handler.LoadCommand(this.GenName);
-            handler.LoadCommand(this.Reverse);
             handler.LoadCommand(this.XFiles);
+            handler.LoadCommand(this.Style);
+            handler.LoadCommand(this.OldInsult);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
