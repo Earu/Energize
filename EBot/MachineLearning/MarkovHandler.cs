@@ -2,54 +2,60 @@
 using Discord;
 using Discord.WebSocket;
 using System;
+using EBot.Logs;
 
 namespace EBot.MachineLearning
 {
     public class MarkovHandler
     {
-        private static MarkovChain _Chain = new MarkovChain();
+        private static char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
+        private static int _MaxDepth = 2;
         private static Dictionary<ulong,bool> _BlackList = new Dictionary<ulong,bool>
         {
-            [81384788765712384] = false,
+            [81384788765712384]  = false,
             [110373943822540800] = false,
             [264445053596991498] = false,
         };
 
-        public static void Learn(string content,ulong id)
+        public static void Learn(string content,ulong id,BotLog log)
         {
+            MarkovChain chain = new MarkovChain();
             if(!_BlackList.ContainsKey(id))
             {
-                _Chain.Learn(content);
+                try
+                {   
+                    chain.Learn(content);
+                }
+                catch(Exception e)
+                {
+                    log.Nice("Markov",ConsoleColor.Red,"Failed to learn from a message\n" + e.ToString());
+                }
             }
         }
 
         public static string Generate(string data)
         {
-            string result = "";
+            MarkovChain chain = new MarkovChain();
 
             if (data == "")
             {
-                List<string> words = _Chain.Generate(120);
-                foreach (string word in words)
-                {
-                    result += " " + word;
-                }
-
-                return result;
+                return chain.Generate(40);
             }
             else
             {
-                string[] parts = data.Split(' ');
-                string firstword = parts[parts.Length - 1];
-                string firstpart = string.Join(' ', parts, 0, parts.Length - 1);
-                List<string> words = _Chain.Generate(firstword,120);
-
-                foreach (string word in words)
+                data = data.ToLower();
+                string firstpart = "";
+                string[] parts = data.Split(_Separators);
+                if(parts.Length > _MaxDepth)
                 {
-                    result += " " + word;
+                    firstpart = string.Join(' ',parts,parts.Length - _MaxDepth,_MaxDepth);
+                    return data + " " + chain.Generate(firstpart,40).TrimStart();
                 }
-
-                return firstpart + " " + result.TrimStart();
+                else
+                {
+                    firstpart = string.Join(' ',parts);
+                    return firstpart + " " + chain.Generate(firstpart,40).TrimStart();
+                }
             }
         }
     }

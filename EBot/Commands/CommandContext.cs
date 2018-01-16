@@ -69,7 +69,7 @@ namespace EBot.Commands
             if (!this._IsPrivate)
             {
                 SocketGuildUser user = this._Message.Author as SocketGuildUser;
-                List<SocketRole> roles = user.Roles.Where(x => x != null && x.Name == "EBot").ToList();
+                List<SocketRole> roles = user.Roles.Where(x => x != null && x.Name == "EBotAdmin").ToList();
                 if(roles.Count > 0 || user.GuildPermissions.Administrator)
                 {
                     return true;

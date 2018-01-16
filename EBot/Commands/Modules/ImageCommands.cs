@@ -26,12 +26,14 @@ namespace EBot.Commands.Modules
                 user = u;
             }
 
-            string url = user.GetAvatarUrl(ImageFormat.Auto,512);
+            string url = user.GetAvatarUrl(ImageFormat.Auto);
+            url = url.Remove(url.Length - 9);
             EmbedBuilder builder = new EmbedBuilder();
-            ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
-            builder.WithColor(ctx.EmbedReply.ColorGood);
-            builder.WithImageUrl(url);
+
+            ctx.EmbedReply.BuilderWithAuthor(ctx.Message, builder);
             builder.WithFooter("Avatar");
+            builder.WithImageUrl(url);
+            builder.WithColor(ctx.EmbedReply.ColorGood);
 
             await ctx.EmbedReply.Send(ctx.Message, builder.Build());
         }
@@ -48,7 +50,7 @@ namespace EBot.Commands.Modules
             if(Discord.Emote.TryParse(ctx.Arguments[0],out Emote emote))
             {
                 EmbedBuilder builder = new EmbedBuilder();
-                
+
                 ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
                 builder.WithFooter("Emote");
                 builder.WithImageUrl(emote.Url);
@@ -58,7 +60,7 @@ namespace EBot.Commands.Modules
             }
             /*else if()
             {
-                
+
             }*/
             else if(!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
@@ -91,10 +93,10 @@ namespace EBot.Commands.Modules
             string url = null;
             string path = null;
             int value = 0;
-            
+
             if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
-                url = user.GetAvatarUrl(ImageFormat.Png, 512);
+                url = user.GetAvatarUrl(ImageFormat.Auto, 512);
                 if(ctx.Arguments.Count > 1)
                 {
                     if(int.TryParse(ctx.Arguments[1],out int arg))
@@ -192,7 +194,7 @@ namespace EBot.Commands.Modules
                 using (FileStream stream =  File.OpenWrite(path)){
                     encoder.Encode(img, stream);
                 }
-                
+
                 return path;
             });
         }
@@ -231,7 +233,7 @@ namespace EBot.Commands.Modules
         {
             await this.Process(ctx, "Blur", (img, value) => img.Mutate(x => x.BoxBlur()));
         }
-          
+
         [Command(Name="greenify",Help="Greenifies a picture",Usage="greenify <imageurl|user")]
         private async Task Greenify(CommandContext ctx)
         {
@@ -267,6 +269,24 @@ namespace EBot.Commands.Modules
             await ctx.EmbedReply.Send(ctx.Message,builder.Build());
         }
 
+        [Command(Name="illegal",Help="Make something illegal",Usage="illegal <input>")]
+        private async Task Illegal(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Illegal","You didnt provide any input");
+                return;
+            }
+
+            string path = await ImageProcess.DownloadImage("https://storage.googleapis.com/is-now-illegal.appspot.com/gifs/TRUMPFIRE.gif");
+            Image<Rgba32> img = ImageProcess.Get(path);
+            //img.Mutate(x => )
+
+            await ctx.EmbedReply.SendFile(ctx.Message, path);
+
+            ImageProcess.DeleteImage(path);
+        }
+
         public void Initialize(CommandHandler handler,BotLog log)
         {
             handler.LoadCommand(this.Avatar);
@@ -281,6 +301,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.DeepFry);
             handler.LoadCommand(this.Pixelate);
             handler.LoadCommand(this.Inspiro);
+            handler.LoadCommand(this.Illegal);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }

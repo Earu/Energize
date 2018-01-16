@@ -114,7 +114,7 @@ namespace EBot.Commands
 
                 string[] decoration = EBotData.ANIME_DECORATIONS[rand.Next(0,EBotData.ANIME_DECORATIONS.Length-1)];
                 result = decoration[0] + result + decoration[1];
-                
+
                 string emote = EBotData.ANIME_EMOTES[rand.Next(0,EBotData.ANIME_EMOTES.Length-1)];
                 if(rand.Next(0,100) > 50)
                 {
@@ -124,7 +124,75 @@ namespace EBot.Commands
                 {
                     result = result + " － " + emote;
                 }
-                
+
+                return result;
+            },
+            ["kid"] = input => {
+                Random rand = new Random();
+                string result = input.ToLower()
+                    .Replace("i will","ima")
+                    .Replace("i dont know","idk")
+                    .Replace("dont know","dunno")
+                    .Replace("because","cuz")
+                    .Replace("seriously","srs")
+                    .Replace("you are","you is")
+                    .Replace("they are","they is")
+                    .Replace("what","wat")
+                    .Replace("you're","ur")
+                    .Replace("you","u")
+                    .Replace("people","ppl")
+                    .Replace("that","taht")
+                    .Replace("this","dis")
+                    .Replace("please","pls")
+                    .Replace("arent","aint")
+                    .Replace("than","den")
+                    .Replace("fucking","fuken")
+                    .Replace("kid","kiddi")
+                    .Replace("see","c")
+                    .Replace("yes","ye")
+                    .Replace("the","da")
+                    .Replace("why","y")
+
+                    .Replace("'","")
+                    .Replace(".","!!1 ")
+                    .Replace(","," ")
+                    .Replace("to","2")
+                    .Replace("for","4")
+                    .Replace("oh","o")
+                    .Replace("be","B")
+                    .Replace("ll","l")
+                    .Replace("nn","n")
+                    .Replace("pp","p")
+                    .Replace("ck","k");
+
+                if(rand.Next(0,100) > 50)
+                {
+                    int rnum = rand.Next(0,100);
+                    if(rnum > 66)
+                    {
+                        int amount = rand.Next(1,3);
+                        result += " :" + new string('D',amount);
+                    }
+                    else if(rnum < 33)
+                    {
+                        int amount = rand.Next(1,3);
+                        result += " X" + new string('D',amount);
+                    }
+                    else
+                    {
+                        result += " =)";
+                    }
+                }
+
+                return result;
+            },
+            ["leet"] = input => {
+                string result = input.ToLower()
+                    .Replace("e","3")
+                    .Replace("a","4")
+                    .Replace("i","1")
+                    .Replace("o","0");
+
                 return result;
             }
         };
@@ -215,7 +283,7 @@ namespace EBot.Commands
                     }
                     catch
                     {
-                    
+
                     }
                 }
             }

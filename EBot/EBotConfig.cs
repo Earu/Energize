@@ -30,6 +30,8 @@ namespace EBot
         private string WebSearchToken;
         [DataMember]
         private string ServerInvite;
+        [DataMember]
+        private string SteamAPIKey;
 
         public static string TOKEN_MAIN;
         public static string TOKEN_DEV;
@@ -42,6 +44,7 @@ namespace EBot
         public static ulong FEEDBACK_CHANNEL_ID;
         public static string WEB_SEARCH_TOKEN;
         public static string SERVER_INVITE;
+        public static string STEAM_API_KEY;
 
         public static async Task Load()
         {
@@ -61,6 +64,7 @@ namespace EBot
                 FEEDBACK_CHANNEL_ID = config.FeedbackChannelID;
                 WEB_SEARCH_TOKEN = config.WebSearchToken;
                 SERVER_INVITE = config.ServerInvite;
+                STEAM_API_KEY = config.SteamAPIKey;
             }
         }
     }

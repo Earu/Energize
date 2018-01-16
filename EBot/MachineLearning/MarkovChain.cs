@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace EBot.MachineLearning
 {
     public class MarkovChain
     {
-        private string _Path = "External/Markov/";
+        private static string _Path = "External/Markov/";
+        private static int _MaxDepth = 2;
+        private static string _Extension = ".markov";
+        private static char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
 
         public void Learn(string sentence)
         {
+            if(sentence == null) return;
 
             if (!Directory.Exists(_Path))
             {
@@ -17,62 +22,74 @@ namespace EBot.MachineLearning
             }
 
             sentence = sentence.Trim().ToLower();
-            string[] words = sentence.Split(new[] { ' ' });
+            sentence = Regex.Replace(sentence,"https?:\\/\\/.+\\s","LINK-REMOVED ");
+            sentence = sentence.Replace("\\","/").Replace("/"," ");
+
+            string[] words = sentence.Split(_Separators);
 
             for (int i = 0; i < words.Length - 1; i++)
             {
-                string word = words[i].ToLower();
-                string next = words[i + 1].ToLower();
-                string path = this._Path + word;
+                string word = words[i].ToLower().Trim();
+                string next = i + 1 > words.Length ? "END_SEQUENCE" : words[i + 1].ToLower().Trim();
+
+                string path = _Path + word + _Extension;
                 File.AppendAllText(path, next + "\n");
+
+                string left = word + _Extension;
+                for(int depth = 1; depth < _MaxDepth; depth++)
+                {
+                    if(i - depth >= 0)
+                    {
+                        left = words[i - depth].Trim() + "_" + left;
+                        path = _Path + left;
+
+                        File.AppendAllText(path, next + "\n");
+                    }
+                }
             }
         }
 
-        public List<string> Generate(int? max=null)
+        public string Generate(int? max=null)
         {
             max = max ?? int.MaxValue;
             Random rand = new Random();
-            string[] files = Directory.GetFiles(this._Path);
+            string[] files = Directory.GetFiles(_Path);
+
             string word = files[rand.Next(0, files.Length - 1)];
             string[] dirs = word.Split('/');
             word = dirs[dirs.Length - 1];
+            word = word.Remove(word.Length - _Extension.Length);
 
-            return Generate(word, max.Value);
+            //Console.WriteLine(word);
+            string result = word + ' ' + Generate(word, max.Value);
+            result = result.Replace('_',' ');
+
+            return result;
         }
 
-        public List<string> Generate(string firstWord)
+        public string Generate(string firstpart, int wordcount)
         {
-            return Generate(firstWord, int.MaxValue);
-        }
-
-        public List<string> Generate(string firstWord, int wordcount)
-        {
-            List<string> results = new List<string>();
-            int count = 0;
             Random rand = new Random();
-            string current = firstWord;
+            string result = "";
+            List<string> currentinput = new List<string>(firstpart.Split(_Separators));
 
-            results.Add(current);
-
-            while (++count < wordcount)
+            for(int i = 0; i < wordcount; i++)
             {
-                string path = this._Path + current;
-
-                if (File.Exists(path))
+                string path = _Path + string.Join('_',currentinput) + _Extension;
+                if(File.Exists(path))
                 {
-                    string[] words = File.ReadAllLines(path);
-                    string temp = words[rand.Next(0, words.Length - 1)];
+                    string[] nexts = File.ReadAllLines(path);
+                    string next = nexts[rand.Next(0,nexts.Length)].Trim();
 
-                    if(words.Length > 1)
+                    if(next == "END_SEQUENCE") break;
+
+                    result += " " + next;
+
+                    currentinput.Add(next);
+                    if(currentinput.Count > _MaxDepth)
                     {
-                        while(current == temp)
-                        {
-                            temp = words[rand.Next(0, words.Length - 1)];
-                        }
+                        currentinput.RemoveAt(0);
                     }
-
-                    current = temp;
-                    results.Add(current);
                 }
                 else
                 {
@@ -80,7 +97,7 @@ namespace EBot.MachineLearning
                 }
             }
 
-            return results;
+            return result;
         }
     }
 }

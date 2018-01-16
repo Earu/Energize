@@ -69,7 +69,7 @@ namespace EBot.Commands
             Type cbtype                 = callback.Target.GetType();
             CommandModuleAttribute matt = cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false)[0] as CommandModuleAttribute;
             CommandAttribute att        = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false)[0] as CommandAttribute;
-            
+
             string modulename = matt.Name.ToLower();
             string name       = att.Name;
             string help       = att.Help;
@@ -204,7 +204,7 @@ namespace EBot.Commands
         {
             List<string> args = this.GetCmdArgs(msg.Content);
             if (this._Cmds.TryGetValue(cmd, out Command retrieved))
-            { 
+            {
                 try
                 {
                     await msg.Channel.TriggerTypingAsync();
@@ -227,7 +227,7 @@ namespace EBot.Commands
             string content = msg.Content;
             if (!msg.Author.IsBot)
             {
-                if (content.StartsWith(this._Prefix) || this.StartsWithBotMention(content))
+                if (content.ToLower().StartsWith(this._Prefix) || this.StartsWithBotMention(content))
                 {
                     string cmd = this.GetCmd(content);
                     if (this.IsCmdLoaded(cmd))
@@ -290,7 +290,7 @@ namespace EBot.Commands
             {
                 this._LastChannelPictureURL[msg.Channel.Id] = url;
             }
-            
+
             this.MainCall(msg).RunSynchronously();
         }
     }

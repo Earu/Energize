@@ -105,7 +105,7 @@ namespace EBot.Commands.Modules
             }
         }
 
-        [Command(Name="8ball",Help="Gives a negative or positive answer to a question",Usage="8ball <question>")]
+        [Command(Name="8b",Help="Gives a negative or positive answer to a question",Usage="8b <question>")]
         private async Task EightBalls(CommandContext ctx)
         {
             if (!ctx.HasArguments)
@@ -146,22 +146,13 @@ namespace EBot.Commands.Modules
             string sentence = ctx.Input;
             try
             {
-                string pattern = @"<@\!?(\d+)>";
                 string generated = MarkovHandler.Generate(sentence);
-                string[] parts = Regex.Split(generated,pattern);
-                MatchCollection matches = Regex.Matches(generated,pattern);
-                string result = "";
-                for(int i = 0; i < parts.Length; i++)
+                if(string.IsNullOrWhiteSpace(generated))
                 {
-                    if(matches.Count > i + 1 && ctx.TryGetUser(matches[i].Value,out SocketUser user))
-                    {
-                        result += parts[i] + user.Username;
-                    }
-                    else
-                    {
-                        result += parts[i];
-                    }
+                    await ctx.EmbedReply.Danger(ctx.Message,"Markov","Generated nothing??!");
+                    return;
                 }
+                generated = Regex.Replace(generated,"\\s\\s"," ");
                 await ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
             }
             catch(Exception e)
@@ -276,7 +267,7 @@ namespace EBot.Commands.Modules
                     SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
                     string identifier = "EBotStyle: ";
                     string rolename = identifier + ctx.Arguments[0];
-                    
+
                     IGuild guild = user.Guild as IGuild;
                     IGuildUser bot = await guild.GetUserAsync(ctx.Client.CurrentUser.Id);
                     if(!bot.GuildPermissions.ManageMessages || !bot.GuildPermissions.ManageRoles)
@@ -309,7 +300,7 @@ namespace EBot.Commands.Modules
                 {
                     List<string> parts = new List<string>(ctx.Arguments);
                     parts.RemoveAt(0);
-                    
+
                     string result = Extras.GetStyleResult(string.Join(",",parts),ctx.Arguments[0]);
 
                     await ctx.EmbedReply.Good(ctx.Message,"Style",result);
@@ -331,7 +322,7 @@ namespace EBot.Commands.Modules
             string html = await HTTP.Fetch("http://www.pangloss.com/seidel/Shaker/",ctx.Log);
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
-            var node = doc.DocumentNode.SelectNodes("//font").FirstOrDefault();
+            HtmlNode node = doc.DocumentNode.SelectNodes("//font").FirstOrDefault();
 
             if(node == null)
             {

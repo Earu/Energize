@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace EBot.Commands.Modules
 {
-    [CommandModule(Name="Info")]
+    [CommandModule(Name="Information")]
     class InfoCommands : CommandModule,ICommandModule
     {
         [Command(Name="server",Help="Gets information about the server",Usage="server <nothing>")]
@@ -22,20 +22,26 @@ namespace EBot.Commands.Modules
                 SocketGuild guild = (ctx.Message.Channel as IGuildChannel).Guild as SocketGuild;
                 RestUser owner = await ctx.RESTClient.GetUserAsync(guild.OwnerId);
 
+                string created = guild.CreatedAt.ToString();
+                created = created.Remove(created.Length - 7);
+                string region = guild.VoiceRegionId.ToString().ToUpper();
+
                 string info = "";
-                info += "**ID**: " + guild.Id + "\n";
-                info += "**OWNER**: " + (owner == null ? "NULL\n" : owner.Username + "#" + owner.Discriminator + "\n");
-                info += "**MEMBERS**: " + guild.MemberCount + "\n";
-                info += "**REGION**: " + guild.VoiceRegionId + "\n";
+                info += "**ID:** " + guild.Id + "\n";
+                info += "**OWNER:** " + (owner == null ? "NULL\n" : owner.Mention + "\n");
+                info += "**MEMBERS:** " + guild.MemberCount + "\n";
+                info += "**REGION:** " + region + "\n";
+                info += "**CREATED ON:** " + created + "\n";
+                info += "**MAIN CHANNEL:** " + guild.DefaultChannel.Name + "\n";
 
                 if (guild.Emotes.Count > 0)
                 {
-                    info += "\n\n---- EMOJIS ----\n";
+                    info += "\n--- Emotes ---\n";
 
                     int count = 0;
                     foreach (Emote emoji in guild.Emotes)
                     {
-                        info += "<:" + emoji.Name + ":" + emoji.Id + ">  ";
+                        info += emoji + " ";
                         count++;
                         if (count >= 10)
                         {
@@ -58,7 +64,7 @@ namespace EBot.Commands.Modules
         {
             if(ctx.HasArguments)
             {
-                this.User(ctx);
+                await this.User(ctx);
             }
             else
             {
@@ -133,7 +139,7 @@ namespace EBot.Commands.Modules
                     {
                         string guildjoindate = "";
                         string nickname = "";
-            
+
                         IGuildUser gu = u as IGuildUser;
                         guildjoindate = gu.JoinedAt.ToString();
                         guildjoindate = guildjoindate.Remove(guildjoindate.Length - 7);
@@ -164,7 +170,7 @@ namespace EBot.Commands.Modules
 
                 string created = u.CreatedAt.ToString();
                 created = created.Remove(created.Length - 7);
-                
+
                 string desc = "**ID:** " + u.Id + "\n"
                     + "**NAME:** " + u.Username + "#" + u.Discriminator + "\n"
                     + "**BOT:** " + (u.IsBot ? "Yes" : "No") + "\n"
@@ -173,7 +179,7 @@ namespace EBot.Commands.Modules
                     + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
                     + (guildinfo == null ? "" : guildinfo);
 
-                await ctx.EmbedReply.Send(ctx.Message,"User",desc,ctx.EmbedReply.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,32));
+                await ctx.EmbedReply.Send(ctx.Message,"User",desc,ctx.EmbedReply.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
             }
             else
             {
@@ -277,6 +283,33 @@ namespace EBot.Commands.Modules
             }
         }
 
+        [Command(Name="roles",Help="Gets a person roles and relative ids",Usage="roles <@user>")]
+        private async Task Roles(CommandContext ctx)
+        {
+            if(ctx.IsPrivate)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Roles","This is not available in DM");
+                return;
+            }
+
+            if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
+            {
+                SocketGuildUser u = user as SocketGuildUser;
+                string display = "```";
+                foreach(IRole role in u.Roles)
+                {
+                    display += role.Name + "\t\t" + role.Id + "\n";
+                }
+                display += "```";
+
+                await ctx.EmbedReply.Good(ctx.Message,"Roles",display);
+            }
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Roles","Couldn't find any user for your input");
+            }
+        }
+
         /*[Command(Name="playing",Help="Gets the amount of people playing a specific game",Usage="playing <game>")]
         private async Task Playing(CommandContext ctx)
         {
@@ -312,6 +345,7 @@ namespace EBot.Commands.Modules
             handler.LoadCommand(this.Help);
             handler.LoadCommand(this.IsAdmin);
             //handler.LoadCommand(this.Playing);
+            handler.LoadCommand(this.Roles);
 
             log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
