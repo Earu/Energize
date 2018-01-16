@@ -55,7 +55,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    IRole role = await ctx.GetOrCreateRole(user, "EBot");
+                    IRole role = await ctx.GetOrCreateRole(user, "EBotAdmin");
 
                     await user.AddRoleAsync(role);
                     await ctx.EmbedReply.Good(ctx.Message, "OP", user.Username + "#" + user.Discriminator + " was succesfully allowed to use administration commands");
@@ -74,7 +74,7 @@ namespace EBot.Commands.Modules
             {
                 try
                 {
-                    IRole role = await ctx.GetOrCreateRole(user, "EBot");
+                    IRole role = await ctx.GetOrCreateRole(user, "EBotAdmin");
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
@@ -119,7 +119,7 @@ namespace EBot.Commands.Modules
                 }
             }
 
-            IEnumerable<IMessage> messages = await ctx.Message.Channel.GetMessagesAsync().Flatten();
+            IEnumerable<IMessage> messages = ctx.Message.Channel.GetMessagesAsync().Flatten().ToEnumerable();
             List<IMessage> todelete = new List<IMessage>();
             int count = 0;
             foreach (IMessage msg in messages)
