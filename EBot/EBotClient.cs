@@ -9,6 +9,7 @@ using Discord.WebSocket;
 using Discord;
 using Discord.Rest;
 using EBot.MachineLearning;
+using System.IO;
 
 namespace EBot
 {
@@ -84,6 +85,11 @@ namespace EBot
         {
             try
             {
+                if(File.Exists("logs.txt"))
+                {
+                    File.Delete("logs.txt");
+                }
+
                 await this._Discord.LoginAsync(TokenType.Bot, _Token, true);
                 await this._Discord.StartAsync();
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
@@ -94,9 +100,9 @@ namespace EBot
                     ClientMemoryStream.Initialize(this);
                     this._HasInitialized = true;
                 }
-                
-                string gname = this._Prefix + "help | " + this._Prefix + "info" ;
-                await this._Discord.SetGameAsync(gname, EBotConfig.TWITCH_URL, StreamType.Twitch);
+
+                StreamingGame game = new StreamingGame(this._Prefix + "help | " + this._Prefix + "info",EBotConfig.TWITCH_URL);
+                await this._Discord.SetActivityAsync(game);
 
                 this._Discord.MessageDeleted += async (msg,chan) =>
                 {
@@ -111,11 +117,17 @@ namespace EBot
                     Extras.InviteCheck(msg, this._Handler.EmbedReply);
                     Extras.Hentai(msg,this._Handler.EmbedReply);
                     Extras.Stylify(msg,this._Handler.EmbedReply);
-                    
+
                     ITextChannel chan = msg.Channel as ITextChannel;
-                    if (!msg.Author.IsBot && !chan.IsNsfw)
+                    if (!msg.Author.IsBot && !chan.IsNsfw && !msg.Content.StartsWith(this._Prefix))
                     {
-                        MarkovHandler.Learn(msg.Content,msg.Channel.Id);
+                        ulong id = 0;
+                        if(msg.Channel is IGuildChannel)
+                        {
+                            IGuildChannel guildchan = msg.Channel as IGuildChannel;
+                            id = guildchan.Guild.Id;
+                        }
+                        MarkovHandler.Learn(msg.Content,id,this._Log);
                     }
                 };
 
@@ -133,7 +145,7 @@ namespace EBot
 
                 int hour = 1000 * 60 * 60;
                 gctimer.Change(hour, hour);
-                
+
             }
             catch (Exception e)
             {

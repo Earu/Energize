@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace EBot.Logs
 {
@@ -26,6 +27,8 @@ namespace EBot.Logs
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(msg);
+
+            File.AppendAllText("logs.txt","[NORMAL] >> " + msg + "\n\n");
         }
 
         public void Nice(string head,ConsoleColor col,string content)
@@ -38,6 +41,8 @@ namespace EBot.Logs
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("] >> ");
             Console.WriteLine(content);
+
+            File.AppendAllText("logs.txt","[NICE-" + head.ToUpper() + "] >> " + content + "\n\n");
         }
 
         public void Warning(string msg)
@@ -45,6 +50,8 @@ namespace EBot.Logs
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(msg);
+
+            File.AppendAllText("logs.txt","[WARN >> " + msg + "\n\n");
         }
 
         public void Danger(string msg)
@@ -52,6 +59,8 @@ namespace EBot.Logs
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(msg);
+
+            File.AppendAllText("logs.txt","[DANGER] >> " + msg + "\n\n");
         }
 
         public void Error(string msg)
@@ -61,6 +70,8 @@ namespace EBot.Logs
             Console.WriteLine("/!\\ ERROR /!\\");
             Console.WriteLine(msg);
             Console.ReadLine();
+
+            File.AppendAllText("logs.txt","[ERROR] >> " + msg + "\n\n");
         }
 
         public void Good(string msg)
@@ -68,6 +79,8 @@ namespace EBot.Logs
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(msg);
+
+            File.AppendAllText("logs.txt","[GOOD] >> " + msg + "\n\n");
         }
 
         public void Notify(string msg)

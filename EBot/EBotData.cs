@@ -23,8 +23,6 @@ namespace EBot
         [DataMember]
         public string[] ApologizeFilter;
         [DataMember]
-        public string IllegalGif;
-        [DataMember]
         public string[] AnimeEmotes;
         [DataMember]
         public string[][] AnimeDecorations;
@@ -38,7 +36,6 @@ namespace EBot
         public static string[] PICK_ANSWERS;
         public static string[] DRAMA_FILTER;
         public static string[] APOLOGIZE_FILTER;
-        public static string ILLEGAL_GIF;
         public static string[] ANIME_EMOTES;
         public static string[][] ANIME_DECORATIONS;
         public static string[] HENTAI_QUOTES;
@@ -56,7 +53,6 @@ namespace EBot
                 PICK_ANSWERS = data.PickAnswers;
                 DRAMA_FILTER = data.DramaFilter;
                 APOLOGIZE_FILTER = data.ApologizeFilter;
-                ILLEGAL_GIF = data.IllegalGif;
                 ANIME_EMOTES = data.AnimeEmotes;
                 ANIME_DECORATIONS = data.AnimeDecorations;
                 HENTAI_QUOTES = data.HentaiQuotes;

@@ -30,7 +30,7 @@ namespace EBot.Commands
             {
                 SocketGuildUser author = msg.Author as SocketGuildUser;
                 string nick = author.Nickname != null ? author.Nickname + " (" + author.ToString() + ")" : author.ToString();
-                string url = author.GetAvatarUrl(ImageFormat.Auto,32);
+                string url = author.GetAvatarUrl(ImageFormat.Auto,1024);
                 builder.WithAuthor(nick,url,url);
             }
             else
@@ -38,7 +38,7 @@ namespace EBot.Commands
                 builder.WithAuthor(msg.Author);
             }
         }
-        
+
         public async Task<RestUserMessage> Send(SocketMessage msg,string header="",string content="",Color color=new Color(),string picurl=null)
         {
             try
@@ -49,7 +49,7 @@ namespace EBot.Commands
                 builder.WithDescription(content);
                 builder.WithFooter(header);
                 this.BuilderWithAuthor(msg,builder);
-                
+
                 if(picurl != null)
                 {
                     builder.WithThumbnailUrl(picurl);
