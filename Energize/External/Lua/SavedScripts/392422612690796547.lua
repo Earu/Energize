@@ -1,0 +1,2 @@
+return ("©"):byte()
+-- GEN --
