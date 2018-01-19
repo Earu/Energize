@@ -1,0 +1,11 @@
+C:\Users\renor\Documents\Energize\bin\Debug\netcoreapp2.0\Energize.deps.json
+C:\Users\renor\Documents\Energize\bin\Debug\netcoreapp2.0\Energize.runtimeconfig.json
+C:\Users\renor\Documents\Energize\bin\Debug\netcoreapp2.0\Energize.runtimeconfig.dev.json
+C:\Users\renor\Documents\Energize\bin\Debug\netcoreapp2.0\Energize.dll
+C:\Users\renor\Documents\Energize\bin\Debug\netcoreapp2.0\Energize.pdb
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.csprojResolveAssemblyReference.cache
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.csproj.CoreCompileInputs.cache
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.AssemblyInfoInputs.cache
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.AssemblyInfo.cs
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.dll
+C:\Users\renor\Documents\Energize\obj\Debug\netcoreapp2.0\Energize.pdb
