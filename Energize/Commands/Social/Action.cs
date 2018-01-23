@@ -12,10 +12,15 @@ namespace Energize.Commands.Social
             string action = sentences[rand.Next(0, sentences.Length)];
             action = action.Replace("<origin>",from.Mention);
             action = action.Replace("<action>", act);
+            
+            int count = 0;
             string users = "";
             foreach(SocketUser user in to)
             {
                 users += user.Mention + " and ";
+                count++;
+                
+                if(count > 3) break;
             }
             users = users.Remove(users.Length - 4);
             action = action.Replace("<user>", users);

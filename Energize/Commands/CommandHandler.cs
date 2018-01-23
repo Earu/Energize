@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using Energize.MachineLearning;
 using Energize.MemoryStream;
+using System.Reflection;
 
 namespace Energize.Commands
 {
@@ -17,16 +18,13 @@ namespace Energize.Commands
     {
         public delegate Task CommandCallback(CommandContext ctx);
 
-        private DiscordSocketClient           _Client;
-        private BotLog                        _Log;
-        private string                        _Prefix;
-        private CommandSource                 _Source;
-        private CommandReplyEmbed             _EmbedReply;
-        private Dictionary<string, Command>   _Cmds;
-        private Dictionary<ulong, string>     _LastChannelPictureURL;
-        private Dictionary<ulong, SocketMessage> _LastMessage;
-        private DiscordRestClient             _RESTClient;
-        private Dictionary<ulong, bool>       _LogDeleted;
+        private DiscordSocketClient              _Client;
+        private BotLog                           _Log;
+        private string                           _Prefix;
+        private CommandReplyEmbed                _EmbedReply;
+        private Dictionary<string, Command>      _Cmds;
+        private Dictionary<ulong, CommandCache>  _Caches;
+        private DiscordRestClient                _RESTClient;
 
         public CommandHandler()
         {
@@ -35,41 +33,28 @@ namespace Energize.Commands
                 Handler = this
             };
             this._Cmds = new Dictionary<string, Command>();
-            this._LastChannelPictureURL = new Dictionary<ulong, string>();
-            this._LastMessage = new Dictionary<ulong, SocketMessage>();
-            this._LogDeleted = new Dictionary<ulong, bool>();
+            this._Caches = new Dictionary<ulong, CommandCache>();
         }
 
         public BotLog Log                           { get => this._Log;        set => this._Log        = value; }
-        public CommandSource Source                 { get => this._Source;     set => this._Source     = value; }
         public CommandReplyEmbed EmbedReply         { get => this._EmbedReply; set => this._EmbedReply = value; }
         public string Prefix                        { get => this._Prefix;     set => this._Prefix     = value; }
         public DiscordSocketClient Client           { get => this._Client;     set => this._Client     = value; }
         public Dictionary<string,Command> Commands  { get => this._Cmds; }
         public DiscordRestClient RESTClient         { get => this._RESTClient; set => this._RESTClient = value; }
-        public Dictionary<ulong,bool> LogDeleted    { get => this._LogDeleted; set => this._LogDeleted = value; }
 
-        public string GetLastPictureURL(ulong id)
+        public CommandCache GetChannelCache(ulong id)
         {
-            if(this._LastChannelPictureURL.TryGetValue(id,out string url))
+            if(this._Caches.TryGetValue(id,out CommandCache cache))
             {
-                return url;
+                return cache;
             }
             else
             {
-                return null;
-            }
-        }
+                CommandCache chancache = new CommandCache();
+                this._Caches[id] = chancache;
 
-        public SocketMessage GetLastMessage(ulong id)
-        {
-            if(this._LastMessage.TryGetValue(id,out SocketMessage msg))
-            {
-                return msg;
-            }
-            else
-            {
-                return null;
+                return chancache;
             }
         }
 
@@ -98,6 +83,33 @@ namespace Energize.Commands
                 Command cmd = new Command(name, callback, help, usage, modulename);
 
                 this._Cmds.Add(name,cmd);
+            }
+        }
+
+        public void LoadCommands()
+        {
+            IEnumerable<Type> Modules = Assembly.GetExecutingAssembly().GetTypes().Where(type => {
+                if(type.FullName.StartsWith("Energize.Commands.Modules") && Attribute.IsDefined(type,typeof(CommandModuleAttribute)))
+                {
+                    CommandModuleAttribute matt = type.GetCustomAttributes(typeof(CommandModuleAttribute),false)[0] as CommandModuleAttribute;
+                    this._Log.Nice("Module",ConsoleColor.Green,"Initialized " + matt.Name);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            });
+            
+            foreach(Type module in Modules)
+            {
+                object inst = Activator.CreateInstance(module);
+                IEnumerable<MethodInfo> methods = module.GetMethods(BindingFlags.NonPublic|BindingFlags.Instance)
+                    .Where(method => Attribute.IsDefined(method,typeof(CommandAttribute)));
+                foreach(MethodInfo method in methods)
+                {
+                    this.LoadCommand((CommandCallback)method.CreateDelegate(typeof(CommandCallback),inst));
+                }
             }
         }
 
@@ -205,8 +217,7 @@ namespace Energize.Commands
                 Message           = msg,
                 Command           = cmd,
                 Arguments         = args,
-                LastPictureURL    = this.GetLastPictureURL(msg.Channel.Id),
-                LastMessage       = this.GetLastMessage(msg.Channel.Id),
+                Cache             = this.GetChannelCache(msg.Channel.Id),
                 Log               = this._Log,
                 Commands          = this._Cmds,
                 IsPrivate         = msg.Channel is IDMChannel,
@@ -218,20 +229,33 @@ namespace Energize.Commands
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
+            IDisposable state = null;
             if (this._Cmds.TryGetValue(cmd, out Command retrieved))
             {
                 try
                 {
+                    state = msg.Channel.EnterTypingState();
                     await msg.Channel.TriggerTypingAsync();
                     CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
-                    await retrieved.Run(ctx);
+                    Task tcallback = retrieved.Run(ctx,state);
+                    if(!tcallback.IsCompleted)
+                    {
+                        Task tres = await Task.WhenAny(tcallback,Task.Delay(20000));
+                        if(tres != tcallback)
+                        {
+                            this._EmbedReply.Warning(msg, "Time out", "Your command `" + cmd + "` is timing out!");
+                            this._Log.Nice("Commands",ConsoleColor.Yellow,"Time out of command <" + cmd + ">");
+                            await tcallback;
+                        }
+                    }
+
                     this.LogCommand(ctx);
                 }
                 catch (Exception e)
                 {
                     this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [ " + string.Join(',', args) + " ]");
                     this._Log.Danger(e.ToString());
-
+                    state?.Dispose();
                     await this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
                 }
             }
@@ -257,7 +281,7 @@ namespace Energize.Commands
                 }
             }
 
-            this._LastMessage[msg.Channel.Id] = msg;
+            this.GetChannelCache(msg.Channel.Id).LastMessage = msg;
         }
 
         public string GetImageURLS(IMessage msg)
@@ -305,10 +329,19 @@ namespace Energize.Commands
             string url = this.GetImageURLS(msg);
             if (url != null)
             {
-                this._LastChannelPictureURL[msg.Channel.Id] = url;
+                this.GetChannelCache(msg.Channel.Id).LastPictureURL = url;
             }
 
             this.MainCall(msg).RunSynchronously();
+        }
+
+        public async Task OnMessageDeleted(Cacheable<IMessage,ulong> cache,ISocketMessageChannel chan)
+        {
+            if(cache.HasValue)
+            {
+                SocketMessage msg = cache.Value as SocketMessage;
+                this.GetChannelCache(msg.Channel.Id).LastDeletedMessage = msg;
+            }
         }
     }
 }

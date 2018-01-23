@@ -12,7 +12,7 @@ using System.Linq;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Information")]
-    class InfoCommands : CommandModule,ICommandModule
+    class InfoCommands
     {
         [Command(Name="server",Help="Gets information about the server",Usage="server <nothing>")]
         private async Task Server(CommandContext ctx)
@@ -205,7 +205,7 @@ namespace Energize.Commands.Modules
                         string result = "";
                         List<Command> cmds = Command.Modules[arg];
                         result += "**COMMANDS:**\n";
-                        result += "``";
+                        result += "```";
                         foreach (Command com in cmds)
                         {
                             if (com.Loaded)
@@ -214,7 +214,7 @@ namespace Energize.Commands.Modules
                             }
                         }
                         result = result.Remove(result.Length - 1);
-                        result += "``\n\n";
+                        result += "```\n\n";
 
                         await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", result);
                     }
@@ -239,7 +239,7 @@ namespace Energize.Commands.Modules
                     {
                         List<Command> cmds = module.Value;
                         result += "**" + module.Key.ToUpper() + ":**\n";
-                        result += "``";
+                        result += "```";
                         foreach (Command cmd in cmds)
                         {
                             if (cmd.Loaded)
@@ -248,7 +248,7 @@ namespace Energize.Commands.Modules
                             }
                         }
                         result = result.Remove(result.Length - 1);
-                        result += "``\n\n";
+                        result += "```\n\n";
                     }
                 }
 
@@ -310,6 +310,29 @@ namespace Energize.Commands.Modules
             }
         }
 
+        [Command(Name="snipe",Help="Snipes the last deleted message in the channel",Usage="snipe <nothing>")]
+        private async Task Snipe(CommandContext ctx)
+        {
+            if(ctx.Cache.LastDeletedMessage == null)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Snipe","Nothing to snipe");
+                return;
+            }
+            else
+            {
+                SocketMessage delmsg = ctx.Cache.LastDeletedMessage;
+                EmbedBuilder builder = new EmbedBuilder();
+                ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+                builder.WithColor(ctx.EmbedReply.ColorGood);
+                string iconurl = delmsg.Author.GetAvatarUrl(ImageFormat.Auto,32);
+                builder.WithFooter("Message sniped from " + delmsg.Author.ToString(),iconurl);
+                builder.WithTimestamp(delmsg.CreatedAt);
+                builder.WithDescription(delmsg.Content);
+
+                await ctx.EmbedReply.Send(ctx.Message,builder.Build());
+            }
+        }
+
         /*[Command(Name="playing",Help="Gets the amount of people playing a specific game",Usage="playing <game>")]
         private async Task Playing(CommandContext ctx)
         {
@@ -335,19 +358,5 @@ namespace Energize.Commands.Modules
                 await ctx.EmbedReply.Good(ctx.Message,"Playing","Seems like nobody is playing `" + ctx.Input + "`");
             }
         }*/
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.Server);
-            handler.LoadCommand(this.Info);
-            handler.LoadCommand(this.Invite);
-            handler.LoadCommand(this.User);
-            handler.LoadCommand(this.Help);
-            handler.LoadCommand(this.IsAdmin);
-            //handler.LoadCommand(this.Playing);
-            handler.LoadCommand(this.Roles);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
-        }
     }
 }

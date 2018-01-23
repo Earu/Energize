@@ -17,16 +17,13 @@ using Microsoft.CodeAnalysis;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Utils")]
-    class UtilsCommands : CommandModule,ICommandModule
+    class UtilsCommands
     {
         [Command(Name="ping",Help="Pings the bot",Usage="ping <nothing>")]
         private async Task Ping(CommandContext ctx)
         {
-            DateTimeOffset createtimestamp = ctx.Message.CreatedAt;
             DateTimeOffset timestamp = ctx.Message.Timestamp;
-
             int diff = timestamp.Millisecond / 10;
-
 
             await ctx.EmbedReply.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
                 ":clock1: Bot: " + ctx.Client.Latency + "ms");
@@ -244,6 +241,27 @@ namespace Energize.Commands.Modules
 
         }
 
+        [Command(Name="to",Help="Timing out test",Usage="to <seconds>")]
+        private async Task TimingOut(CommandContext ctx)
+        {
+            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
+            if (ctx.Message.Author.Id != app.Owner.Id)
+            {
+                await ctx.EmbedReply.Danger(ctx.Message, "Timing out test", "Owner only!");
+                return;
+            }
+
+            if(int.TryParse(ctx.Input,out int duration))
+            {
+                await Task.Delay(duration * 1000);
+                await ctx.EmbedReply.Good(ctx.Message,"Time Out","Timed out during `" + duration + "`s");
+            }
+            else
+            {
+                await ctx.EmbedReply.Danger(ctx.Message,"Time Out","Input wasnt a number");
+            }
+        }
+
         /*[Command(Name="w",Help="Asks wolfram something",Usage="w <input>")]
         private async Task Wolfram(CommandContext ctx)
         {
@@ -257,20 +275,5 @@ namespace Energize.Commands.Modules
             string result = await HTTP.Fetch(endpoint,ctx.Log);
 
         }*/
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.Say);
-            handler.LoadCommand(this.Ping);
-            handler.LoadCommand(this.Lua);
-            handler.LoadCommand(this.LuaReset);
-            handler.LoadCommand(this.LoadCommand);
-            handler.LoadCommand(this.UnloadCommand);
-            handler.LoadCommand(this.Feedback);
-            //handler.LoadCommand(this.Wolfram);
-            handler.LoadCommand(this.Eval);
-            
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
-        }
     }
 }

@@ -15,7 +15,7 @@ using HtmlAgilityPack;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Fun")]
-    class FunCommands : CommandModule,ICommandModule
+    class FunCommands
     {
         [Command(Name="ascii",Help="Makes a text/sentence ascii art",Usage="ascii <sentence>")]
         private async Task ASCII(CommandContext ctx)
@@ -339,24 +339,6 @@ namespace Energize.Commands.Modules
             }
 
             await ctx.EmbedReply.Good(ctx.Message,"Old Insult",node.InnerText);
-        }
-
-        public void Initialize(CommandHandler handler, BotLog log)
-        {
-            handler.LoadCommand(this.Describe);
-            handler.LoadCommand(this.Letters);
-            handler.LoadCommand(this.ASCII);
-            handler.LoadCommand(this.EightBalls);
-            handler.LoadCommand(this.Pick);
-            handler.LoadCommand(this.Markov);
-            handler.LoadCommand(this.Chuck);
-            handler.LoadCommand(this.Meme);
-            handler.LoadCommand(this.GenName);
-            handler.LoadCommand(this.XFiles);
-            handler.LoadCommand(this.Style);
-            handler.LoadCommand(this.OldInsult);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }
