@@ -11,7 +11,7 @@ using Discord.Net;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Administration")]
-    class AdministrationCommands : CommandModule,ICommandModule
+    class AdministrationCommands
     {
 
         private async Task Role(CommandContext ctx,string name,Action<SocketGuildUser> callback)
@@ -131,8 +131,6 @@ namespace Energize.Commands.Modules
                 }
             }
 
-            ctx.Handler.LogDeleted[ctx.Message.Channel.Id] = false;
-
             try
             {
                 ITextChannel chan = ctx.Message.Channel as ITextChannel;
@@ -143,9 +141,6 @@ namespace Energize.Commands.Modules
             {
                 await ctx.EmbedReply.Danger(ctx.Message, "Clear", "I don't have the rights to do that!");
             }
-
-            ctx.Handler.LogDeleted[ctx.Message.Channel.Id] = true;
-
         }
 
         [Command(Name="clear",Help="Clear the bot messages",Usage="clear <amounttoremove|nothing>")]
@@ -337,19 +332,6 @@ namespace Energize.Commands.Modules
             {
                 await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
             }
-        }
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.OP);
-            handler.LoadCommand(this.DeOP);
-            handler.LoadCommand(this.Clear);
-            handler.LoadCommand(this.ClearBots);
-            handler.LoadCommand(this.Shame);
-            handler.LoadCommand(this.ClearRaw);
-            handler.LoadCommand(this.DelInvites);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

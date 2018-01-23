@@ -10,7 +10,7 @@ using GoogleCSE;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Search")]
-    class SearchCommands : CommandModule,ICommandModule
+    class SearchCommands
     {
         [Command(Name="urban",Help="Searches for a definition on urban dictionnary",Usage="urban <search>,<pagenumber|nothing>")]
         private async Task SearchUrban(CommandContext ctx)
@@ -143,14 +143,6 @@ namespace Energize.Commands.Modules
             List<GoogleSearchResult> results = gs.Search(ctx.Arguments[0]);
 
             await ctx.EmbedReply.Good(ctx.Message, "Google", results[0].Url);
-        }
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.SearchUrban);
-            handler.LoadCommand(this.Youtube);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

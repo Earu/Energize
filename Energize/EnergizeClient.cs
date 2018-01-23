@@ -21,7 +21,6 @@ namespace Energize
         private DiscordSocketClient _Discord;
         private DiscordRestClient _DiscordREST;
         private CommandHandler _Handler;
-        private CommandSource _Source;
         private BotLog _Log;
         private LogEvent _Event;
         private SpyLog _Spy;
@@ -39,7 +38,6 @@ namespace Energize
             this._Event = new LogEvent();
             this._Spy = new SpyLog();
             this._Handler = new CommandHandler();
-            this._Source = new CommandSource(this._Handler,this._Log);
             this._Discord = new DiscordSocketClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
@@ -55,9 +53,8 @@ namespace Energize
             this._Handler.RESTClient = this._DiscordREST;
             this._Handler.Log = this._Log;
             this._Handler.Prefix = this._Prefix;
-            this._Handler.Source = this._Source;
             this._Handler.EmbedReply.Log = this._Log;
-            this._Source.Initialize();
+            this._Handler.LoadCommands();
 
             this._Spy.Client = this._Discord;
             this._Spy.RESTClient = this._DiscordREST;
@@ -76,7 +73,6 @@ namespace Energize
         public DiscordSocketClient Discord { get => this._Discord; set => this._Discord = value; }
         public DiscordRestClient DiscordREST { get => this._DiscordREST; set => this._DiscordREST = value; }
         public CommandHandler Handler { get => this._Handler; set => this._Handler = value; }
-        public CommandSource Source { get => this._Source; set => this._Source = value; }
         public BotLog Log { get => this._Log; set => this._Log = value; }
         public LogEvent Event { get => this._Event; set => this._Event = value; }
         public SpyLog Spy { get => this._Spy; set => this._Spy = value; }
@@ -103,14 +99,44 @@ namespace Energize
 
                 StreamingGame game = new StreamingGame(this._Prefix + "help | " + this._Prefix + "info",EnergizeConfig.TWITCH_URL);
                 await this._Discord.SetActivityAsync(game);
-                await this.Discord.CurrentUser.ModifyAsync(prop =>
+                /*await this.Discord.CurrentUser.ModifyAsync(prop =>
                 {
                     prop.Username = "Energize⚡";
-                });
+                });*/
+                
+                this._Discord.Disconnected += async ex =>
+                {
+                    this._Log.Nice("Outage",ConsoleColor.Red,ex.ToString());
+                    /*this._Log.Nice("Outage", ConsoleColor.Red, "Went offline because of a discord outage");
+                    bool done = false;
+                    Timer timerreconnect = new Timer(async callback =>
+                    {
+                        if(!done)
+                        {
+                            try
+                            {
+                                await this._Discord.LoginAsync(TokenType.Bot, _Token, true);
+                                await this._Discord.StartAsync();
+                                await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
+                                await this._Discord.SetActivityAsync(game);
+                                done = true;
+
+                                this._Log.Nice("Outage", ConsoleColor.Green, "Reconnected successfully");
+                            }
+                            catch
+                            {
+                                this._Log.Nice("Outage", ConsoleColor.Yellow, "Failed to reconnect");
+                            }
+                        }
+                    });
+
+                    timerreconnect.Change(0, 60000); //1min for reconnect*/
+                };
 
                 this._Discord.MessageDeleted += async (msg,chan) =>
                 {
                     LuaEnv.OnMessageDeleted(msg, chan);
+                    this._Handler.OnMessageDeleted(msg,chan);
                 };
 
                 this._Discord.MessageReceived += async msg =>

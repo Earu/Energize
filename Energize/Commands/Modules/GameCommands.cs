@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Game")]
-    class GameCommands : CommandModule,ICommandModule
+    class GameCommands
     {
         [Command(Name = "walerts", Help = "Gets the warframe ongoing alerts", Usage = "walerts <nothing>")]
         private async Task Alerts(CommandContext ctx)
@@ -63,7 +63,22 @@ namespace Energize.Commands.Modules
         private async Task Steam(CommandContext ctx)
         {
             string id64 = "";
-            bool success = ulong.TryParse(ctx.Input,out ulong steamid64);
+            bool success = ulong.TryParse(ctx.Input,out ulong steamid64) && ctx.Input.Length == 17;
+            if(success)
+            {
+                id64 = steamid64.ToString();
+            }
+            
+            if (!success && ctx.Input.StartsWith("STEAM_"))
+            {
+                string[] parts = ctx.Input.Split(":");
+                if(parts.Length == 3 && long.TryParse(parts[1],out long y) && long.TryParse(parts[2],out long z))
+                {
+                    long identifier = 0x0110000100000000;
+                    id64 = (z * 2 + identifier + y).ToString();
+                    success = true;
+                }
+            }
 
             if(!success)
             {
@@ -81,10 +96,6 @@ namespace Energize.Commands.Modules
                     return;
                 }
             }
-            else
-            {
-                id64 = steamid64.ToString();
-            }
 
             string endpoint = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + EnergizeConfig.STEAM_API_KEY + "&steamids=" + id64;
             string json = await HTTP.Fetch(endpoint,ctx.Log);
@@ -97,6 +108,12 @@ namespace Energize.Commands.Modules
             }
             else
             {
+                if(summary.response.players.Length < 1)
+                {
+                    await ctx.EmbedReply.Danger(ctx.Message,"Steam","Your input was correct but it doesnt belong to anyone on steam");
+                    return;
+                }
+
                 SteamUser user = summary.response.players[0];
                 DateTime created = new DateTime(1970,1,1,0,0,0,0,DateTimeKind.Utc);
                 created = created.AddSeconds(user.timecreated).ToLocalTime();
@@ -108,7 +125,8 @@ namespace Energize.Commands.Modules
                 {
                     visibility = "Public";
                     HtmlDocument doc = new HtmlDocument();
-                    doc.LoadHtml(await HTTP.Fetch(user.profileurl,ctx.Log));
+                    string html = await HTTP.Fetch(user.profileurl,ctx.Log);
+                    doc.LoadHtml(html);
                     HtmlNodeCollection collection = doc.DocumentNode.SelectNodes("//div[contains(@class,'profile_summary')]");
                     HtmlNode node = collection[0];
                     
@@ -143,15 +161,6 @@ namespace Energize.Commands.Modules
                     + "**URL:** " + user.profileurl,
                 ctx.EmbedReply.ColorGood,user.avatarfull);
             }
-        }
-
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.Alerts);
-            handler.LoadCommand(this.Steam);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

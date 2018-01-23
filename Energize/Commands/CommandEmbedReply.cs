@@ -30,8 +30,8 @@ namespace Energize.Commands
             {
                 SocketGuildUser author = msg.Author as SocketGuildUser;
                 string nick = author.Nickname != null ? author.Nickname + " (" + author.ToString() + ")" : author.ToString();
-                string url = author.GetAvatarUrl(ImageFormat.Auto,1024);
-                builder.WithAuthor(nick,url,url);
+                string url = author.GetAvatarUrl(ImageFormat.Auto,32);
+                builder.WithAuthor(nick,url);
             }
             else
             {
