@@ -62,9 +62,10 @@ namespace Energize.Commands
             _ModulesLoaded[module] = state;
         }
 
-        public async Task Run(CommandContext ctx)
+        public async Task Run(CommandContext ctx,IDisposable state)
         {
             await this._Callback(ctx);
+            state.Dispose();
         }
 
         public string GetHelp()
@@ -72,7 +73,7 @@ namespace Energize.Commands
             string help =  "**USAGE:**\n";
             help += "``" + this._Usage + "``\n";
             help += "**HELP:**\n";
-            help += "``" + this._Help + "``";
+            help += "```" + this._Help + "```";
 
             return help;
         }

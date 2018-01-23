@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Social")]
-    class SocialCommands : CommandModule,ICommandModule
+    class SocialCommands
     {
         private delegate string ActionCallback(SocketUser from, IReadOnlyList<SocketUser> to);
 
@@ -143,25 +143,6 @@ namespace Energize.Commands.Modules
             {
                 await ctx.EmbedReply.Danger(ctx.Message, "Love", "You need to mention two persons!");
             }
-        }
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.Hug);
-            handler.LoadCommand(this.Boop);
-            handler.LoadCommand(this.Slap);
-            handler.LoadCommand(this.Love);
-            handler.LoadCommand(this.Kiss);
-            handler.LoadCommand(this.Snuggle);
-            handler.LoadCommand(this.Shoot);
-            handler.LoadCommand(this.Pet);
-            handler.LoadCommand(this.Spank);
-            handler.LoadCommand(this.Yiff);
-            handler.LoadCommand(this.Nom);
-            handler.LoadCommand(this.Lick);
-            handler.LoadCommand(this.Bite);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

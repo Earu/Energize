@@ -9,7 +9,7 @@ using System.Xml;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="NSFW")]
-    class NSFWCommands : CommandModule,ICommandModule
+    class NSFWCommands
     {
         private Embed CreateNSFWEmbed(CommandContext ctx,string name,string pic,string url)
         {
@@ -122,16 +122,6 @@ namespace Energize.Commands.Modules
         private async Task GelBooru(CommandContext ctx)
         {
             await this.DAPICommandBase(ctx,"GelBooru","gelbooru.com");
-        }
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.SearchE621);
-            handler.LoadCommand(this.FurryBooru);
-            handler.LoadCommand(this.R34);
-            handler.LoadCommand(this.GelBooru);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

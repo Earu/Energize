@@ -14,7 +14,7 @@ using System.Linq;
 namespace Energize.Commands.Modules
 {
     [CommandModule(Name="Image")]
-    class ImageCommands : CommandModule, ICommandModule
+    class ImageCommands
     {
         private delegate string SaveCallback(Image<Rgba32> img, string path);
 
@@ -149,8 +149,40 @@ namespace Energize.Commands.Modules
             string url = null;
             string path = null;
             int value = 0;
+            bool set = false;
 
-            if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
+            if(ctx.Arguments[0] == "$lastpic")
+            {
+                url = ctx.Cache.LastPictureURL;
+                if(ctx.Arguments.Count > 1)
+                {
+                    if(int.TryParse(ctx.Arguments[1],out int arg))
+                    {
+                        value = arg;
+                    }
+                }
+                set = true;
+            }
+            else if (!set && Discord.Emote.TryParse(ctx.Arguments[0],out Emote emote))
+            {
+                url = emote.Url;
+                if(ctx.Arguments.Count > 1)
+                {
+                    if(int.TryParse(ctx.Arguments[1],out int arg))
+                    {
+                        value = arg;
+                    }
+                }
+
+                set = true;
+            }
+            else if (!set && int.TryParse(ctx.Arguments[0],out int argum))
+            {
+                value = argum;
+                url = ctx.Cache.LastPictureURL;
+                set = true;
+            } 
+            else if(!set && ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
             {
                 url = user.GetAvatarUrl(ImageFormat.Auto, 512);
                 if(ctx.Arguments.Count > 1)
@@ -161,25 +193,9 @@ namespace Energize.Commands.Modules
                     }
                 }
             }
-            else if (Discord.Emote.TryParse(ctx.Arguments[0],out Emote emote))
-            {
-                url = emote.Url;
-                if(ctx.Arguments.Count > 1)
-                {
-                    if(int.TryParse(ctx.Arguments[1],out int arg))
-                    {
-                        value = arg;
-                    }
-                }
-            }
-            else if (int.TryParse(ctx.Arguments[0],out int arg))
-            {
-                value = arg;
-                url = ctx.LastPictureURL;
-            }
             else
             {
-                url = ctx.HasArguments ? ctx.Arguments[0] : ctx.LastPictureURL;
+                url = ctx.HasArguments ? ctx.Arguments[0] : ctx.Cache.LastPictureURL;
                 if (ctx.Arguments.Count > 1)
                 {
                     if (int.TryParse(ctx.Arguments[1], out int argu))
@@ -341,26 +357,6 @@ namespace Energize.Commands.Modules
             await ctx.EmbedReply.SendFile(ctx.Message, path);
 
             ImageProcess.DeleteImage(path);
-        }
-
-        public void Initialize(CommandHandler handler,BotLog log)
-        {
-            handler.LoadCommand(this.Avatar);
-            handler.LoadCommand(this.Emote);
-            handler.LoadCommand(this.BlackWhite);
-            handler.LoadCommand(this.Jpg);
-            handler.LoadCommand(this.Invert);
-            handler.LoadCommand(this.Paint);
-            handler.LoadCommand(this.Intensify);
-            handler.LoadCommand(this.Blur);
-            handler.LoadCommand(this.Greenify);
-            handler.LoadCommand(this.DeepFry);
-            handler.LoadCommand(this.Pixelate);
-            handler.LoadCommand(this.Inspiro);
-            handler.LoadCommand(this.Illegal);
-            handler.LoadCommand(this.Icon);
-
-            log.Nice("Module", ConsoleColor.Green, "Initialized " + this.GetModuleName());
         }
     }
 }

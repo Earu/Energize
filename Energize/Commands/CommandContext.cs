@@ -19,7 +19,7 @@ namespace Energize.Commands
                 return ctx.Message.Author;
             },
             ["last"] = (ctx,args) => {
-                return ctx.LastMessage.Author;
+                return ctx.Cache.LastMessage.Author;
             },
             ["random"] = (ctx,args) => {
                 Random rand = new Random();
@@ -82,7 +82,7 @@ namespace Energize.Commands
                 }
                 else
                 {
-                    List<SocketGuildUser> results = ctx.GuildCachedUsers.Where(x => x.Username.ToLower() == name).ToList();
+                    List<SocketGuildUser> results = ctx.GuildCachedUsers.Where(x => x.Username != null && x.Username.ToLower() == name).ToList();
                     if(results.Count == 0)
                     {
                         return null;
@@ -142,13 +142,12 @@ namespace Energize.Commands
         private List<string> _Args;
         private string _Prefix;
         private CommandReplyEmbed _EmbedReply;
-        private string _LastPictureURL;
-        private SocketMessage _LastMessage;
         private BotLog _Log;
         private Dictionary<string, Command> _Cmds;
         private List<SocketGuildUser> _GuildCachedUsers;
         private bool _IsPrivate;
         private CommandHandler _Handler;
+        private CommandCache _Cache;
 
         public DiscordSocketClient Client             { get => this._Client; set => this._Client = value; }
         public DiscordRestClient RESTClient           { get => this._RESTClient; set => this._RESTClient = value; }
@@ -157,13 +156,12 @@ namespace Energize.Commands
         public List<string> Arguments                 { get => this._Args; set => this._Args = value; }
         public string Prefix                          { get => this._Prefix; set => this._Prefix = value; }
         public CommandReplyEmbed EmbedReply           { get => this._EmbedReply; set => this._EmbedReply = value; }
-        public string LastPictureURL                  { get => this._LastPictureURL; set => this._LastPictureURL = value; }
-        public SocketMessage LastMessage              { get => this._LastMessage; set => this._LastMessage = value; }
         public BotLog Log                             { get => this._Log; set => this._Log = value; }
         public Dictionary<string,Command> Commands    { get => this._Cmds; set => this._Cmds = value; }
         public bool IsPrivate                         { get => this._IsPrivate; set => this._IsPrivate = value; }
         public List<SocketGuildUser> GuildCachedUsers { get => this._GuildCachedUsers; set => this._GuildCachedUsers = value; }
         public CommandHandler Handler                 { get => this._Handler; set => this._Handler = value; }
+        public CommandCache Cache                     { get => this._Cache; set => this._Cache = value; }
         public bool HasArguments                      { get => (!string.IsNullOrWhiteSpace(this._Args[0])) && this._Args.Count > 0; }
         public string Input                           { get => string.Join(',', this._Args).Trim(); }
         public string AuthorMention                   { get => this._Message.Author.Mention; }
