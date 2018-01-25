@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Image")]
+    [CommandModule("Image")]
     class ImageCommands
     {
         private delegate string SaveCallback(Image<Rgba32> img, string path);

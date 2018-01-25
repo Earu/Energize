@@ -13,7 +13,7 @@ using Energize.Services.TextProcessing;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Fun")]
+    [CommandModule("Fun")]
     class FunCommands
     {
         [Command(Name="ascii",Help="Makes a text/sentence ascii art",Usage="ascii <sentence>")]

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Search")]
+    [CommandModule("Search")]
     class SearchCommands
     {
         [Command(Name="urban",Help="Searches for a definition on urban dictionnary",Usage="urban <search>,<pagenumber|nothing>")]

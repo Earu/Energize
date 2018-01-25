@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Information")]
+    [CommandModule("Information")]
     class InfoCommands
     {
         [Command(Name="server",Help="Gets information about the server",Usage="server <nothing>")]
