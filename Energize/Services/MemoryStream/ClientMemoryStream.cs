@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.MemoryStream
 {
-    [Service(Name = "MemoryStream")]
+    [Service("MemoryStream")]
     public class ClientMemoryStream
     {
         public delegate Task RequestCallback(StreamWriter writer, StreamReader reader);

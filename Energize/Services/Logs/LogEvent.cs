@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Logs
 {
-    [Service(Name = "EventLogs")]
+    [Service("EventLogs")]
     public class LogEvent
     {
         private DiscordRestClient _RESTClient;
@@ -32,27 +32,32 @@ namespace Energize.Services.Logs
             return guild.Roles.Any(x => x.Name == "EnergizeLogs");
         }
 
-        public async Task Connected()
+        [Event("Connected")]
+        public async Task OnConnected()
         {
             this._Log.Notify("Ready");
         }
 
-        public async Task GuildAvailable(SocketGuild guild)
+        [Event("GuildAvailable")]
+        public async Task OnGuildAvailable(SocketGuild guild)
         {
             this._Log.Nice("Guild", ConsoleColor.Magenta, "Online on " + guild.Name + " || ID => [ " + guild.Id + " ]");
         }
 
-        public async Task GuildUnavailable(SocketGuild guild)
+        [Event("GuildUnavailable")]
+        public async Task OnGuildUnavailable(SocketGuild guild)
         {
             this._Log.Nice("Guild", ConsoleColor.Red, "Offline from " + guild.Name + " || ID => [ " + guild.Id + " ]");
         }
 
-        public async Task JoinedGuild(SocketGuild guild)
+        [Event("JoinedGuild")]
+        public async Task OnJoinedGuild(SocketGuild guild)
         {
             this._Log.Nice("Guild", ConsoleColor.Magenta, "Joined " + guild.Name + " || ID => [ " + guild.Id + " ]");
         }
 
-        public async Task LeftGuild(SocketGuild guild)
+        [Event("LeftGuild")]
+        public async Task OnLeftGuild(SocketGuild guild)
         {
             this._Log.Nice("Guild", ConsoleColor.Red, "Left " + guild.Name + " || ID => [ " + guild.Id + " ]");
         }
