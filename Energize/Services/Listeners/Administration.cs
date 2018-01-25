@@ -10,13 +10,14 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
-    [Service(Name = "Administration")]
+    [Service("Administration")]
     class Administration
     {
         //Follow service structure
         public Administration(EnergizeClient eclient) { }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             if (msg.Channel is IDMChannel) return;
             SocketGuildChannel chan = msg.Channel as SocketGuildChannel;

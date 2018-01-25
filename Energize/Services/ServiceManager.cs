@@ -24,8 +24,11 @@ namespace Energize.Services
 
         public static void LoadServices(EnergizeClient eclient)
         {
+            Type satype = typeof(ServiceAttribute);
+            Type eatype = typeof(EventAttribute);
+            
             IEnumerable<Type> services = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => type.FullName.StartsWith(_Namespace) && Attribute.IsDefined(type,typeof(ServiceAttribute)));
+                .Where(type => type.FullName.StartsWith(_Namespace) && Attribute.IsDefined(type,satype));
 
             foreach(Type service in services)
             {
@@ -39,23 +42,31 @@ namespace Energize.Services
                     serv.Initialized = true;
                 }
 
-                ServiceAttribute att = service.GetCustomAttributes(typeof(ServiceAttribute), false).First() as ServiceAttribute;
+                ServiceAttribute att = service.GetCustomAttributes(satype,false).First() as ServiceAttribute;
                 serv.Name = att.Name;
                 _Services[att.Name] = serv;
                 
+                IEnumerable<MethodInfo> servmethods = service.GetMethods()
+                    .Where(x => !_MethodBlacklist.Contains(x.Name));
+                
                 foreach(MethodInfo minfo in _BaseServiceMethods)
                 {
-                    IEnumerable<MethodInfo> methods = service.GetMethods().Where(x => x.Name == minfo.Name && !_MethodBlacklist.Contains(x.Name));
+                    IEnumerable<MethodInfo> methods = servmethods
+                        .Where(x => Attribute.IsDefined(x,eatype) && 
+                        (x.GetCustomAttributes(eatype,false).First() as EventAttribute).Name == minfo.Name);
+
                     if(methods.Count() > 0)
                     {
                         try
                         {
                             EventInfo _event = _DiscordSocketClientType.GetEvent(minfo.Name);
-                            _event.AddEventHandler(eclient.Discord, methods.First().CreateDelegate(_event.EventHandlerType, inst));
+                            _event.AddEventHandler(eclient.Discord, methods.First()
+                                .CreateDelegate(_event.EventHandlerType, inst));
                         }
                         catch
                         {
-                            eclient.Log.Nice("Init", ConsoleColor.Red, att.Name + " tried to sub to an event with wrong signature <" + methods.First().Name + ">");
+                            eclient.Log.Nice("Init", ConsoleColor.Red, att.Name 
+                            + " tried to sub to an event with wrong signature <" + methods.First().Name + ">");
                         }
                     }
                 }

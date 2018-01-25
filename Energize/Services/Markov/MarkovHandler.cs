@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Markov
 {
-    [Service(Name = "Markov")]
+    [Service("Markov")]
     public class MarkovHandler
     {
         private string _Prefix;
@@ -68,7 +68,8 @@ namespace Energize.Services.Markov
             }
         }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             ITextChannel chan = msg.Channel as ITextChannel;
             if (!msg.Author.IsBot && !chan.IsNsfw && !msg.Content.StartsWith(this._Prefix))
