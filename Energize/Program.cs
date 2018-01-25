@@ -15,7 +15,7 @@ namespace Energize
             await EnergizeConfig.Load();
             await EnergizeData.Load();
 
-            EnergizeClient client = new EnergizeClient(EnergizeConfig.TOKEN_MAIN, "x");
+            EnergizeClient client = new EnergizeClient(EnergizeConfig.TOKEN_DEV, "]");
 
             await client.InitializeAsync();
             await Task.Delay(-1);
