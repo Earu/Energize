@@ -9,7 +9,7 @@ using Energize.Services.MemoryStream;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Administration")]
+    [CommandModule("Administration")]
     class AdministrationCommands
     {
 

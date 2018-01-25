@@ -12,7 +12,7 @@ using Energize.Services.LuaService;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Utils")]
+    [CommandModule("Utils")]
     class UtilsCommands
     {
         [Command(Name="ping",Help="Pings the bot",Usage="ping <nothing>")]
