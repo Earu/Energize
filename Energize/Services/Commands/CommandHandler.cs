@@ -11,13 +11,13 @@ using System.Reflection;
 
 namespace Energize.Services.Commands
 {
-    [Service(Name = "Commands")]
+    [Service("Commands")]
     public class CommandHandler
     {
         public delegate Task CommandCallback(CommandContext ctx);
 
         private DiscordSocketClient              _Client;
-        private EnergizeLog                           _Log;
+        private EnergizeLog                      _Log;
         private string                           _Prefix;
         private CommandReplyEmbed                _EmbedReply;
         private Dictionary<string, Command>      _Cmds;
@@ -335,7 +335,8 @@ namespace Energize.Services.Commands
             }
         }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             string url = this.GetImageURLS(msg);
             if (url != null)
@@ -346,6 +347,7 @@ namespace Energize.Services.Commands
             this.MainCall(msg).RunSynchronously();
         }
 
+        [Event("MessageDeleted")]
         public async Task MessageDeleted(Cacheable<IMessage,ulong> cache,ISocketMessageChannel chan)
         {
             if(cache.HasValue)

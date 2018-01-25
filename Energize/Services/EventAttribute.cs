@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Energize.Services
 {
-    class ServiceAttribute : Attribute
+    class EventAttribute : Attribute
     {
         private string _Name;
 
-        public ServiceAttribute(string name)
+        public EventAttribute(string name)
         {
             this._Name = name;
         }

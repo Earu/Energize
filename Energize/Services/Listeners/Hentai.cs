@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
-    [Service(Name = "Hentai")]
+    [Service("Hentai")]
     public class Hentai
     {
         //Follow service structure
         public Hentai(EnergizeClient eclient) { }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             if (msg.Channel is IDMChannel || msg.Author.IsBot) return;
             if (msg.Content.ToLower().Contains("hentai"))

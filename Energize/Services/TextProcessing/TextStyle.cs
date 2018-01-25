@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.TextProcessing
 {
-    [Service(Name="TextStyle")]
+    [Service("TextStyle")]
     public class TextStyle
     {
         private delegate string StyleCallback(string input);
@@ -225,7 +225,8 @@ namespace Energize.Services.TextProcessing
             return styles;
         }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             if (msg.Channel is IDMChannel || msg.Author.IsBot) return;
             SocketGuildUser user = msg.Author as SocketGuildUser;

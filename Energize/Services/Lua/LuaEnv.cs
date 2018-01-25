@@ -11,7 +11,7 @@ using Energize.Services.Commands;
 
 namespace Energize.Services.LuaService
 {
-    [Service(Name = "Lua")]
+    [Service("Lua")]
     public class LuaEnv
     {
         private DiscordSocketClient _Client;
@@ -58,7 +58,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task UserJoined(SocketGuildUser user)
+        [Event("UserJoined")]
+        public async Task OnUserJoined(SocketGuildUser user)
         {
             IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
             foreach(SocketGuildChannel chan in channels)
@@ -75,7 +76,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task UserLeft(SocketGuildUser user)
+        [Event("UserLeft")]
+        public async Task OnUserLeft(SocketGuildUser user)
         {
             IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
             foreach (SocketGuildChannel chan in channels)
@@ -93,7 +95,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task MessageReceived(SocketMessage msg)
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
         {
             if (_States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
             {
@@ -108,7 +111,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task MessageDeleted(Cacheable<IMessage,ulong> msg, ISocketMessageChannel c)
+        [Event("MessageDeleted")]
+        public async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg, ISocketMessageChannel c)
         {
             if (msg.HasValue && _States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
             {
@@ -123,7 +127,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task MessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel c)
+        [Event("MessageUpdated")]
+        public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel c)
         {
             if (_States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
             {
@@ -138,7 +143,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task ReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel c, SocketReaction react)
+        [Event("ReactionAdded")]
+        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel c, SocketReaction react)
         {
             if(_States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
@@ -151,7 +157,8 @@ namespace Energize.Services.LuaService
             }
         }
 
-        public async Task ReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel c, SocketReaction react)
+        [Event("ReactionRemoved")]
+        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel c, SocketReaction react)
         {
             if (_States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
