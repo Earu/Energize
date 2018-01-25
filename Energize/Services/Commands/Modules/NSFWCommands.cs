@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="NSFW")]
+    [CommandModule("NSFW")]
     class NSFWCommands
     {
         private Embed CreateNSFWEmbed(CommandContext ctx,string name,string pic,string url)

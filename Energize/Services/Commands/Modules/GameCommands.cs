@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Game")]
+    [CommandModule("Game")]
     class GameCommands
     {
         [Command(Name = "walerts", Help = "Gets the warframe ongoing alerts", Usage = "walerts <nothing>")]

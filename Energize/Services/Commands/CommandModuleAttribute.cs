@@ -6,6 +6,11 @@ namespace Energize.Services.Commands
     {
         private string _Name;
 
-        public string Name { get => this._Name; set => this._Name = value; }
+        public CommandModuleAttribute(string name)
+        {
+            this._Name = name;
+        }
+
+        public string Name { get => this._Name; }
     }
 }

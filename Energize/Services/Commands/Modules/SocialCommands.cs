@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Commands.Modules
 {
-    [CommandModule(Name="Social")]
+    [CommandModule("Social")]
     class SocialCommands
     {
         private delegate string ActionCallback(SocketUser from, IReadOnlyList<SocketUser> to);
