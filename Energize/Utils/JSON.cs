@@ -1,14 +1,11 @@
-﻿using Energize.Logs;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Energize.Utils
 {
     public class JSON
     {
-        public static T Deserialize<T>(string json,BotLog log)
+        public static T Deserialize<T>(string json,EnergizeLog log)
         {
             try
             {
@@ -23,7 +20,7 @@ namespace Energize.Utils
             }
         }
 
-        public static string Serialize(Object obj,BotLog log)
+        public static string Serialize(Object obj,EnergizeLog log)
         {
             try
             {

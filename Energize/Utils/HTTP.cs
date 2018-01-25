@@ -1,5 +1,4 @@
-﻿using Energize.Logs;
-using System;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -11,7 +10,7 @@ namespace Energize.Utils
     {
         private static string UserAgent = "Energize Discord(Earu's Bot)";
 
-        public static async Task<string> Fetch(string url,BotLog log,string useragent=null,Action<HttpWebRequest> callback=null)
+        public static async Task<string> Fetch(string url,EnergizeLog log,string useragent=null,Action<HttpWebRequest> callback=null)
         {
             try
             {
