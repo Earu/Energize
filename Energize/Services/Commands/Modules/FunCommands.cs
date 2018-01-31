@@ -21,24 +21,24 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "You didn't provide any word or sentence!");
+                await ctx.SendBadUsage();
             }
             else
             {
                 string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Input,ctx.Log);
                 if (body.Length > 2000)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
+                    await ctx.MessageSender.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
                 }
                 else
                 {
-                    await ctx.EmbedReply.SendRaw(ctx.Message,"```\n" + body + "\n```");
+                    await ctx.MessageSender.SendRaw(ctx.Message,"```\n" + body + "\n```");
                 }
 
             }
         }
 
-        [Command(Name="describe",Help="Does a description of a user",Usage="describe <@user>")]
+        [Command(Name="describe",Help="Does a description of a user",Usage="describe <@user|nothing>")]
         private async Task Describe(CommandContext ctx)
         {
             string[] adjs = EnergizeData.ADJECTIVES;
@@ -73,7 +73,7 @@ namespace Energize.Services.Commands.Modules
             result += nouns[random.Next(0, nouns.Length)].ToLower();
 
             bool isvowel = EnergizeData.VOWELS.Any(x => result.StartsWith(x));
-            await ctx.EmbedReply.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
+            await ctx.MessageSender.Good(ctx.Message, "Description", toping.Mention + " is " + (isvowel ? "an" : "a") + " " + result);
         }
 
         [Command(Name="letters",Help="Transforms a sentence into letter emotes",Usage="letters <sentence>")]
@@ -97,18 +97,22 @@ namespace Energize.Services.Commands.Modules
                     }
                 }
 
-                if(result.Length > 2000)
+                if(result.Length == 0)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Letters","Message was too long to be sent");
+                    await ctx.MessageSender.Danger(ctx.Message, "Letters", "Your message contained only non-letters characters");
+                }
+                else if(result.Length > 2000)
+                {
+                    await ctx.MessageSender.Danger(ctx.Message,"Letters","Message was too long to be sent");
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Letters", result);
+                    await ctx.MessageSender.Good(ctx.Message, "Letters", result);
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Letters", "You didn't provide any sentence");
+                await ctx.SendBadUsage();
             }
         }
 
@@ -117,7 +121,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "8ball", "You didn't provide any word or sentence!");
+                await ctx.SendBadUsage();
             }
             else
             {
@@ -125,7 +129,7 @@ namespace Energize.Services.Commands.Modules
                 string[] answers = EnergizeData.EIGHT_BALL_ANSWERS;
                 string answer = answers[rand.Next(0, answers.Length - 1)];
 
-                await ctx.EmbedReply.Good(ctx.Message,"8ball",answer);
+                await ctx.MessageSender.Good(ctx.Message,"8ball",answer);
             }
         }
 
@@ -134,7 +138,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Pick", "You didn't provide any/enough word(s)!");
+                await ctx.SendBadUsage();
             }
             else
             {
@@ -143,7 +147,7 @@ namespace Energize.Services.Commands.Modules
                 string choice = ctx.Arguments[rand.Next(0, ctx.Arguments.Count - 1)].Trim();
                 string answer = answers[rand.Next(0, answers.Length - 1)].Replace("<answer>", choice);
 
-                await ctx.EmbedReply.Good(ctx.Message,"Pick", answer);
+                await ctx.MessageSender.Good(ctx.Message,"Pick", answer);
             }
         }
 
@@ -151,21 +155,14 @@ namespace Energize.Services.Commands.Modules
         private async Task Markov(CommandContext ctx)
         {
             string sentence = ctx.Input;
-            try
+            string generated = ServiceManager.GetService<MarkovHandler>("Markov").Generate(sentence);
+            if(string.IsNullOrWhiteSpace(generated))
             {
-                string generated = (ServiceManager.GetService("Markov").Instance as MarkovHandler).Generate(sentence);
-                if(string.IsNullOrWhiteSpace(generated))
-                {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Markov","Generated nothing??!");
-                    return;
-                }
-                generated = Regex.Replace(generated,"\\s\\s"," ");
-                await ctx.EmbedReply.Good(ctx.Message,"Markov", generated);
+                await ctx.MessageSender.Danger(ctx.Message,"Markov","Generated nothing??!");
+                return;
             }
-            catch(Exception e)
-            {
-                await ctx.EmbedReply.Danger(ctx.Message, "Markov", "Something went wrong:\n" + e.ToString());
-            }
+            generated = Regex.Replace(generated,"\\s\\s"," ");
+            await ctx.MessageSender.Good(ctx.Message,"Markov", generated);
         }
 
         [Command(Name="chuck",Help="Gets a random chuck norris fact",Usage="chuck <nothing>")]
@@ -175,7 +172,7 @@ namespace Energize.Services.Commands.Modules
             string json = await HTTP.Fetch(endpoint, ctx.Log);
             FactObject fact = JSON.Deserialize<FactObject>(json, ctx.Log);
 
-            await ctx.EmbedReply.Good(ctx.Message, "Chuck Norris Fact", fact.value);
+            await ctx.MessageSender.Good(ctx.Message, "Chuck Norris Fact", fact.value);
         }
 
         [Command(Name="meme",Help="Gets a random meme picture",Usage="meme <nothing>")]
@@ -190,9 +187,9 @@ namespace Energize.Services.Commands.Modules
             builder.WithAuthor(ctx.Message.Author);
             builder.WithImageUrl(url);
             builder.WithFooter("Meme");
-            builder.WithColor(ctx.EmbedReply.ColorGood);
+            builder.WithColor(ctx.MessageSender.ColorGood);
 
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            await ctx.MessageSender.Send(ctx.Message, builder.Build());
         }
 
         [Command(Name="gname",Help="Gets a random username",Usage="gname <nothing>")]
@@ -207,11 +204,11 @@ namespace Energize.Services.Commands.Modules
 
                 if (result != null)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "GName", result.results[0].login.username);
+                    await ctx.MessageSender.Good(ctx.Message, "GName", result.results[0].login.username);
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "GName", "Couldn't generate a new username");
+                    await ctx.MessageSender.Danger(ctx.Message, "GName", "Couldn't generate a new username");
                 }
             }
             else
@@ -226,7 +223,7 @@ namespace Energize.Services.Commands.Modules
 
                 result = result.Replace("-", "").ToLower();
 
-                await ctx.EmbedReply.Good(ctx.Message, "GName", result);
+                await ctx.MessageSender.Good(ctx.Message, "GName", result);
             }
 
         }
@@ -237,12 +234,12 @@ namespace Energize.Services.Commands.Modules
             if (ctx.Handler.Prefix == "x")
             {
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(ctx.EmbedReply.ColorGood);
+                builder.WithColor(ctx.MessageSender.ColorGood);
                 builder.WithAuthor(ctx.Message.Author);
                 builder.WithFooter("XFiles");
                 builder.WithImageUrl("https://i.imgur.com/kWK2BEW.png");
 
-                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                await ctx.MessageSender.Send(ctx.Message, builder.Build());
             }
         }
 
@@ -251,16 +248,16 @@ namespace Energize.Services.Commands.Modules
         {
             if(!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Style","You must either provide a sentence or \"toggle\"");
+                await ctx.SendBadUsage();
                 return;
             }
 
-            TextStyle style = ServiceManager.GetService("TextStyle").Instance as TextStyle;
+            TextStyle style = ServiceManager.GetService<TextStyle>("TextStyle");
             if(ctx.Arguments.Count > 1)
             {
                 if(!style.GetStyles().Any(x => x == ctx.Arguments[0]))
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Style","Styles available:\n`" + string.Join(",",style.GetStyles()) + "`");
+                    await ctx.MessageSender.Danger(ctx.Message,"Style","Styles available:\n`" + string.Join(",",style.GetStyles()) + "`");
                     return;
                 }
 
@@ -268,7 +265,7 @@ namespace Energize.Services.Commands.Modules
                 {
                     if(ctx.IsPrivate)
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message,"Style","You can't toggle a style in DM!");
+                        await ctx.MessageSender.Danger(ctx.Message,"Style","You can't toggle a style in DM!");
                         return;
                     }
 
@@ -280,7 +277,7 @@ namespace Energize.Services.Commands.Modules
                     IGuildUser bot = await guild.GetUserAsync(ctx.Client.CurrentUser.Id);
                     if(!bot.GuildPermissions.ManageMessages || !bot.GuildPermissions.ManageRoles)
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message,"Style","I dont seem to have the rights for that!");
+                        await ctx.MessageSender.Danger(ctx.Message,"Style","I dont seem to have the rights for that!");
                         return;
                     }
 
@@ -289,7 +286,7 @@ namespace Energize.Services.Commands.Modules
                         IRole oldrole = await ctx.GetOrCreateRole(user,rolename);
                         await user.RemoveRoleAsync(oldrole);
 
-                        await ctx.EmbedReply.Good(ctx.Message,"Style","Untoggled style");
+                        await ctx.MessageSender.Good(ctx.Message,"Style","Untoggled style");
                         return;
                     }
 
@@ -302,7 +299,7 @@ namespace Energize.Services.Commands.Modules
                     IRole newrole = await ctx.GetOrCreateRole(user,rolename);
                     await user.AddRoleAsync(newrole);
 
-                    await ctx.EmbedReply.Good(ctx.Message,"Style","Style applied");
+                    await ctx.MessageSender.Good(ctx.Message,"Style","Style applied");
                 }
                 else if(!string.IsNullOrWhiteSpace(ctx.Arguments[1]))
                 {
@@ -311,16 +308,16 @@ namespace Energize.Services.Commands.Modules
 
                     string result = style.GetStyleResult(string.Join(",",parts),ctx.Arguments[0]);
 
-                    await ctx.EmbedReply.Good(ctx.Message,"Style",result);
+                    await ctx.MessageSender.Good(ctx.Message,"Style",result);
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Style","You must provide a second argument (\"toggle\" or a sentence)");
+                    await ctx.SendBadUsage();
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Style","You must provide a second argument (\"toggle\" or a sentence)");
+                await ctx.SendBadUsage();
             }
         }
 
@@ -334,11 +331,11 @@ namespace Energize.Services.Commands.Modules
 
             if(node == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Old Insult","Seems like the website is down");
+                await ctx.MessageSender.Danger(ctx.Message,"Old Insult","Seems like the website is down");
                 return;
             }
 
-            await ctx.EmbedReply.Good(ctx.Message,"Old Insult",node.InnerText);
+            await ctx.MessageSender.Good(ctx.Message,"Old Insult",node.InnerText);
         }
     }
 }

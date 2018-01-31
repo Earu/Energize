@@ -199,9 +199,6 @@ namespace Energize.Services.TextProcessing
             }
         };
 
-        //for service sake
-        public TextStyle(EnergizeClient eclient) { }
-
         public string GetStyleResult(string input, string style)
         {
             if (StyleCallbacks.ContainsKey(style))
@@ -228,39 +225,41 @@ namespace Energize.Services.TextProcessing
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (msg.Channel is IDMChannel || msg.Author.IsBot) return;
-            SocketGuildUser user = msg.Author as SocketGuildUser;
-            string identifier = "EnergizeStyle: ";
-
-            IRole role = user.Roles.Where(x => x.Name.StartsWith(identifier)).FirstOrDefault();
-            if (role != null)
+            if (msg.Channel is IGuildChannel && !msg.Author.IsBot)
             {
-                string style = role.Name.Remove(0, identifier.Length);
-                if (StyleCallbacks.ContainsKey(style))
+                SocketGuildUser user = msg.Author as SocketGuildUser;
+                string identifier = "EnergizeStyle: ";
+
+                IRole role = user.Roles.Where(x => x.Name.StartsWith(identifier)).FirstOrDefault();
+                if (role != null)
                 {
-                    try
+                    string style = role.Name.Remove(0, identifier.Length);
+                    if (StyleCallbacks.ContainsKey(style))
                     {
-                        CommandHandler chandler = ServiceManager.GetService("Commands").Instance as CommandHandler;
-                        string result = GetStyleResult(msg.Content, style);
-                        EmbedBuilder builder = new EmbedBuilder();
-                        await chandler.EmbedReply.BuilderWithAuthor(msg, builder);
-                        builder.WithDescription(result);
-                        builder.WithColor(chandler.EmbedReply.ColorNormal);
-
-                        await msg.DeleteAsync();
-
-                        if (result.Length > 2000)
+                        try
                         {
-                            await chandler.EmbedReply.Danger(msg, "Style", "Message was over discord message limit");
-                        }
-                        else
-                        {
-                            await chandler.EmbedReply.Send(msg, builder.Build());
-                        }
-                    }
-                    catch
-                    {
+                            CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
+                            string result = GetStyleResult(msg.Content, style);
+                            EmbedBuilder builder = new EmbedBuilder();
+                            chandler.MessageSender.BuilderWithAuthor(msg, builder);
+                            builder.WithDescription(result);
+                            builder.WithColor(chandler.MessageSender.ColorNormal);
 
+                            await msg.DeleteAsync();
+
+                            if (result.Length > 2000)
+                            {
+                                await chandler.MessageSender.Danger(msg, "Style", "Message was over discord message limit");
+                            }
+                            else
+                            {
+                                await chandler.MessageSender.Send(msg, builder.Build());
+                            }
+                        }
+                        catch
+                        {
+
+                        }
                     }
                 }
             }

@@ -5,6 +5,7 @@ using Energize.Services.MemoryStream;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -48,11 +49,11 @@ namespace Energize.Services.Commands.Modules
                     }
                 }
 
-                await ctx.EmbedReply.Send(ctx.Message,guild.Name,info,ctx.EmbedReply.ColorGood,guild.IconUrl);
+                await ctx.MessageSender.Send(ctx.Message,guild.Name,info,ctx.MessageSender.ColorGood,guild.IconUrl);
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Server", "You can't do that in a DM channel!");
+                await ctx.MessageSender.Danger(ctx.Message, "Server", "You can't do that in a DM channel!");
             }
         }
 
@@ -65,7 +66,7 @@ namespace Energize.Services.Commands.Modules
             }
             else
             {
-                ClientInfo info = await (ServiceManager.GetService("MemoryStream").Instance as ClientMemoryStream).GetClientInfo();
+                ClientInfo info = await (ServiceManager.GetService<ClientMemoryStream>("MemoryStream")).GetClientInfo();
                 string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EnergizeConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
                 string server = EnergizeConfig.SERVER_INVITE;
                 string github = "<https://github.com/Earu/Energize>";
@@ -78,8 +79,8 @@ namespace Energize.Services.Commands.Modules
                 desc += "**USERS**: " + info.UserAmount + "\n";
                 desc += "**OWNER**: " + info.Owner + "\n";
 
-                await ctx.EmbedReply.Send(ctx.Message,"Info",desc,ctx.EmbedReply.ColorGood,info.Avatar);
-                await ctx.EmbedReply.SendRaw(ctx.Message,
+                await ctx.MessageSender.Send(ctx.Message,"Info",desc,ctx.MessageSender.ColorGood,info.Avatar);
+                await ctx.MessageSender.SendRaw(ctx.Message,
                     "Official server: " + EnergizeConfig.SERVER_INVITE + "\n"
                     + "Invite link: " + invite + "\n"
                     + "Github: " + github);
@@ -91,8 +92,8 @@ namespace Energize.Services.Commands.Modules
         {
             string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EnergizeConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
 
-            await ctx.EmbedReply.SendRaw(ctx.Message,"Invite link: " + invite);
-            await ctx.EmbedReply.SendRaw(ctx.Message,"Official server: " + EnergizeConfig.SERVER_INVITE);
+            await ctx.MessageSender.SendRaw(ctx.Message,"Invite link: " + invite);
+            await ctx.MessageSender.SendRaw(ctx.Message,"Official server: " + EnergizeConfig.SERVER_INVITE);
         }
 
         [Command(Name="user",Help="Gets information about a specific user",Usage="user <@user|id>")]
@@ -176,11 +177,11 @@ namespace Energize.Services.Commands.Modules
                     + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
                     + (guildinfo == null ? "" : guildinfo);
 
-                await ctx.EmbedReply.Send(ctx.Message,"User",desc,ctx.EmbedReply.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
+                await ctx.MessageSender.Send(ctx.Message,"User",desc,ctx.MessageSender.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "User", "Couldn't find any user corresponding to your input");
+                await ctx.MessageSender.Danger(ctx.Message, "User", "Couldn't find any user corresponding to your input");
             }
         }
 
@@ -193,7 +194,13 @@ namespace Energize.Services.Commands.Modules
                 bool retrieved = ctx.Commands.TryGetValue(arg.ToLower(), out Command cmd);
                 if (retrieved && cmd.Loaded)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", cmd.GetHelp());
+                    if(cmd.Cmd == ctx.CommandName)
+                    {
+                        await ctx.MessageSender.SendRaw(ctx.Message,"<:thonkang:387908330800152576>");
+                        return;
+                    }
+                    
+                    await ctx.MessageSender.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", cmd.GetHelp());
                 }
                 else
                 {
@@ -213,12 +220,12 @@ namespace Energize.Services.Commands.Modules
                         result = result.Remove(result.Length - 1);
                         result += "```\n\n";
 
-                        await ctx.EmbedReply.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", result);
+                        await ctx.MessageSender.Good(ctx.Message, "Help [ " + arg.ToUpper() + " ]", result);
                     }
                     else
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
-                        await ctx.EmbedReply.SendRaw(ctx.Message,"Join the official server for more information: " + EnergizeConfig.SERVER_INVITE);
+                        await ctx.MessageSender.Danger(ctx.Message, "Help", "Couldn't find documentation for \"" + arg + "\"");
+                        await ctx.MessageSender.SendRaw(ctx.Message,"Join the official server for more information: " + EnergizeConfig.SERVER_INVITE);
                     }
                 }
             }
@@ -226,7 +233,7 @@ namespace Energize.Services.Commands.Modules
             {
                 if (!ctx.IsPrivate)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Help", "Check your private messages " + ctx.Message.Author.Mention);
+                    await ctx.MessageSender.Good(ctx.Message, "Help", "Check your private messages " + ctx.Message.Author.Mention);
                 }
 
                 string result = "";
@@ -249,7 +256,7 @@ namespace Energize.Services.Commands.Modules
                     }
                 }
 
-                await ctx.EmbedReply.RespondByDM(ctx.Message, "Help [ ALL ]", result);
+                await ctx.MessageSender.RespondByDM(ctx.Message, "Help [ ALL ]", result);
             }
         }
 
@@ -258,7 +265,7 @@ namespace Energize.Services.Commands.Modules
         {
             if(!(ctx.Message.Channel is IGuildChannel))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "IsAdmin", "You can't do that in a DM");
+                await ctx.MessageSender.Danger(ctx.Message, "IsAdmin", "You can't do that in a DM");
                 return;
             }
 
@@ -267,16 +274,16 @@ namespace Energize.Services.Commands.Modules
                 SocketGuildUser u = user as SocketGuildUser;
                 if (u.GuildPermissions.Administrator)
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is an administrator");
+                    await ctx.MessageSender.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is an administrator");
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is not an administrator");
+                    await ctx.MessageSender.Good(ctx.Message, "IsAdmin", u.Username + "#" + u.Discriminator + " is not an administrator");
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "IsAdmin", "No user was found with your input");
+                await ctx.MessageSender.Danger(ctx.Message, "IsAdmin", "No user was found with your input");
             }
         }
 
@@ -285,7 +292,7 @@ namespace Energize.Services.Commands.Modules
         {
             if(ctx.IsPrivate)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Roles","This is not available in DM");
+                await ctx.MessageSender.Danger(ctx.Message,"Roles","This is not available in DM");
                 return;
             }
 
@@ -299,28 +306,29 @@ namespace Energize.Services.Commands.Modules
                 }
                 display += "```";
 
-                await ctx.EmbedReply.Good(ctx.Message,"Roles",display);
+                await ctx.MessageSender.Good(ctx.Message,"Roles",display);
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Roles","Couldn't find any user for your input");
+                await ctx.MessageSender.Danger(ctx.Message,"Roles","Couldn't find any user for your input");
             }
         }
 
-        [Command(Name="snipe",Help="Snipes the last deleted message in the channel",Usage="snipe <nothing>")]
+        [Command(Name="snipe",Help="Snipes the last message deleted in the channel",Usage="snipe <nothing>")]
         private async Task Snipe(CommandContext ctx)
         {
+            
             if(ctx.Cache.LastDeletedMessage == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Snipe","Nothing to snipe");
+                await ctx.MessageSender.Danger(ctx.Message,ctx.CommandName,"Nothing to snipe");
                 return;
             }
             else
             {
                 SocketMessage delmsg = ctx.Cache.LastDeletedMessage;
                 EmbedBuilder builder = new EmbedBuilder();
-                ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
-                builder.WithColor(ctx.EmbedReply.ColorGood);
+                ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
+                builder.WithColor(ctx.MessageSender.ColorGood);
                 string iconurl = delmsg.Author.GetAvatarUrl(ImageFormat.Auto,32);
                 builder.WithFooter("Message sniped from " + delmsg.Author.ToString(),iconurl);
                 builder.WithTimestamp(delmsg.CreatedAt);
@@ -331,7 +339,7 @@ namespace Energize.Services.Commands.Modules
                     builder.WithImageUrl(url);
                 }
 
-                await ctx.EmbedReply.Send(ctx.Message,builder.Build());
+                await ctx.MessageSender.Send(ctx.Message,builder.Build());
             }
         }
 

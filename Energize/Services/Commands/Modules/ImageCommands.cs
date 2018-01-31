@@ -29,12 +29,12 @@ namespace Energize.Services.Commands.Modules
             url = url.Remove(url.Length - 9);
             EmbedBuilder builder = new EmbedBuilder();
 
-            ctx.EmbedReply.BuilderWithAuthor(ctx.Message, builder);
+            ctx.MessageSender.BuilderWithAuthor(ctx.Message, builder);
             builder.WithFooter("Avatar");
             builder.WithImageUrl(url);
-            builder.WithColor(ctx.EmbedReply.ColorGood);
+            builder.WithColor(ctx.MessageSender.ColorGood);
 
-            await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+            await ctx.MessageSender.Send(ctx.Message, builder.Build());
         }
 
         [Command(Name="icon",Help="Gets the picture of the guild",Usage="icon <nothing|id>")]
@@ -48,49 +48,49 @@ namespace Energize.Services.Commands.Modules
                     if(guild != null)
                     {
                         EmbedBuilder builder = new EmbedBuilder();
-                        ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+                        ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
                         builder.WithFooter("Icon");
                         builder.WithImageUrl(guild.IconUrl);
-                        builder.WithColor(ctx.EmbedReply.ColorGood);
+                        builder.WithColor(ctx.MessageSender.ColorGood);
 
-                        await ctx.EmbedReply.Send(ctx.Message,builder.Build());
+                        await ctx.MessageSender.Send(ctx.Message,builder.Build());
                     }
                     else
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message,"Icon","The guild corresponding to the ID you provided couln't be found!");
+                        await ctx.MessageSender.Danger(ctx.Message,"Icon","The guild corresponding to the ID you provided couln't be found!");
                     }
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Icon","The argument provided is not a guild ID!");
+                    await ctx.SendBadUsage();
                 }
             }
             else
             {
                 if(ctx.IsPrivate)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Icon","You need to input a guild ID for this to work in DM!");
+                    await ctx.MessageSender.Danger(ctx.Message,"Icon","You need to input a guild ID for this to work in DM!");
                 }
                 else
                 {
                     SocketGuild guild = (ctx.Message.Author as SocketGuildUser).Guild;
                     EmbedBuilder builder = new EmbedBuilder();
-                    ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+                    ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
                     builder.WithFooter("Icon");
                     builder.WithImageUrl(guild.IconUrl);
-                    builder.WithColor(ctx.EmbedReply.ColorGood);
+                    builder.WithColor(ctx.MessageSender.ColorGood);
 
-                    await ctx.EmbedReply.Send(ctx.Message,builder.Build());
+                    await ctx.MessageSender.Send(ctx.Message,builder.Build());
                 }
             }
         }
 
-        [Command(Name="e",Help="Gets the picture of an emote",Usage="e <emote>")]
+        [Command(Name="e",Help="Gets the picture of an emote",Usage="e <emote|text>")]
         private async Task Emote(CommandContext ctx)
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Emote", "You didn't provide any emote");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -98,12 +98,12 @@ namespace Energize.Services.Commands.Modules
             {
                 EmbedBuilder builder = new EmbedBuilder();
 
-                ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+                ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
                 builder.WithFooter("Emote");
                 builder.WithImageUrl(emote.Url);
-                builder.WithColor(ctx.EmbedReply.ColorGood);
+                builder.WithColor(ctx.MessageSender.ColorGood);
 
-                await ctx.EmbedReply.Send(ctx.Message, builder.Build());
+                await ctx.MessageSender.Send(ctx.Message, builder.Build());
             }
             /*else if()
             {
@@ -129,16 +129,16 @@ namespace Energize.Services.Commands.Modules
 
                 if(result.Length > 2000)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Emote","Message was too long to be sent");
+                    await ctx.MessageSender.Danger(ctx.Message,"Emote","Message was too long to be sent");
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Emote", result);
+                    await ctx.MessageSender.Good(ctx.Message, "Emote", result);
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Emote", "You didn't provide a valid input");
+                await ctx.SendBadUsage();
             }
         }
 
@@ -229,14 +229,14 @@ namespace Energize.Services.Commands.Modules
                     path = savecallback(img, path);
                 }
 
-                await ctx.EmbedReply.SendFile(ctx.Message, path);
+                await ctx.MessageSender.SendFile(ctx.Message, path);
 
                 ImageProcess.DeleteImage(path);
             }
 
             if (path == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "There's no valid url to use!");
+                await ctx.MessageSender.Danger(ctx.Message, name, "There's no valid url to use!");
             }
         }
 
@@ -331,12 +331,12 @@ namespace Energize.Services.Commands.Modules
             string endpoint = "http://inspirobot.me/api?generate=true";
             string url = await HTTP.Fetch(endpoint,ctx.Log);
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(ctx.EmbedReply.ColorGood);
+            builder.WithColor(ctx.MessageSender.ColorGood);
             builder.WithImageUrl(url);
             builder.WithFooter("InspiroBot");
-            ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+            ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
 
-            await ctx.EmbedReply.Send(ctx.Message,builder.Build());
+            await ctx.MessageSender.Send(ctx.Message,builder.Build());
         }
 
         [Command(Name="illegal",Help="Make something illegal",Usage="illegal <input>")]
@@ -344,7 +344,7 @@ namespace Energize.Services.Commands.Modules
         {
             if(!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Illegal","You didnt provide any input");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -352,7 +352,7 @@ namespace Energize.Services.Commands.Modules
             Image<Rgba32> img = ImageProcess.Get(path);
             //img.Mutate(x => )
 
-            await ctx.EmbedReply.SendFile(ctx.Message, path);
+            await ctx.MessageSender.SendFile(ctx.Message, path);
 
             ImageProcess.DeleteImage(path);
         }

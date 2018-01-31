@@ -4,25 +4,59 @@ using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Commands
+namespace Energize
 {
-    public class CommandReplyEmbed
+    public class EnergizeMessage
     {
         private EnergizeLog _Log;
-        private CommandHandler _Handler;
         private Color _Good = new Color(30, 30, 30);
         private Color _Normal = new Color(200,200,200);
         private Color _Warning = new Color(226, 123, 68);
         private Color _Danger = new Color(226, 68, 68);
 
-        public EnergizeLog Log { get => this._Log; set => this._Log = value; }
-        public CommandHandler Handler { get => this._Handler; set => this._Handler = value; }
+        public EnergizeMessage(EnergizeLog log)
+        {
+            this._Log = log;
+        }
+
+        public EnergizeLog Log { get => this._Log; }
         public Color ColorGood { get => this._Good; }
         public Color ColorNormal { get => this._Normal; }
         public Color ColorWarning { get => this._Warning; }
         public Color ColorDanger { get => this._Danger; }
 
-        public async Task BuilderWithAuthor(SocketMessage msg,EmbedBuilder builder)
+        private void LogFailedMessage(SocketMessage msg)
+        {
+            string log = "";
+            if (!(msg.Channel is IDMChannel))
+            {
+                IGuildChannel chan = msg.Channel as IGuildChannel;
+                log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username} doesn't have <send message> right";
+            }
+            else
+            {
+                log += $"(DM) {msg.Author.Username} blocked a message";
+            }
+            _Log.Nice("Message", ConsoleColor.Red, log);
+        }
+
+        private void LogFailedMessage(SocketChannel chan)
+        {
+            string log = "";
+            if (!(chan is IDMChannel))
+            {
+                IGuildChannel c = chan as IGuildChannel;
+                log += $"({c.Guild.Name} - #{c.Name}) doesn't have <send message> right";
+            }
+            else
+            {
+                IDMChannel c = chan as IDMChannel;
+                log += $"(DM) {c.Recipient} blocked a message";
+            }
+            _Log.Nice("Message", ConsoleColor.Red, log);
+        }
+
+        public void BuilderWithAuthor(SocketMessage msg,EmbedBuilder builder)
         {
             if(msg.Channel is SocketGuildChannel)
             {
@@ -60,7 +94,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(msg);
             }
 
             return null;
@@ -82,7 +116,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(chan as SocketChannel);
             }
 
             return null;
@@ -96,7 +130,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(msg);
             }
 
             return null;
@@ -110,7 +144,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(msg);
             }
 
             return null;
@@ -125,7 +159,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(chan as SocketChannel);
             }
 
             return null;
@@ -140,7 +174,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(chan);
             }
 
             return null;
@@ -161,7 +195,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a message");
+                this.LogFailedMessage(msg);
             }
 
             return null;
@@ -220,7 +254,7 @@ namespace Energize.Services.Commands
             }
             catch
             {
-                _Log.Nice("EmbedReply", ConsoleColor.Red, "Failed to send a file");
+                this.LogFailedMessage(msg);
             }
 
             return null;

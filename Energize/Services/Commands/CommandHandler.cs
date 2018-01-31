@@ -7,7 +7,7 @@ using Discord.Rest;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
-
+using System.IO;
 
 namespace Energize.Services.Commands
 {
@@ -19,28 +19,26 @@ namespace Energize.Services.Commands
         private DiscordSocketClient              _Client;
         private EnergizeLog                      _Log;
         private string                           _Prefix;
-        private CommandReplyEmbed                _EmbedReply;
+        private EnergizeMessage                  _MessageSender;
         private Dictionary<string, Command>      _Cmds;
         private Dictionary<ulong, CommandCache>  _Caches;
         private DiscordRestClient                _RESTClient;
+        private CommandCache                     _GlobalCache;
 
         public CommandHandler(EnergizeClient client)
         {
-            this._EmbedReply = new CommandReplyEmbed
-            {
-                Handler = this,
-                Log = client.Log
-            };
+            this._MessageSender = client.MessageSender;
             this._Cmds = new Dictionary<string, Command>();
             this._Caches = new Dictionary<ulong, CommandCache>();
             this._Client = client.Discord;
             this._RESTClient = client.DiscordREST;
             this._Prefix = client.Prefix;
             this._Log = client.Log;
+            this._GlobalCache = new CommandCache();
         }
 
-        public EnergizeLog Log                           { get => this._Log;        }
-        public CommandReplyEmbed EmbedReply         { get => this._EmbedReply; }
+        public EnergizeLog Log                      { get => this._Log;        }
+        public EnergizeMessage MessageSender        { get => this._MessageSender; }
         public string Prefix                        { get => this._Prefix;     }
         public DiscordSocketClient Client           { get => this._Client;     }
         public Dictionary<string,Command> Commands  { get => this._Cmds;       }
@@ -151,7 +149,7 @@ namespace Energize.Services.Commands
             if (!ctx.IsPrivate)
             {
                 IGuildChannel chan = ctx.Message.Channel as IGuildChannel;
-                log  += "(" + chan.Guild.Name + " - #" + ctx.Message.Channel.Name + ") ";
+                log  += $"({chan.Guild.Name} - #{chan.Name}) ";
                 color = ConsoleColor.Blue;
                 head  = "Commands";
             }
@@ -162,10 +160,10 @@ namespace Energize.Services.Commands
                 action = "deleted";
             }
 
-            log += ctx.Message.Author.Username + " " + action + " <" + ctx.Command + ">";
+            log += $"{ctx.Message.Author.Username} {action} <{ctx.CommandName}>";
             if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
             {
-                log += "  => [ " + string.Join(',',ctx.Arguments) + " ]";
+                log += $"  => [ {string.Join(',',ctx.Arguments)} ]";
             }
             else
             {
@@ -175,7 +173,7 @@ namespace Energize.Services.Commands
             this._Log.Nice(head,color, log);
         }
 
-        private CommandContext CreateCmdContext(SocketMessage msg,string cmd,List<string> args)
+        private CommandContext CreateCmdContext(SocketMessage msg,Command cmd,List<string> args)
         {
             List<SocketGuildUser> users = new List<SocketGuildUser>();
             if(msg.Channel is IGuildChannel)
@@ -193,11 +191,12 @@ namespace Energize.Services.Commands
                 Client            = this._Client,
                 RESTClient        = this._RESTClient,
                 Prefix            = this._Prefix,
-                EmbedReply        = this._EmbedReply,
+                MessageSender        = this._MessageSender,
                 Message           = msg,
                 Command           = cmd,
                 Arguments         = args,
                 Cache             = this.GetChannelCache(msg.Channel.Id),
+                GlobalCache       = this._GlobalCache,
                 Log               = this._Log,
                 Commands          = this._Cmds,
                 IsPrivate         = msg.Channel is IDMChannel,
@@ -212,32 +211,24 @@ namespace Energize.Services.Commands
             IDisposable state = null;
             if (this._Cmds.TryGetValue(cmd, out Command retrieved))
             {
-                try
-                {
-                    state = msg.Channel.EnterTypingState();
-                    await msg.Channel.TriggerTypingAsync();
-                    CommandContext ctx = this.CreateCmdContext(msg, cmd, args);
-                    Task tcallback = retrieved.Run(ctx,state);
-                    if(!tcallback.IsCompleted)
-                    {
-                        Task tres = await Task.WhenAny(tcallback,Task.Delay(20000));
-                        if(tres != tcallback)
-                        {
-                            this._EmbedReply.Warning(msg, "Time out", "Your command `" + cmd + "` is timing out!");
-                            this._Log.Nice("Commands",ConsoleColor.Yellow,"Time out of command <" + cmd + ">");
-                            await tcallback;
-                        }
-                    }
 
-                    this.LogCommand(ctx);
-                }
-                catch (Exception e)
+                state = msg.Channel.EnterTypingState();
+                await msg.Channel.TriggerTypingAsync();
+                CommandContext ctx = this.CreateCmdContext(msg, retrieved, args);
+                Task tcallback = retrieved.Run(ctx,state);
+                if(!tcallback.IsCompleted)
                 {
-                    this._Log.Nice("Commands", ConsoleColor.Red, "<" + cmd + "> generated an error, args were [ " + string.Join(',', args) + " ]");
-                    this._Log.Danger(e.ToString());
-                    state?.Dispose();
-                    await this._EmbedReply.Danger(msg, "Bad usage", retrieved.GetHelp());
+                    Task tres = await Task.WhenAny(tcallback,Task.Delay(20000));
+                    if(tres != tcallback)
+                    {
+                        this._MessageSender.Warning(msg, "Time out", $"Your command `{cmd}` is timing out!")
+                            .RunSynchronously();
+                        this._Log.Nice("Commands",ConsoleColor.Yellow,$"Time out of command <{cmd}>");
+                        await tcallback;
+                    }
                 }
+
+                this.LogCommand(ctx);
             }
         }
 
@@ -255,8 +246,8 @@ namespace Energize.Services.Commands
                     }
                     else
                     {
-                        this._Log.Nice("Commands", ConsoleColor.Red, msg.Author.Username + " tried to use an unloaded command <" + cmd + ">");
-                        await this._EmbedReply.Warning(msg, "Unloaded Command", "This is not available right now!");
+                        this._Log.Nice("Commands", ConsoleColor.Red,$"{msg.Author.Username} tried to use an disabled command <{cmd}>");
+                        await this._MessageSender.Warning(msg, "Disabled command", "This is a disabled feature for now");
                     }
                 }
             }
@@ -298,7 +289,7 @@ namespace Energize.Services.Commands
             if(gifs.Count > 0)
             {
                 string giftoken = gifs[gifs.Count - 1].Groups[2].Value;
-                url = "https://media.giphy.com/media/" + giftoken + "/giphy.gif";
+                url = $"https://media.giphy.com/media/{giftoken}/giphy.gif";
             }
 
             return url;
@@ -342,6 +333,7 @@ namespace Energize.Services.Commands
             if (url != null)
             {
                 this.GetChannelCache(msg.Channel.Id).LastPictureURL = url;
+                this._GlobalCache.LastPictureURL = url;
             }
 
             this.MainCall(msg).RunSynchronously();
@@ -350,10 +342,11 @@ namespace Energize.Services.Commands
         [Event("MessageDeleted")]
         public async Task MessageDeleted(Cacheable<IMessage,ulong> cache,ISocketMessageChannel chan)
         {
-            if(cache.HasValue)
+            if(cache.HasValue && !cache.Value.Author.IsBot)
             {
                 SocketMessage msg = cache.Value as SocketMessage;
                 this.GetChannelCache(msg.Channel.Id).LastDeletedMessage = msg;
+                this._GlobalCache.LastDeletedMessage = msg;
             }
         }
     }

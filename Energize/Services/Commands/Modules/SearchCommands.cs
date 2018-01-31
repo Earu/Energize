@@ -13,7 +13,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Urban", "No entry to look for was given");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -35,13 +35,13 @@ namespace Energize.Services.Commands.Modules
 
             if (global == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Urban", "There was no data to use for this!");
+                await ctx.MessageSender.Danger(ctx.Message, "Urban", "There was no data to use for this!");
             }
             else
             {
                 if (global.list.Length == 0)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Urban", "Looks like I couldn't find anything!");
+                    await ctx.MessageSender.Danger(ctx.Message, "Urban", "Looks like I couldn't find anything!");
                 }
                 else
                 {
@@ -58,7 +58,7 @@ namespace Energize.Services.Commands.Modules
                     Urban.UWord wordobj = global.list[page];
                     bool hasexample = string.IsNullOrWhiteSpace(wordobj.example);
                     string smalldef = wordobj.definition.Length > 300 ? wordobj.definition.Remove(300) + "..." : wordobj.definition;
-                    await ctx.EmbedReply.Good(ctx.Message, "Definition " + (page + 1) + "/" + global.list.Length,
+                    await ctx.MessageSender.Good(ctx.Message, "Definition " + (page + 1) + "/" + global.list.Length,
                         "**" + wordobj.permalink + "**\n\n"
                         + smalldef + (!hasexample ? "\n\n**EXAMPLE:**\n\n" + wordobj.example : "") + "\n\n" +
                         ":thumbsup: x" + wordobj.thumbs_up + "\t :thumbsdown: x" + wordobj.thumbs_down);
@@ -71,7 +71,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "YT", "You didn't provide any search");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -83,7 +83,7 @@ namespace Energize.Services.Commands.Modules
             }
             catch
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
+                await ctx.MessageSender.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
                 return;
             }
 
@@ -105,24 +105,24 @@ namespace Energize.Services.Commands.Modules
                         }
 
                         VideoInformation video = videos[id-1];
-                        await ctx.EmbedReply.SendRaw(ctx.Message, "#" + id + " out of " + videos.Count
+                        await ctx.MessageSender.SendRaw(ctx.Message, "#" + id + " out of " + videos.Count
                             + " results for \"" + ctx.Arguments[0] + "\"" + "\n" + video.Url);
                     }
                     else
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message, "YT", "Second argument must be a number");
+                        await ctx.SendBadUsage();
                     }
                 }
                 else
                 {
                     VideoInformation video = videos[0];
-                    await ctx.EmbedReply.SendRaw(ctx.Message, "#1 out of " + videos.Count
+                    await ctx.MessageSender.SendRaw(ctx.Message, "#1 out of " + videos.Count
                             + " results for \"" + ctx.Input + "\"" + "\n" + video.Url);
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
+                await ctx.MessageSender.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
             }
         }
     }

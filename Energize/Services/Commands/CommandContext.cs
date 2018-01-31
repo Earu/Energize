@@ -135,26 +135,27 @@ namespace Energize.Services.Commands
 
         private DiscordSocketClient _Client;
         private DiscordRestClient _RESTClient;
-        private string _Cmd;
+        private Command _Cmd;
         private SocketMessage _Message;
         private List<string> _Args;
         private string _Prefix;
-        private CommandReplyEmbed _EmbedReply;
+        private EnergizeMessage _MessageSender;
         private EnergizeLog _Log;
         private Dictionary<string, Command> _Cmds;
         private List<SocketGuildUser> _GuildCachedUsers;
         private bool _IsPrivate;
         private CommandHandler _Handler;
         private CommandCache _Cache;
+        private CommandCache _GlobalCache;
 
         public DiscordSocketClient Client             { get => this._Client; set => this._Client = value; }
         public DiscordRestClient RESTClient           { get => this._RESTClient; set => this._RESTClient = value; }
-        public string Command                         { get => this._Cmd; set => this._Cmd = value; }
+        public Command Command                        { get => this._Cmd; set => this._Cmd = value; }
         public SocketMessage Message                  { get => this._Message; set => this._Message = value; }
         public List<string> Arguments                 { get => this._Args; set => this._Args = value; }
         public string Prefix                          { get => this._Prefix; set => this._Prefix = value; }
-        public CommandReplyEmbed EmbedReply           { get => this._EmbedReply; set => this._EmbedReply = value; }
-        public EnergizeLog Log                             { get => this._Log; set => this._Log = value; }
+        public EnergizeMessage MessageSender          { get => this._MessageSender; set => this._MessageSender = value; }
+        public EnergizeLog Log                        { get => this._Log; set => this._Log = value; }
         public Dictionary<string,Command> Commands    { get => this._Cmds; set => this._Cmds = value; }
         public bool IsPrivate                         { get => this._IsPrivate; set => this._IsPrivate = value; }
         public List<SocketGuildUser> GuildCachedUsers { get => this._GuildCachedUsers; set => this._GuildCachedUsers = value; }
@@ -163,6 +164,9 @@ namespace Energize.Services.Commands
         public bool HasArguments                      { get => (!string.IsNullOrWhiteSpace(this._Args[0])) && this._Args.Count > 0; }
         public string Input                           { get => string.Join(',', this._Args).Trim(); }
         public string AuthorMention                   { get => this._Message.Author.Mention; }
+        public string Help                            { get => this._Cmd.GetHelp(); }
+        public string CommandName                     { get => this._Cmd.Cmd; }
+        public CommandCache GlobalCache               { get => this._GlobalCache; set => this._GlobalCache = value; }
 
         public bool IsNSFW()
         {
@@ -285,6 +289,24 @@ namespace Energize.Services.Commands
         public bool HasRoleStartingWith(SocketGuildUser user,string name)
         {
             return user.Roles.Any(x => x != null && x.Name.StartsWith(name));
+        }
+
+        public async Task<RestMessage> SendBadUsage()
+        {
+            return await this._MessageSender.Warning(this._Message, $"Help [ {Command.Cmd.ToUpper()} ]", this.Help);
+        }
+
+        public async Task<bool> IsOwner()
+        {
+            RestApplication app = await this._RESTClient.GetApplicationInfoAsync();
+            if (this._Message.Author.Id != app.Owner.Id)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
     }
 }
