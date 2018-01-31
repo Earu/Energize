@@ -5,10 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Text;
 using static Energize.Services.Commands.CommandHandler;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Energize.Services.LuaService;
+using System.IO;
+using System.Diagnostics;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -21,7 +24,7 @@ namespace Energize.Services.Commands.Modules
             DateTimeOffset timestamp = ctx.Message.Timestamp;
             int diff = timestamp.Millisecond / 10;
 
-            await ctx.EmbedReply.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
+            await ctx.MessageSender.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
                 ":clock1: Bot: " + ctx.Client.Latency + "ms");
         }
 
@@ -30,64 +33,63 @@ namespace Energize.Services.Commands.Modules
         {
             if (ctx.HasArguments)
             {
-                await ctx.EmbedReply.Good(ctx.Message, "Say", ctx.Input);
+                await ctx.MessageSender.Good(ctx.Message, "Say", ctx.Input);
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Say", "You need to provide a sentence");
+                await ctx.SendBadUsage();
             }
         }
 
         [Command(Name="l",Help="Runs lua code",Usage="l <code>")]
         private async Task Lua(CommandContext ctx)
         {
-            LuaEnv env = ServiceManager.GetService("Lua").Instance as LuaEnv;
+            LuaEnv env = ServiceManager.GetService<LuaEnv>("Lua");
             if (env.Run(ctx.Message,ctx.Input,out List<Object> returns,out string error,ctx.Log))
             {
                 string display = string.Join('\t', returns);
                 if (string.IsNullOrWhiteSpace(display))
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Lua", ":ok_hand: (nil or no value was returned)");
+                    await ctx.MessageSender.Good(ctx.Message, "Lua", ":ok_hand: (nil or no value was returned)");
                 }
                 else
                 {
                     if(display.Length > 2000)
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message,"Lua","The output was too long to be sent");
+                        await ctx.MessageSender.Danger(ctx.Message,"Lua","The output was too long to be sent");
                     }
                     else
                     {
-                        await ctx.EmbedReply.Good(ctx.Message, "Lua",display);
+                        await ctx.MessageSender.Good(ctx.Message, "Lua",display);
                     }
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Lua","```\n" + error.Replace("`","") + "```");
+                await ctx.MessageSender.Danger(ctx.Message,"Lua","```\n" + error.Replace("`","") + "```");
             }
         }
 
         [Command(Name="lr",Help="Reset the lua state of the channel",Usage="lr <nothing>")]
         private async Task LuaReset(CommandContext ctx)
         {
-            LuaEnv env = ServiceManager.GetService("Lua").Instance as LuaEnv;
+            LuaEnv env = ServiceManager.GetService<LuaEnv>("Lua");
             env.Reset(ctx.Message.Channel.Id,ctx.Log);
-            await ctx.EmbedReply.Good(ctx.Message, "Lua Reset", "Lua state was reset for this channel");
+            await ctx.MessageSender.Good(ctx.Message, "Lua Reset", "Lua state was reset for this channel");
         }
 
         private async Task BehaviorChange(CommandContext ctx,string name, Action<CommandCallback> callback)
         {
-            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
-            if (ctx.Message.Author.Id != app.Owner.Id)
+            if (!await ctx.IsOwner())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "Owner only!");
+                await ctx.MessageSender.Danger(ctx.Message, name, "Owner only!");
                 return;
             }
 
             bool success = false;
             if (!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "You must provide a command or a module to unload!");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -97,7 +99,7 @@ namespace Energize.Services.Commands.Modules
                 Command.Modules[arg].ForEach(x => callback(x.Callback));
                 Command.SetLoadedModule(arg, false);
 
-                await ctx.EmbedReply.Good(ctx.Message, name, "Successfully " + name.ToLower() + "ed module \"" + arg + "\"");
+                await ctx.MessageSender.Good(ctx.Message, name, "Successfully " + name.ToLower() + "d module \"" + arg + "\"");
                 success = true;
             }
             else
@@ -110,7 +112,7 @@ namespace Energize.Services.Commands.Modules
                         {
                             callback(cmd.Callback);
 
-                            await ctx.EmbedReply.Good(ctx.Message, name, name + "ed command \"" + arg + "\"");
+                            await ctx.MessageSender.Good(ctx.Message, name, name + "d command \"" + arg + "\"");
                             success = true;
                             break;
                         }
@@ -120,20 +122,20 @@ namespace Energize.Services.Commands.Modules
 
             if (!success)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "No command or module with that name was found!");
+                await ctx.MessageSender.Danger(ctx.Message, name, "No command or module with that name was found!");
             }
         }
 
-        [Command(Name="unload",Help="Unloads a module or a command, owner only",Usage="unload <cmd|module>")]
+        [Command(Name="disable",Help="Disables a module or a command, owner only",Usage="disable <cmd|module>")]
         private async Task UnloadCommand(CommandContext ctx)
         {
-            await this.BehaviorChange(ctx, "Unload", ctx.Handler.UnloadCommand);
+            await this.BehaviorChange(ctx, "Disable", ctx.Handler.UnloadCommand);
         }
 
-        [Command(Name="load",Help="Loads a module or a command, owner only",Usage="load <cmd|module>")]
+        [Command(Name="enable",Help="Enables a module or a command, owner only",Usage="enable <cmd|module>")]
         private async Task LoadCommand(CommandContext ctx)
         {
-            await this.BehaviorChange(ctx, "Load", ctx.Handler.LoadCommand);
+            await this.BehaviorChange(ctx, "Enable", ctx.Handler.LoadCommand);
         }
 
         [Command(Name="feedback",Help="Give feedback to the owner, suggestion or bugs",Usage="feedback <sentence>")]
@@ -143,10 +145,10 @@ namespace Energize.Services.Commands.Modules
             {
                 string feedback = ctx.Input;
                 SocketChannel chan = ctx.Client.GetChannel(EnergizeConfig.FEEDBACK_CHANNEL_ID);
-                await ctx.EmbedReply.Good(ctx.Message, "Feedback", "Successfully sent your feedback");
+                await ctx.MessageSender.Good(ctx.Message, "Feedback", "Successfully sent your feedback");
 
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(ctx.EmbedReply.ColorNormal);
+                builder.WithColor(ctx.MessageSender.ColorNormal);
                 builder.WithAuthor(ctx.Message.Author);
                 builder.WithTimestamp(ctx.Message.CreatedAt);
                 builder.WithDescription(ctx.Input);
@@ -160,21 +162,20 @@ namespace Energize.Services.Commands.Modules
                     builder.WithFooter("DM Feedback");
                 }
 
-                await ctx.EmbedReply.Send(chan,builder.Build());
+                await ctx.MessageSender.Send(chan,builder.Build());
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Feedback", "You can't send nothing!");
+                await ctx.SendBadUsage();
             }
         }
 
         [Command(Name="ev",Help="lets you evaluate code in a command context",Usage="ev <csharpcode>")]
         private async Task Eval(CommandContext ctx)
         {
-            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
-            if (ctx.Message.Author.Id != app.Owner.Id)
+            if (!await ctx.IsOwner())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Eval", "Owner only!");
+                await ctx.MessageSender.Danger(ctx.Message, "Eval", "Owner only!");
                 return;
             }
 
@@ -219,21 +220,21 @@ namespace Energize.Services.Commands.Modules
                             ret = ret.Substring(0,1980) + "... \n**[" + (ret.Length - 2020) + "\tCHARS\tLEFT]**";
                         }
                         
-                        await ctx.EmbedReply.Good(ctx.Message,"Eval",ret);
+                        await ctx.MessageSender.Good(ctx.Message,"Eval",ret);
                     }
                     else
                     {
-                        await ctx.EmbedReply.Warning(ctx.Message, "Eval", ":warning: (string was null or empty)");
+                        await ctx.MessageSender.Warning(ctx.Message, "Eval", ":warning: (string was null or empty)");
                     }
                 }
                 else
                 {
-                    await ctx.EmbedReply.Good(ctx.Message, "Eval", ":ok_hand: (nothing or null was returned)");
+                    await ctx.MessageSender.Good(ctx.Message, "Eval", ":ok_hand: (nothing or null was returned)");
                 }
             }
             catch(Exception e)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Eval", "```\n" + e.Message.Replace("`", "") + "```");
+                await ctx.MessageSender.Danger(ctx.Message, "Eval", "```\n" + e.Message.Replace("`", "") + "```");
             }
 
         }
@@ -241,22 +242,77 @@ namespace Energize.Services.Commands.Modules
         [Command(Name="to",Help="Timing out test",Usage="to <seconds>")]
         private async Task TimingOut(CommandContext ctx)
         {
-            RestApplication app = await ctx.RESTClient.GetApplicationInfoAsync();
-            if (ctx.Message.Author.Id != app.Owner.Id)
+            if (!await ctx.IsOwner())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Timing out test", "Owner only!");
+                await ctx.MessageSender.Danger(ctx.Message, "Time Out", "Owner only!");
                 return;
             }
 
             if(int.TryParse(ctx.Input,out int duration))
             {
                 await Task.Delay(duration * 1000);
-                await ctx.EmbedReply.Good(ctx.Message,"Time Out","Timed out during `" + duration + "`s");
+                await ctx.MessageSender.Good(ctx.Message,"Time Out","Timed out during `" + duration + "`s");
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Time Out","Input wasnt a number");
+                await ctx.SendBadUsage();
             }
+        }
+
+        [Command(Name="b64e",Help="Encodes a sentence to base64",Usage="b64e <sentence>")]
+        private async Task B64Encode(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
+            byte[] bytes = Encoding.UTF8.GetBytes(ctx.Input);
+            string result = Convert.ToBase64String(bytes);
+
+            if(result.Length > 2000)
+            {
+                await ctx.MessageSender.Danger(ctx.Message,"Base64","Output too long to be sent");
+                return;
+            }
+
+            await ctx.MessageSender.Good(ctx.Message,"Base64",result);
+        }
+
+        [Command(Name="b64d",Help="Decodes a base64 sentence",Usage="b64d <sentence>")]
+        private async Task B64Decode(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
+            byte[] bytes = Convert.FromBase64String(ctx.Input);
+            string result = Encoding.UTF8.GetString(bytes);
+
+            if(result.Length > 2000)
+            {
+                await ctx.MessageSender.Danger(ctx.Message,"Base64","Output too long to be sent");
+                return;
+            }
+
+            await ctx.MessageSender.Good(ctx.Message,"Base64",result);
+        }
+
+        [Command(Name="restart",Help="Restarts the bot, owner only",Usage="restart <nothing>")]
+        private async Task Restart(CommandContext ctx)
+        {
+            if (!await ctx.IsOwner())
+            {
+                await ctx.MessageSender.Danger(ctx.Message, "Restart", "Owner only!");
+                return;
+            }
+
+            File.WriteAllText("restartlog.txt",ctx.Message.Channel.Id.ToString());
+            await ctx.MessageSender.Warning(ctx.Message,"Restart","Ok, restarting...");
+            Process.GetCurrentProcess().Kill();
         }
 
         /*[Command(Name="w",Help="Asks wolfram something",Usage="w <input>")]

@@ -17,14 +17,14 @@ namespace Energize.Services.Commands.Modules
         {
             if (!(ctx.Message.Channel is IGuildChannel))
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "You can't do that in a DM channel");
+                await ctx.MessageSender.Danger(ctx.Message, name, "You can't do that in a DM channel");
                 return;
             }
 
             SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
             if (!user.GuildPermissions.Administrator) //&& user.Id != EnergizeConfig.OWNER_ID) debug
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "Only a server administrator can do that");
+                await ctx.MessageSender.Danger(ctx.Message, name, "Only a server administrator can do that");
                 return;
             }
 
@@ -37,12 +37,12 @@ namespace Energize.Services.Commands.Modules
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, name, "This user is not part of the server!");
+                    await ctx.MessageSender.Danger(ctx.Message, name, "This user is not part of the server!");
                 }
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "No user was found for your input");
+                await ctx.MessageSender.Danger(ctx.Message, name, "No user was found for your input");
             }
 
         }
@@ -57,11 +57,11 @@ namespace Energize.Services.Commands.Modules
                     IRole role = await ctx.GetOrCreateRole(user, "EnergizeAdmin");
 
                     await user.AddRoleAsync(role);
-                    await ctx.EmbedReply.Good(ctx.Message, "OP", user.Username + "#" + user.Discriminator + " was succesfully allowed to use administration commands");
+                    await ctx.MessageSender.Good(ctx.Message, "OP", user.Username + "#" + user.Discriminator + " was succesfully allowed to use administration commands");
                 }
                 catch
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "OP", "I don't have the rights to do that!");
+                    await ctx.MessageSender.Danger(ctx.Message, "OP", "I don't have the rights to do that!");
                 }
             });
         }
@@ -77,16 +77,16 @@ namespace Energize.Services.Commands.Modules
                     if (role != null)
                     {
                         await user.RemoveRoleAsync(role);
-                        await ctx.EmbedReply.Good(ctx.Message, "DeOP", user.Username + "#" + user.Discriminator + " was succesfully prevented from using administration commands");
+                        await ctx.MessageSender.Good(ctx.Message, "DeOP", user.Username + "#" + user.Discriminator + " was succesfully prevented from using administration commands");
                     }
                     else
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message, "DeOP", "You didn't op anybody yet!");
+                        await ctx.MessageSender.Danger(ctx.Message, "DeOP", "You didn't op anybody yet!");
                     }
                 }
                 catch
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "DeOP", "I don't have the rights to do that!");
+                    await ctx.MessageSender.Danger(ctx.Message, "DeOP", "I don't have the rights to do that!");
                 }
             });
         }
@@ -95,7 +95,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.IsAdminUser())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Clear", "You don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "Clear", "You don't have the rights to do that");
                 return;
             }
 
@@ -134,18 +134,18 @@ namespace Energize.Services.Commands.Modules
             {
                 ITextChannel chan = ctx.Message.Channel as ITextChannel;
                 await chan.DeleteMessagesAsync(todelete);
-                await ctx.EmbedReply.Good(ctx.Message, "Clear", "Cleared " + todelete.Count + " messages among " + amount);
+                await ctx.MessageSender.Good(ctx.Message, "Clear", "Cleared " + todelete.Count + " messages among " + amount);
             }
             catch
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Clear", "I don't have the rights to do that!");
+                await ctx.MessageSender.Danger(ctx.Message, "Clear", "I don't have the rights to do that!");
             }
         }
 
         [Command(Name="clear",Help="Clear the bot messages",Usage="clear <amounttoremove|nothing>")]
         private async Task Clear(CommandContext ctx)
         {
-            ClientMemoryStream stream = ServiceManager.GetService("MemoryStream").Instance as ClientMemoryStream;
+            ClientMemoryStream stream = ServiceManager.GetService<ClientMemoryStream>("MemoryStream");
             ulong id = (await stream.GetClientInfo()).ID;
             await this.ClearBase(ctx, (msg,todelete) =>
             {
@@ -233,7 +233,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.IsAdminUser())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Shame", "You don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "Shame", "You don't have the rights to do that");
                 return;
             }
 
@@ -243,13 +243,13 @@ namespace Energize.Services.Commands.Modules
                     "Channel created by Energize, share unique and funny messages using " + ctx.Prefix + "shame");
                 if(c == null)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Shame", "I couldn't find or create \"Hall of Shames\" channel");
+                    await ctx.MessageSender.Danger(ctx.Message, "Shame", "I couldn't find or create \"Hall of Shames\" channel");
                     return;
                 }
 
                 if (!ctx.HasArguments)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Shame", "You didn't provide any message id");
+                    await ctx.SendBadUsage();
                     return;
                 }
 
@@ -263,39 +263,39 @@ namespace Energize.Services.Commands.Modules
                         builder.WithDescription(msg.Content);
                         builder.WithFooter("#" + msg.Channel.Name);
                         builder.WithTimestamp(msg.CreatedAt);
-                        builder.WithColor(ctx.EmbedReply.ColorNormal);
+                        builder.WithColor(ctx.MessageSender.ColorNormal);
                         string url = ctx.Handler.GetImageURLS(msg);
                         if(url != null)
                         {
                             builder.WithImageUrl(url);
                         }
 
-                        IUserMessage posted = await ctx.EmbedReply.Send(c as SocketChannel, builder.Build());
+                        IUserMessage posted = await ctx.MessageSender.Send(c as SocketChannel, builder.Build());
                         if(posted != null)
                         {
                             await posted.AddReactionAsync(new Emoji("🌟"));
-                            await ctx.EmbedReply.Good(ctx.Message, "Shame", "Message added to hall of shames");
+                            await ctx.MessageSender.Good(ctx.Message, "Shame", "Message added to hall of shames");
                         }
                         else
                         {
-                            await ctx.EmbedReply.Danger(ctx.Message, "Shame", "I wasn't able to post in \"Hall of Shames\" ?!");
+                            await ctx.MessageSender.Danger(ctx.Message, "Shame", "I wasn't able to post in \"Hall of Shames\" ?!");
                         }
                     }
                     else
                     {
-                        await ctx.EmbedReply.Danger(ctx.Message, "Shame", "Sorry this message wasnt found or is not in the same channel");
+                        await ctx.MessageSender.Danger(ctx.Message, "Shame", "Sorry this message wasnt found or is not in the same channel");
                     }
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "Shame", "You didn't input a message id");
+                    await ctx.SendBadUsage();
                 }
 
             }
             catch(Exception e)
             {
                 EnergizeLog.Debug(e.ToString());
-                await ctx.EmbedReply.Danger(ctx.Message, "Shame", "I don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "Shame", "I don't have the rights to do that");
             }
         }
 
@@ -307,7 +307,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.IsAdminUser())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "You don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "DelInvites", "You don't have the rights to do that");
                 return;
             }
 
@@ -316,7 +316,7 @@ namespace Energize.Services.Commands.Modules
 
             if (role == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
                 return;
             }
 
@@ -325,12 +325,12 @@ namespace Energize.Services.Commands.Modules
                 IGuildUser bot = await ctx.RESTClient.GetGuildUserAsync(user.Guild.Id, ctx.Client.CurrentUser.Id);
                 await bot.AddRoleAsync(role);
 
-                await ctx.EmbedReply.Good(ctx.Message, "DelInvites", "I will now delete every messages containing an invite link, "
+                await ctx.MessageSender.Good(ctx.Message, "DelInvites", "I will now delete every messages containing an invite link, "
                     + "delete the \"EnergizeDeleteInvites\" role to remove that feature");
             }
             catch
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
+                await ctx.MessageSender.Danger(ctx.Message, "DelInvites", "I don't have the rights to do that");
             }
         }
     }

@@ -26,11 +26,11 @@ namespace Energize.Services.Commands.Modules
             if (users.Count > 0)
             {
                 result = callback(ctx.Message.Author, users);
-                await ctx.EmbedReply.Good(ctx.Message, what, result);
+                await ctx.MessageSender.Good(ctx.Message, what, result);
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, what, "You need to mention the persons you want to " + what.ToLower());
+                await ctx.SendBadUsage();
             }
         }
 
@@ -135,11 +135,11 @@ namespace Energize.Services.Commands.Modules
 
                 LoveObject love = JSON.Deserialize<LoveObject>(json, ctx.Log);
 
-                await ctx.EmbedReply.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
+                await ctx.MessageSender.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
             }
             else
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Love", "You need to mention two persons!");
+                await ctx.SendBadUsage();
             }
         }
     }

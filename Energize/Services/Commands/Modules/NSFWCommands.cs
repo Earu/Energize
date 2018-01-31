@@ -13,9 +13,9 @@ namespace Energize.Services.Commands.Modules
         private Embed CreateNSFWEmbed(CommandContext ctx,string name,string pic,string url)
         {
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(ctx.EmbedReply.ColorGood);
+            builder.WithColor(ctx.MessageSender.ColorGood);
             builder.WithImageUrl(pic);
-            ctx.EmbedReply.BuilderWithAuthor(ctx.Message,builder);
+            ctx.MessageSender.BuilderWithAuthor(ctx.Message,builder);
             builder.WithFooter(name);
             builder.WithDescription("\n[**CHECK ON " + name.ToUpper() + "**](" + url + ")");
 
@@ -27,7 +27,7 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.IsNSFW())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "E621", "Haha, did you really believe it would be that easy? :smirk:");
+                await ctx.MessageSender.Danger(ctx.Message, "E621", "Haha, did you really believe it would be that easy? :smirk:");
                 return;
             }
 
@@ -37,20 +37,20 @@ namespace Energize.Services.Commands.Modules
 
             if(posts == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "E621", "There was a problem with your request");
+                await ctx.MessageSender.Danger(ctx.Message, "E621", "There was a problem with your request");
             }
             else
             {
                 if(posts.Count < 1)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message, "E621", "Nothing was found");
+                    await ctx.MessageSender.Danger(ctx.Message, "E621", "Nothing was found");
                     return;
                 }
 
                 E621.EPost post = posts[rand.Next(0, posts.Count - 1)];
                 Embed embed = this.CreateNSFWEmbed(ctx,"E621",post.sample_url,"https://e621.net/post/show/" + post.id + "/");
 
-                await ctx.EmbedReply.Send(ctx.Message, embed);
+                await ctx.MessageSender.Send(ctx.Message, embed);
             }
         }
 
@@ -86,14 +86,14 @@ namespace Energize.Services.Commands.Modules
         {
             if (!ctx.IsNSFW())
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "Haha, did you really believe it would be that easy? :smirk:");
+                await ctx.MessageSender.Danger(ctx.Message, name, "Haha, did you really believe it would be that easy? :smirk:");
                 return;
             }
 
             string[] result = await this.GetDAPIResult(ctx,domain);
             if(result.Length < 1)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, name, "Nothing was found");
+                await ctx.MessageSender.Danger(ctx.Message, name, "Nothing was found");
                 return;
             }
             
@@ -102,7 +102,7 @@ namespace Energize.Services.Commands.Modules
 
             Embed embed = this.CreateNSFWEmbed(ctx,name,url,page);
 
-            await ctx.EmbedReply.Send(ctx.Message, embed);
+            await ctx.MessageSender.Send(ctx.Message, embed);
         }
 
         [Command(Name="furrybooru",Help="Browses FurryBooru",Usage="furrybooru <tags|search>")]

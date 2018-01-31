@@ -77,7 +77,7 @@ namespace Energize.Services.MemoryStream
 
         public async Task<ClientInfo> GetClientInfo()
         {
-            CommandHandler handler = ServiceManager.GetService("Commands").Instance as CommandHandler;
+            CommandHandler handler = ServiceManager.GetService<CommandHandler>("Commands");
             ClientInfo info = await new ClientInfo(this._Client,handler).Initialize();
             return info;
         }

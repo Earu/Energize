@@ -10,15 +10,14 @@ namespace Energize
 {
     public class EnergizeClient
     {
-        public static EnergizeClient CLIENT;
-
         private string _Prefix;
         private DiscordSocketClient _Discord;
         private DiscordRestClient _DiscordREST;
         private EnergizeLog _Log;
+        private EnergizeMessage _MessageSender;
         private string _Token;
 
-        public EnergizeClient(string token,string prefix)
+        public EnergizeClient(string token, string prefix)
         {
             Console.Clear();
             Console.Title = "Energize's Logs";
@@ -26,12 +25,13 @@ namespace Energize
             this._Token = token;
             this._Prefix = prefix;
             this._Log = new EnergizeLog();
+            this._MessageSender = new EnergizeMessage(this._Log);
             this._Discord = new DiscordSocketClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
             this._DiscordREST = new DiscordRestClient();
-            
+
             this._Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
             this._Log.Notify("Initializing");
 
@@ -42,6 +42,7 @@ namespace Energize
         public DiscordSocketClient Discord { get => this._Discord; }
         public DiscordRestClient DiscordREST { get => this._DiscordREST; }
         public EnergizeLog Log { get => this._Log; }
+        public EnergizeMessage MessageSender { get => this._MessageSender; }
 
         public async Task InitializeAsync()
         {
@@ -59,11 +60,6 @@ namespace Energize
 
                 StreamingGame game = new StreamingGame(this._Prefix + "help | " + this._Prefix + "info",EnergizeConfig.TWITCH_URL);
                 await this._Discord.SetActivityAsync(game);
-                
-                this._Discord.Disconnected += async ex =>
-                {
-                    this._Log.Nice("Outage",ConsoleColor.Red,ex.ToString());
-                };
 
                 Timer gctimer = new Timer(arg =>
                 {
@@ -78,8 +74,7 @@ namespace Energize
             }
             catch (Exception e)
             {
-                this._Log.Nice("Init", ConsoleColor.Red, "Failed to connect");
-                this._Log.Error(e.ToString());
+                this._Log.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
             }
         }
     }
