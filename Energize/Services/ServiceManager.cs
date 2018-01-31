@@ -32,8 +32,24 @@ namespace Energize.Services
 
             foreach(Type service in services)
             {
-                object inst = Activator.CreateInstance(service,eclient);
-                Service serv = new Service(inst);
+                object inst;
+                bool hasconstructor = false;
+                if (service.GetConstructor(new Type[]{ typeof(EnergizeClient) }) != null)
+                {
+                    inst = Activator.CreateInstance(service, eclient);
+                    hasconstructor = true;
+
+                }
+                else
+                {
+                    //Use default constructor
+                    inst = Activator.CreateInstance(service);
+                }
+
+                Service serv = new Service(inst)
+                {
+                    HasConstructor = hasconstructor
+                };
 
                 MethodInfo initinfo = service.GetMethod("Initialize");
                 if(initinfo != null)
@@ -80,13 +96,21 @@ namespace Energize.Services
                 MethodInfo minfo = service.Value.Instance.GetType().GetMethod("InitializeAsync");
                 if(minfo != null)
                 {
-                    Task tinit = (Task)minfo.Invoke(service.Value.Instance, new object[] { eclient });
-                    await tinit;
+                    try
+                    {
+                        Task tinit = (Task)minfo.Invoke(service.Value.Instance, null);
+                        await tinit;
+                    }
+                    catch(Exception e)
+                    {
+                        eclient.Log.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
+                        + $"invoking InitializeAsync: {e}");
+                    }
                 }
             }
         }
 
-        public static Service GetService(string name)
+        public static Service GetServiceHolder(string name)
         {
             if(_Services.ContainsKey(name))
             {
@@ -95,6 +119,26 @@ namespace Energize.Services
             else
             {
                 return null;
+            }
+        }
+
+        public static T GetService<T>(string name)
+        {
+            if(_Services.ContainsKey(name))
+            {
+                object inst = _Services[name].Instance;
+                if (inst is T)
+                {
+                    return (T)inst;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+            else
+            {
+                return default;
             }
         }
     }

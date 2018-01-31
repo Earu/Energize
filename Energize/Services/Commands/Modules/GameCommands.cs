@@ -19,7 +19,7 @@ namespace Energize.Services.Commands.Modules
 
             if (global == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message, "Warframe Alerts", "Looks like I couldn't get any data!");
+                await ctx.MessageSender.Danger(ctx.Message, "Warframe Alerts", "Looks like I couldn't get any data!");
             }
             else
             {
@@ -47,7 +47,7 @@ namespace Energize.Services.Commands.Modules
                         }
                     }
 
-                    await ctx.EmbedReply.Good(ctx.Message, "Alert " + (i + 1) + "/" + global.Alerts.Length,
+                    await ctx.MessageSender.Good(ctx.Message, "Alert " + (i + 1) + "/" + global.Alerts.Length,
                         "**Level**: " + minfo.minEnemyLevel + " - " + minfo.maxEnemyLevel + "\t**Type**: " + minfo.missionType.Substring(3).ToLower().Replace("_", " ")
                         + "\t**Enemy**: " + minfo.faction.Substring(3).ToLower() + "\n"
                         + "**Credits**: " + mreward.credits + "\t**Time Left**: " + (endtime.Subtract(nowtime).Minutes) + "mins\n"
@@ -63,7 +63,7 @@ namespace Energize.Services.Commands.Modules
         {
             if(!ctx.HasArguments)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Steam","You didnt provide any input");
+                await ctx.SendBadUsage();
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace Energize.Services.Commands.Modules
                 }
                 else
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Steam","Couldn't find any steam profile with your input");
+                    await ctx.MessageSender.Danger(ctx.Message,"Steam","Couldn't find any steam profile with your input");
                     return;
                 }
             }
@@ -109,13 +109,13 @@ namespace Energize.Services.Commands.Modules
 
             if (summary == null)
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Steam","Couldn't find any steam profile with your input");
+                await ctx.MessageSender.Danger(ctx.Message,"Steam","Couldn't find any steam profile with your input");
             }
             else
             {
                 if(summary.response.players.Length < 1)
                 {
-                    await ctx.EmbedReply.Danger(ctx.Message,"Steam","Your input was correct but it doesnt belong to anyone on steam");
+                    await ctx.MessageSender.Danger(ctx.Message,"Steam","Your input was correct but it doesnt belong to anyone on steam");
                     return;
                 }
 
@@ -156,7 +156,7 @@ namespace Energize.Services.Commands.Modules
                     datecreated = "???";
                 }
 
-                await ctx.EmbedReply.Send(ctx.Message,"Steam",
+                await ctx.MessageSender.Send(ctx.Message,"Steam",
                     "**NAME:** " + user.personaname + "\n"
                     + "**STATUS:** " + user.GetState() + "\n"
                     + "**CREATED ON:** " + datecreated + "\n"
@@ -164,7 +164,7 @@ namespace Energize.Services.Commands.Modules
                     + "**STEAMID64:** " + user.steamid + "\n"
                     + "**DESCRIPTION:** ```\n" + desc + "```\n"
                     + "**URL:** " + user.profileurl,
-                ctx.EmbedReply.ColorGood,user.avatarfull);
+                ctx.MessageSender.ColorGood,user.avatarfull);
             }
         }
 

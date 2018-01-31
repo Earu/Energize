@@ -64,8 +64,17 @@ namespace Energize.Services.Commands
 
         public async Task Run(CommandContext ctx,IDisposable state)
         {
-            await this._Callback(ctx);
-            state.Dispose();
+            try
+            {
+                await this._Callback(ctx);
+                state.Dispose();
+            }
+            catch(Exception e)
+            {
+                await ctx.MessageSender.Danger(ctx.Message,"Internal error","Something went wrong, try again?");
+                ctx.Log.Nice("CommandError",ConsoleColor.Red,e.Message);
+                state.Dispose();
+            }
         }
 
         public string GetHelp()
