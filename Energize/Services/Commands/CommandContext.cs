@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Rest;
+using Discord.Webhook;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;

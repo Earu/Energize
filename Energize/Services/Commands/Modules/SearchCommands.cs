@@ -125,5 +125,13 @@ namespace Energize.Services.Commands.Modules
                 await ctx.MessageSender.Danger(ctx.Message, "YT", "Couldn't find anything for given search");
             }
         }
+
+        /*[Command(Name="g",Help="Gets a result from google",Usage="g <search>,<resultnumber>")]
+        private async Task Google(CommandContext ctx)
+        {
+            string endpoint = $"https://www.googleapis.com/customsearch/v1?key={EnergizeConfig.GOOGLE_API_KEY}"
+                + $"&cx=010399579583698952911:lc0stqwbymq&q={ctx.Arguments[0]}";
+            string json = await HTTP.Fetch(endpoint, ctx.Log);
+        }*/
     }
 }
