@@ -62,18 +62,16 @@ namespace Energize.Services.Commands
             _ModulesLoaded[module] = state;
         }
 
-        public async Task Run(CommandContext ctx,IDisposable state)
+        public async Task Run(CommandContext ctx)
         {
             try
             {
                 await this._Callback(ctx);
-                state.Dispose();
             }
             catch(Exception e)
             {
                 await ctx.MessageSender.Danger(ctx.Message,"Internal error","Something went wrong, try again?");
                 ctx.Log.Nice("CommandError",ConsoleColor.Red,e.Message);
-                state.Dispose();
             }
         }
 

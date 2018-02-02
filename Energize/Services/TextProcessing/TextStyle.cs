@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Services.Commands;
+using Energize.Services.Listeners;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -238,22 +239,20 @@ namespace Energize.Services.TextProcessing
                     {
                         try
                         {
-                            CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                             string result = GetStyleResult(msg.Content, style);
-                            EmbedBuilder builder = new EmbedBuilder();
-                            chandler.MessageSender.BuilderWithAuthor(msg, builder);
-                            builder.WithDescription(result);
-                            builder.WithColor(chandler.MessageSender.ColorNormal);
+                            string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
+                            string name = msg.Author.Username;
+                            WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
 
                             await msg.DeleteAsync();
 
                             if (result.Length > 2000)
                             {
-                                await chandler.MessageSender.Danger(msg, "Style", "Message was over discord message limit");
+                                await sender.SendRaw(msg, "Message was over discord limit!",name,avatar);
                             }
                             else
                             {
-                                await chandler.MessageSender.Send(msg, builder.Build());
+                                await sender.SendRaw(msg, result, name, avatar);
                             }
                         }
                         catch

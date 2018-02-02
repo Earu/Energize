@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
 using Discord.Rest;
+using Discord.Webhook;
 using System.IO;
 
 namespace Energize
@@ -13,6 +14,7 @@ namespace Energize
         private string _Prefix;
         private DiscordSocketClient _Discord;
         private DiscordRestClient _DiscordREST;
+        private DiscordWebhookClient _DiscordWebhook;
         private EnergizeLog _Log;
         private EnergizeMessage _MessageSender;
         private string _Token;
@@ -26,6 +28,7 @@ namespace Energize
             this._Prefix = prefix;
             this._Log = new EnergizeLog();
             this._MessageSender = new EnergizeMessage(this._Log);
+            this._DiscordWebhook = null;
             this._Discord = new DiscordSocketClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,

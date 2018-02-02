@@ -104,7 +104,7 @@ namespace Energize.Services.Commands
 
         public bool StartsWithBotMention(string line)
         {
-            if(Regex.IsMatch(line,@"^<@!?" + this._Client.CurrentUser.Id + ">"))
+            if(Regex.IsMatch(line,$@"^<@!?{this._Client.CurrentUser.Id}>"))
             {
                 return true;
             }
@@ -141,7 +141,7 @@ namespace Energize.Services.Commands
 
         private void LogCommand(CommandContext ctx,bool isdeleted=false)
         {
-            string log         = "";
+            string log         = string.Empty;
             ConsoleColor color = ConsoleColor.Cyan;
             string head        = "DMCommands";
             string action      = "used";
@@ -191,7 +191,7 @@ namespace Energize.Services.Commands
                 Client            = this._Client,
                 RESTClient        = this._RESTClient,
                 Prefix            = this._Prefix,
-                MessageSender        = this._MessageSender,
+                MessageSender     = this._MessageSender,
                 Message           = msg,
                 Command           = cmd,
                 Arguments         = args,
@@ -201,21 +201,18 @@ namespace Energize.Services.Commands
                 Commands          = this._Cmds,
                 IsPrivate         = msg.Channel is IDMChannel,
                 GuildCachedUsers  = users,
-                Handler           = this
+                Handler           = this,
             };
         }
 
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
-            IDisposable state = null;
             if (this._Cmds.TryGetValue(cmd, out Command retrieved))
             {
-
-                state = msg.Channel.EnterTypingState();
                 await msg.Channel.TriggerTypingAsync();
                 CommandContext ctx = this.CreateCmdContext(msg, retrieved, args);
-                Task tcallback = retrieved.Run(ctx,state);
+                Task tcallback = retrieved.Run(ctx);
                 if(!tcallback.IsCompleted)
                 {
                     Task tres = await Task.WhenAny(tcallback,Task.Delay(20000));
@@ -242,11 +239,11 @@ namespace Energize.Services.Commands
                     string cmd = this.GetCmd(content);
                     if (this.IsCmdLoaded(cmd))
                     {
-                        await this.CommandCall(msg, cmd);
+                        await this.CommandCall(msg, cmd).ConfigureAwait(false);
                     }
                     else
                     {
-                        this._Log.Nice("Commands", ConsoleColor.Red,$"{msg.Author.Username} tried to use an disabled command <{cmd}>");
+                        this._Log.Nice("Commands", ConsoleColor.Red,$"{msg.Author} tried to use a disabled command <{cmd}>");
                         await this._MessageSender.Warning(msg, "Disabled command", "This is a disabled feature for now");
                     }
                 }

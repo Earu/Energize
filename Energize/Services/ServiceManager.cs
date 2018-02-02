@@ -73,16 +73,16 @@ namespace Energize.Services
 
                     if(methods.Count() > 0)
                     {
+                        MethodInfo method = methods.First();
                         try
                         {
                             EventInfo _event = _DiscordSocketClientType.GetEvent(minfo.Name);
-                            _event.AddEventHandler(eclient.Discord, methods.First()
-                                .CreateDelegate(_event.EventHandlerType, inst));
+                            _event.AddEventHandler(eclient.Discord,method.CreateDelegate(_event.EventHandlerType, inst));
                         }
                         catch
                         {
                             eclient.Log.Nice("Init", ConsoleColor.Red, att.Name 
-                            + " tried to sub to an event with wrong signature <" + methods.First().Name + ">");
+                            + " tried to sub to an event with wrong signature <" + method.Name + ">");
                         }
                     }
                 }
@@ -104,7 +104,7 @@ namespace Energize.Services
                     catch(Exception e)
                     {
                         eclient.Log.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
-                        + $"invoking InitializeAsync: {e}");
+                        + $"invoking InitializeAsync: {e.Message}");
                     }
                 }
             }
