@@ -12,6 +12,8 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Energize.Services.LuaService;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
+using Energize.Services.Listeners;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -24,8 +26,29 @@ namespace Energize.Services.Commands.Modules
             DateTimeOffset timestamp = ctx.Message.Timestamp;
             int diff = timestamp.Millisecond / 10;
 
-            await ctx.MessageSender.Good(ctx.Message, "Pong!", ":alarm_clock: Discord: " + diff + "ms\n" +
-                ":clock1: Bot: " + ctx.Client.Latency + "ms");
+            await ctx.MessageSender.Good(ctx.Message, "Pong!", $":alarm_clock: Discord: {diff}ms\n" +
+                $":clock1: Bot: {ctx.Client.Latency}ms");
+        }
+
+        [Command(Name="usage",Help="Gets CPU usage and memory usage",Usage="usage <nothing>")]
+        private async Task Usage(CommandContext ctx)
+        {
+            int cores = 8;
+            Process curprocess = Process.GetCurrentProcess();
+            int cpu = (int)(curprocess.TotalProcessorTime.TotalMilliseconds / 1000 / cores);
+            int mbused = (int)(curprocess.WorkingSet64 / 1024 / 1024);
+
+            await ctx.MessageSender.Good(ctx.Message,"Usage", $":gear: CPU: {cpu}%\n" +
+                $":wrench: Memory: {mbused}MB");
+        }
+
+        [Command(Name="uptime",Help="Gets the current uptime",Usage="uptime <nothing>")]
+        private async Task Uptime(CommandContext ctx)
+        {
+            TimeSpan diff = (DateTime.Now - Process.GetCurrentProcess().StartTime).Duration();
+            string res = $"{diff.Days}d{diff.Hours}h{diff.Minutes}m";
+
+            await ctx.MessageSender.Good(ctx.Message, "Uptime", "The current instance has been up for " + res);
         }
 
         [Command(Name="say",Help="Makes me say something",Usage="say <sentence>")]
@@ -143,26 +166,30 @@ namespace Energize.Services.Commands.Modules
         {
             if (ctx.HasArguments)
             {
+                WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
                 string feedback = ctx.Input;
+                string name = ctx.Message.Author.Username;
+                string avatar = ctx.Message.Author.GetAvatarUrl(ImageFormat.Auto);
                 SocketChannel chan = ctx.Client.GetChannel(EnergizeConfig.FEEDBACK_CHANNEL_ID);
-                await ctx.MessageSender.Good(ctx.Message, "Feedback", "Successfully sent your feedback");
-
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(ctx.MessageSender.ColorNormal);
-                builder.WithAuthor(ctx.Message.Author);
-                builder.WithTimestamp(ctx.Message.CreatedAt);
-                builder.WithDescription(ctx.Input);
-                if(ctx.Message.Channel is IGuildChannel)
+                string log = string.Empty;
+                if (ctx.IsPrivate)
                 {
                     IGuildChannel c = ctx.Message.Channel as IGuildChannel;
-                    builder.WithFooter(c.Guild.Name + "#" + c.Name + " Feedback");
+                    log += $"{c.Guild.Name}#{c.Name}";
                 }
                 else
                 {
-                    builder.WithFooter("DM Feedback");
+                    log += ctx.Message.Author.ToString();
                 }
 
-                await ctx.MessageSender.Send(chan,builder.Build());
+                await ctx.MessageSender.Good(ctx.Message, "Feedback", "Successfully sent your feedback");
+
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithDescription(feedback);
+                builder.WithTimestamp(ctx.Message.CreatedAt);
+                builder.WithFooter(log);
+
+                await sender.SendEmbed(chan as ITextChannel, builder.Build(), name, avatar);
             }
             else
             {
@@ -201,7 +228,8 @@ namespace Energize.Services.Commands.Modules
                 "Energize.Utils",
                 "Energize.Services",
                 "Energize.Services.Commands",
-                "System.Text.RegularExpressions"
+                "System.Text.RegularExpressions",
+                "System.Diagnostics"
             };
             ScriptOptions options = ScriptOptions.Default
                 .WithImports(imports)

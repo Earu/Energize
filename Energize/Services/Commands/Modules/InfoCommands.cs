@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using System.Diagnostics;
 
 namespace Energize.Services.Commands.Modules
 {
