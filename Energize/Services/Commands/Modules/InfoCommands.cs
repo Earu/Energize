@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Diagnostics;
+using Energize.Utils;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -176,7 +177,7 @@ namespace Energize.Services.Commands.Modules
                     + "**STATUS:** " + u.Status + "\n"
                     + "**JOINED DISCORD:** " + created + "\n"
                     + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
-                    + (guildinfo == null ? "" : guildinfo);
+                    + (guildinfo ?? "");
 
                 await ctx.MessageSender.Send(ctx.Message,"User",desc,ctx.MessageSender.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
             }
@@ -344,7 +345,24 @@ namespace Energize.Services.Commands.Modules
             }
         }
 
-        /*[Command(Name="playing",Help="Gets the amount of people playing a specific game",Usage="playing <game>")]
+        [Command(Name="lastchanges",Help="Gets the last changes publicly available",Usage="lastchanges <nothing>")]
+        private async Task LastChanges(CommandContext ctx)
+        {
+            string endpoint = "https://api.github.com/repos/Earu/Energize/commits";
+            string json = await HTTP.Fetch(endpoint, ctx.Log);
+            GitHub.GitHubCommit[] commits = JSON.Deserialize<GitHub.GitHubCommit[]>(json, ctx.Log);
+            if(commits != null && commits.Length > 0)
+            {
+                string changes = commits[0].commit.message;
+                await ctx.MessageSender.Good(ctx.Message, "Last Changes", $"```\n{changes}\n```");
+            }
+            else
+            {
+                await ctx.MessageSender.Danger(ctx.Message, "Last Changes", "There was a problem fetching the last changes");
+            }
+        }
+
+        [Command(Name="playing",Help="Gets the amount of people playing a specific game",Usage="playing <game>")]
         private async Task Playing(CommandContext ctx)
         {
             int count = 0;
@@ -352,22 +370,25 @@ namespace Energize.Services.Commands.Modules
             {
                 foreach(SocketGuildUser user in guild.Users)
                 {
-                    string activity = user.Activity.Name.ToLower();
-                    if(activity.Contains(ctx.Input.ToLower()))
+                    if(user.Activity != null)
                     {
-                        count++;
+                        string activity = user.Activity.Name.ToLower();
+                        if (activity == ctx.Input.ToLower())
+                        {
+                            count++;
+                        }
                     }
                 }
             }
 
             if(count > 0)
             {
-                await ctx.EmbedReply.Good(ctx.Message,"Playing","**" + count + "** users are playing `" + ctx.Input + "`");
+                await ctx.MessageSender.Good(ctx.Message,"Playing","**" + count + "** users are playing `" + ctx.Input + "`");
             }
             else
             {
-                await ctx.EmbedReply.Good(ctx.Message,"Playing","Seems like nobody is playing `" + ctx.Input + "`");
+                await ctx.MessageSender.Good(ctx.Message,"Playing","Seems like nobody is playing `" + ctx.Input + "`");
             }
-        }*/
+        }
     }
 }
