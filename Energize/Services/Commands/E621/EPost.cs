@@ -6,6 +6,7 @@ namespace Energize.Services.Commands.E621
 {
     class EPost
     {
+#pragma warning disable 649
         public int id;
         public string tags;
         public bool? locked_tags;
@@ -35,5 +36,6 @@ namespace Energize.Services.Commands.E621
         public bool? parent_id;
         public string[] artist;
         public string[] sources;
+#pragma warning restore 649
     }
 }

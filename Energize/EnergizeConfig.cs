@@ -8,6 +8,7 @@ namespace Energize
     [DataContract]
     public class EnergizeConfig
     {
+#pragma warning disable 649
         [DataMember]
         private string TokenDev;
         [DataMember]
@@ -32,6 +33,7 @@ namespace Energize
         private string ServerInvite;
         [DataMember]
         private string SteamAPIKey;
+#pragma warning restore 649
 
         public static string TOKEN_MAIN;
         public static string TOKEN_DEV;
@@ -53,18 +55,18 @@ namespace Energize
                 string json = await reader.ReadToEndAsync();
                 EnergizeConfig config = JsonConvert.DeserializeObject<EnergizeConfig>(json);
 
-                TOKEN_DEV = config.TokenDev;
-                TOKEN_MAIN = config.TokenMain;
-                TWITCH_URL = config.TwitchURL;
-                BOT_ID_MAIN = config.BotIDMain;
-                BOT_ID_DEV = config.BotIDDev;
-                OWNER_ID = config.OwnerID;
-                GOOGLE_API_KEY = config.GoogleAPIKey;
-                MASHAPE_KEY = config.MashapeKey;
+                TOKEN_DEV           = config.TokenDev;
+                TOKEN_MAIN          = config.TokenMain;
+                TWITCH_URL          = config.TwitchURL;
+                BOT_ID_MAIN         = config.BotIDMain;
+                BOT_ID_DEV          = config.BotIDDev;
+                OWNER_ID            = config.OwnerID;
+                GOOGLE_API_KEY      = config.GoogleAPIKey;
+                MASHAPE_KEY         = config.MashapeKey;
                 FEEDBACK_CHANNEL_ID = config.FeedbackChannelID;
-                WEB_SEARCH_TOKEN = config.WebSearchToken;
-                SERVER_INVITE = config.ServerInvite;
-                STEAM_API_KEY = config.SteamAPIKey;
+                WEB_SEARCH_TOKEN    = config.WebSearchToken;
+                SERVER_INVITE       = config.ServerInvite;
+                STEAM_API_KEY       = config.SteamAPIKey;
             }
         }
     }

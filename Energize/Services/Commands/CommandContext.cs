@@ -292,9 +292,10 @@ namespace Energize.Services.Commands
             return user.Roles.Any(x => x != null && x.Name.StartsWith(name));
         }
 
-        public async Task<RestMessage> SendBadUsage()
+        public async Task<RestMessage> SendBadUsage(string extra=null)
         {
-            return await this._MessageSender.Warning(this._Message, $"Help [ {Command.Cmd.ToUpper()} ]", this.Help);
+            string help = $"{this.Help}**EXTRA:**\n{extra}";
+            return await this._MessageSender.Warning(this._Message, $"Help [ {Command.Cmd.ToUpper()} ]", help);
         }
 
         public async Task<bool> IsOwner()

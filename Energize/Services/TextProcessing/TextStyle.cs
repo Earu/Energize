@@ -197,8 +197,34 @@ namespace Energize.Services.TextProcessing
                     .Replace("o", "0");
 
                 return result;
+            },
+            ["zalgo"] = input =>
+            {
+                string ret = string.Empty;
+                Random rand = new Random();
+                foreach(char c in input)
+                {
+                    string toput = string.Empty;
+                    int count = rand.Next(5, 20);
+                    for(uint i =0; i < count; i++)
+                    {
+                        toput += EnergizeData.ZALGO[rand.Next(0, EnergizeData.ZALGO.Length - 1)];
+                    }
+
+                    ret += toput + c;
+                }
+                return ret;
             }
         };
+
+        private EnergizeLog _Log;
+        private EnergizeMessage _MessageSender;
+
+        public TextStyle(EnergizeClient client)
+        {
+            this._Log = client.Log;
+            this._MessageSender = client.MessageSender;
+        }
 
         public string GetStyleResult(string input, string style)
         {
@@ -237,27 +263,45 @@ namespace Energize.Services.TextProcessing
                     string style = role.Name.Remove(0, identifier.Length);
                     if (StyleCallbacks.ContainsKey(style))
                     {
+                        bool shouldpost = true;
                         try
+                        {
+                            await msg.DeleteAsync();
+                        }
+                        catch
+                        {
+                            shouldpost = false;
+                        }
+
+                        if(shouldpost)
                         {
                             string result = GetStyleResult(msg.Content, style);
                             string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
                             string name = msg.Author.Username;
+                            ulong success = 0;
                             WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
-
-                            await msg.DeleteAsync();
 
                             if (result.Length > 2000)
                             {
-                                await sender.SendRaw(msg, "Message was over discord limit!",name,avatar);
+                                success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);
                             }
                             else
                             {
-                                await sender.SendRaw(msg, result, name, avatar);
+                                success = await sender.SendRaw(msg, result, name, avatar);
                             }
-                        }
-                        catch
-                        {
 
+                            if (success == 0)
+                            {
+                                string display = $"{msg.Author}: {result}\n`(This feature needs the \"Manage webhooks\" right to work properly)`";
+                                if(display.Length > 2000)
+                                {
+                                    await this._MessageSender.Warning(msg, "Style", "Message was over discord limit!");
+                                }
+                                else
+                                {
+                                    await this._MessageSender.SendRaw(msg,display);
+                                }
+                            }
                         }
                     }
                 }
