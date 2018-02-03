@@ -8,6 +8,7 @@ namespace Energize
     [DataContract]
     class EnergizeData
     {
+#pragma warning disable 649
         [DataMember]
         public string[] Adjectives;
         [DataMember]
@@ -28,6 +29,10 @@ namespace Energize
         public string[][] AnimeDecorations;
         [DataMember]
         public string[] HentaiQuotes;
+        [DataMember]
+        public char[] Zalgo;
+
+#pragma warning restore 649
 
         public static string[] ADJECTIVES;
         public static string[] NOUNS;
@@ -39,6 +44,7 @@ namespace Energize
         public static string[] ANIME_EMOTES;
         public static string[][] ANIME_DECORATIONS;
         public static string[] HENTAI_QUOTES;
+        public static char[] ZALGO;
 
         public static async Task Load()
         {
@@ -56,6 +62,7 @@ namespace Energize
                 ANIME_EMOTES = data.AnimeEmotes;
                 ANIME_DECORATIONS = data.AnimeDecorations;
                 HENTAI_QUOTES = data.HentaiQuotes;
+                ZALGO = data.Zalgo;
             }
         }
     }

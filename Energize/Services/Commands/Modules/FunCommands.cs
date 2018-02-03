@@ -246,18 +246,20 @@ namespace Energize.Services.Commands.Modules
         [Command(Name="style",Help="Sets a typing style for yourself or use one on a sentence",Usage="style <style>,<toggle|sentence>")]
         private async Task Style(CommandContext ctx)
         {
-            if(!ctx.HasArguments)
+            TextStyle style = ServiceManager.GetService<TextStyle>("TextStyle");
+            string stylelist = $"Styles available:\n`{string.Join(",", style.GetStyles())}`";
+
+            if (!ctx.HasArguments)
             {
-                await ctx.SendBadUsage();
+                await ctx.SendBadUsage(stylelist);
                 return;
             }
 
-            TextStyle style = ServiceManager.GetService<TextStyle>("TextStyle");
-            if(ctx.Arguments.Count > 1)
+            if (ctx.Arguments.Count > 1)
             {
                 if(!style.GetStyles().Any(x => x == ctx.Arguments[0]))
                 {
-                    await ctx.MessageSender.Danger(ctx.Message,"Style","Styles available:\n`" + string.Join(",",style.GetStyles()) + "`");
+                    await ctx.MessageSender.Warning(ctx.Message,"Style",stylelist);
                     return;
                 }
 
@@ -312,12 +314,12 @@ namespace Energize.Services.Commands.Modules
                 }
                 else
                 {
-                    await ctx.SendBadUsage();
+                    await ctx.SendBadUsage(stylelist);
                 }
             }
             else
             {
-                await ctx.SendBadUsage();
+                await ctx.SendBadUsage(stylelist);
             }
         }
 
