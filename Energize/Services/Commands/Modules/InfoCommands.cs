@@ -177,7 +177,7 @@ namespace Energize.Services.Commands.Modules
                     + "**STATUS:** " + u.Status + "\n"
                     + "**JOINED DISCORD:** " + created + "\n"
                     + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
-                    + (guildinfo ?? "");
+                    + (guildinfo == null ? "" : guildinfo);
 
                 await ctx.MessageSender.Send(ctx.Message,"User",desc,ctx.MessageSender.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
             }

@@ -32,18 +32,25 @@ namespace Energize.Services
 
             foreach(Type service in services)
             {
-                object inst;
+                object inst = null;
                 bool hasconstructor = false;
-                if (service.GetConstructor(new Type[]{ typeof(EnergizeClient) }) != null)
+                try
                 {
-                    inst = Activator.CreateInstance(service, eclient);
-                    hasconstructor = true;
+                    if (service.GetConstructor(new Type[] { typeof(EnergizeClient) }) != null)
+                    {
+                        inst = Activator.CreateInstance(service, eclient);
+                        hasconstructor = true;
 
+                    }
+                    else
+                    {
+                        //Use default constructor
+                        inst = Activator.CreateInstance(service);
+                    }
                 }
-                else
+                catch(Exception e)
                 {
-                    //Use default constructor
-                    inst = Activator.CreateInstance(service);
+                    eclient.Log.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e}");
                 }
 
                 Service serv = new Service(inst)
@@ -54,7 +61,14 @@ namespace Energize.Services
                 MethodInfo initinfo = service.GetMethod("Initialize");
                 if(initinfo != null)
                 {
-                    initinfo.Invoke(inst, null);
+                    try
+                    {
+                        initinfo.Invoke(inst, null);
+                    }
+                    catch(Exception e)
+                    {
+                        eclient.Log.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
+                    }
                     serv.Initialized = true;
                 }
 
@@ -93,18 +107,21 @@ namespace Energize.Services
         {
             foreach(KeyValuePair<string,Service> service in _Services)
             {
-                MethodInfo minfo = service.Value.Instance.GetType().GetMethod("InitializeAsync");
-                if(minfo != null)
+                if(service.Value.Instance != null)
                 {
-                    try
+                    MethodInfo minfo = service.Value.Instance.GetType().GetMethod("InitializeAsync");
+                    if (minfo != null)
                     {
-                        Task tinit = (Task)minfo.Invoke(service.Value.Instance, null);
-                        await tinit;
-                    }
-                    catch(Exception e)
-                    {
-                        eclient.Log.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
-                        + $"invoking InitializeAsync: {e.Message}");
+                        try
+                        {
+                            Task tinit = (Task)minfo.Invoke(service.Value.Instance, null);
+                            await tinit;
+                        }
+                        catch (Exception e)
+                        {
+                            eclient.Log.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
+                            + $"invoking InitializeAsync: {e.Message}");
+                        }
                     }
                 }
             }

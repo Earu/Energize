@@ -37,7 +37,7 @@ namespace Energize.Services.Markov
                 }
                 catch(Exception e)
                 {
-                    log.Nice("Markov",ConsoleColor.Red,"Failed to learn from a message\n" + e.ToString());
+                    log.Nice("Markov",ConsoleColor.Red,$"Failed to learn from a message:{e.Message}");
                 }
             }
         }
