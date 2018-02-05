@@ -105,8 +105,9 @@ namespace Energize.Services.Commands.Modules
                         }
 
                         VideoInformation video = videos[id-1];
-                        await ctx.MessageSender.SendRaw(ctx.Message, "#" + id + " out of " + videos.Count
-                            + " results for \"" + ctx.Arguments[0] + "\"" + "\n" + video.Url);
+                        await ctx.MessageSender.SendRaw(ctx.Message, ctx.AuthorMention + " #" + id 
+                        + " out of " + videos.Count + " results for \"" + ctx.Arguments[0] + "\"" 
+                        + "\n" + video.Url);
                     }
                     else
                     {
@@ -116,7 +117,7 @@ namespace Energize.Services.Commands.Modules
                 else
                 {
                     VideoInformation video = videos[0];
-                    await ctx.MessageSender.SendRaw(ctx.Message, "#1 out of " + videos.Count
+                    await ctx.MessageSender.SendRaw(ctx.Message,ctx.AuthorMention + " #1 out of " + videos.Count
                             + " results for \"" + ctx.Input + "\"" + "\n" + video.Url);
                 }
             }

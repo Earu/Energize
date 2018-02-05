@@ -33,6 +33,8 @@ namespace Energize
         private string ServerInvite;
         [DataMember]
         private string SteamAPIKey;
+        [DataMember]
+        private string DBConnectionString;
 #pragma warning restore 649
 
         public static string TOKEN_MAIN;
@@ -47,6 +49,7 @@ namespace Energize
         public static string WEB_SEARCH_TOKEN;
         public static string SERVER_INVITE;
         public static string STEAM_API_KEY;
+        public static string DB_CONNECTION_STRING;
 
         public static async Task Load()
         {
@@ -55,18 +58,19 @@ namespace Energize
                 string json = await reader.ReadToEndAsync();
                 EnergizeConfig config = JsonConvert.DeserializeObject<EnergizeConfig>(json);
 
-                TOKEN_DEV           = config.TokenDev;
-                TOKEN_MAIN          = config.TokenMain;
-                TWITCH_URL          = config.TwitchURL;
-                BOT_ID_MAIN         = config.BotIDMain;
-                BOT_ID_DEV          = config.BotIDDev;
-                OWNER_ID            = config.OwnerID;
-                GOOGLE_API_KEY      = config.GoogleAPIKey;
-                MASHAPE_KEY         = config.MashapeKey;
-                FEEDBACK_CHANNEL_ID = config.FeedbackChannelID;
-                WEB_SEARCH_TOKEN    = config.WebSearchToken;
-                SERVER_INVITE       = config.ServerInvite;
-                STEAM_API_KEY       = config.SteamAPIKey;
+                TOKEN_DEV            = config.TokenDev;
+                TOKEN_MAIN           = config.TokenMain;
+                TWITCH_URL           = config.TwitchURL;
+                BOT_ID_MAIN          = config.BotIDMain;
+                BOT_ID_DEV           = config.BotIDDev;
+                OWNER_ID             = config.OwnerID;
+                GOOGLE_API_KEY       = config.GoogleAPIKey;
+                MASHAPE_KEY          = config.MashapeKey;
+                FEEDBACK_CHANNEL_ID  = config.FeedbackChannelID;
+                WEB_SEARCH_TOKEN     = config.WebSearchToken;
+                SERVER_INVITE        = config.ServerInvite;
+                STEAM_API_KEY        = config.SteamAPIKey;
+                DB_CONNECTION_STRING = config.DBConnectionString;
             }
         }
     }
