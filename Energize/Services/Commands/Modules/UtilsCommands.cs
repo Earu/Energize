@@ -14,6 +14,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Threading;
 using Energize.Services.Listeners;
+using Microsoft.Data.Sqlite;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -206,6 +207,12 @@ namespace Energize.Services.Commands.Modules
                 return;
             }
 
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
             string code = ctx.Input;
             if(ctx.Input[ctx.Input.Length - 1] != ';')
             {
@@ -343,18 +350,66 @@ namespace Energize.Services.Commands.Modules
             Process.GetCurrentProcess().Kill();
         }
 
-        /*[Command(Name="w",Help="Asks wolfram something",Usage="w <input>")]
-        private async Task Wolfram(CommandContext ctx)
+        [Command(Name="sql",Help="Runs an sql statement in the database",Usage="sql <statement>")]
+        private async Task SQL(CommandContext ctx)
         {
-            if(!ctx.HasArguments)
+            if(!await ctx.IsOwner())
             {
-                await ctx.EmbedReply.Danger(ctx.Message,"Wolfram","You didn't provide any input");
+                await ctx.MessageSender.Danger(ctx.Message, "Restart", "Owner only!");
                 return;
             }
 
-            string endpoint = "";
-            string result = await HTTP.Fetch(endpoint,ctx.Log);
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
 
-        }*/
+            using (SqliteConnection connection = new SqliteConnection(EnergizeConfig.DB_CONNECTION_STRING))
+            {
+
+                try
+                {
+                    await connection.OpenAsync();
+
+                    SqliteCommand cmd = new SqliteCommand(ctx.Input, connection);
+                    SqliteDataReader reader = cmd.ExecuteReader();
+
+                    if (!reader.HasRows)
+                    {
+                        await ctx.MessageSender.Warning(ctx.Message, "SQL", "No data was gathered for the specified statement");
+                        return;
+                    }
+
+                    string res = string.Empty;
+                    while (reader.Read())
+                    {
+                        List<string> values = new List<string>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            values.Add(reader[i].ToString());
+                        }
+
+                        res += $"{string.Join('\t', values)}\n{new string('-', 50)}\n";
+                    }
+
+                    res = $"```\n{new string('-', 50)}\n{res}```";
+                    if(res.Length > 2000)
+                    {
+                        await ctx.MessageSender.Danger(ctx.Message, "SQL", "Output was too long to be sent");
+                    }
+                    else
+                    {
+                        await ctx.MessageSender.Good(ctx.Message, "SQL", res);
+                    }
+          
+                }
+                catch(Exception e)
+                {
+                    await ctx.MessageSender.Danger(ctx.Message, "SQL", "```\n" + e.Message.Replace("`", "") + "```");
+                }
+            }
+
+        }
     }
 }

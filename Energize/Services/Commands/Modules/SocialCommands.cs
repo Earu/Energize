@@ -1,5 +1,7 @@
 ﻿using Discord.WebSocket;
 using Energize.Services.Commands.Social;
+using Energize.Services.Database;
+using Energize.Services.Database.Models;
 using Energize.Utils;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -118,7 +120,7 @@ namespace Energize.Services.Commands.Modules
             await this.Action(ctx,"Bite",action.Bite);
         }
 
-        [Command(Name = "love", Help = "Gets a love percentage between two users", Usage = "love <@user>,<@user>")]
+        [Command(Name="love",Help="Gets a love percentage between two users",Usage="love <@user>,<@user>")]
         private async Task Love(CommandContext ctx)
         {
             string endpoint = "https://love-calculator.p.mashape.com/getPercentage?";
@@ -135,11 +137,55 @@ namespace Energize.Services.Commands.Modules
 
                 LoveObject love = JSON.Deserialize<LoveObject>(json, ctx.Log);
 
-                await ctx.MessageSender.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
+                await ctx.MessageSender.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention 
+                    + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);
             }
             else
             {
                 await ctx.SendBadUsage();
+            }
+        }
+
+        [Command(Name="setdesc",Help="Sets your description",Usage="setdesc <description>")]
+        private async Task SetDescription(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
+            DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+            using (DBContext dbctx = await db.GetContext())
+            {
+                DiscordUser resuser = await dbctx.Context.GetOrCreateUser(ctx.Message.Author.Id);
+                resuser.Description = ctx.Input;
+            }
+
+            await ctx.MessageSender.Good(ctx.Message, "Description", "Description successfully changed");
+        }
+
+        [Command(Name="desc",Help="Show another user's description",Usage="desc <@user>")]
+        private async Task Description(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
+            if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user))
+            {
+                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+                using (DBContext dbctx = await db.GetContext())
+                {
+                    DiscordUser resuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                    await ctx.MessageSender.Good(ctx.Message, "Description", $"{user.Mention}'s description is:\n`{resuser.Description}`");
+                }
+            }
+            else
+            {
+                await ctx.MessageSender.Danger(ctx.Message, "Description", "Coulnd't find any user for your input");
             }
         }
     }

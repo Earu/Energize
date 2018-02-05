@@ -10,5 +10,6 @@
   "FeedbackChannelID": 0,
   "WebSearchToken": "",
   "ServerInvite": "",
-  "SteamAPIKey": ""
+  "SteamAPIKey": "",
+  "DBConnectionString": ""
 }
