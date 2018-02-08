@@ -1,12 +1,32 @@
 ﻿using Discord.WebSocket;
+using Energize.Services.Database;
+using Energize.Services.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Energize.Services.Commands.Social
 {
     class Action
     {
-        private string Global(SocketUser from, IReadOnlyList<SocketUser> to, string act, string[] sentences)
+        private delegate void DBCountCallback(DiscordUserStats stats);
+        private Dictionary<string, DBCountCallback> _DBCountCallbacks = new Dictionary<string, DBCountCallback>
+        {
+            ["hug"] = s => s.HuggedCount++,
+            ["boop"] = s => s.BoopedCount++,
+            ["slap"] = s => s.SlappedCount++,
+            ["kiss"] = s => s.KissedCount++,
+            ["snuggle"] = s => s.SnuggledCount++,
+            ["shoot"] = s => s.ShotCount++,
+            ["pet"] = s => s.PetCount++,
+            ["spank"] = s => s.SpankedCount++,
+            ["yiff"] = s => s.YiffedCount++,
+            ["nom"] = s => s.NomedCount++ ,
+            ["lick"] = s => s.LickedCount++,
+            ["bite"] = s => s.BittenCount++,
+        };
+
+        private async Task<string> Global(SocketUser from, IReadOnlyList<SocketUser> to, string act, string[] sentences)
         {
             Random rand = new Random();
             string action = sentences[rand.Next(0, sentences.Length)];
@@ -15,22 +35,30 @@ namespace Energize.Services.Commands.Social
             
             int count = 0;
             string users = "";
-            foreach(SocketUser user in to)
+            foreach (SocketUser user in to)
             {
+                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+                using (DBContext ctx = await db.GetContext())
+                {
+                    DiscordUser dbuser = await ctx.Context.GetOrCreateUser(user.Id);
+                    dbuser.Stats = dbuser.Stats ?? new DiscordUserStats();
+                    _DBCountCallbacks[act](dbuser.Stats);
+                }
                 users += user.Mention + " and ";
                 count++;
-                
-                if(count > 3) break;
+
+                if (count > 3) break;
             }
+
             users = users.Remove(users.Length - 4);
             action = action.Replace("<user>", users);
 
             return action;
         }
 
-        public string Hug(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Hug(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "hug",new string[]
+            return await Global(from, to, "hug",new string[]
             {
                 "<origin> comes up close to <user> and <action>s them",
                 "<origin> sneaks behind <user> and <action>s them",
@@ -38,9 +66,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Boop(SocketUser from, IReadOnlyList<SocketUser> to)
+        public async Task<string> Boop(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "boop",new string[]
+            return await Global(from, to, "boop",new string[]
             {
                 "<user> got <action>ed by <origin>",
                 "<origin> proceeds to gently <action> <user>",
@@ -48,9 +76,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Slap(SocketUser from, IReadOnlyList<SocketUser> to)
+        public async Task<string> Slap(SocketUser from, IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "slap",new string[]
+            return await Global(from, to, "slap",new string[]
             {
                 "<origin> <action>s <user> angrily",
                 "<origin> gets mad and <action>s <user> in the face",
@@ -58,9 +86,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Kiss(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Kiss(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "kiss",new string[]
+            return await Global(from, to, "kiss",new string[]
             {
                 "<origin> gives a big <action> to <user>",
                 "<origin> gently <action>es <user>",
@@ -68,9 +96,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Snuggle(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Snuggle(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "snuggle",new string[]
+            return await Global(from, to, "snuggle",new string[]
             {
                 "<origin> <action>s against <user>",
                 "<origin> <action>s <user>",
@@ -78,9 +106,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Shoot(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Shoot(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "shoot", new string[]
+            return await Global(from, to, "shoot", new string[]
             {
                 "<origin> <action>s at <user>",
                 "<origin> pulls out a gun and <action>s <user>",
@@ -88,9 +116,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Pet(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Pet(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "pet", new string[]
+            return await Global(from, to, "pet", new string[]
             {
                 "<origin> comes up to <user> and <action>s their head(s)",
                 "<origin> gives <user> a gentle <action>",
@@ -98,9 +126,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Spank(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Spank(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "spank", new string[]
+            return await Global(from, to, "spank", new string[]
             {
                 "<origin> gives a large <action> to <user>",
                 "<origin> <action>s <user>, hard.",
@@ -108,9 +136,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Yiff(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Yiff(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from, to, "yiff", new string[]
+            return await Global(from, to, "yiff", new string[]
             {
                 "<origin> <action>s <user> *cringe*",
                 "<origin> wildy <action>s <user> *cringe*",
@@ -118,9 +146,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Nom(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Nom(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from,to,"nom",new string[]
+            return await Global(from,to,"nom",new string[]
             {
                 "<origin> <action>s <user>",
                 "<origin> gently <action>s <user>",
@@ -128,9 +156,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Lick(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Lick(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from,to,"lick",new string[]
+            return await Global(from,to,"lick",new string[]
             {
                 "<origin> softly <action>s <user>",
                 "<origin> <action>s <user> across their faces",
@@ -138,9 +166,9 @@ namespace Energize.Services.Commands.Social
             });
         }
 
-        public string Bite(SocketUser from,IReadOnlyList<SocketUser> to)
+        public async Task<string> Bite(SocketUser from,IReadOnlyList<SocketUser> to)
         {
-            return Global(from,to,"bite",new string[]
+            return await Global(from,to,"bite",new string[]
             {
                 "<origin> angrily <action>s <user>",
                 "<origin> <action>s <user> hard",

@@ -13,6 +13,7 @@ namespace Energize.Services.Database
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
         public DbSet<DiscordChannel> Channels { get; set; }
+        public DbSet<DiscordUserStats> Stats { get; set; }
 
         public EnergizeDB(string connectionstring)
         {
