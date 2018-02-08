@@ -71,7 +71,7 @@ namespace Energize.Services.Commands
             catch(Exception e)
             {
                 await ctx.MessageSender.Danger(ctx.Message,"Internal error","Something went wrong, try again?");
-                ctx.Log.Nice("CommandError",ConsoleColor.Red,e.Message);
+                ctx.Log.Nice("CommandError",ConsoleColor.Red,e.ToString());
             }
         }
 
