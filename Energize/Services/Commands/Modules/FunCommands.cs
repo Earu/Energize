@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using HtmlAgilityPack;
 using Energize.Services.Markov;
 using Energize.Services.TextProcessing;
+using Energize.Services.Database;
+using Energize.Services.Database.Models;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -272,36 +274,21 @@ namespace Energize.Services.Commands.Modules
                     }
 
                     SocketGuildUser user = ctx.Message.Author as SocketGuildUser;
-                    string identifier = "EnergizeStyle: ";
-                    string rolename = identifier + ctx.Arguments[0];
-
-                    IGuild guild = user.Guild as IGuild;
-                    IGuildUser bot = await guild.GetUserAsync(ctx.Client.CurrentUser.Id);
-                    if(!bot.GuildPermissions.ManageMessages || !bot.GuildPermissions.ManageRoles)
+                    DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+                    using (DBContext dbctx = await db.GetContext())
                     {
-                        await ctx.MessageSender.Danger(ctx.Message,"Style","I dont seem to have the rights for that!");
-                        return;
+                        DiscordUser dbuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                        if(dbuser.Style == ctx.Arguments[0])
+                        {
+                            dbuser.Style = "none";
+                            await ctx.MessageSender.Good(ctx.Message, "Style", "Untoggled style");
+                        }
+                        else if(dbuser.Style != ctx.Arguments[0])
+                        {
+                            dbuser.Style = ctx.Arguments[0];
+                            await ctx.MessageSender.Good(ctx.Message, "Style", "Toggled style");
+                        }
                     }
-
-                    if(ctx.HasRole(user,rolename)) //untoggle
-                    {
-                        IRole oldrole = await ctx.GetOrCreateRole(user,rolename);
-                        await user.RemoveRoleAsync(oldrole);
-
-                        await ctx.MessageSender.Good(ctx.Message,"Style","Untoggled style");
-                        return;
-                    }
-
-                    if(ctx.HasRoleStartingWith(user,identifier)) //changes of style
-                    {
-                        IRole oldrole = user.Roles.Where(x => x.Name != null && x.Name.StartsWith(identifier)).First();
-                        await user.RemoveRoleAsync(oldrole);
-                    }
-
-                    IRole newrole = await ctx.GetOrCreateRole(user,rolename);
-                    await user.AddRoleAsync(newrole);
-
-                    await ctx.MessageSender.Good(ctx.Message,"Style","Style applied");
                 }
                 else if(!string.IsNullOrWhiteSpace(ctx.Arguments[1]))
                 {

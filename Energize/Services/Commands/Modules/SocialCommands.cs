@@ -11,7 +11,7 @@ namespace Energize.Services.Commands.Modules
     [CommandModule("Social")]
     class SocialCommands
     {
-        private delegate string ActionCallback(SocketUser from, IReadOnlyList<SocketUser> to);
+        private delegate Task<string> ActionCallback(SocketUser from, IReadOnlyList<SocketUser> to);
 
         private async Task Action(CommandContext ctx,string what,ActionCallback callback)
         {
@@ -27,7 +27,7 @@ namespace Energize.Services.Commands.Modules
 
             if (users.Count > 0)
             {
-                result = callback(ctx.Message.Author, users);
+                result = await callback(ctx.Message.Author, users);
                 await ctx.MessageSender.Good(ctx.Message, what, result);
             }
             else
@@ -186,6 +186,34 @@ namespace Energize.Services.Commands.Modules
             else
             {
                 await ctx.MessageSender.Danger(ctx.Message, "Description", "Coulnd't find any user for your input");
+            }
+        }
+
+        [Command(Name="stats",Help="Gets the social stats of a user",Usage="stats <@user|userid>")]
+        private async Task Stats(CommandContext ctx)
+        {
+            if(!ctx.HasArguments)
+            {
+                await ctx.SendBadUsage();
+                return;
+            }
+
+            if(ctx.TryGetUser(ctx.Arguments[0],out SocketUser user,true))
+            {
+                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+                using (DBContext dbctx = await db.GetContext())
+                {
+                    DiscordUser dbuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                    DiscordUserStats s = dbuser.Stats;
+                    string res = $"{user.Mention} got:\n***HUGGED:*** `{s.HuggedCount}`\t***KISSED:*** `{s.KissedCount}`\n"
+                        + $"***SNUGGLED:*** `{s.SnuggledCount}`\t***PET:*** `{s.PetCount}`\n"
+                        + $"***NIBBLED:*** `{s.NomedCount}`\t***SPANKED:*** `{s.SpankedCount}`\n"
+                        + $"***SHOT:*** `{s.ShotCount}`\t***SLAPPED:*** `{s.SlappedCount}`\n"
+                        + $"***YIFFED:*** `{s.YiffedCount}`\t***BITTEN:*** `{s.BittenCount}`\n"
+                        + $"***BOOPED:*** `{s.BoopedCount}`";
+
+                    await ctx.MessageSender.Good(ctx.Message, "Social Stats", res);
+                }
             }
         }
     }
