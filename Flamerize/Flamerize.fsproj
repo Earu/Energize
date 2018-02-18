@@ -6,9 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="MessageSender.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="BotCommands.fs" />
-    <Compile Include="BotCore.fs" />
+    <Compile Include="Commands.fs" />
+    <Compile Include="Initializer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
