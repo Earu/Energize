@@ -11,7 +11,7 @@ module Initializer =
     let DiscordConfig = DiscordConfiguration()
     DiscordConfig.set_AutoReconnect true
     DiscordConfig.set_LogLevel LogLevel.Debug
-    DiscordConfig.set_Token "MzYxNzk2ODI0NzE5NDI1NTM2.DKpVEQ.Pip4gtZJXDuSaaQnK4ff5PYgg1E"
+    DiscordConfig.set_Token "<YOUR TOKEN HERE>"
     DiscordConfig.set_TokenType TokenType.Bot
 
     let Discord = new DiscordClient(DiscordConfig)
@@ -41,6 +41,14 @@ module Initializer =
         Console.Write (sprintf "%s" e.Application)
         Console.ForegroundColor <- ConsoleColor.White
         Console.Write (sprintf "] >> %s\n" e.Message)
+    
+    let OnError(e: Exception) =
+        let err = e.ToString()
+        Console.Write (sprintf "%s - [" (DateTime.Now.ToString("HH:mm")))
+        Console.ForegroundColor <- ConsoleColor.Red
+        Console.Write (sprintf "Error")
+        Console.ForegroundColor <- ConsoleColor.White
+        Console.Write (sprintf "] >> %s\n" err)
 
     Discord.DebugLogger.LogMessageReceived.AddHandler(EventHandler<DebugLogMessageEventArgs>(OnLog))
 
@@ -55,6 +63,7 @@ module Initializer =
         embed.Timestamp <- new Nullable<DateTimeOffset>(DateTimeOffset.UtcNow)
         embed.Description <- sprintf "```cs\n%s: %s\n```" (e.Exception.GetType().ToString()) e.Exception.Message
 
+        OnError e.Exception
         e.Context.Channel.SendMessageAsync("", false, embed.Build()) :> Task
 
     Commands.add_CommandErrored(new AsyncEventHandler<CommandErrorEventArgs>(OnCommandError))
