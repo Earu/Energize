@@ -10,8 +10,8 @@ fn main()
     let path = String::from("markov/");
     let ext = String::from(".markov");
     let chain = MarkovChain::new(path,2,ext);
-    let mut sentence = String::from("I like girls");
+    let sentence = String::from("I like girls");
 
     chain.learn(sentence);
-    println!("Hello, world!");
+    println!("{}",chain.generate_from(String::from("like"),30));
 }

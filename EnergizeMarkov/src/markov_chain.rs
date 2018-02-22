@@ -43,11 +43,13 @@ impl MarkovChain
             return false;
         }
 
-        let mut file = fileres.unwrap();
+        let file = fileres.unwrap();
         let mut writer = BufWriter::new(&file);
-        writer.write(text.as_bytes());
-
-        return true;
+        match writer.write(text.as_bytes())
+        {
+            Ok(_) => true,
+            Err(_) => false
+        }
     }
 
     fn read_all_lines(&self,path: String) -> Vec<String>
@@ -58,17 +60,29 @@ impl MarkovChain
             return vec![];
         }
 
-        let mut file = fileres.unwrap();
-        let mut reader = BufReader::new(&file);
-        let mut contents = reader.lines().map(|r| r.unwrap());
+        let file = fileres.unwrap();
+        let reader = BufReader::new(&file);
+        let contents = reader.lines().map(|r| r.unwrap());
         
-        return contents.collect::<Vec<String>>();
+        contents.collect::<Vec<String>>()
     }
 
     fn split<'a>(&self,sentence: &'a str) -> Vec<&'a str>
     {
-        let mut re = Regex::new(r"\s|\.|,|!|\?|;|_").unwrap();
-        return re.split(sentence).collect::<Vec<&str>>();
+        let re = Regex::new(r"\s|\.|,|!|\?|;|_").unwrap();
+        re.split(sentence).collect::<Vec<&str>>()
+    }
+
+    fn split_noref(&self,sentence: String) -> Vec<String>
+    {
+        let re = Regex::new(r"\s|\.|,|!|\?|;|_").unwrap();
+        let mut parts: Vec<String> = vec![];
+        for x in re.split(&sentence)
+        {
+            parts.push(String::from(x));
+        }
+
+        parts
     }
 
     pub fn learn(&self,mut sentence: String) -> bool
@@ -87,11 +101,11 @@ impl MarkovChain
         }
 
         sentence = sentence.trim().to_lowercase();
-        let mut re = Regex::new(r"[a-z]+://\S+").unwrap();
+        let re = Regex::new(r"[a-z]+://\S+").unwrap();
         sentence = re.replace_all(&sentence,"LINK-REMOVED").to_string();
         sentence = sentence.replace("\\","/").replace("/"," ");
         
-        let mut words: Vec<&str> = self.split(&sentence);
+        let words: Vec<&str> = self.split(&sentence);
         let mut i: i32 = 0;
         let mut worditer = words.iter().peekable();
 
@@ -126,19 +140,38 @@ impl MarkovChain
             i += 1;
         }
 
-        return true;
+        true
     }
 
-    pub fn generate(&self,wordcount: u32) //-> String
+    pub fn generate(&self,wordcount: u32) -> String
     {
-        //let mut rng = rand::thread_rng();
+        let mut rng = rand::thread_rng();
+        let mut files = fs::read_dir(&self.path)
+            .unwrap()
+            .collect::<Vec<_>>();
+        
+        match files.is_empty()
+        {
+            true => 
+            {
+                let max = files.len() - 1;
+                let index = rng.gen_range::<usize>(0,max);
+                let entry = files.swap_remove(index).unwrap();
+                let word = entry.file_name()
+                    .into_string()
+                    .unwrap();
+
+                format!("{} {}",word.clone(),self.generate_from(word,wordcount))
+            },
+            false => String::new()
+        }
     }
 
     pub fn generate_from(&self,firstpart: String,wordcount: u32) -> String
     {
         let mut rng = rand::thread_rng();
         let mut res = String::new();
-        let mut curinput = self.split(&firstpart);
+        let mut curinput = self.split_noref(firstpart);
 
         for _ in 0..wordcount
         {
@@ -146,24 +179,25 @@ impl MarkovChain
             if !Path::new(&path).exists()
             {
                 let lines = self.read_all_lines(path);
-                let index = rng.gen_range::<usize>(0,lines.len());
-                let next = lines[index];
+                let max = lines.len() - 1;
+                let index = rng.gen_range::<usize>(0,max);
+                let next = &lines[index];
 
                 if next == "END_SEQUENCE" { break; }
 
                 res = format!("{} {}",res,next);
-                curinput.push(next);
+                curinput.push(next.clone());
                 if curinput.len() > self.max_depth as usize
                 {
                     curinput.remove(0);
                 }
             }
             else
-            {
+            {   
                 break;
             }
         }
 
-        return res;
+        res
     }
 }
