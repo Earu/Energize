@@ -6,6 +6,7 @@ namespace Energize.Services.Database.Models
     {
         [Key]
         public int Identity { get; set; }
+        public ulong ID { get; set; }
         public ulong SnuggledCount { get; set; }
         public ulong HuggedCount { get; set; }
         public ulong BoopedCount { get; set; }
@@ -19,8 +20,11 @@ namespace Energize.Services.Database.Models
         public ulong LickedCount { get; set; }
         public ulong BittenCount { get; set; }
 
-        public DiscordUserStats()
+        public DiscordUserStats() { }
+
+        public DiscordUserStats(ulong id)
         {
+            this.ID = id;
             this.SnuggledCount = 0;
             this.HuggedCount = 0;
             this.BoopedCount = 0;

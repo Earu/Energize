@@ -248,7 +248,7 @@ namespace Energize.Services.Commands.Modules
             using (DBContext dbctx = await db.GetContext())
             {
                 IGuild guild = (ctx.Message.Author as SocketGuildUser).Guild;
-                DiscordGuild dbguild = await dbctx.Context.GetOrCreateGuild(guild.Id);
+                DiscordGuild dbguild = await dbctx.Instance.GetOrCreateGuild(guild.Id);
                 ITextChannel c = null;
                 if(dbguild.HasHallOfShames)
                 {
@@ -334,7 +334,7 @@ namespace Energize.Services.Commands.Modules
                 DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                 using (DBContext dbctx = await db.GetContext())
                 {
-                    DiscordGuild dbguild = await dbctx.Context.GetOrCreateGuild(user.Guild.Id);
+                    DiscordGuild dbguild = await dbctx.Instance.GetOrCreateGuild(user.Guild.Id);
                     dbguild.ShouldDeleteInvites = !dbguild.ShouldDeleteInvites;
                     if(dbguild.ShouldDeleteInvites)
                     {

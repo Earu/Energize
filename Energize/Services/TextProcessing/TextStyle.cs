@@ -260,7 +260,7 @@ namespace Energize.Services.TextProcessing
                 DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                 using (DBContext dbctx = await db.GetContext())
                 {
-                    DiscordUser dbuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                    DiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
                     if(dbuser.Style != "none")
                     {
                         string style = dbuser.Style;
