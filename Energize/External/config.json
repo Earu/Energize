@@ -9,7 +9,7 @@
   "MashapeKey": "",
   "FeedbackChannelID": 0,
   "WebSearchToken": "",
-  "ServerInvite": "",
+  "ServerInvite": "https://discord.gg/KJqhQ22",
   "SteamAPIKey": "",
-  "DBConnectionString": ""
+  "DBConnectionString": "Data Source=EnergizeDB.db"
 }

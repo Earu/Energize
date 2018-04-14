@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services
 {
-    internal class ServiceManager
+    public class ServiceManager
     {
         private const String _Namespace = "Energize.Services";
         private static readonly Type _BaseServiceType = typeof(BaseService);

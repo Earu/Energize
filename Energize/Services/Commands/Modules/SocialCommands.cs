@@ -158,7 +158,7 @@ namespace Energize.Services.Commands.Modules
             DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
             using (DBContext dbctx = await db.GetContext())
             {
-                DiscordUser resuser = await dbctx.Context.GetOrCreateUser(ctx.Message.Author.Id);
+                DiscordUser resuser = await dbctx.Instance.GetOrCreateUser(ctx.Message.Author.Id);
                 resuser.Description = ctx.Input;
             }
 
@@ -179,7 +179,7 @@ namespace Energize.Services.Commands.Modules
                 DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                 using (DBContext dbctx = await db.GetContext())
                 {
-                    DiscordUser resuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                    DiscordUser resuser = await dbctx.Instance.GetOrCreateUser(user.Id);
                     await ctx.MessageSender.Good(ctx.Message, "Description", $"{user.Mention}'s description is:\n`{resuser.Description}`");
                 }
             }
@@ -203,17 +203,27 @@ namespace Energize.Services.Commands.Modules
                 DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                 using (DBContext dbctx = await db.GetContext())
                 {
-                    DiscordUser dbuser = await dbctx.Context.GetOrCreateUser(user.Id);
-                    DiscordUserStats s = dbuser.Stats;
-                    string res = $"{user.Mention} got:\n***HUGGED:*** `{s.HuggedCount}`\t***KISSED:*** `{s.KissedCount}`\n"
-                        + $"***SNUGGLED:*** `{s.SnuggledCount}`\t***PET:*** `{s.PetCount}`\n"
-                        + $"***NIBBLED:*** `{s.NomedCount}`\t***SPANKED:*** `{s.SpankedCount}`\n"
-                        + $"***SHOT:*** `{s.ShotCount}`\t***SLAPPED:*** `{s.SlappedCount}`\n"
-                        + $"***YIFFED:*** `{s.YiffedCount}`\t***BITTEN:*** `{s.BittenCount}`\n"
-                        + $"***BOOPED:*** `{s.BoopedCount}`";
+                    DiscordUserStats s = await dbctx.Instance.GetOrCreateUserStats(user.Id);
+                    if(s == null)
+                    {
+                        await ctx.MessageSender.Good(ctx.Message,"Social Stats","This user didn't interact with anybody yet");
+                    }
+                    else
+                    {
+                        string res = $"{user.Mention} got:\n***HUGGED:*** `{s.HuggedCount}`\t***KISSED:*** `{s.KissedCount}`\n"
+                            + $"***SNUGGLED:*** `{s.SnuggledCount}`\t***PET:*** `{s.PetCount}`\n"
+                            + $"***NIBBLED:*** `{s.NomedCount}`\t***SPANKED:*** `{s.SpankedCount}`\n"
+                            + $"***SHOT:*** `{s.ShotCount}`\t***SLAPPED:*** `{s.SlappedCount}`\n"
+                            + $"***YIFFED:*** `{s.YiffedCount}`\t***BITTEN:*** `{s.BittenCount}`\n"
+                            + $"***BOOPED:*** `{s.BoopedCount}`";
 
-                    await ctx.MessageSender.Good(ctx.Message, "Social Stats", res);
+                        await ctx.MessageSender.Good(ctx.Message, "Social Stats", res);
+                    }
                 }
+            }
+            else
+            {
+                await ctx.MessageSender.Danger(ctx.Message,"Social Stats","Couldn't find any user for your input");
             }
         }
     }

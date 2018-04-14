@@ -42,6 +42,23 @@ namespace Energize.Services.Database
             }
         }
 
+        public async Task<DiscordUserStats> GetOrCreateUserStats(ulong id)
+        {
+            DiscordUserStats stats = await this.Stats.FirstOrDefaultAsync(x => x.ID == id);
+            if(stats != null)
+            {
+                return stats;
+            }
+            else
+            {
+                stats = new DiscordUserStats(id);
+                this.Stats.Add(stats);
+                await this.SaveChangesAsync(true);
+
+                return stats;
+            }
+        }
+
         public async Task<DiscordGuild> GetOrCreateGuild(ulong id)
         {
             DiscordGuild guild = await this.Guilds.FirstOrDefaultAsync(x => x.ID == id);
@@ -83,6 +100,7 @@ namespace Energize.Services.Database
                 DBContext ctx = this._Pool[i];
                 if(!ctx.IsUsed)
                 {
+                    ctx.IsUsed = true;
                     return ctx;
                 }
             }
@@ -98,13 +116,6 @@ namespace Energize.Services.Database
             context.Database.EnsureCreated();
 
             return context;
-        }
-
-        [Event("JoinedGuild")]
-        public async Task OnGuildJoined(SocketGuild guild)
-        {
-            using (DBContext ctx = await this.GetContext())
-                ctx.Context.Guilds.Add(new DiscordGuild(guild.Id));
         }
     }
 }

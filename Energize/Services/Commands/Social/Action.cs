@@ -4,6 +4,7 @@ using Energize.Services.Database.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Energize.Services.Commands.Social
 {
@@ -32,25 +33,26 @@ namespace Energize.Services.Commands.Social
             string action = sentences[rand.Next(0, sentences.Length)];
             action = action.Replace("<origin>",from.Mention);
             action = action.Replace("<action>", act);
-            
+
+            to = to.Distinct().ToList();
             int count = 0;
             string users = "";
-            foreach (SocketUser user in to)
+            
+            DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+            using (DBContext ctx = await db.GetContext())
             {
-                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
-                using (DBContext ctx = await db.GetContext())
+                foreach (SocketUser user in to)
                 {
-                    DiscordUser dbuser = await ctx.Context.GetOrCreateUser(user.Id);
-                    dbuser.Stats = dbuser.Stats ?? new DiscordUserStats();
-                    _DBCountCallbacks[act](dbuser.Stats);
-                }
-                users += user.Mention + " and ";
-                count++;
+                    DiscordUserStats stats = await ctx.Instance.GetOrCreateUserStats(user.Id);
+                    _DBCountCallbacks[act](stats);
+                    users += (from == user ? "themself" : user.Mention) + " and ";
+                    count++;
 
-                if (count > 3) break;
+                    if (count > 3) break;
+                }
             }
 
-            users = users.Remove(users.Length - 4);
+            users = users.Remove(users.Length - 5);
             action = action.Replace("<user>", users);
 
             return action;
@@ -152,7 +154,7 @@ namespace Energize.Services.Commands.Social
             {
                 "<origin> <action>s <user>",
                 "<origin> gently <action>s <user>",
-                "<user> just have been <action>ed by <origin>"
+                "<user> has been <action>ed by <origin>"
             });
         }
 

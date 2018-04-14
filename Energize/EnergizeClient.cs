@@ -58,7 +58,7 @@ namespace Energize
                 await this._DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
                 await Services.ServiceManager.LoadServicesAsync(this);
 
-                StreamingGame game = new StreamingGame(this._Prefix + "help | " + this._Prefix + "info",EnergizeConfig.TWITCH_URL);
+                StreamingGame game = new StreamingGame($"{this._Prefix}help | {this._Prefix}info",EnergizeConfig.TWITCH_URL);
                 await this._Discord.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>

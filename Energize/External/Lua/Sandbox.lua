@@ -9,7 +9,7 @@ readonlytable = function(index)
     for k,v in pairs(index) do
         protecteds[k] = true
     end
-
+    
     local meta = {
         __index = index,
         __newindex = function(tbl,key,value)
@@ -60,7 +60,7 @@ ENV.next       = next
 ENV.pairs      = pairs
 ENV.select     = select
 ENV.tonumber   = tonumber
-ENV.tostring   = tostring
+ENV.tostring   = tostring 
 ENV.unpack     = unpack
 ENV._VERSION   = _VERSION
 ENV.pcall      = pcall
@@ -132,7 +132,7 @@ safefunc = function(resulttbl,func,...)
     }
 
     setfenv(func,env)
-
+    
     local t = os.time()
     debug.sethook(function()
         local diff = os.time() - t
@@ -147,7 +147,7 @@ safefunc = function(resulttbl,func,...)
     local succ,err = retrieved[1],retrieved[2]
     local varargs = {}
     local printstack = ""
-
+    
     for i=2,#retrieved do
         table.insert(varargs,(retrieved[i] == nil and "nil" or retrieved[i]))
     end
@@ -167,7 +167,7 @@ safefunc = function(resulttbl,func,...)
         printstack = printstack .. "\n"
     end
     table.empty(PRINT_PILE)
-
+    
     resulttbl.Success = succ
     resulttbl.Error = err
     resulttbl.Varargs = varargs
@@ -184,7 +184,7 @@ sandbox = function(script)
         PrintStack = "",
     }
 
-    if script:byte(1) == 27 then
+    if script:byte(1) == 27 then 
         result.Success = false
         result.Error = "HAX!"
 
@@ -197,15 +197,15 @@ sandbox = function(script)
 
         return result
     end]]--
-
+    
     local script,message = loadstring(script)
 
-    if not script then
+    if not script then 
         result.Success = false
         result.Error = message
-
+        
         return result
     end
-
+    
     return safefunc(result,script)
 end
