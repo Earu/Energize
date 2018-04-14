@@ -277,7 +277,7 @@ namespace Energize.Services.Commands.Modules
                     DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                     using (DBContext dbctx = await db.GetContext())
                     {
-                        DiscordUser dbuser = await dbctx.Context.GetOrCreateUser(user.Id);
+                        DiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
                         if(dbuser.Style == ctx.Arguments[0])
                         {
                             dbuser.Style = "none";

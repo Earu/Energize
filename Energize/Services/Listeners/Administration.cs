@@ -72,28 +72,30 @@ namespace Energize.Services.Listeners
                 if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != EnergizeConfig.BOT_ID_MAIN)
                 {
                     DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
-                    DBContext ctx = await db.GetContext();
-                    DiscordGuild dbguild = await ctx.Context.GetOrCreateGuild(chan.Guild.Id);
-                    if (dbguild.ShouldDeleteInvites)
+                    using(DBContext ctx = await db.GetContext())
                     {
-                        CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
-                        try
+                        DiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
+                        if (dbguild.ShouldDeleteInvites)
                         {
-                            EmbedBuilder builder = new EmbedBuilder();
-                            chandler.MessageSender.BuilderWithAuthor(msg, builder);
-                            builder.WithDescription("Your message was removed, it contained an invitation link");
-                            builder.WithFooter("Invite Checker");
-                            builder.WithColor(chandler.MessageSender.ColorWarning);
+                            CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
+                            try
+                            {
+                                EmbedBuilder builder = new EmbedBuilder();
+                                chandler.MessageSender.BuilderWithAuthor(msg, builder);
+                                builder.WithDescription("Your message was removed, it contained an invitation link");
+                                builder.WithFooter("Invite Checker");
+                                builder.WithColor(chandler.MessageSender.ColorWarning);
 
-                            await msg.DeleteAsync();
-                            await chandler.MessageSender.Send(msg, builder.Build());
-                        }
-                        catch
-                        {
-                            await chandler.MessageSender.Danger(msg, "Invite Checker", "I couldn't delete this message"
-                                + " because I don't have the rights necessary for that");
-                        }
+                                await msg.DeleteAsync();
+                                await chandler.MessageSender.Send(msg, builder.Build());
+                            }
+                            catch
+                            {
+                                await chandler.MessageSender.Danger(msg, "Invite Checker", "I couldn't delete this message"
+                                    + " because I don't have the rights necessary for that");
+                            }
 
+                        }
                     }
                 }
             }
@@ -104,9 +106,15 @@ namespace Energize.Services.Listeners
             if (File.Exists("restartlog.txt"))
             {
                 string content = File.ReadAllText("restartlog.txt");
-                ulong id = ulong.Parse(content.Trim());
+                if(ulong.TryParse(content,out ulong id))
+                {
+                    SocketChannel chan = this._EClient.Discord.GetChannel(id);
+                    if(chan != null)
+                    {
+                        await this._EClient.MessageSender.Good(chan, "Restart", "Done restarting.");
+                    }
+                }
 
-                await this._EClient.MessageSender.Good(this._EClient.Discord.GetChannel(id), "Restart", "Done restarting.");
                 File.Delete("restartlog.txt");
             }
         }

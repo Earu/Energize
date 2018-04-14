@@ -339,7 +339,7 @@ namespace Energize.Services.Commands.Modules
             await ctx.MessageSender.Send(ctx.Message,builder.Build());
         }
 
-        [Command(Name="illegal",Help="Make something illegal",Usage="illegal <input>")]
+        /*[Command(Name="illegal",Help="Make something illegal",Usage="illegal <input>")]
         private async Task Illegal(CommandContext ctx)
         {
             if(!ctx.HasArguments)
@@ -355,6 +355,6 @@ namespace Energize.Services.Commands.Modules
             await ctx.MessageSender.SendFile(ctx.Message, path);
 
             ImageProcess.DeleteImage(path);
-        }
+        }*/
     }
 }

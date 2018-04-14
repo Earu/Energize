@@ -6,25 +6,25 @@ namespace Energize.Services.Database
 {
     public class DBContext : IDisposable
     {
-        private EnergizeDB _Context;
+        private EnergizeDB _Instance;
         private bool _IsUsed;
         private EnergizeLog _Log;
 
         public DBContext(EnergizeDB context,EnergizeLog log)
         {
-            this._Context = context;
+            this._Instance = context;
             this._IsUsed = false;
             this._Log = log;
         }
 
-        public EnergizeDB Context { get => this._Context; }
-        public bool IsUsed { get => this._IsUsed; }
+        public EnergizeDB Instance { get => this._Instance; }
+        public bool IsUsed { get => this._IsUsed; set => this._IsUsed = value; }
 
         public void Dispose()
         {
             try
             {
-                this.Context.SaveChanges(true);
+                this._Instance.SaveChanges(true);
                 this._IsUsed = false;
             }
             catch(Exception e)

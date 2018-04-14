@@ -142,7 +142,7 @@ namespace Energize.Services.Commands.Modules
 
                         IGuildUser gu = u as IGuildUser;
                         guildjoindate = gu.JoinedAt.ToString();
-                        guildjoindate = guildjoindate.Remove(guildjoindate.Length - 7);
+                        guildjoindate = guildjoindate.Length >= 7 ? guildjoindate.Remove(guildjoindate.Length - 7) : guildjoindate;
                         nickname = gu.Nickname ?? "none";
 
                         List<string> rolenames = new List<string>();
@@ -187,6 +187,11 @@ namespace Energize.Services.Commands.Modules
             }
         }
 
+        private int CommandCompare(Command c1,Command c2)
+        {
+            return c1.Cmd.CompareTo(c2.Cmd);
+        }
+
         [Command(Name="help",Help="This command",Usage="help <command|nothing>")]
         private async Task Help(CommandContext ctx)
         {
@@ -210,6 +215,7 @@ namespace Energize.Services.Commands.Modules
                     {
                         string result = "";
                         List<Command> cmds = Command.Modules[arg];
+                        cmds.Sort(this.CommandCompare);
                         result += "**COMMANDS:**\n";
                         result += "```";
                         foreach (Command com in cmds)
@@ -244,6 +250,7 @@ namespace Energize.Services.Commands.Modules
                     if (Command.IsLoadedModule(module.Key))
                     {
                         List<Command> cmds = module.Value;
+                        cmds.Sort(this.CommandCompare);
                         result += "**" + module.Key.ToUpper() + ":**\n";
                         result += "```";
                         foreach (Command cmd in cmds)

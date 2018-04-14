@@ -12,7 +12,6 @@ namespace Energize.Services.Database.Models
         public string Style { get; set; }
         [MaxLength(300)]
         public string Description { get; set; }
-        public DiscordUserStats Stats { get; set; }
 
         public DiscordUser() { }
 
@@ -22,7 +21,6 @@ namespace Energize.Services.Database.Models
             this.Level = 0;
             this.Style = "none";
             this.Description = "no description provided";
-            this.Stats = new DiscordUserStats();
         }
     }
 }
