@@ -28,13 +28,13 @@ namespace Energize.Services.Commands
         public CommandHandler(EnergizeClient client)
         {
             this._MessageSender = client.MessageSender;
-            this._Cmds = new Dictionary<string, Command>();
-            this._Caches = new Dictionary<ulong, CommandCache>();
-            this._Client = client.Discord;
-            this._RESTClient = client.DiscordREST;
-            this._Prefix = client.Prefix;
-            this._Log = client.Log;
-            this._GlobalCache = new CommandCache();
+            this._Cmds          = new Dictionary<string, Command>();
+            this._Caches        = new Dictionary<ulong, CommandCache>();
+            this._Client        = client.Discord;
+            this._RESTClient    = client.DiscordREST;
+            this._Prefix        = client.Prefix;
+            this._Log           = client.Log;
+            this._GlobalCache   = new CommandCache();
         }
 
         public EnergizeLog Log                      { get => this._Log;        }
@@ -68,10 +68,11 @@ namespace Energize.Services.Commands
         {
             Type cbtype = callback.Target.GetType();
             CommandAttribute att = callback.Method.GetCustomAttributes(typeof(CommandAttribute), false).FirstOrDefault() as CommandAttribute;
+            CommandModuleAttribute moduleatt = cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false).FirstOrDefault() as CommandModuleAttribute;
 
-            if (cbtype.GetCustomAttributes(typeof(CommandModuleAttribute), false).FirstOrDefault() is CommandModuleAttribute matt && att != null)
+            if (moduleatt != null && att != null)
             {
-                string modulename = matt.Name.ToLower();
+                string modulename = moduleatt.Name.ToLower();
                 string name = att.Name;
                 string help = att.Help;
                 string usage = att.Usage;
@@ -301,8 +302,8 @@ namespace Energize.Services.Commands
             IEnumerable<Type> Modules = Assembly.GetExecutingAssembly().GetTypes().Where(type => {
                 if (type.FullName.StartsWith("Energize.Services.Commands.Modules") && Attribute.IsDefined(type, typeof(CommandModuleAttribute)))
                 {
-                    CommandModuleAttribute matt = type.GetCustomAttributes(typeof(CommandModuleAttribute), false).First() as CommandModuleAttribute;
-                    this._Log.Nice("Module", ConsoleColor.Green, "Initialized " + matt.Name);
+                    CommandModuleAttribute matt = type.GetCustomAttribute(typeof(CommandModuleAttribute)) as CommandModuleAttribute;
+                    this._Log.Nice("CMD Module", ConsoleColor.Green, "Initialized " + matt.Name);
                     return true;
                 }
                 else

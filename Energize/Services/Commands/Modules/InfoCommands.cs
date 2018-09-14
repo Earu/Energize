@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Services.MemoryStream;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
@@ -26,13 +25,13 @@ namespace Energize.Services.Commands.Modules
                 created = created.Remove(created.Length - 7);
                 string region = guild.VoiceRegionId.ToString().ToUpper();
 
-                string info = "";
-                info += "**ID:** " + guild.Id + "\n";
-                info += "**OWNER:** " + (owner == null ? "NULL\n" : owner.Mention + "\n");
-                info += "**MEMBERS:** " + guild.MemberCount + "\n";
-                info += "**REGION:** " + region + "\n";
-                info += "**CREATED ON:** " + created + "\n";
-                info += "**MAIN CHANNEL:** " + guild.DefaultChannel.Name + "\n";
+                string info = $@"
+                **ID:** {guild.Id}
+                **OWNER:** {(owner == null ? "NULL" : owner.Mention)}
+                **MEMBERS:** {guild.MemberCount}
+                **REGION:** {region}
+                **CREATED ON:** {created}
+                **MAIN CHANNEL:** {guild.DefaultChannel.Name}";
 
                 if (guild.Emotes.Count > 0)
                 {
@@ -68,74 +67,68 @@ namespace Energize.Services.Commands.Modules
             }
             else
             {
-                ClientInfo info = await (ServiceManager.GetService<ClientMemoryStream>("MemoryStream")).GetClientInfo();
-                string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EnergizeConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
+                string invite = $"<https://discordapp.com/oauth2/authorize?client_id={EnergizeConfig.BOT_ID_MAIN}&scope=bot&permissions=8>";
                 string server = EnergizeConfig.SERVER_INVITE;
                 string github = "<https://github.com/Earu/Energize>";
 
-                string desc = "";
-                desc += "**NAME**: " + info.Name + "\n";
-                desc += "**PREFIX**: " + info.Prefix + "\n";
-                desc += "**COMMANDS**: " + info.CommandAmount + "\n";
-                desc += "**SERVERS**: " + info.GuildAmount + "\n";
-                desc += "**USERS**: " + info.UserAmount + "\n";
-                desc += "**OWNER**: " + info.Owner + "\n";
+                SocketUser owner = ctx.Client.GetUser(EnergizeConfig.OWNER_ID);
+                IReadOnlyCollection<SocketGuild> guilds = ctx.Client.Guilds;
+                int usercount = 0;
+                foreach (SocketGuild guild in guilds)
+                    usercount += guild.Users.Count;
+                    
+                string desc = $@"
+                **NAME**: {ctx.Client.CurrentUser}
+                **PREFIX**: {ctx.Prefix}
+                **COMMANDS**: {ctx.Commands.Count}
+                **SERVERS**: {guilds.Count}
+                **USERS**: {usercount}
+                **OWNER**: {owner}";
 
-                await ctx.MessageSender.Send(ctx.Message,"Info",desc,ctx.MessageSender.ColorGood,info.Avatar);
-                await ctx.MessageSender.SendRaw(ctx.Message,
-                    "Official server: " + EnergizeConfig.SERVER_INVITE + "\n"
-                    + "Invite link: " + invite + "\n"
-                    + "Github: " + github);
+                await ctx.MessageSender.Send(ctx.Message,"Info",desc,ctx.MessageSender.ColorGood,ctx.Client.CurrentUser.GetAvatarUrl());
+                await ctx.MessageSender.SendRaw(ctx.Message,$"Official server: {EnergizeConfig.SERVER_INVITE}\nInvite link: {invite}\nGithub: {github}");
             }
         }
 
         [Command(Name = "invite", Help = "Gets the invite link for the bot", Usage = "invite <nothing>")]
         private async Task Invite(CommandContext ctx)
         {
-            string invite = "<https://discordapp.com/oauth2/authorize?client_id=" + EnergizeConfig.BOT_ID_MAIN + "&scope=bot&permissions=8>";
+            string invite = $"<https://discordapp.com/oauth2/authorize?client_id={EnergizeConfig.BOT_ID_MAIN}&scope=bot&permissions=8>";
 
-            await ctx.MessageSender.SendRaw(ctx.Message,"Invite link: " + invite);
-            await ctx.MessageSender.SendRaw(ctx.Message,"Official server: " + EnergizeConfig.SERVER_INVITE);
+            await ctx.MessageSender.SendRaw(ctx.Message, $"Invite link: {invite}");
+            await ctx.MessageSender.SendRaw(ctx.Message,$"Official server: {EnergizeConfig.SERVER_INVITE}");
         }
 
         [Command(Name="user",Help="Gets information about a specific user",Usage="user <@user|id>")]
         private async Task User(CommandContext ctx)
         {
-            if (ctx.TryGetUser(ctx.Arguments[0], out SocketUser user,true))
+            if (ctx.TryGetUser(ctx.Arguments[0], out SocketUser user, true))
             {
                 IUser u = null;
-                if(user == null)
-                {
+                if (user == null)
                     u = await ctx.RESTClient.GetUserAsync(user.Id);
-                }
                 else
-                {
                     u = user;
-                }
 
                 List<string> guildnames = new List<string>();
                 int maxguilds = 15;
                 int leftguilds = 0;
-                foreach(SocketGuild guild in ctx.Client.Guilds)
+                foreach (SocketGuild guild in ctx.Client.Guilds)
                 {
-                    if(guild.Users.Any(x => x.Id == u.Id))
+                    if (guild.Users.Any(x => x.Id == u.Id))
                     {
-                        if(guildnames.Count < maxguilds)
-                        {
+                        if (guildnames.Count < maxguilds)
                             guildnames.Add(guild.Name);
-                        }
                         else
-                        {
                             leftguilds++;
-                        }
                     }
                 }
 
                 string guildinfo = null;
-                if(!ctx.IsPrivate)
+                if (!ctx.IsPrivate)
                 {
                     SocketGuildChannel chan = ctx.Message.Channel as SocketGuildChannel;
-                    if(chan.Guild.Users.Any(x => x.Id == u.Id))
+                    if (chan.Guild.Users.Any(x => x.Id == u.Id))
                     {
                         string guildjoindate = "";
                         string nickname = "";
@@ -148,9 +141,9 @@ namespace Energize.Services.Commands.Modules
                         List<string> rolenames = new List<string>();
                         int maxroles = 15;
                         int leftroles = 0;
-                        foreach(ulong id in gu.RoleIds)
+                        foreach (ulong id in gu.RoleIds)
                         {
-                            if(rolenames.Count < maxroles)
+                            if (rolenames.Count < maxroles)
                             {
                                 IRole role = gu.Guild.GetRole(id);
                                 rolenames.Add(role.Name);
@@ -161,23 +154,23 @@ namespace Energize.Services.Commands.Modules
                             }
                         }
 
-                        guildinfo = "\n\n--- Guild Related Info ---\n"
-                        + "**NICKNAME:** " + nickname + "\n"
-                        + "**JOINED GUILD:** " + guildjoindate + "\n"
-                        + "**ROLES:** " + string.Join(", ",rolenames) + (leftroles > 0 ? " and " + leftroles + " more..." : "");
+                        guildinfo = $@"--- Guild Related Info ---
+                        **NICKNAME:** {nickname}
+                        **JOINED GUILD:** {guildjoindate}
+                        **ROLES:** {string.Join(", ", rolenames) + (leftroles > 0 ? " and " + leftroles + " more..." : "")}";
                     }
                 }
 
                 string created = u.CreatedAt.ToString();
                 created = created.Remove(created.Length - 7);
 
-                string desc = "**ID:** " + u.Id + "\n"
-                    + "**NAME:** " + u.Username + "#" + u.Discriminator + "\n"
-                    + "**BOT:** " + (u.IsBot ? "Yes" : "No") + "\n"
-                    + "**STATUS:** " + u.Status + "\n"
-                    + "**JOINED DISCORD:** " + created + "\n"
-                    + "**SEEN ON:** " + string.Join(", ",guildnames) + (leftguilds > 0 ? " and " + leftguilds + " more..." : "")
-                    + (guildinfo == null ? "" : guildinfo);
+                string desc = $@"**ID:** {u.Id}
+                    **NAME:** {u}
+                    **BOT:** {(u.IsBot ? "Yes" : "No")}
+                    **STATUS:** {u.Status}
+                    **JOINED DISCORD:** {created}
+                    **SEEN ON:** {string.Join(", ",guildnames)}{(leftguilds > 0 ? " and " + leftguilds + " more..." : "")}
+                    {(guildinfo == null ? "" : guildinfo)}";
 
                 await ctx.MessageSender.Send(ctx.Message,"User",desc,ctx.MessageSender.ColorGood,u.GetAvatarUrl(ImageFormat.Auto,512));
             }
