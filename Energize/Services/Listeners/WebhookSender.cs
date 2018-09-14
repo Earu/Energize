@@ -67,13 +67,9 @@ namespace Energize.Services.Listeners
         {
             string log = string.Empty;
             if (!(chan is IDMChannel))
-            {
                 log += $"({chan.Guild.Name} - #{chan.Name}) doesn't have <send message> right";
-            }
             else
-            {
                 log += $"(DM) {chan.Name} blocked a message";
-            }
             this._Log.Nice("Webhook", ConsoleColor.Red, log);
         }
 

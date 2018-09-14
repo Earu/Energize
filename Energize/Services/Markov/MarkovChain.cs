@@ -22,7 +22,7 @@ namespace Energize.Services.Markov
             }
 
             sentence = sentence.Trim().ToLower();
-            sentence = Regex.Replace(sentence,"https?:\\/\\/.+\\s","LINK-REMOVED ");
+            sentence = Regex.Replace(sentence,@"https?://\S*","LINK-REMOVED ");
             sentence = sentence.Replace("\\","/").Replace("/"," ");
 
             string[] words = sentence.Split(_Separators);

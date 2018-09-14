@@ -104,7 +104,7 @@ namespace Energize.Services.Commands.Social
             {
                 "<origin> <action>s against <user>",
                 "<origin> <action>s <user>",
-                "<origin> lovely <action>s <user>"
+                "<origin> lovingly <action>s <user>"
             });
         }
 

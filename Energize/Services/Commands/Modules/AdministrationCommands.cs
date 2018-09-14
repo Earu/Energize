@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Energize.Services.MemoryStream;
 using Energize.Services.Database;
 using Energize.Services.Database.Models;
 using Energize.Services.Listeners;
@@ -113,15 +112,8 @@ namespace Energize.Services.Commands.Modules
             {
                 if (int.TryParse(ctx.Arguments[0], out int a))
                 {
-                    if (a > 100)
-                    {
-                        a = 100;
-                    }
-
-                    if (a < 0)
-                    {
-                        a = 1;
-                    }
+                    if (a > 100) a = 100;
+                    if (a < 0) a = 1;
 
                     amount = a;
                 }
@@ -154,8 +146,7 @@ namespace Energize.Services.Commands.Modules
         [Command(Name = "clear", Help = "Clear the bot messages and commands", Usage = "clear <amounttoremove|nothing>")]
         private async Task Clear(CommandContext ctx)
         {
-            ClientMemoryStream stream = ServiceManager.GetService<ClientMemoryStream>("MemoryStream");
-            ulong id = (await stream.GetClientInfo()).ID;
+            ulong id = EnergizeConfig.BOT_ID_MAIN;
             await this.ClearBase(ctx, (msg, todelete) =>
             {
                 bool old = (DateTime.Now.Date.Ticks - msg.CreatedAt.Date.Ticks > new DateTime().AddDays(15).Ticks);

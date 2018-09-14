@@ -22,11 +22,11 @@ namespace Energize
             Console.Clear();
             Console.Title = "Energize's Logs";
 
-            this._Token = token;
-            this._Prefix = prefix;
-            this._Log = new EnergizeLog();
+            this._Token         = token;
+            this._Prefix        = prefix;
+            this._Log           = new EnergizeLog();
             this._MessageSender = new EnergizeMessage(this._Log);
-            this._Discord = new DiscordSocketClient(new DiscordSocketConfig
+            this._Discord       = new DiscordSocketClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
@@ -38,10 +38,10 @@ namespace Energize
             Services.ServiceManager.LoadServices(this);
         }
 
-        public string Prefix { get => this._Prefix; }
-        public DiscordSocketClient Discord { get => this._Discord; }
+        public string Prefix                 { get => this._Prefix; }
+        public DiscordSocketClient Discord   { get => this._Discord; }
         public DiscordRestClient DiscordREST { get => this._DiscordREST; }
-        public EnergizeLog Log { get => this._Log; }
+        public EnergizeLog Log               { get => this._Log; }
         public EnergizeMessage MessageSender { get => this._MessageSender; }
 
         public async Task InitializeAsync()
@@ -63,7 +63,7 @@ namespace Energize
 
                 Timer gctimer = new Timer(arg =>
                 {
-                    long mb = GC.GetTotalMemory(false)/1024/1024; //b to mb
+                    long mb = GC.GetTotalMemory(false) / 1024 / 1024; //b to mb
                     GC.Collect();
                     this._Log.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
                 });
