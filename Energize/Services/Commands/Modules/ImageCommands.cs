@@ -243,16 +243,14 @@ namespace Energize.Services.Commands.Modules
         [Command(Name="bw",Help="Makes a picture black and white",Usage= "bw <imageurl|user|nothing>")]
         private async Task BlackWhite(CommandContext ctx)
         {
-            await this. Process(ctx, "BW", (img,value) => img.Mutate(x => x.Grayscale(SixLabors.ImageSharp.Processing.GrayscaleMode.Bt601)));
+            await this.Process(ctx, "BW", (img,value) => img.Mutate(x => x.Grayscale(SixLabors.ImageSharp.Processing.GrayscaleMode.Bt601)));
         }
 
         [Command(Name="jpg",Help="Makes a picture have bad quality",Usage= "jpg [<amount>]|[<imageurl|user>,<amount>]")]
         private async Task Jpg(CommandContext ctx)
         {
             int val = 1; //default
-            await this.Process(ctx, "JPG", (img,value) => {
-                val = value == 1 ? 100 : value;
-            },
+            await this.Process(ctx, "JPG", (img,value) => val = value == 1 ? 100 : value,
             (img, path) => {
                 JpegEncoder encoder = new JpegEncoder
                 {

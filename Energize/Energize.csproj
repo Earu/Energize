@@ -11,12 +11,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="External\**" />
-    <EmbeddedResource Remove="External\**" />
-    <None Remove="External\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.0.0-beta-00879" />
+    <PackageReference Include="Discord.Net" Version="2.0.0-beta-00921" />
     <PackageReference Include="Google.Apis" Version="1.32.1" />
     <PackageReference Include="GoogleCustomSearchEngine" Version="3.0.1" />
     <PackageReference Include="HtmlAgilityPack" Version="1.6.16" />
@@ -31,5 +26,13 @@
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="2.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="nuget.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External/*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

@@ -250,9 +250,9 @@ namespace Energize.Services.Commands.Modules
                     string ret = state.ReturnValue.ToString();
                     if(!string.IsNullOrWhiteSpace(ret))
                     {
-                        if(ret.Length > 2000)
+                        if (ret.Length > 2000)
                         {
-                            ret = ret.Substring(0,1980) + "... \n**[" + (ret.Length - 2020) + "\tCHARS\tLEFT]**";
+                            ret = $"{ret.Substring(0,1980)}... \n**[{(ret.Length - 2020)}\tCHARS\tLEFT]**";
                         }
                         
                         await ctx.MessageSender.Good(ctx.Message,"Eval",ret);
