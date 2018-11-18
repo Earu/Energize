@@ -9,12 +9,13 @@ namespace Energize.Services
 {
     public class ServiceManager
     {
-        private const String _Namespace = "Energize.Services";
-        private static readonly Type _BaseServiceType = typeof(BaseService);
-        private static readonly Type _DiscordSocketClientType = typeof(DiscordSocketClient);
-        private static readonly MethodInfo[] _BaseServiceMethods = _BaseServiceType.GetMethods();
-        private static Dictionary<string, Service> _Services = new Dictionary<string, Service>();
-        private static List<string> _MethodBlacklist = new List<string>
+        private const string _Namespace = "Energize.Services";
+
+        private static readonly Type        _DiscordShardedClientType = typeof(DiscordShardedClient);
+        private static readonly EventInfo[] _DiscordClientEvents      = _DiscordShardedClientType.GetEvents();
+
+        private static Dictionary<string, Service> _Services        = new Dictionary<string, Service>();
+        private static List<string>                _MethodBlacklist = new List<string>
         {
             "ToString",
             "Equals",
@@ -40,7 +41,6 @@ namespace Energize.Services
                     {
                         inst = Activator.CreateInstance(service, eclient);
                         hasconstructor = true;
-
                     }
                     else
                     {
@@ -79,7 +79,7 @@ namespace Energize.Services
                 IEnumerable<MethodInfo> servmethods = service.GetMethods()
                     .Where(x => !_MethodBlacklist.Contains(x.Name));
                 
-                foreach(MethodInfo minfo in _BaseServiceMethods)
+                foreach(EventInfo minfo in _DiscordClientEvents)
                 {
                     IEnumerable<MethodInfo> methods = servmethods
                         .Where(x => Attribute.IsDefined(x,eatype) && 
@@ -90,7 +90,7 @@ namespace Energize.Services
                         MethodInfo method = methods.First();
                         try
                         {
-                            EventInfo _event = _DiscordSocketClientType.GetEvent(minfo.Name);
+                            EventInfo _event = _DiscordShardedClientType.GetEvent(minfo.Name);
                             _event.AddEventHandler(eclient.Discord,method.CreateDelegate(_event.EventHandlerType, inst));
                         }
                         catch
@@ -128,30 +128,15 @@ namespace Energize.Services
         }
 
         public static Service GetServiceHolder(string name)
-        {
-            if(_Services.ContainsKey(name))
-            {
-                return _Services[name];
-            }
-            else
-            {
-                return null;
-            }
-        }
+            => _Services.ContainsKey(name) ? _Services[name] : null;
 
         public static T GetService<T>(string name)
         {
             if(_Services.ContainsKey(name))
             {
                 object inst = _Services[name].Instance;
-                if (inst is T)
-                {
-                    return (T)inst;
-                }
-                else
-                {
-                    return default;
-                }
+                if (inst is T) return (T)inst;
+                else return default;
             }
             else
             {

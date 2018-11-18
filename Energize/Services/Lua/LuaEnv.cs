@@ -14,16 +14,15 @@ namespace Energize.Services.LuaService
     [Service("Lua")]
     public class LuaEnv
     {
-        private DiscordSocketClient _Client;
-        private string _Path = "External/Lua/SavedScripts";
+        private readonly DiscordShardedClient _Client;
+        private readonly string               _Path = "External/Lua/SavedScripts";
+        private readonly string               _ScriptSeparator = "\n-- GEN --\n";
+
         private RestApplication _App;
         private Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
-        private string ScriptSeparator = "\n-- GEN --\n";
 
         public LuaEnv(EnergizeClient client)
-        {
-            this._Client = client.Discord;
-        }
+            => this._Client = client.Discord;
 
         //Service method dont change the signature
         public async Task InitializeAsync()
@@ -31,9 +30,7 @@ namespace Energize.Services.LuaService
             _App = await this._Client.GetApplicationInfoAsync();
 
             if (!Directory.Exists(_Path))
-            {
                 Directory.CreateDirectory(_Path);
-            }
 
             CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
 
@@ -47,7 +44,7 @@ namespace Energize.Services.LuaService
 
                 Lua state = this.CreateState(chanid);
                 string script = File.ReadAllText(path);
-                string[] parts = script.Split(ScriptSeparator,StringSplitOptions.RemoveEmptyEntries);
+                string[] parts = script.Split(_ScriptSeparator,StringSplitOptions.RemoveEmptyEntries);
                 foreach(string part in parts)
                 {
                     state["PART"] = part.Trim();
@@ -68,7 +65,7 @@ namespace Energize.Services.LuaService
                     CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                     Lua state = _States[chan.Id];
                     state["USER"] = user as SocketUser;
-                    Object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
+                    object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
                     state["USER"] = null;
                     await chandler.MessageSender.Good(chan, "Lua Event", returns[0].ToString());
                 }
@@ -86,7 +83,7 @@ namespace Energize.Services.LuaService
                     CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                     Lua state = _States[chan.Id];
                     state["USER"] = user as SocketUser;
-                    Object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
+                    object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
                     state["USER"] = null;
                     await chandler.MessageSender.Good(chan, "Lua Event", returns[0].ToString());
                 }
@@ -103,7 +100,7 @@ namespace Energize.Services.LuaService
                 Lua state = _States[msg.Channel.Id];
                 state["USER"] = msg.Author;
                 state["MESSAGE"] = msg;
-                Object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
+                object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
                 await chandler.MessageSender.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
@@ -119,7 +116,7 @@ namespace Energize.Services.LuaService
                 Lua state = _States[c.Id];
                 state["MESSAGE"] = msg.Value as SocketMessage;
                 state["USER"] = msg.Value.Author as SocketUser;
-                Object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
+                object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
                 await chandler.MessageSender.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
@@ -135,7 +132,7 @@ namespace Energize.Services.LuaService
                 Lua state = _States[c.Id];
                 state["USER"] = msg.Author as SocketUser;
                 state["MESSAGE"] = msg as SocketMessage;
-                Object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
+                object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
                 await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
@@ -150,7 +147,7 @@ namespace Energize.Services.LuaService
                 CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["REACTION"] = react;
-                Object[] returns = state.DoString(@"return event.fire('OnReactionAdded',REACTION)");
+                object[] returns = state.DoString(@"return event.fire('OnReactionAdded',REACTION)");
                 state["REACTION"] = null;
                 await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
             }
@@ -164,7 +161,7 @@ namespace Energize.Services.LuaService
                 CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["REACTION"] = react;
-                Object[] returns = state.DoString(@"return event.fire('OnReactionRemoved',REACTION)");
+                object[] returns = state.DoString(@"return event.fire('OnReactionRemoved',REACTION)");
                 state["REACTION"] = null;
                 await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
             }
@@ -199,16 +196,14 @@ namespace Energize.Services.LuaService
         {
             code = code.TrimStart();
             string path =  _Path + "/" + chan.Id + ".lua";
-            File.AppendAllText(path,code + ScriptSeparator);
+            File.AppendAllText(path,code + _ScriptSeparator);
         }
 
         public bool Run(SocketMessage msg,string code,out List<Object> returns,out string error,EnergizeLog log)
         {
             SocketChannel chan = msg.Channel as SocketChannel;
             if (!_States.ContainsKey(chan.Id) || _States[chan.Id] == null)
-            {
                 _States[chan.Id] = CreateState(chan.Id);
-            }
 
             Save(chan, code);
 
@@ -219,7 +214,7 @@ namespace Energize.Services.LuaService
                 Lua state = _States[chan.Id];
                 code = SafeCode(state,code);
 
-                Object[] parts = state.DoString(code,"SANDBOX");
+                object[] parts = state.DoString(code,"SANDBOX");
                 returns = new List<object>(parts);
                 error = "";
             }

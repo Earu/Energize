@@ -7,7 +7,6 @@ using Discord.Rest;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
-using System.IO;
 
 namespace Energize.Services.Commands
 {
@@ -16,40 +15,32 @@ namespace Energize.Services.Commands
     {
         public delegate Task CommandCallback(CommandContext ctx);
 
-        private DiscordSocketClient              _Client;
-        private EnergizeLog                      _Log;
-        private string                           _Prefix;
-        private EnergizeMessage                  _MessageSender;
-        private Dictionary<string, Command>      _Cmds;
-        private Dictionary<ulong, CommandCache>  _Caches;
-        private DiscordRestClient                _RESTClient;
-        private CommandCache                     _GlobalCache;
+        private readonly Dictionary<ulong, CommandCache>  _Caches;
+        private readonly CommandCache                     _GlobalCache;
 
         public CommandHandler(EnergizeClient client)
         {
-            this._MessageSender = client.MessageSender;
-            this._Cmds          = new Dictionary<string, Command>();
-            this._Caches        = new Dictionary<ulong, CommandCache>();
-            this._Client        = client.Discord;
-            this._RESTClient    = client.DiscordREST;
-            this._Prefix        = client.Prefix;
-            this._Log           = client.Log;
-            this._GlobalCache   = new CommandCache();
+            this.MessageSender = client.MessageSender;
+            this.Commands      = new Dictionary<string, Command>();
+            this._Caches       = new Dictionary<ulong, CommandCache>();
+            this.Client        = client.Discord;
+            this.RESTClient    = client.DiscordREST;
+            this.Prefix        = client.Prefix;
+            this.Log           = client.Log;
+            this._GlobalCache  = new CommandCache();
         }
 
-        public EnergizeLog Log                      { get => this._Log;        }
-        public EnergizeMessage MessageSender        { get => this._MessageSender; }
-        public string Prefix                        { get => this._Prefix;     }
-        public DiscordSocketClient Client           { get => this._Client;     }
-        public Dictionary<string,Command> Commands  { get => this._Cmds;       }
-        public DiscordRestClient RESTClient         { get => this._RESTClient; }
+        public EnergizeLog                 Log           { get; }
+        public EnergizeMessage             MessageSender { get; }
+        public string                      Prefix        { get; }
+        public DiscordShardedClient        Client        { get; }
+        public Dictionary<string, Command> Commands      { get; }
+        public DiscordRestClient           RESTClient    { get; }
 
         public CommandCache GetChannelCache(ulong id)
         {
             if(this._Caches.TryGetValue(id,out CommandCache cache))
-            {
                 return cache;
-            }
             else
             {
                 CommandCache chancache = new CommandCache();
@@ -60,9 +51,7 @@ namespace Energize.Services.Commands
         }
 
         public bool IsCmdLoaded(string cmd)
-        {
-            return this._Cmds.ContainsKey(cmd) ? this._Cmds[cmd].Loaded : true;
-        }
+            => this.Commands.ContainsKey(cmd) ? this.Commands[cmd].Loaded : true;
 
         public void LoadCommand(CommandCallback callback)
         {
@@ -77,15 +66,15 @@ namespace Energize.Services.Commands
                 string help = att.Help;
                 string usage = att.Usage;
 
-                if (this._Cmds.ContainsKey(name))
+                if (this.Commands.ContainsKey(name))
                 {
-                    this._Cmds[name].Loaded = true;
+                    this.Commands[name].Loaded = true;
                 }
                 else
                 {
                     Command cmd = new Command(name, callback, help, usage, modulename);
 
-                    this._Cmds.Add(name, cmd);
+                    this.Commands.Add(name, cmd);
                 }
             }
         }
@@ -96,41 +85,24 @@ namespace Energize.Services.Commands
             {
                 string name = att.Name;
 
-                if (this._Cmds.ContainsKey(name))
-                {
-                    this._Cmds[name].Loaded = false;
-                }
+                if (this.Commands.ContainsKey(name))
+                    this.Commands[name].Loaded = false;
             }
         }
 
         public bool StartsWithBotMention(string line)
-        {
-            if(Regex.IsMatch(line,$@"^<@!?{this._Client.CurrentUser.Id}>"))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+            => Regex.IsMatch(line,$@"^<@!?{this.Client.CurrentUser.Id}>");
 
         public int GetPrefixLen(string line)
         {
             if(this.StartsWithBotMention(line))
-            {
-                return this._Client.CurrentUser.Mention.Length;
-            }
+                return this.Client.CurrentUser.Mention.Length;
             else
-            {
-                return this._Prefix.Length;
-            }
+                return this.Prefix.Length;
         }
 
         public string GetCmd(string line)
-        {
-            return line.Substring(this.GetPrefixLen(line)).Split(' ')[0];
-        }
+            => line.Substring(this.GetPrefixLen(line)).Split(' ')[0];
 
         private List<string> GetCmdArgs(string line)
         {
@@ -163,15 +135,11 @@ namespace Energize.Services.Commands
 
             log += $"{ctx.Message.Author.Username} {action} <{ctx.CommandName}>";
             if (!string.IsNullOrWhiteSpace(ctx.Arguments[0]))
-            {
                 log += $"  => [ {string.Join(',',ctx.Arguments)} ]";
-            }
             else
-            {
                 log += " with no args";
-            }
 
-            this._Log.Nice(head,color, log);
+            this.Log.Nice(head,color, log);
         }
 
         private CommandContext CreateCmdContext(SocketMessage msg,Command cmd,List<string> args)
@@ -181,25 +149,22 @@ namespace Energize.Services.Commands
             {
                 IGuildChannel chan = msg.Channel as IGuildChannel;
                 foreach(SocketGuildUser u in (chan.Guild as SocketGuild).Users)
-                {
                     users.Add(u);
-                }
-
             }
 
             return new CommandContext
             {
-                Client            = this._Client,
-                RESTClient        = this._RESTClient,
-                Prefix            = this._Prefix,
-                MessageSender     = this._MessageSender,
+                Client            = this.Client,
+                RESTClient        = this.RESTClient,
+                Prefix            = this.Prefix,
+                MessageSender     = this.MessageSender,
                 Message           = msg,
                 Command           = cmd,
                 Arguments         = args,
                 Cache             = this.GetChannelCache(msg.Channel.Id),
                 GlobalCache       = this._GlobalCache,
-                Log               = this._Log,
-                Commands          = this._Cmds,
+                Log               = this.Log,
+                Commands          = this.Commands,
                 IsPrivate         = msg.Channel is IDMChannel,
                 GuildCachedUsers  = users,
                 Handler           = this,
@@ -209,7 +174,7 @@ namespace Energize.Services.Commands
         private async Task CommandCall(SocketMessage msg,string cmd)
         {
             List<string> args = this.GetCmdArgs(msg.Content);
-            if (this._Cmds.TryGetValue(cmd, out Command retrieved))
+            if (this.Commands.TryGetValue(cmd, out Command retrieved))
             {
                 await msg.Channel.TriggerTypingAsync();
                 CommandContext ctx = this.CreateCmdContext(msg, retrieved, args);
@@ -219,9 +184,9 @@ namespace Energize.Services.Commands
                     Task tres = await Task.WhenAny(tcallback,Task.Delay(20000));
                     if(tres != tcallback)
                     {
-                        this._MessageSender.Warning(msg, "Time out", $"Your command `{cmd}` is timing out!")
+                        this.MessageSender.Warning(msg, "Time out", $"Your command `{cmd}` is timing out!")
                             .RunSynchronously();
-                        this._Log.Nice("Commands",ConsoleColor.Yellow,$"Time out of command <{cmd}>");
+                        this.Log.Nice("Commands",ConsoleColor.Yellow,$"Time out of command <{cmd}>");
                         await tcallback;
                     }
                 }
@@ -235,7 +200,7 @@ namespace Energize.Services.Commands
             string content = msg.Content;
             if (!msg.Author.IsBot)
             {
-                if (content.ToLower().StartsWith(this._Prefix) || this.StartsWithBotMention(content))
+                if (content.ToLower().StartsWith(this.Prefix) || this.StartsWithBotMention(content))
                 {
                     string cmd = this.GetCmd(content);
                     if (this.IsCmdLoaded(cmd))
@@ -244,8 +209,8 @@ namespace Energize.Services.Commands
                     }
                     else
                     {
-                        this._Log.Nice("Commands", ConsoleColor.Red,$"{msg.Author} tried to use a disabled command <{cmd}>");
-                        await this._MessageSender.Warning(msg, "Disabled command", "This is a disabled feature for now");
+                        this.Log.Nice("Commands", ConsoleColor.Red,$"{msg.Author} tried to use a disabled command <{cmd}>");
+                        await this.MessageSender.Warning(msg, "Disabled command", "This is a disabled feature for now");
                     }
                 }
             }
@@ -259,28 +224,18 @@ namespace Energize.Services.Commands
 
             IReadOnlyCollection<IAttachment> attachs = msg.Attachments;
             foreach (IAttachment attach in attachs)
-            {
                 if(attach.Width.HasValue)
-                {
                     url = attach.ProxyUrl;
-                }
-            }
 
             IReadOnlyCollection<IEmbed> embeds = msg.Embeds;
             foreach(IEmbed embed in embeds)
-            {
                 if (embed.Image.HasValue)
-                {
                     url = embed.Image.Value.ProxyUrl;
-                }
-            }
 
             string pattern = @"(https?:\/\/.+\.(jpg|png|gif))";
             MatchCollection matches = Regex.Matches(msg.Content, pattern);
             if (matches.Count > 0)
-            {
                 url = matches[matches.Count - 1].Value;
-            }
 
             string giphy = @"https:\/\/giphy\.com\/gifs\/(.+-)?([A-Za-z0-9]+)\s?";
             MatchCollection gifs = Regex.Matches(msg.Content, giphy);
@@ -303,7 +258,7 @@ namespace Energize.Services.Commands
                 if (type.FullName.StartsWith("Energize.Services.Commands.Modules") && Attribute.IsDefined(type, typeof(CommandModuleAttribute)))
                 {
                     CommandModuleAttribute matt = type.GetCustomAttribute(typeof(CommandModuleAttribute)) as CommandModuleAttribute;
-                    this._Log.Nice("CMD Module", ConsoleColor.Green, "Initialized " + matt.Name);
+                    this.Log.Nice("CMD Module", ConsoleColor.Green, "Initialized " + matt.Name);
                     return true;
                 }
                 else
@@ -318,9 +273,7 @@ namespace Energize.Services.Commands
                 IEnumerable<MethodInfo> methods = module.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public)
                     .Where(method => Attribute.IsDefined(method, typeof(CommandAttribute)));
                 foreach (MethodInfo method in methods)
-                {
                     this.LoadCommand((CommandCallback)method.CreateDelegate(typeof(CommandCallback), inst));
-                }
             }
         }
 

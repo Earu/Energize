@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using System;
 
 namespace Energize
 {
@@ -15,7 +14,7 @@ namespace Energize
             await EnergizeConfig.Load();
             await EnergizeData.Load();
 
-            EnergizeClient client = new EnergizeClient(EnergizeConfig.TOKEN_DEV, "]");
+            EnergizeClient client = new EnergizeClient(EnergizeConfig.TOKEN_MAIN, "x");
 
             await client.InitializeAsync();
             await Task.Delay(-1);
