@@ -13,12 +13,6 @@ namespace Energize.Services.Markov
         private EnergizeLog _Log;
         private char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
         private int _MaxDepth = 2;
-        private Dictionary<ulong,bool> _BlackList = new Dictionary<ulong,bool>
-        {
-            [81384788765712384]  = false,
-            [110373943822540800] = false,
-            [264445053596991498] = false,
-        };
 
         public MarkovHandler(EnergizeClient client)
         {
@@ -29,17 +23,12 @@ namespace Energize.Services.Markov
         public void Learn(string content,ulong id,EnergizeLog log)
         {
             MarkovChain chain = new MarkovChain();
-            if(!_BlackList.ContainsKey(id))
-            {
-                try
-                {   
-                    chain.Learn(content);
-                }
-                catch(Exception e)
-                {
-                    log.Nice("Markov",ConsoleColor.Red,$"Failed to learn from a message:{e.Message}");
-                }
+            try
+            {   
+                chain.Learn(content);
             }
+            //Yeah fuck that this log is too verbose
+            catch{ }
         }
 
         public string Generate(string data)

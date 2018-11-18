@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,6 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Energize.Services.LuaService;
 using System.IO;
 using System.Diagnostics;
-using System.Threading;
 using Energize.Services.Listeners;
 using Microsoft.Data.Sqlite;
 
@@ -221,6 +219,7 @@ namespace Energize.Services.Commands.Modules
 
             string[] imports = {
                 "System",
+                "System.IO",
                 "System.Collections",
                 "System.Collections.Generic",
                 "System.Linq",
