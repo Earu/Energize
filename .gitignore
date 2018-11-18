@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 Energize/External/config.json
+
+Energize/External/

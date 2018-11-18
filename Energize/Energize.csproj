@@ -35,4 +35,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="External\**" />
+    <Compile Remove="Masks\**" />
+    <EmbeddedResource Remove="External\**" />
+    <EmbeddedResource Remove="Masks\**" />
+    <None Remove="External\**" />
+    <None Remove="Masks\**" />
+  </ItemGroup>
 </Project>
