@@ -43,4 +43,12 @@
     <None Remove="External\**" />
     <None Remove="Masks\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="External\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="External\data.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
