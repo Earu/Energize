@@ -11,6 +11,12 @@ namespace Energize.Services.Commands.Modules
         [Command(Name="urban",Help="Searches for a definition on urban dictionnary",Usage="urban <search>,<pagenumber|nothing>")]
         private async Task SearchUrban(CommandContext ctx)
         {
+            if(!ctx.IsNSFW())
+            {
+                await ctx.MessageSender.Warning(ctx.Message, "Urban", "Apparently Urban Dictionary is NSFW nowadays 🤷");
+                return;
+            }
+
             if (!ctx.HasArguments)
             {
                 await ctx.SendBadUsage();
@@ -19,41 +25,27 @@ namespace Energize.Services.Commands.Modules
 
             int page = 0;
             if (ctx.Arguments.Count > 1)
-            {
                 if (!string.IsNullOrWhiteSpace(ctx.Arguments[1]))
-                {
                     if (int.TryParse(ctx.Arguments[1].Trim(), out int temp))
-                    {
                         page = temp - 1;
-                    }
-                }
-            }
 
             string search = ctx.Arguments[0];
             string body = await HTTP.Fetch("http://api.urbandictionary.com/v0/define?term=" + search,ctx.Log);
             Urban.UGlobal global = JSON.Deserialize<Urban.UGlobal>(body, ctx.Log);
 
             if (global == null)
-            {
                 await ctx.MessageSender.Danger(ctx.Message, "Urban", "There was no data to use for this!");
-            }
             else
             {
                 if (global.list.Length == 0)
-                {
                     await ctx.MessageSender.Danger(ctx.Message, "Urban", "Looks like I couldn't find anything!");
-                }
                 else
                 {
                     if(global.list.Length-1 < page)
-                    {
                         page = 0;
-                    }
 
                     if(page < 0)
-                    {
                         page = global.list.Length - 1;
-                    }
 
                     Urban.UWord wordobj = global.list[page];
                     bool hasexample = string.IsNullOrWhiteSpace(wordobj.example);
