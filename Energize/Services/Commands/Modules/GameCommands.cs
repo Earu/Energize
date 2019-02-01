@@ -172,8 +172,8 @@ namespace Energize.Services.Commands.Modules
         [Command(Name = "minesweeper", Help = "Minesweeper minigame", Usage = "minesweeper <width, height, mineamount>")]
         private async Task MineSweeper(CommandContext ctx)
         {
-            if (int.TryParse(ctx.Arguments[0], out int width)
-                && int.TryParse(ctx.Arguments[1], out int height)
+            if (int.TryParse(ctx.Arguments[0], out int height)
+                && int.TryParse(ctx.Arguments[1], out int width)
                 && int.TryParse(ctx.Arguments[2], out int amount))
             {
                 if(width > 10 || height > 10)
@@ -208,7 +208,7 @@ namespace Energize.Services.Commands.Modules
                 string result = string.Empty;
                 string[] types = new string[]
                 {
-                    "white_large_square", "one", "two", "three", "four", "five", "six", "seven", "height"
+                    "white_large_square", "one", "two", "three", "four", "five", "six", "seven", "eight"
                 };
 
                 for(int y = 0; y < height; y++)
