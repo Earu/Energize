@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Energize.Services.Commands.Steam;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -168,6 +169,101 @@ namespace Energize.Services.Commands.Modules
             }
         }
 
+        [Command(Name = "minesweeper", Help = "Minesweeper minigame", Usage = "minesweeper <width, height, mineamount>")]
+        private async Task MineSweeper(CommandContext ctx)
+        {
+            if (int.TryParse(ctx.Arguments[0], out int width)
+                && int.TryParse(ctx.Arguments[1], out int height)
+                && int.TryParse(ctx.Arguments[2], out int amount))
+            {
+                if(width > 10 || height > 10)
+                {
+                    await ctx.MessageSender.Warning(ctx.Message, "MineSweeper", "Maximum width and height is 10");
+                    return;
+                }
 
+                int maxmines = height * width;
+                if (amount > maxmines)
+                {
+                    await ctx.MessageSender.Warning(ctx.Message, "MineSweeper", "Can't have more bombs than squares");
+                    return;
+                }
+
+                Random rand = new Random();
+                Dictionary<(int, int), int> mines = new Dictionary<(int, int), int>();
+                for(int i=0; i<amount;i++)
+                {
+                    int x = rand.Next(0, width);
+                    int y = rand.Next(0, height);
+                    while(mines.ContainsKey((y, x)))
+                    {
+                        x = rand.Next(0, width);
+                        y = rand.Next(0, height);
+                    }
+
+                    mines.Add((y, x), 0);
+                }
+
+                string mine = ":boom:";
+                string result = string.Empty;
+                string[] types = new string[]
+                {
+                    "white_large_square", "one", "two", "three", "four", "five", "six", "seven", "height"
+                };
+
+                for(int y = 0; y < height; y++)
+                {
+                    for(int x = 0; x < width; x++)
+                    {
+                        string casecontent;
+                        if (mines.ContainsKey((y, x)))
+                        {
+                            casecontent = mine;
+                        }
+                        else
+                        {
+                            int minecount = 0;
+                            //above
+                            if (mines.ContainsKey((y - 1, x - 1)) && mines[(y - 1, x - 1)] == 0)
+                                minecount++;
+                            if (mines.ContainsKey((y - 1, x)) && mines[(y - 1, x)] == 0)
+                                minecount++;
+                            if (mines.ContainsKey((y - 1, x + 1)) && mines[(y - 1, x + 1)] == 0)
+                                minecount++;
+
+                            //around
+                            if (mines.ContainsKey((y, x - 1)) && mines[(y, x - 1)] == 0)
+                                minecount++;
+                            if (mines.ContainsKey((y, x + 1)) && mines[(y, x + 1)] == 0)
+                                minecount++;
+
+                            //under
+                            if (mines.ContainsKey((y + 1, x - 1)) && mines[(y + 1, x - 1)] == 0)
+                                minecount++;
+                            if (mines.ContainsKey((y + 1, x)) && mines[(y + 1, x)] == 0)
+                                minecount++;
+                            if (mines.ContainsKey((y + 1, x + 1)) && mines[(y + 1, x + 1)] == 0)
+                                minecount++;
+
+                            casecontent = $":{types[minecount]}:";
+                        }
+
+                        result += $"||{casecontent}||";
+                    }
+
+                    result += "\n";
+                }
+
+                if(result.Length > 2000)
+                {
+                    await ctx.MessageSender.Warning(ctx.Message, "MineSweeper", "Result was too long to be displayed");
+                    return;
+                }
+
+                await ctx.MessageSender.Send(ctx.Message, "MineSweeper", result);
+            }
+            else
+                await ctx.SendBadUsage();
+        }
     }
 }

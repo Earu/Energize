@@ -87,14 +87,10 @@ namespace Energize.Services.Commands.Modules
                     if(int.TryParse(pageid,out int id))
                     {
                         if (id > videos.Count)
-                        {
                             id = 1;
-                        }
                                 
                         if(id < 1)
-                        {
                             id = videos.Count;
-                        }
 
                         VideoInformation video = videos[id-1];
                         await ctx.MessageSender.SendRaw(ctx.Message, ctx.AuthorMention + " #" + id 
