@@ -1,13 +1,14 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Energize.Services.Commands;
+using Energize.Toolkit;
 using NLua;
 using NLua.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Energize.Services.Commands;
 
 namespace Energize.Services.LuaService
 {
@@ -199,7 +200,7 @@ namespace Energize.Services.LuaService
             File.AppendAllText(path,code + _ScriptSeparator);
         }
 
-        public bool Run(SocketMessage msg,string code,out List<Object> returns,out string error,EnergizeLog log)
+        public bool Run(SocketMessage msg,string code,out List<object> returns,out string error, Logger log)
         {
             SocketChannel chan = msg.Channel as SocketChannel;
             if (!_States.ContainsKey(chan.Id) || _States[chan.Id] == null)
@@ -234,7 +235,7 @@ namespace Energize.Services.LuaService
             return success;
         }
 
-        public void Reset(ulong chanid,EnergizeLog log)
+        public void Reset(ulong chanid, Logger log)
         {
             if (_States.ContainsKey(chanid) && _States[chanid] != null)
             {

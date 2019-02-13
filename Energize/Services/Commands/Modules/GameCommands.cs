@@ -1,4 +1,4 @@
-﻿using Energize.Utils;
+﻿using Energize.Toolkit;
 using System;
 using Energize.Services.Commands.Warframe;
 using System.Threading.Tasks;
@@ -15,8 +15,8 @@ namespace Energize.Services.Commands.Modules
         [Command(Name = "walerts", Help = "Gets the warframe ongoing alerts", Usage = "walerts <nothing>")]
         private async Task Alerts(CommandContext ctx)
         {
-            string body = await HTTP.Fetch("http://content.warframe.com/dynamic/worldState.php", ctx.Log);
-            WGlobal global = JSON.Deserialize<WGlobal>(body,ctx.Log);
+            string body = await HttpClient.Fetch("http://content.warframe.com/dynamic/worldState.php", ctx.Log);
+            WGlobal global = JsonPayload.Deserialize<WGlobal>(body,ctx.Log);
 
             if (global == null)
             {
@@ -89,8 +89,8 @@ namespace Energize.Services.Commands.Modules
             if(!success)
             {
                 string vanity = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1?key=" + EnergizeConfig.STEAM_API_KEY + "&vanityurl=" + ctx.Input;
-                string vanityresponse = await HTTP.Fetch(vanity,ctx.Log);
-                SteamVanity result = JSON.Deserialize<SteamVanity>(vanityresponse,ctx.Log);
+                string vanityresponse = await HttpClient.Fetch(vanity,ctx.Log);
+                SteamVanity result = JsonPayload.Deserialize<SteamVanity>(vanityresponse,ctx.Log);
 
                 if(result.response.success == 1)
                 {
@@ -104,9 +104,9 @@ namespace Energize.Services.Commands.Modules
             }
 
             string endpoint = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + EnergizeConfig.STEAM_API_KEY + "&steamids=" + id64;
-            string json = await HTTP.Fetch(endpoint,ctx.Log);
+            string json = await HttpClient.Fetch(endpoint,ctx.Log);
 
-            SteamPlayerSummary summary = JSON.Deserialize<SteamPlayerSummary>(json,ctx.Log);
+            SteamPlayerSummary summary = JsonPayload.Deserialize<SteamPlayerSummary>(json,ctx.Log);
 
             if (summary == null)
             {
@@ -131,7 +131,7 @@ namespace Energize.Services.Commands.Modules
                 {
                     visibility = "Public";
                     HtmlDocument doc = new HtmlDocument();
-                    string html = await HTTP.Fetch(user.profileurl,ctx.Log);
+                    string html = await HttpClient.Fetch(user.profileurl,ctx.Log);
                     doc.LoadHtml(html);
                     HtmlNodeCollection collection = doc.DocumentNode.SelectNodes("//div[contains(@class,'profile_summary')]");
                     HtmlNode node = collection[0];

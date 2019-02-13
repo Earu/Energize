@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Discord;
 using Discord.Rest;
 using System.IO;
+using Energize.Toolkit;
 
 namespace Energize
 {
@@ -19,8 +20,8 @@ namespace Energize
 
             this._Token        = token;
             this.Prefix        = prefix;
-            this.Log           = new EnergizeLog();
-            this.MessageSender = new EnergizeMessage(this.Log);
+            this.Log           = new Logger();
+            this.MessageSender = new MessageSender(this.Log);
             this.Discord       = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
@@ -36,8 +37,8 @@ namespace Energize
         public string               Prefix        { get; }
         public DiscordShardedClient Discord       { get; }
         public DiscordRestClient    DiscordREST   { get; }
-        public EnergizeLog          Log           { get; }
-        public EnergizeMessage      MessageSender { get; }
+        public Logger               Log           { get; }
+        public MessageSender      MessageSender { get; }
 
         public async Task InitializeAsync()
         {

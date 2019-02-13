@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize", "Energize.csproj", "{9CBCAC34-5712-479C-9283-1A3A6B7EB4AF}"
 EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Energize.Commands", "..\Energize.Commands\Energize.Commands.fsproj", "{8EA1822E-08AC-4AD5-A345-0B33BCF065C6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize.Toolkit", "..\Energize.Logger\Energize.Toolkit.csproj", "{AB9BF935-904F-4C01-B8B5-65B0DBF7DDC6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{9CBCAC34-5712-479C-9283-1A3A6B7EB4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CBCAC34-5712-479C-9283-1A3A6B7EB4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CBCAC34-5712-479C-9283-1A3A6B7EB4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EA1822E-08AC-4AD5-A345-0B33BCF065C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EA1822E-08AC-4AD5-A345-0B33BCF065C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EA1822E-08AC-4AD5-A345-0B33BCF065C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EA1822E-08AC-4AD5-A345-0B33BCF065C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB9BF935-904F-4C01-B8B5-65B0DBF7DDC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB9BF935-904F-4C01-B8B5-65B0DBF7DDC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB9BF935-904F-4C01-B8B5-65B0DBF7DDC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB9BF935-904F-4C01-B8B5-65B0DBF7DDC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

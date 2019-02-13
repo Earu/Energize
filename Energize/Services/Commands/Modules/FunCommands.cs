@@ -1,4 +1,4 @@
-﻿using Energize.Utils;
+﻿using Energize.Toolkit;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -27,7 +27,7 @@ namespace Energize.Services.Commands.Modules
             }
             else
             {
-                string body = await HTTP.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Input,ctx.Log);
+                string body = await HttpClient.Fetch("http://artii.herokuapp.com/make?text=" + ctx.Input,ctx.Log);
                 if (body.Length > 2000)
                 {
                     await ctx.MessageSender.Danger(ctx.Message, "ASCII", "The word or sentence you provided is too long!");
@@ -171,8 +171,8 @@ namespace Energize.Services.Commands.Modules
         private async Task Chuck(CommandContext ctx)
         {
             string endpoint = "https://api.chucknorris.io/jokes/random";
-            string json = await HTTP.Fetch(endpoint, ctx.Log);
-            FactObject fact = JSON.Deserialize<FactObject>(json, ctx.Log);
+            string json = await HttpClient.Fetch(endpoint, ctx.Log);
+            FactObject fact = JsonPayload.Deserialize<FactObject>(json, ctx.Log);
 
             await ctx.MessageSender.Good(ctx.Message, "Chuck Norris Fact", fact.value);
         }
@@ -181,8 +181,8 @@ namespace Energize.Services.Commands.Modules
         private async Task Meme(CommandContext ctx)
         {
             string endpoint = "https://api.imgflip.com/get_memes";
-            string json = await HTTP.Fetch(endpoint, ctx.Log);
-            Meme.ResponseObject response = JSON.Deserialize<Meme.ResponseObject>(json, ctx.Log);
+            string json = await HttpClient.Fetch(endpoint, ctx.Log);
+            Meme.ResponseObject response = JsonPayload.Deserialize<Meme.ResponseObject>(json, ctx.Log);
             Random rand = new Random();
             string url = response.data.memes[rand.Next(0, response.data.memes.Length - 1)].url;
             EmbedBuilder builder = new EmbedBuilder();
@@ -201,8 +201,8 @@ namespace Energize.Services.Commands.Modules
             if(rand.Next(1,100) < 30)
             {
                 string endpoint = "https://randomuser.me/api/";
-                string json = await HTTP.Fetch(endpoint, ctx.Log);
-                GenName.ResultObject result = JSON.Deserialize<GenName.ResultObject>(json, ctx.Log);
+                string json = await HttpClient.Fetch(endpoint, ctx.Log);
+                GenName.ResultObject result = JsonPayload.Deserialize<GenName.ResultObject>(json, ctx.Log);
 
                 if (result != null)
                 {
@@ -313,7 +313,7 @@ namespace Energize.Services.Commands.Modules
         [Command(Name="oldswear",Help="Generates old swear words and insults",Usage="oldswear <nothing>")]
         private async Task OldInsult(CommandContext ctx)
         {
-            string html = await HTTP.Fetch("http://www.pangloss.com/seidel/Shaker/",ctx.Log);
+            string html = await HttpClient.Fetch("http://www.pangloss.com/seidel/Shaker/",ctx.Log);
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
             HtmlNode node = doc.DocumentNode.SelectNodes("//font").FirstOrDefault();

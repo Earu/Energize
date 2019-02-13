@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Energize
+namespace Energize.Toolkit
 {
-    public class EnergizeLog
+    public class Logger
     {
         private string _Prefix = "> ";
 
@@ -17,7 +17,7 @@ namespace Energize
             int minute = DateTime.Now.TimeOfDay.Minutes;
             string nicehour = hour < 10 ? "0" + hour : hour.ToString();
             string nicemin = minute < 10 ? "0" + minute : minute.ToString();
-            Console.Write(nicehour + ":" + nicemin + " - ");
+            Console.Write($"{nicehour}:{nicemin} - ");
         }
 
         public void Normal(string msg)
@@ -26,10 +26,10 @@ namespace Energize
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(msg);
 
-            File.AppendAllText("logs.txt","[NORMAL] >> " + msg + "\n\n");
+            File.AppendAllText("logs.txt", $"[NORMAL] >> {msg}\n\n");
         }
 
-        public void Nice(string head,ConsoleColor col,string content)
+        public void Nice(string head, ConsoleColor col, string content)
         {
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.White;
@@ -40,7 +40,7 @@ namespace Energize
             Console.Write("] >> ");
             Console.WriteLine(content);
 
-            File.AppendAllText("logs.txt","[NICE-" + head.ToUpper() + "] >> " + content + "\n\n");
+            File.AppendAllText("logs.txt", $"[NICE-{head.ToUpper()}] >> {content}\n\n");
         }
 
         public void Warning(string msg)
@@ -49,7 +49,7 @@ namespace Energize
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(msg);
 
-            File.AppendAllText("logs.txt","[WARN >> " + msg + "\n\n");
+            File.AppendAllText("logs.txt", $"[WARN >> {msg}\n\n");
         }
 
         public void Danger(string msg)
@@ -58,7 +58,7 @@ namespace Energize
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(msg);
 
-            File.AppendAllText("logs.txt","[DANGER] >> " + msg + "\n\n");
+            File.AppendAllText("logs.txt", $"[DANGER] >> {msg}\n\n");
         }
 
         public void Error(string msg)
@@ -69,7 +69,7 @@ namespace Energize
             Console.WriteLine(msg);
             Console.ReadLine();
 
-            File.AppendAllText("logs.txt","[ERROR] >> " + msg + "\n\n");
+            File.AppendAllText("logs.txt", $"[ERROR] >> {msg}\n\n");
         }
 
         public void Good(string msg)
@@ -78,12 +78,12 @@ namespace Energize
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(msg);
 
-            File.AppendAllText("logs.txt","[GOOD] >> " + msg + "\n\n");
+            File.AppendAllText("logs.txt", $"[GOOD] >> {msg}\n\n");
         }
 
         public void Notify(string msg)
         {
-            Console.WriteLine("\n\t---------\\\\\\\\ " + msg + " ////---------\n");
+            Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
         }
 
         public static void Debug(string msg)
@@ -97,7 +97,7 @@ namespace Energize
 
         public static void Debug(List<string> msgs)
         {
-            foreach(string msg in msgs)
+            foreach (string msg in msgs)
             {
                 Debug(msg);
             }
