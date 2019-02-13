@@ -14,5 +14,13 @@
     <Compile Include="Handler.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Commands\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Energize.Toolkit\Energize.Toolkit.csproj" />
+  </ItemGroup>
 
 </Project>
