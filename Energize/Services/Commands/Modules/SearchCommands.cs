@@ -1,4 +1,4 @@
-﻿using Energize.Utils;
+﻿using Energize.Toolkit;
 using System.Threading.Tasks;
 using YoutubeSearch;
 using System.Collections.Generic;
@@ -30,8 +30,8 @@ namespace Energize.Services.Commands.Modules
                         page = temp - 1;
 
             string search = ctx.Arguments[0];
-            string body = await HTTP.Fetch("http://api.urbandictionary.com/v0/define?term=" + search,ctx.Log);
-            Urban.UGlobal global = JSON.Deserialize<Urban.UGlobal>(body, ctx.Log);
+            string body = await HttpClient.Fetch("http://api.urbandictionary.com/v0/define?term=" + search,ctx.Log);
+            Urban.UGlobal global = JsonPayload.Deserialize<Urban.UGlobal>(body, ctx.Log);
 
             if (global == null)
                 await ctx.MessageSender.Danger(ctx.Message, "Urban", "There was no data to use for this!");

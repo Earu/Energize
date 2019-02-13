@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Energize.Utils
+namespace Energize.Toolkit
 {
-    public class JSON
+    public class JsonPayload
     {
-        public static T Deserialize<T>(string json,EnergizeLog log)
+        public static T Deserialize<T>(string json, Logger log)
         {
             try
             {
@@ -20,7 +20,7 @@ namespace Energize.Utils
             }
         }
 
-        public static string Serialize(Object obj,EnergizeLog log)
+        public static string Serialize(object obj, Logger log)
         {
             try
             {
@@ -31,7 +31,7 @@ namespace Energize.Utils
             {
                 log.Nice("JSON", ConsoleColor.Red, "Couldn't serialize a string!");
 
-                return "";
+                return string.Empty;
             }
         }
 

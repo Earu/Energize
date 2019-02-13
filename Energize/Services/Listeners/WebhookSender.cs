@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Energize.Toolkit;
 using System;
 using System.Threading.Tasks;
 
@@ -11,8 +12,8 @@ namespace Energize.Services.Listeners
     {
         private static ulong _ID = 0;
 
-        private EnergizeClient _EClient;
-        private EnergizeLog _Log;
+        private readonly EnergizeClient _EClient;
+        private readonly Logger _Log;
 
         public WebhookSender(EnergizeClient eclient)
         {

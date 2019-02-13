@@ -2,7 +2,7 @@
 using Energize.Services.Commands.Social;
 using Energize.Services.Database;
 using Energize.Services.Database.Models;
-using Energize.Utils;
+using Energize.Toolkit;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -129,13 +129,13 @@ namespace Energize.Services.Commands.Modules
                 endpoint += "fname=" + u1.Username + "&";
                 endpoint += "sname=" + u2.Username;
 
-                string json = await HTTP.Fetch(endpoint, ctx.Log, null, req =>
+                string json = await HttpClient.Fetch(endpoint, ctx.Log, null, req =>
                 {
                     req.Headers[System.Net.HttpRequestHeader.Accept] = "text/plain";
                     req.Headers["X-Mashape-Key"] = EnergizeConfig.MASHAPE_KEY;
                 });
 
-                LoveObject love = JSON.Deserialize<LoveObject>(json, ctx.Log);
+                LoveObject love = JsonPayload.Deserialize<LoveObject>(json, ctx.Log);
 
                 await ctx.MessageSender.Good(ctx.Message, "Love", u1.Mention + " & " + u2.Mention 
                     + "\n:heartbeat: \t" + love.percentage + "%\n" + love.result);

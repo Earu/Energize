@@ -1,6 +1,7 @@
-﻿using System;
-using Discord.Rest;
+﻿using Discord.Rest;
 using Discord.WebSocket;
+using Energize.Toolkit;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,7 +21,7 @@ namespace Energize.Services.Logs
         public DiscordRestClient    RESTClient { get; }
         public DiscordShardedClient Client     { get; }
         public string               Prefix     { get; }
-        public EnergizeLog          Log        { get; }
+        public Logger               Log        { get; }
 
         public bool AreLogsEnabled(SocketGuild guild)
             => guild.Roles.Any(x => x.Name == "EnergizeLogs");

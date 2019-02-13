@@ -1,4 +1,4 @@
-﻿using Energize.Utils;
+﻿using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -32,8 +32,8 @@ namespace Energize.Services.Commands.Modules
             }
 
             Random rand = new Random();
-            string body = await HTTP.Fetch("https://e621.net/post/index.json?tags=" + ctx.Input,ctx.Log);
-            List<E621.EPost> posts = JSON.Deserialize<List<E621.EPost>>(body,ctx.Log);
+            string body = await HttpClient.Fetch("https://e621.net/post/index.json?tags=" + ctx.Input,ctx.Log);
+            List<E621.EPost> posts = JsonPayload.Deserialize<List<E621.EPost>>(body,ctx.Log);
 
             if(posts == null)
             {
@@ -57,7 +57,7 @@ namespace Energize.Services.Commands.Modules
         private async Task<string[]> GetDAPIResult(CommandContext ctx,string domain)
         {
             Random rand = new Random();
-            string xml = await HTTP.Fetch("http://" + domain + "/index.php?page=dapi&s=post&q=index&tags=" + ctx.Input,ctx.Log);
+            string xml = await HttpClient.Fetch("http://" + domain + "/index.php?page=dapi&s=post&q=index&tags=" + ctx.Input,ctx.Log);
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
             XmlNodeList nodes = doc.SelectNodes("//post");
