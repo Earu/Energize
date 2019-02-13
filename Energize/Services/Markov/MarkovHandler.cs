@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
-using System;
+using Energize.Toolkit;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Markov
@@ -10,7 +9,7 @@ namespace Energize.Services.Markov
     public class MarkovHandler
     {
         private string _Prefix;
-        private EnergizeLog _Log;
+        private Logger _Log;
         private char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
         private int _MaxDepth = 2;
 
@@ -20,7 +19,7 @@ namespace Energize.Services.Markov
             this._Log = client.Log;
         }
 
-        public void Learn(string content,ulong id,EnergizeLog log)
+        public void Learn(string content,ulong id, Logger log)
         {
             MarkovChain chain = new MarkovChain();
             try

@@ -1,31 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Energize.Toolkit;
+using System;
 
 namespace Energize.Services.Database
 {
     public class DBContext : IDisposable
     {
-        private EnergizeDB _Instance;
-        private bool _IsUsed;
-        private EnergizeLog _Log;
+        private readonly Logger _Log;
 
-        public DBContext(EnergizeDB context,EnergizeLog log)
+        public DBContext(EnergizeDB context, Logger log)
         {
-            this._Instance = context;
-            this._IsUsed = false;
+            this.Instance = context;
+            this.IsUsed = false;
             this._Log = log;
         }
 
-        public EnergizeDB Instance { get => this._Instance; }
-        public bool IsUsed { get => this._IsUsed; set => this._IsUsed = value; }
+        public EnergizeDB Instance { get; }
+
+        public bool IsUsed { get; set; }
 
         public void Dispose()
         {
             try
             {
-                this._Instance.SaveChanges(true);
-                this._IsUsed = false;
+                this.Instance.SaveChanges(true);
+                this.IsUsed = false;
             }
             catch(Exception e)
             {

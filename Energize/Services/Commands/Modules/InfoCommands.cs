@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Diagnostics;
-using Energize.Utils;
+using Energize.Toolkit;
 
 namespace Energize.Services.Commands.Modules
 {
@@ -349,8 +349,8 @@ namespace Energize.Services.Commands.Modules
         private async Task LastChanges(CommandContext ctx)
         {
             string endpoint = "https://api.github.com/repos/Earu/Energize/commits";
-            string json = await HTTP.Fetch(endpoint, ctx.Log);
-            GitHub.GitHubCommit[] commits = JSON.Deserialize<GitHub.GitHubCommit[]>(json, ctx.Log);
+            string json = await HttpClient.Fetch(endpoint, ctx.Log);
+            GitHub.GitHubCommit[] commits = JsonPayload.Deserialize<GitHub.GitHubCommit[]>(json, ctx.Log);
             if(commits != null && commits.Length > 0)
             {
                 string changes = commits[0].commit.message;

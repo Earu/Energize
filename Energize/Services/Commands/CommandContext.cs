@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +40,8 @@ namespace Energize.Services.Commands
         public SocketMessage               Message          { get; set; }
         public List<string>                Arguments        { get; set; }
         public string                      Prefix           { get; set; }
-        public EnergizeMessage             MessageSender    { get; set; }
-        public EnergizeLog                 Log              { get; set; }
+        public MessageSender               MessageSender    { get; set; }
+        public Logger                      Log              { get; set; }
         public Dictionary<string, Command> Commands         { get; set; }
         public bool                        IsPrivate        { get; set; }
         public List<SocketGuildUser>       GuildCachedUsers { get; set; }

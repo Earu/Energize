@@ -1,12 +1,13 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
+using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord.Rest;
-using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Energize.Services.Commands
 {
@@ -30,8 +31,8 @@ namespace Energize.Services.Commands
             this._GlobalCache  = new CommandCache();
         }
 
-        public EnergizeLog                 Log           { get; }
-        public EnergizeMessage             MessageSender { get; }
+        public Logger                      Log           { get; }
+        public MessageSender             MessageSender { get; }
         public string                      Prefix        { get; }
         public DiscordShardedClient        Client        { get; }
         public Dictionary<string, Command> Commands      { get; }

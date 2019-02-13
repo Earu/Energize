@@ -1,5 +1,5 @@
 ﻿using System;
-using Energize.Utils;
+using Energize.Toolkit;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Discord;
@@ -327,7 +327,7 @@ namespace Energize.Services.Commands.Modules
         private async Task Inspiro(CommandContext ctx)
         {
             string endpoint = "http://inspirobot.me/api?generate=true";
-            string url = await HTTP.Fetch(endpoint,ctx.Log);
+            string url = await HttpClient.Fetch(endpoint,ctx.Log);
             EmbedBuilder builder = new EmbedBuilder();
             builder.WithColor(ctx.MessageSender.ColorGood);
             builder.WithImageUrl(url);

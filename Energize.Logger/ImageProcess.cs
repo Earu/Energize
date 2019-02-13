@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Net;
 using SixLabors.ImageSharp;
 
-namespace Energize.Utils
+namespace Energize.Toolkit
 {
     public class ImageProcess
     {

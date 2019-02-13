@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Energize.Services.Commands;
 using Energize.Services.Database;
 using Energize.Services.Database.Models;
 using Energize.Services.Listeners;
+using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,8 +219,8 @@ namespace Energize.Services.TextProcessing
             }
         };
 
-        private EnergizeLog _Log;
-        private EnergizeMessage _MessageSender;
+        private readonly Logger _Log;
+        private readonly MessageSender _MessageSender;
 
         public TextStyle(EnergizeClient client)
         {
