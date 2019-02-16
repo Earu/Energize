@@ -2,7 +2,6 @@
 
 module Cache =
     open Discord.WebSocket
-    open Discord
 
     type CommandCache = 
         {
