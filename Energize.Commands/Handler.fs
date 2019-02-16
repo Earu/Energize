@@ -4,13 +4,7 @@ module CommandHandler =
     open Discord.WebSocket
     open ImageUrlProvider
     open System.Text.RegularExpressions
-    open Command
     open Discord
-
-    type HandlerState = 
-        {
-            commands : Command list
-        }
 
     let private startsWithBotMention (str : string) (user : SocketSelfUser) =
         Regex.IsMatch(str,"^<@!?" + user.Id.ToString() + ">")
@@ -22,15 +16,15 @@ module CommandHandler =
         | false ->
             prefix.Length
 
-    let isCmdLoaded cmdName =
+    let private isCmdLoaded cmdName =
         false
     
-    let handleCmd msg cmdName =
+    let private handleCmd msg cmdName =
         ()
-    
+
     let handleMessageReceived (msg : IMessage) (user : SocketSelfUser) (prefix : string) =
         match getLastImgUrl msg with
-        | Some url -> () //implement cache
+        | Some url -> () // cache
         | None -> ()
 
         match msg.Author.IsBot with
