@@ -3,21 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Remove="Commands\**" />
-  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.0.0-beta-00921" />
   </ItemGroup>
   
   <ItemGroup>
+    <Compile Include="AsyncHelper.fs" />
     <Compile Include="ImageUrlProvider.fs" />
     <Compile Include="Cache.fs" />
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Handler.fs" />
+    <Compile Include="Implementation\Util.fs" />
   </ItemGroup>
   
   <ItemGroup>
