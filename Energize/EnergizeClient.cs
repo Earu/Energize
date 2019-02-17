@@ -6,6 +6,7 @@ using Discord;
 using Discord.Rest;
 using System.IO;
 using Energize.Toolkit;
+using Energize.Services;
 
 namespace Energize
 {
@@ -27,18 +28,20 @@ namespace Energize
                 MessageCacheSize = 1000,
             });
             this.DiscordREST = new DiscordRestClient();
+            this.ServiceManager = new ServiceManager();
 
-            this.Logger.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
+            this.Logger.Nice("Config", ConsoleColor.Yellow, $"Token used => [ {token} ]");
             this.Logger.Notify("Initializing");
 
-            Services.ServiceManager.LoadServices(this);
+            ServiceManager.LoadServices(this);
         }
 
-        public string               Prefix        { get; }
-        public DiscordShardedClient Discord       { get; }
-        public DiscordRestClient    DiscordREST   { get; }
-        public Logger               Logger           { get; }
-        public MessageSender        MessageSender { get; }
+        public string               Prefix         { get; }
+        public DiscordShardedClient Discord        { get; }
+        public DiscordRestClient    DiscordREST    { get; }
+        public Logger               Logger         { get; }
+        public MessageSender        MessageSender  { get; }
+        public ServiceManager       ServiceManager { get; }
 
         public async Task InitializeAsync()
         {
@@ -50,7 +53,7 @@ namespace Energize
                 await this.Discord.LoginAsync(TokenType.Bot, _Token, true);
                 await this.Discord.StartAsync();
                 await this.DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
-                await Services.ServiceManager.LoadServicesAsync(this);
+                await ServiceManager.LoadServicesAsync(this);
 
                 StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
                 await this.Discord.SetActivityAsync(game);
@@ -59,7 +62,7 @@ namespace Energize
                 {
                     long mb = GC.GetTotalMemory(false) / 1024 / 1024; //b to mb
                     GC.Collect();
-                    this.Logger.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
+                    this.Logger.Nice("GC", ConsoleColor.Gray, $"Collected {mb}MB of garbage");
                 });
 
                 int hour = 1000 * 60 * 60;
