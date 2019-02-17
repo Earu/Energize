@@ -20,16 +20,16 @@ namespace Energize
 
             this._Token        = token;
             this.Prefix        = prefix;
-            this.Log           = new Logger();
-            this.MessageSender = new MessageSender(this.Log);
+            this.Logger           = new Logger();
+            this.MessageSender = new MessageSender(this.Logger);
             this.Discord       = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
             this.DiscordREST = new DiscordRestClient();
 
-            this.Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
-            this.Log.Notify("Initializing");
+            this.Logger.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
+            this.Logger.Notify("Initializing");
 
             Services.ServiceManager.LoadServices(this);
         }
@@ -37,7 +37,7 @@ namespace Energize
         public string               Prefix        { get; }
         public DiscordShardedClient Discord       { get; }
         public DiscordRestClient    DiscordREST   { get; }
-        public Logger               Log           { get; }
+        public Logger               Logger           { get; }
         public MessageSender      MessageSender { get; }
 
         public async Task InitializeAsync()
@@ -59,7 +59,7 @@ namespace Energize
                 {
                     long mb = GC.GetTotalMemory(false) / 1024 / 1024; //b to mb
                     GC.Collect();
-                    this.Log.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
+                    this.Logger.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
                 });
 
                 int hour = 1000 * 60 * 60;
@@ -68,7 +68,7 @@ namespace Energize
             }
             catch (Exception e)
             {
-                this.Log.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
+                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
             }
         }
     }

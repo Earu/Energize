@@ -1,12 +1,12 @@
 ﻿namespace Energize.Commands.Implementation
 
 module Util =
-    open Energize.Commands.CommandHandler
+    open Energize.Commands.Command
     open Energize.Commands.AsyncHelper
 
     let private moduleName = "Utils"
 
-    let private ping : Command = 
+    let commands : Command list = [ 
         {
             name = "ping"
             callback = 
@@ -21,7 +21,6 @@ module Util =
             usage = "ping <nothing>"
             help = "Pings the bot"
             moduleName = moduleName
+            parameters = 0
         }
-
-    registerCmd ping
-  
+    ]

@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Services.Commands;
 using Energize.Toolkit;
 using NLua;
 using NLua.Exceptions;
@@ -16,6 +15,7 @@ namespace Energize.Services.LuaService
     public class LuaEnv
     {
         private readonly DiscordShardedClient _Client;
+        private readonly MessageSender        _MessageSender;
         private readonly string               _Path = "External/Lua/SavedScripts";
         private readonly string               _ScriptSeparator = "\n-- GEN --\n";
 
@@ -23,7 +23,10 @@ namespace Energize.Services.LuaService
         private Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
 
         public LuaEnv(EnergizeClient client)
-            => this._Client = client.Discord;
+        {
+            this._Client = client.Discord;
+            this._MessageSender = client.MessageSender;
+        }
 
         //Service method dont change the signature
         public async Task InitializeAsync()
@@ -32,8 +35,6 @@ namespace Energize.Services.LuaService
 
             if (!Directory.Exists(_Path))
                 Directory.CreateDirectory(_Path);
-
-            CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
 
             foreach (string filepath in Directory.GetFiles(_Path))
             {
@@ -63,12 +64,11 @@ namespace Energize.Services.LuaService
             {
                 if (_States.ContainsKey(chan.Id))
                 {
-                    CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                     Lua state = _States[chan.Id];
                     state["USER"] = user as SocketUser;
                     object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
                     state["USER"] = null;
-                    await chandler.MessageSender.Good(chan, "Lua Event", returns[0].ToString());
+                    await _MessageSender.Good(chan, "Lua Event", returns[0].ToString());
                 }
             }
         }
@@ -81,12 +81,11 @@ namespace Energize.Services.LuaService
             {
                 if (_States.ContainsKey(chan.Id))
                 {
-                    CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                     Lua state = _States[chan.Id];
                     state["USER"] = user as SocketUser;
                     object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
                     state["USER"] = null;
-                    await chandler.MessageSender.Good(chan, "Lua Event", returns[0].ToString());
+                    await _MessageSender.Good(chan, "Lua Event", returns[0].ToString());
                 }
 
             }
@@ -97,14 +96,13 @@ namespace Energize.Services.LuaService
         {
             if (_States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
             {
-                CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[msg.Channel.Id];
                 state["USER"] = msg.Author;
                 state["MESSAGE"] = msg;
                 object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
-                await chandler.MessageSender.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
+                await _MessageSender.Good((msg.Channel as SocketChannel), "Lua Event", returns[0].ToString());
             }
         }
 
@@ -113,14 +111,13 @@ namespace Energize.Services.LuaService
         {
             if (msg.HasValue && _States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
             {
-                CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["MESSAGE"] = msg.Value as SocketMessage;
                 state["USER"] = msg.Value.Author as SocketUser;
                 object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
-                await chandler.MessageSender.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
+                await _MessageSender.Good((msg.Value.Channel as SocketChannel), "Lua Event", returns[0].ToString());
             }
         }
 
@@ -129,14 +126,13 @@ namespace Energize.Services.LuaService
         {
             if (_States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
             {
-                CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["USER"] = msg.Author as SocketUser;
                 state["MESSAGE"] = msg as SocketMessage;
                 object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
                 state["USER"] = null;
                 state["MESSAGE"] = null;
-                await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                await _MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
             }
         }
 
@@ -145,12 +141,11 @@ namespace Energize.Services.LuaService
         {
             if(_States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
-                CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["REACTION"] = react;
                 object[] returns = state.DoString(@"return event.fire('OnReactionAdded',REACTION)");
                 state["REACTION"] = null;
-                await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                await _MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
             }
         }
 
@@ -159,12 +154,11 @@ namespace Energize.Services.LuaService
         {
             if (_States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
-                CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                 Lua state = _States[c.Id];
                 state["REACTION"] = react;
                 object[] returns = state.DoString(@"return event.fire('OnReactionRemoved',REACTION)");
                 state["REACTION"] = null;
-                await chandler.MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
+                await _MessageSender.Good((c as SocketChannel), "Lua Event", returns[0].ToString());
             }
         }
 

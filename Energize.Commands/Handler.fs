@@ -12,16 +12,8 @@ module CommandHandler =
     open Energize.Toolkit
     open System
     open AsyncHelper
-
-    type Command =
-        {
-            name : string
-            callback : (CommandContext -> Async<unit>)
-            mutable isLoaded : bool
-            usage : string
-            help : string
-            moduleName : string
-        }
+    open Command
+    open Energize.Commands.Implementation
 
     type CommandState =
         {
@@ -37,6 +29,34 @@ module CommandHandler =
 
     // I had to.
     let mutable private handlerState : CommandState option = None
+
+    let registerCmd (state : CommandState) (cmd : Command) =
+        state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered <%s> in module [%s]" cmd.name cmd.moduleName)
+        Some { state with commands = state.commands.Add (cmd.name, cmd) }
+
+    let registerHelpCmd (state : CommandState) =
+        let helpCmd : Command = 
+            {
+                name = "help"
+                callback = 
+                    (fun ctx -> async {
+                        let cmdName = ctx.arguments.[0].Trim()
+                        match handlerState.Value.commands |> Map.tryFind cmdName with
+                        | Some cmd ->
+                            let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
+                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
+                                |> ignore
+                        | None ->
+                            awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
+                                |> ignore
+                    })
+                isLoaded = true
+                usage = "help <cmd>"
+                help = "This command."
+                moduleName = "Core"
+                parameters = 1
+            }
+        registerCmd state helpCmd
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) =
@@ -58,12 +78,19 @@ module CommandHandler =
                 messageSender = messageSender
                 prefix = prefix
             }
-        handlerState <- Some newState
+        
+        newState.logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
+        for cmd in Util.commands do
+            handlerState <- (registerCmd newState cmd)
+
+        handlerState <- registerHelpCmd (match handlerState with Some s -> s | None -> newState)
+            
 
     let private getChannelCache (state : CommandState) (id : uint64) : CommandCache =
-        if state.caches |> Map.containsKey id then
-            state.caches.[id]
-        else
+        match state.caches |> Map.tryFind id with
+        | Some cache ->
+            cache
+        | None ->
             let cache = 
                 {
                     lastMessage = None
@@ -85,34 +112,32 @@ module CommandHandler =
         else
             state.prefix.Length
     
-    let registerCmd (cmd : Command) =
-        match handlerState with
-        | Some s ->
-            handlerState <- Some { s with commands = s.commands.Add (cmd.name, cmd) }
-        | None ->
-            ()
-    
     // yeah yeah ugly mutability I know, but CPU intensive otherwise
-    let unloadCmd (state : CommandState) (input : string)  =
-        if state.commands |> Map.containsKey input then
-            state.commands.[input].isLoaded <- false
+    let unloadCmd (state : CommandState) (cmdName : string)  =
+        match state.commands |> Map.tryFind cmdName with
+        | Some cmd ->
+            cmd.isLoaded <- false
+        | None -> ()
 
-    let loadCmd (state : CommandState) (input : string) = 
-        if state.commands |> Map.containsKey input then
-            state.commands.[input].isLoaded <- true
+    let loadCmd (state : CommandState) (cmdName : string) = 
+        match state.commands |> Map.tryFind cmdName with
+        | Some cmd ->
+            cmd.isLoaded <- true
+        | None -> ()
 
     let private getCmdName (state : CommandState) (input : string) : string =
         input.Substring(getPrefixLength state input).Split(' ').[0]
 
     let private getCmdArgs (state : CommandState) (input : string) : string list =
         let offset = (getPrefixLength state input) + ((getCmdName state input) |> String.length)
-        input.[offset..].TrimStart().Split(',') |> Array.toList
-
-    let private isCmdLoaded (state : CommandState) (cmdName : string) : bool =
-        if state.commands |> Map.containsKey cmdName then
-            state.commands.[cmdName].isLoaded
+        let args = input.[offset..].TrimStart().Split(',') |> Array.toList
+        if args.[0] |> String.IsNullOrWhiteSpace && (args |> List.length).Equals(1) then
+            []
         else
-            false
+            args
+
+    let private isCmdLoaded (cmd : Command) : bool =
+        cmd.isLoaded
     
     let private buildCmdContext (state : CommandState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
         {
@@ -152,14 +177,14 @@ module CommandHandler =
 
     // that function is disgusting
     let private logCmd (ctx : CommandContext) (deleted : bool) =
-        let mutable info = { log = String.Empty; color = ConsoleColor.Cyan; head = "DMCommands"; action = "used" }
+        let mutable info = { log = String.Empty; color = ConsoleColor.Blue; head = "DMCommands"; action = "used" }
         info <-
             if ctx.isPrivate then
                 info
             else
                 let chan = ctx.message.Channel :?> IGuildChannel
                 let log = info.log + (sprintf "(%s - #%s) " chan.Guild.Name chan.Name)
-                { info with log = log; color = ConsoleColor.Blue; head = "Commands" }
+                { info with log = log; color = ConsoleColor.Cyan; head = "Commands" }
 
         info <-
             if deleted then
@@ -175,33 +200,40 @@ module CommandHandler =
 
         ctx.logger.Nice(info.head, info.color, info.log)
 
-    let private runCmd (state : CommandState) (msg : SocketMessage) (cmdName : string) (input : string) =
-        if state.commands |> Map.containsKey cmdName then
-            let cmd = state.commands.[cmdName]
-            let ctx = buildCmdContext state cmdName msg (getCmdArgs state input)
-            let task = handleTimeOut state msg cmdName (cmd.callback ctx)
+    let private runCmd (state : CommandState) (msg : SocketMessage) (cmd : Command) (input : string) =
+        let args = getCmdArgs state input
+        let ctx = buildCmdContext state cmd.name msg args
+        if (args |> List.length).Equals(cmd.parameters) then
+            let task = handleTimeOut state msg cmd.name (cmd.callback ctx)
             task.ConfigureAwait(false) |> ignore
             await task
-            logCmd ctx false
+            logCmd ctx false 
         else
-            state.logger.Warning(sprintf "Could not find command callback for <%s>?!" cmdName)
+            let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
+            awaitResult (state.messageSender.Warning(msg, sprintf "Bad usage [%s]" cmd.name, help))
+                |> ignore
+            logCmd ctx false
+              
 
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
-        | Some s ->
+        | Some state ->
             match getLastImgUrl msg with
-            | Some url -> () // cache
+            | Some url -> () //impl cache
             | None -> ()
 
-            if msg.Author.IsBot then
+            if not msg.Author.IsBot then
                 let content = msg.Content
-                if content.ToLower().StartsWith(s.prefix) || (startsWithBotMention s content) then
-                    let cmdName = getCmdName s content
-                    if isCmdLoaded s cmdName then
-                        runCmd s msg cmdName content
-                    else
-                        s.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmdName)
-                        awaitResult (s.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) |> ignore
+                if content.ToLower().StartsWith(state.prefix) || (startsWithBotMention state content) then
+                    let cmdName = getCmdName state content
+                    match state.commands |> Map.tryFind cmdName with
+                    | Some cmd ->
+                        if isCmdLoaded cmd then
+                            runCmd state msg cmd content
+                        else
+                            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmdName)
+                            awaitResult (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) |> ignore
+                    | None -> ()
         | None -> 
             printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
             

@@ -18,7 +18,7 @@ namespace Energize.Services.Listeners
         public WebhookSender(EnergizeClient eclient)
         {
             this._EClient = eclient;
-            this._Log = eclient.Log;
+            this._Log = eclient.Logger;
         }
 
         private async Task<DiscordWebhookClient> CreateWebhook(ITextChannel chan)
