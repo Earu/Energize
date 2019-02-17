@@ -224,7 +224,7 @@ namespace Energize.Services.TextProcessing
 
         public TextStyle(EnergizeClient client)
         {
-            this._Log = client.Log;
+            this._Log = client.Logger;
             this._MessageSender = client.MessageSender;
         }
 

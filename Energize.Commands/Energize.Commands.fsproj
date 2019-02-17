@@ -14,8 +14,9 @@
     <Compile Include="Cache.fs" />
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
-    <Compile Include="Handler.fs" />
+    <Compile Include="Command.fs" />
     <Compile Include="Implementation\Util.fs" />
+    <Compile Include="Handler.fs" />
   </ItemGroup>
   
   <ItemGroup>

@@ -16,7 +16,7 @@ namespace Energize.Services.Markov
         public MarkovHandler(EnergizeClient client)
         {
             this._Prefix = client.Prefix;
-            this._Log = client.Log;
+            this._Log = client.Logger;
         }
 
         public void Learn(string content,ulong id, Logger log)

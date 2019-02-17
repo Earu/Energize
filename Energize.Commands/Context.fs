@@ -6,6 +6,7 @@ module Context =
     open Discord.Rest
     open Energize.Toolkit
     open Cache
+    open System
     
     type CommandContext =
         {
@@ -20,6 +21,15 @@ module Context =
             cache : CommandCache
             commandName : string
         }
+
+        member this.hasArguments =
+            (this.arguments |> List.length > 0) && (not (String.IsNullOrWhiteSpace this.arguments.[0]))
+
+        member this.input =
+            String.Join(',', this.arguments).Trim()
+
+        member this.authorMention =
+            this.message.Author.Mention
 
         member this.isNSFW = 
             let chan = this.message.Channel :?> ITextChannel
