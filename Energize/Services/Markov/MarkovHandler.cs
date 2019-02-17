@@ -1,22 +1,23 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Toolkit;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Markov
 {
     [Service("Markov")]
-    public class MarkovHandler
+    public class MarkovHandler : IServiceImplementation
     {
-        private string _Prefix;
-        private Logger _Log;
-        private char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
-        private int _MaxDepth = 2;
+        private readonly string _Prefix;
+        private readonly Logger _Logger;
+        private readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
+        private readonly int _MaxDepth = 2;
 
         public MarkovHandler(EnergizeClient client)
         {
             this._Prefix = client.Prefix;
-            this._Log = client.Logger;
+            this._Logger = client.Logger;
         }
 
         public void Learn(string content,ulong id, Logger log)
@@ -68,8 +69,13 @@ namespace Energize.Services.Markov
                     IGuildChannel guildchan = msg.Channel as IGuildChannel;
                     id = guildchan.Guild.Id;
                 }
-                this.Learn(msg.Content, id, this._Log);
+                this.Learn(msg.Content, id, this._Logger);
             }
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

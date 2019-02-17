@@ -20,6 +20,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Energize.ServiceInterfaces\Energize.ServiceInterfaces.csproj" />
     <ProjectReference Include="..\Energize.Toolkit\Energize.Toolkit.csproj" />
   </ItemGroup>
 

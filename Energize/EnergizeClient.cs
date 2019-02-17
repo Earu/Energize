@@ -23,11 +23,11 @@ namespace Energize
             this.Prefix        = prefix;
             this.Logger        = new Logger();
             this.MessageSender = new MessageSender(this.Logger);
-            this.Discord       = new DiscordShardedClient(new DiscordSocketConfig
+            this.DiscordClient       = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
-            this.DiscordREST = new DiscordRestClient();
+            this.DiscordRestClient = new DiscordRestClient();
             this.ServiceManager = new ServiceManager();
 
             this.Logger.Nice("Config", ConsoleColor.Yellow, $"Token used => [ {token} ]");
@@ -37,8 +37,8 @@ namespace Energize
         }
 
         public string               Prefix         { get; }
-        public DiscordShardedClient Discord        { get; }
-        public DiscordRestClient    DiscordREST    { get; }
+        public DiscordShardedClient DiscordClient        { get; }
+        public DiscordRestClient    DiscordRestClient    { get; }
         public Logger               Logger         { get; }
         public MessageSender        MessageSender  { get; }
         public ServiceManager       ServiceManager { get; }
@@ -50,13 +50,13 @@ namespace Energize
                 if(File.Exists("logs.txt"))
                     File.Delete("logs.txt");
 
-                await this.Discord.LoginAsync(TokenType.Bot, _Token, true);
-                await this.Discord.StartAsync();
-                await this.DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
+                await this.DiscordClient.LoginAsync(TokenType.Bot, _Token, true);
+                await this.DiscordClient.StartAsync();
+                await this.DiscordRestClient.LoginAsync(TokenType.Bot, _Token, true);
                 await ServiceManager.LoadServicesAsync(this);
 
                 StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
-                await this.Discord.SetActivityAsync(game);
+                await this.DiscordClient.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>
                 {

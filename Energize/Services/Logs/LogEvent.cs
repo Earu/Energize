@@ -1,5 +1,6 @@
 ﻿using Discord.Rest;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Toolkit;
 using System;
 using System.Linq;
@@ -8,12 +9,12 @@ using System.Threading.Tasks;
 namespace Energize.Services.Logs
 {
     [Service("EventLogs")]
-    public class LogEvent
+    public class LogEvent : IServiceImplementation
     {
         public LogEvent(EnergizeClient eclient)
         {
-            this.Client     = eclient.Discord;
-            this.RESTClient = eclient.DiscordREST;
+            this.Client     = eclient.DiscordClient;
+            this.RESTClient = eclient.DiscordRestClient;
             this.Prefix     = eclient.Prefix;
             this.Log        = eclient.Logger;
         }
@@ -41,5 +42,10 @@ namespace Energize.Services.Logs
         [Event("LeftGuild")]
         public async Task OnLeftGuild(SocketGuild guild)
             => this.Log.Nice("Guild", ConsoleColor.Red, $"Left {guild.Name} || ID => [ {guild.Id} ]");
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

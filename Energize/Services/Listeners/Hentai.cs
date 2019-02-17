@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Services.TextProcessing;
 using Energize.Toolkit;
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Hentai")]
-    public class Hentai
+    public class Hentai : IServiceImplementation
     {
         private readonly List<string> _Triggers = new List<string>{
             "hentai",
@@ -49,5 +50,10 @@ namespace Energize.Services.Listeners
                 }
             }
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

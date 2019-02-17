@@ -1,4 +1,5 @@
-﻿using Energize.Services.Database.Models;
+﻿using Energize.ServiceInterfaces;
+using Energize.Services.Database.Models;
 using Energize.Toolkit;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ namespace Energize.Services.Database
 {
     public class EnergizeDB : DbContext
     {
-        private string _ConnectionString;
+        private readonly string _ConnectionString;
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
@@ -78,9 +79,9 @@ namespace Energize.Services.Database
     }
 
     [Service("Database")]
-    public class DBContextPool
+    public class DBContextPool : IServiceImplementation
     {
-        private string _ConnectionString;
+        private readonly string _ConnectionString;
         private List<DBContext> _Pool = new List<DBContext>();
 
         public DBContextPool(EnergizeClient client)
@@ -109,6 +110,11 @@ namespace Energize.Services.Database
             await Task.Delay(100);
             return await this.GetContext();
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
 
         private EnergizeDB Create()
         {
