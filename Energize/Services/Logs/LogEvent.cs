@@ -15,7 +15,7 @@ namespace Energize.Services.Logs
             this.Client     = eclient.Discord;
             this.RESTClient = eclient.DiscordREST;
             this.Prefix     = eclient.Prefix;
-            this.Log        = eclient.Log;
+            this.Log        = eclient.Logger;
         }
 
         public DiscordRestClient    RESTClient { get; }

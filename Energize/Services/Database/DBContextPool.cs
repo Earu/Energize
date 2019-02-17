@@ -89,7 +89,7 @@ namespace Energize.Services.Database
 
             for (uint i = 0; i < 10; i++)
             {
-                _Pool.Add(new DBContext(this.Create(),client.Log));
+                _Pool.Add(new DBContext(this.Create(),client.Logger));
             }
         }
 

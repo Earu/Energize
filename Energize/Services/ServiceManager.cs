@@ -50,7 +50,7 @@ namespace Energize.Services
                 }
                 catch(Exception e)
                 {
-                    eclient.Log.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e}");
+                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e}");
                 }
 
                 Service serv = new Service(inst)
@@ -67,7 +67,7 @@ namespace Energize.Services
                     }
                     catch(Exception e)
                     {
-                        eclient.Log.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
+                        eclient.Logger.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
                     }
                     serv.Initialized = true;
                 }
@@ -95,7 +95,7 @@ namespace Energize.Services
                         }
                         catch
                         {
-                            eclient.Log.Nice("Init", ConsoleColor.Red, att.Name 
+                            eclient.Logger.Nice("Init", ConsoleColor.Red, att.Name 
                             + " tried to sub to an event with wrong signature <" + method.Name + ">");
                         }
                     }
@@ -119,7 +119,7 @@ namespace Energize.Services
                         }
                         catch (Exception e)
                         {
-                            eclient.Log.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
+                            eclient.Logger.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
                             + $"invoking InitializeAsync: {e.Message}");
                         }
                     }
