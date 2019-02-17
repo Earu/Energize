@@ -14,6 +14,8 @@ namespace Energize.Services.Commands
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
         private readonly string _Prefix;
+        private readonly Config _Config;
+        private readonly StaticData _Data;
 
         public CommandHandler(EnergizeClient client)
         {

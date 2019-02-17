@@ -17,10 +17,11 @@ module Util =
                         (ctx.messageSender.Good(ctx.message, "Pong!", sprintf ":alarm_clock: Discord: %dms\n:clock1: Bot: %dms" diff ctx.client.Latency))
                         |> ignore
                 })
-            isLoaded = true
+            isEnabled = true
             usage = "ping <nothing>"
             help = "Pings the bot"
             moduleName = moduleName
             parameters = 0
+            ownerOnly = false
         }
     ]

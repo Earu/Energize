@@ -3,10 +3,10 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace Energize
+namespace Energize.Toolkit
 {
     [DataContract]
-    class EnergizeData
+    public class StaticData
     {
 #pragma warning disable 649
         [DataMember]
@@ -51,7 +51,7 @@ namespace Energize
             using (StreamReader reader = File.OpenText("External/data.json"))
             {
                 string json = await reader.ReadToEndAsync();
-                EnergizeData data = JsonConvert.DeserializeObject<EnergizeData>(json);
+                StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
                 ADJECTIVES = data.Adjectives;
                 NOUNS = data.Nouns;
                 VOWELS = data.Vowels;

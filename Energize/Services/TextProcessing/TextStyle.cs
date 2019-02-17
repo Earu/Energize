@@ -117,10 +117,10 @@ namespace Energize.Services.TextProcessing
                     result += "！！";
                 }
 
-                string[] decoration = EnergizeData.ANIME_DECORATIONS[rand.Next(0, EnergizeData.ANIME_DECORATIONS.Length - 1)];
+                string[] decoration = StaticData.ANIME_DECORATIONS[rand.Next(0, StaticData.ANIME_DECORATIONS.Length - 1)];
                 result = decoration[0] + result + decoration[1];
 
-                string emote = EnergizeData.ANIME_EMOTES[rand.Next(0, EnergizeData.ANIME_EMOTES.Length - 1)];
+                string emote = StaticData.ANIME_EMOTES[rand.Next(0, StaticData.ANIME_EMOTES.Length - 1)];
                 if (rand.Next(0, 100) > 50)
                 {
                     result = emote + " － " + result;
@@ -210,7 +210,7 @@ namespace Energize.Services.TextProcessing
                     int count = rand.Next(5, 20);
                     for(uint i =0; i < count; i++)
                     {
-                        toput += EnergizeData.ZALGO[rand.Next(0, EnergizeData.ZALGO.Length - 1)];
+                        toput += StaticData.ZALGO[rand.Next(0, StaticData.ZALGO.Length - 1)];
                     }
 
                     ret += toput + c;
