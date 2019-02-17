@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Toolkit;
 using System;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Webhook")]
-    class WebhookSender
+    class WebhookSender : IServiceImplementation
     {
         private static ulong _ID = 0;
 
@@ -25,7 +26,7 @@ namespace Energize.Services.Listeners
         {
             try
             {
-                SocketSelfUser bot = this._EClient.Discord.CurrentUser;
+                SocketSelfUser bot = this._EClient.DiscordClient.CurrentUser;
                 IWebhook webhook = await chan.CreateWebhookAsync(bot.Username + _ID);
                 _ID++;
 
@@ -167,5 +168,10 @@ namespace Energize.Services.Listeners
 
             return id;
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

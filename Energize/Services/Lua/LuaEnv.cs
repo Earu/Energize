@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Toolkit;
 using NLua;
 using NLua.Exceptions;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.LuaService
 {
     [Service("Lua")]
-    public class LuaEnv
+    public class LuaEnv : IServiceImplementation
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender        _MessageSender;
@@ -24,7 +25,7 @@ namespace Energize.Services.LuaService
 
         public LuaEnv(EnergizeClient client)
         {
-            this._Client = client.Discord;
+            this._Client = client.DiscordClient;
             this._MessageSender = client.MessageSender;
         }
 
@@ -248,5 +249,7 @@ namespace Energize.Services.LuaService
             }
             _States[chanid] = null;
         }
+
+        public void Initialize() { }
     }
 }

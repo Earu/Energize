@@ -7,6 +7,7 @@ module Context =
     open Energize.Toolkit
     open Cache
     open System
+    open Energize.ServiceInterfaces
     
     type CommandContext =
         {
@@ -20,6 +21,7 @@ module Context =
             isPrivate : bool
             cache : CommandCache
             commandName : string
+            serviceManager : IServiceManager
         }
 
         member this.hasArguments =
