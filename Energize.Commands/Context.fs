@@ -9,8 +9,8 @@ module Context =
     
     type CommandContext =
         {
-            discordClient : DiscordShardedClient
-            discordRest : DiscordRestClient
+            client : DiscordShardedClient
+            restClient : DiscordRestClient
             message : SocketMessage
             arguments : string list
             prefix : string
@@ -18,6 +18,7 @@ module Context =
             logger : Logger
             isPrivate : bool
             cache : CommandCache
+            commandName : string
         }
 
         member this.isNSFW = 

@@ -1,24 +1,16 @@
-﻿using Discord.WebSocket;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using System.Threading;
 using static Energize.Services.Commands.CommandHandler;
 
 namespace Energize.Services.Commands
 {
     public class Command
     {
-        private static Dictionary<string,List<Command>> _Modules = new Dictionary<string, List<Command>>();
         private static Dictionary<string, bool> _ModulesLoaded = new Dictionary<string, bool>();
-
-        private string _Name;
-        private CommandCallback _Callback;
-        private string _Help;
-        private string _Usage;
-        private bool _Loaded;
-        private string _ModuleName;
+        private readonly string _Help;
+        private readonly string _Usage;
+        private readonly string _ModuleName;
 
         public Command(string cmd,CommandCallback callback,string help,string usage,string modulename)
         {
@@ -26,47 +18,41 @@ namespace Energize.Services.Commands
             usage = usage ?? "No usage was provided";
             modulename = modulename ?? "None";
 
-            this._Name = cmd;
-            this._Callback = callback;
+            this.Cmd = cmd;
+            this.Callback = callback;
             this._Help = help;
             this._Usage = usage;
-            this._Loaded = true;
+            this.Loaded = true;
             this._ModuleName = modulename;
 
-            if (!_Modules.ContainsKey(modulename))
-            {
-                _Modules[modulename] = new List<Command>();
-            }
+            if (!Modules.ContainsKey(modulename))
+                Modules[modulename] = new List<Command>();
 
             this.AddToModule(this, modulename);
         }
 
-        public static Dictionary<string,List<Command>> Modules { get => _Modules; }
+        public static Dictionary<string, List<Command>> Modules { get; } = new Dictionary<string, List<Command>>();
 
-        public bool Loaded { get => this._Loaded; set => this._Loaded = value; }
-        public string Cmd { get => this._Name; set => this._Name = value; }
-        public CommandCallback Callback { get => this._Callback; }
+        public bool Loaded { get; set; }
+        public string Cmd { get; set; }
+        public CommandCallback Callback { get; }
 
         public static bool IsLoadedModule(string module)
         {
             if (!_ModulesLoaded.ContainsKey(module))
-            {
                 _ModulesLoaded[module] = true;
-            }
 
             return _ModulesLoaded[module];
         }
 
         public static void SetLoadedModule(string module,bool state)
-        {
-            _ModulesLoaded[module] = state;
-        }
+            => _ModulesLoaded[module] = state;
 
         public async Task Run(CommandContext ctx)
         {
             try
             {
-                await this._Callback(ctx);
+                await this.Callback(ctx);
             }
             catch(Exception e)
             {
@@ -87,16 +73,16 @@ namespace Energize.Services.Commands
 
         private void AddToModule(Command cmd,string modulename)
         {
-            foreach(Command c in _Modules[modulename])
+            foreach(Command c in Modules[modulename])
             {
                 if(c.Cmd == cmd.Cmd)
                 {
-                    _Modules[modulename].Remove(c);
+                    Modules[modulename].Remove(c);
                     break;
                 }
             }
 
-            _Modules[modulename].Add(cmd);
+            Modules[modulename].Add(cmd);
         }
     }
 }

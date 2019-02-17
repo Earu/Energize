@@ -127,7 +127,7 @@ module UserHelper =
         | true ->
             try
                 let id = uint64 input
-                match ctx.discordClient.GetUser(id) with
+                match ctx.client.GetUser(id) with
                 | null -> None
                 | user -> Some user
             with _ ->
