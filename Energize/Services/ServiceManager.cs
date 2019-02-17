@@ -4,16 +4,16 @@ using System.Linq;
 using System.Reflection;
 using Discord.WebSocket;
 using System.Threading.Tasks;
+using Energize.ServiceInterfaces;
 
 namespace Energize.Services
 {
-    public class ServiceManager
+    public class ServiceManager : IServiceManager
     {
         private const string _Namespace = "Energize.Services";
 
         private static readonly Type _DiscordShardedClientType = typeof(DiscordShardedClient);
         private static readonly EventInfo[] _DiscordClientEvents = _DiscordShardedClientType.GetEvents();
-
 
         private static List<string> _MethodBlacklist = new List<string>
         {
@@ -23,9 +23,9 @@ namespace Energize.Services
             "GetType"
         };
 
-        private readonly Dictionary<string, Service> _Services = new Dictionary<string, Service>();
+        private readonly Dictionary<string, IService> _Services = new Dictionary<string, IService>();
 
-        public void LoadServices(EnergizeClient eclient)
+        internal void LoadServices(EnergizeClient eclient)
         {
             Type satype = typeof(ServiceAttribute);
             Type eatype = typeof(EventAttribute);
@@ -35,49 +35,32 @@ namespace Energize.Services
 
             foreach(Type service in services)
             {
-                object inst = null;
-                bool hasconstructor = false;
+                IServiceImplementation inst = null;
                 try
                 {
                     if (service.GetConstructor(new Type[] { typeof(EnergizeClient) }) != null)
-                    {
-                        inst = Activator.CreateInstance(service, eclient);
-                        hasconstructor = true;
-                    }
+                        inst = (IServiceImplementation)Activator.CreateInstance(service, eclient);
                     else
-                    {
                         //Use default constructor
-                        inst = Activator.CreateInstance(service);
-                    }
+                        inst = (IServiceImplementation)Activator.CreateInstance(service);
                 }
                 catch(Exception e)
                 {
                     eclient.Logger.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e}");
                 }
 
-                Service serv = new Service(inst)
+                try
                 {
-                    HasConstructor = hasconstructor
-                };
-
-                MethodInfo initinfo = service.GetMethod("Initialize");
-                if(initinfo != null)
+                    inst.Initialize();
+                }
+                catch(Exception e)
                 {
-                    try
-                    {
-                        initinfo.Invoke(inst, null);
-                    }
-                    catch(Exception e)
-                    {
-                        eclient.Logger.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
-                    }
-                    serv.Initialized = true;
+                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
                 }
 
                 ServiceAttribute att = service.GetCustomAttributes(satype,false).First() as ServiceAttribute;
-                serv.Name = att.Name;
-                this._Services[att.Name] = serv;
-                
+                this._Services[att.Name] = new Service(att.Name, inst as IServiceImplementation);
+
                 IEnumerable<MethodInfo> servmethods = service.GetMethods()
                     .Where(x => !_MethodBlacklist.Contains(x.Name));
                 
@@ -93,56 +76,43 @@ namespace Energize.Services
                         try
                         {
                             EventInfo _event = _DiscordShardedClientType.GetEvent(minfo.Name);
-                            _event.AddEventHandler(eclient.Discord,method.CreateDelegate(_event.EventHandlerType, inst));
+                            _event.AddEventHandler(eclient.DiscordClient, method.CreateDelegate(_event.EventHandlerType, inst));
                         }
                         catch
                         {
                             eclient.Logger.Nice("Init", ConsoleColor.Red, att.Name 
-                            + " tried to sub to an event with wrong signature <" + method.Name + ">");
+                            + $" tried to sub to an event with wrong signature <{method.Name}>");
                         }
                     }
                 }
             }
         }
 
-        public async Task LoadServicesAsync(EnergizeClient eclient)
+        internal async Task LoadServicesAsync(EnergizeClient eclient)
         {
-            foreach(KeyValuePair<string,Service> service in this._Services)
+            foreach(KeyValuePair<string, IService> service in this._Services)
             {
                 if(service.Value.Instance != null)
                 {
-                    MethodInfo minfo = service.Value.Instance.GetType().GetMethod("InitializeAsync");
-                    if (minfo != null)
+                    try
                     {
-                        try
-                        {
-                            Task tinit = (Task)minfo.Invoke(service.Value.Instance, null);
-                            await tinit;
-                        }
-                        catch (Exception e)
-                        {
-                            eclient.Logger.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
-                            + $"invoking InitializeAsync: {e.Message}");
-                        }
+                        await service.Value.Instance.InitializeAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        eclient.Logger.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
+                        + $"invoking InitializeAsync: {e.Message}");
                     }
                 }
             }
         }
 
-        public T GetService<T>(string name)
+        public T GetService<T>(string name) where T : IServiceImplementation
         {
             if(this._Services.ContainsKey(name))
-            {
-                object inst = this._Services[name].Instance;
-                if (inst is T)
-                    return (T)inst;
-                else
-                    return default;
-            }
+                return (T)this._Services[name].Instance;
             else
-            {
                 return default;
-            }
         }
     }
 }

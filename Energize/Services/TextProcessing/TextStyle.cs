@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.ServiceInterfaces;
 using Energize.Services.Database;
 using Energize.Services.Database.Models;
 using Energize.Services.Listeners;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.TextProcessing
 {
     [Service("TextStyle")]
-    public class TextStyle
+    public class TextStyle : IServiceImplementation
     {
         private delegate string StyleCallback(string input);
         private static Dictionary<string, StyleCallback> StyleCallbacks = new Dictionary<string, StyleCallback>
@@ -277,5 +278,10 @@ namespace Energize.Services.TextProcessing
                 }
             }
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

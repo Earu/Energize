@@ -14,6 +14,7 @@ module CommandHandler =
     open Command
     open Energize.Commands.Implementation
     open Energize.Toolkit
+    open Energize.ServiceInterfaces
 
     type CommandHandlerState =
         {
@@ -25,6 +26,7 @@ module CommandHandler =
             logger : Logger
             messageSender : MessageSender
             prefix : string
+            serviceManager : IServiceManager
         }
 
     // I had to.
@@ -96,7 +98,7 @@ module CommandHandler =
         registerCmd state enableCmd
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
-        (messageSender : MessageSender) (prefix : string) =
+        (messageSender : MessageSender) (prefix : string) (serviceManager : IServiceManager) =
         let newState : CommandHandlerState =
             {
                 client = client
@@ -114,6 +116,7 @@ module CommandHandler =
                 logger = logger
                 messageSender = messageSender
                 prefix = prefix
+                serviceManager = serviceManager
             }
         
         logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
@@ -178,6 +181,7 @@ module CommandHandler =
             logger = state.logger
             isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
             commandName = cmdName
+            serviceManager = state.serviceManager
         }
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =

@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Energize.Services.Commands;
+using Energize.ServiceInterfaces;
 using Energize.Services.Database;
 using Energize.Services.Database.Models;
 using Energize.Toolkit;
@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Administration")]
-    class Administration
+    class Administration : IServiceImplementation
     {
         private readonly EnergizeClient _EClient;
         private readonly MessageSender _MessageSender;
@@ -33,7 +33,7 @@ namespace Energize.Services.Listeners
             string pattern = @"discord\.gg\/.+\s?";
             if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
-                DBContextPool db = this._ServiceManager.GetService<DBContextPool>("Database");
+                var db = this._ServiceManager.GetService<DBContextPool>("Database");
                 using(DBContext ctx = await db.GetContext())
                 {
                     DiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
@@ -67,12 +67,14 @@ namespace Energize.Services.Listeners
             string content = File.ReadAllText("restartlog.txt");
             if(ulong.TryParse(content, out ulong id))
             {
-                SocketChannel chan = this._EClient.Discord.GetChannel(id);
+                SocketChannel chan = this._EClient.DiscordClient.GetChannel(id);
                 if(chan != null)
                     await this._EClient.MessageSender.Good(chan, "Restart", "Done restarting.");
             }
 
             File.Delete("restartlog.txt");
         }
+
+        public void Initialize() { }
     }
 }
