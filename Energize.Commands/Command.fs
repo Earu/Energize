@@ -7,10 +7,11 @@ module Command =
         {
             name : string
             callback : (CommandContext -> Async<unit>)
-            mutable isLoaded : bool
+            mutable isEnabled : bool
             usage : string
             help : string
             moduleName : string
             parameters : int
+            ownerOnly : bool
         }
 

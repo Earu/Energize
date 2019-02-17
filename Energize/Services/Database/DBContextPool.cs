@@ -1,5 +1,5 @@
-﻿using Discord.WebSocket;
-using Energize.Services.Database.Models;
+﻿using Energize.Services.Database.Models;
+using Energize.Toolkit;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -85,7 +85,7 @@ namespace Energize.Services.Database
 
         public DBContextPool(EnergizeClient client)
         {
-            this._ConnectionString = EnergizeConfig.DB_CONNECTION_STRING;
+            this._ConnectionString = Config.DB_CONNECTION_STRING;
 
             for (uint i = 0; i < 10; i++)
             {
@@ -112,7 +112,7 @@ namespace Energize.Services.Database
 
         private EnergizeDB Create()
         {
-            var context = new EnergizeDB(EnergizeConfig.DB_CONNECTION_STRING);
+            var context = new EnergizeDB(Config.DB_CONNECTION_STRING);
             context.Database.EnsureCreated();
 
             return context;

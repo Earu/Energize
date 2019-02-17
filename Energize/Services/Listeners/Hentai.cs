@@ -1,13 +1,11 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Services.Commands;
 using Energize.Services.TextProcessing;
+using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
-using Discord.Webhook;
+using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
@@ -36,7 +34,7 @@ namespace Energize.Services.Listeners
                     WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
 
                     Random rand = new Random();
-                    string quote = EnergizeData.HENTAI_QUOTES[rand.Next(0, EnergizeData.HENTAI_QUOTES.Length - 1)];
+                    string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];
                     quote = quote.Replace("{NAME}", msg.Author.Username);
                     quote = style.GetStyleResult(quote, "anime");
                     ITextChannel chan = msg.Channel as ITextChannel;

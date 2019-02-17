@@ -6,7 +6,7 @@ namespace Energize.Toolkit
 {
     public class Logger
     {
-        private string _Prefix = "> ";
+        private readonly string _Prefix = "> ";
 
         private void Prefix()
         {
@@ -82,9 +82,7 @@ namespace Energize.Toolkit
         }
 
         public void Notify(string msg)
-        {
-            Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
-        }
+            => Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
 
         public static void Debug(string msg)
         {
@@ -98,9 +96,7 @@ namespace Energize.Toolkit
         public static void Debug(List<string> msgs)
         {
             foreach (string msg in msgs)
-            {
                 Debug(msg);
-            }
         }
     }
 }

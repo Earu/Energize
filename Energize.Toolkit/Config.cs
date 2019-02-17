@@ -3,10 +3,10 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace Energize
+namespace Energize.Toolkit
 {
     [DataContract]
-    public class EnergizeConfig
+    public class Config
     {
 #pragma warning disable 649
         [DataMember]
@@ -56,20 +56,20 @@ namespace Energize
             using (StreamReader reader = File.OpenText("External/config.json"))
             {
                 string json = await reader.ReadToEndAsync();
-                EnergizeConfig config = JsonConvert.DeserializeObject<EnergizeConfig>(json);
+                Config config = JsonConvert.DeserializeObject<Config>(json);
 
-                TOKEN_DEV            = config.TokenDev;
-                TOKEN_MAIN           = config.TokenMain;
-                TWITCH_URL           = config.TwitchURL;
-                BOT_ID_MAIN          = config.BotIDMain;
-                BOT_ID_DEV           = config.BotIDDev;
-                OWNER_ID             = config.OwnerID;
-                GOOGLE_API_KEY       = config.GoogleAPIKey;
-                MASHAPE_KEY          = config.MashapeKey;
-                FEEDBACK_CHANNEL_ID  = config.FeedbackChannelID;
-                WEB_SEARCH_TOKEN     = config.WebSearchToken;
-                SERVER_INVITE        = config.ServerInvite;
-                STEAM_API_KEY        = config.SteamAPIKey;
+                TOKEN_DEV = config.TokenDev;
+                TOKEN_MAIN = config.TokenMain;
+                TWITCH_URL = config.TwitchURL;
+                BOT_ID_MAIN = config.BotIDMain;
+                BOT_ID_DEV = config.BotIDDev;
+                OWNER_ID = config.OwnerID;
+                GOOGLE_API_KEY = config.GoogleAPIKey;
+                MASHAPE_KEY = config.MashapeKey;
+                FEEDBACK_CHANNEL_ID = config.FeedbackChannelID;
+                WEB_SEARCH_TOKEN = config.WebSearchToken;
+                SERVER_INVITE = config.ServerInvite;
+                STEAM_API_KEY = config.SteamAPIKey;
                 DB_CONNECTION_STRING = config.DBConnectionString;
             }
         }
