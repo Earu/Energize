@@ -11,11 +11,11 @@ namespace Energize.Services
     {
         private const string _Namespace = "Energize.Services";
 
-        private static readonly Type        _DiscordShardedClientType = typeof(DiscordShardedClient);
-        private static readonly EventInfo[] _DiscordClientEvents      = _DiscordShardedClientType.GetEvents();
+        private static readonly Type _DiscordShardedClientType = typeof(DiscordShardedClient);
+        private static readonly EventInfo[] _DiscordClientEvents = _DiscordShardedClientType.GetEvents();
 
-        private static Dictionary<string, Service> _Services        = new Dictionary<string, Service>();
-        private static List<string>                _MethodBlacklist = new List<string>
+
+        private static List<string> _MethodBlacklist = new List<string>
         {
             "ToString",
             "Equals",
@@ -23,7 +23,9 @@ namespace Energize.Services
             "GetType"
         };
 
-        public static void LoadServices(EnergizeClient eclient)
+        private readonly Dictionary<string, Service> _Services = new Dictionary<string, Service>();
+
+        public void LoadServices(EnergizeClient eclient)
         {
             Type satype = typeof(ServiceAttribute);
             Type eatype = typeof(EventAttribute);
@@ -74,7 +76,7 @@ namespace Energize.Services
 
                 ServiceAttribute att = service.GetCustomAttributes(satype,false).First() as ServiceAttribute;
                 serv.Name = att.Name;
-                _Services[att.Name] = serv;
+                this._Services[att.Name] = serv;
                 
                 IEnumerable<MethodInfo> servmethods = service.GetMethods()
                     .Where(x => !_MethodBlacklist.Contains(x.Name));
@@ -103,9 +105,9 @@ namespace Energize.Services
             }
         }
 
-        public static async Task LoadServicesAsync(EnergizeClient eclient)
+        public async Task LoadServicesAsync(EnergizeClient eclient)
         {
-            foreach(KeyValuePair<string,Service> service in _Services)
+            foreach(KeyValuePair<string,Service> service in this._Services)
             {
                 if(service.Value.Instance != null)
                 {
@@ -127,16 +129,15 @@ namespace Energize.Services
             }
         }
 
-        public static Service GetServiceHolder(string name)
-            => _Services.ContainsKey(name) ? _Services[name] : null;
-
-        public static T GetService<T>(string name)
+        public T GetService<T>(string name)
         {
-            if(_Services.ContainsKey(name))
+            if(this._Services.ContainsKey(name))
             {
-                object inst = _Services[name].Instance;
-                if (inst is T) return (T)inst;
-                else return default;
+                object inst = this._Services[name].Instance;
+                if (inst is T)
+                    return (T)inst;
+                else
+                    return default;
             }
             else
             {

@@ -15,7 +15,7 @@ module CommandHandler =
     open Energize.Commands.Implementation
     open Energize.Toolkit
 
-    type CommandState =
+    type CommandHandlerState =
         {
             client : DiscordShardedClient
             restClient : DiscordRestClient
@@ -28,13 +28,13 @@ module CommandHandler =
         }
 
     // I had to.
-    let mutable private handlerState : CommandState option = None
+    let mutable private handlerState : CommandHandlerState option = None
 
-    let registerCmd (state : CommandState) (cmd : Command) =
+    let private registerCmd (state : CommandHandlerState) (cmd : Command) =
         state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered <%s> in module [%s]" cmd.name cmd.moduleName)
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
 
-    let registerHelpCmd (state : CommandState) =
+    let private registerHelpCmd (state : CommandHandlerState) =
         let helpCmd : Command = 
             {
                 name = "help"
@@ -59,13 +59,13 @@ module CommandHandler =
             }
         registerCmd state helpCmd
 
-    let enableCmd (state : CommandState) (cmdName : string) (enabled : bool) = 
+    let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
         match state.commands |> Map.tryFind cmdName with
         | Some cmd ->
             cmd.isEnabled <- enabled
         | None -> ()
 
-    let registerEnableCmd (state : CommandState) =
+    let private registerEnableCmd (state : CommandHandlerState) =
         let enableCmd : Command = 
             {
                 name = "enable"
@@ -97,7 +97,7 @@ module CommandHandler =
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) =
-        let newState : CommandState =
+        let newState : CommandHandlerState =
             {
                 client = client
                 restClient = restClient
@@ -129,7 +129,7 @@ module CommandHandler =
 
         logger.Notify("Commands Initialized")
 
-    let private getChannelCache (state : CommandState) (id : uint64) : CommandCache =
+    let private getChannelCache (state : CommandHandlerState) (id : uint64) : CommandCache =
         match state.caches |> Map.tryFind id with
         | Some cache ->
             cache
@@ -146,19 +146,19 @@ module CommandHandler =
             handlerState <- Some { state with caches = newCaches }
             cache
 
-    let private startsWithBotMention (state : CommandState) (input : string) : bool =
+    let private startsWithBotMention (state : CommandHandlerState) (input : string) : bool =
         Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
 
-    let private getPrefixLength (state : CommandState) (input : string) : int =
+    let private getPrefixLength (state : CommandHandlerState) (input : string) : int =
         if startsWithBotMention state input then
             state.client.CurrentUser.Mention.Length
         else
             state.prefix.Length
 
-    let private getCmdName (state : CommandState) (input : string) : string =
+    let private getCmdName (state : CommandHandlerState) (input : string) : string =
         input.Substring(getPrefixLength state input).Split(' ').[0]
 
-    let private getCmdArgs (state : CommandState) (input : string) : string list =
+    let private getCmdArgs (state : CommandHandlerState) (input : string) : string list =
         let offset = (getPrefixLength state input) + ((getCmdName state input) |> String.length)
         let args = input.[offset..].TrimStart().Split(',') |> Array.toList
         if args.[0] |> String.IsNullOrWhiteSpace && (args |> List.length).Equals(1) then
@@ -166,7 +166,7 @@ module CommandHandler =
         else
             args
     
-    let private buildCmdContext (state : CommandState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
+    let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
         {
             client = state.client
             restClient = state.restClient
@@ -180,7 +180,7 @@ module CommandHandler =
             commandName = cmdName
         }
 
-    let private handleTimeOut (state : CommandState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =
+    let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =
         let tcallback = toTask asyncOp
         if not tcallback.IsCompleted then
             async {
@@ -212,7 +212,7 @@ module CommandHandler =
 
         ctx.logger.Nice(head, color, where + cmdLog + args)
 
-    let private runCmd (state : CommandState) (msg : SocketMessage) (cmd : Command) (input : string) =
+    let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args
         if (args |> List.length).Equals(cmd.parameters) then

@@ -15,11 +15,13 @@ namespace Energize.Services.Listeners
     {
         private readonly EnergizeClient _EClient;
         private readonly MessageSender _MessageSender;
+        private readonly ServiceManager _ServiceManager;
 
         public Administration(EnergizeClient eclient)
         {
             this._EClient = eclient;
             this._MessageSender = eclient.MessageSender;
+            this._ServiceManager = eclient.ServiceManager;
         }
 
         [Event("MessageReceived")]
@@ -31,7 +33,7 @@ namespace Energize.Services.Listeners
             string pattern = @"discord\.gg\/.+\s?";
             if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
-                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
+                DBContextPool db = this._ServiceManager.GetService<DBContextPool>("Database");
                 using(DBContext ctx = await db.GetContext())
                 {
                     DiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
