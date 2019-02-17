@@ -16,7 +16,7 @@
     <Compile Include="ImageUrlProvider.fs" />
     <Compile Include="Cache.fs" />
     <Compile Include="Context.fs" />
-    <Compile Include="UserProvider.fs" />
+    <Compile Include="UserHelper.fs" />
     <Compile Include="Handler.fs" />
   </ItemGroup>
   
