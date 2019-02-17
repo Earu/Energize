@@ -11,11 +11,12 @@ module CommandHandler =
     open System.Threading.Tasks
     open Energize.Toolkit
     open System
+    open AsyncHelper
 
     type Command =
         {
             name : string
-            callback : (CommandContext -> Task)
+            callback : (CommandContext -> Async<unit>)
             mutable isLoaded : bool
             usage : string
             help : string
@@ -84,18 +85,12 @@ module CommandHandler =
         else
             state.prefix.Length
     
-    let registerCmd (state : CommandState) (name : string) (callback : CommandContext -> Task) (usage : string) 
-        (help : string) (moduleName : string) =
-        let cmd : Command = 
-            { 
-                name = name
-                callback = callback 
-                isLoaded = true
-                usage = usage
-                help = help
-                moduleName = moduleName
-            }
-        handlerState <- Some { state with commands = state.commands.Add (name, cmd) }
+    let registerCmd (cmd : Command) =
+        match handlerState with
+        | Some s ->
+            handlerState <- Some { s with commands = s.commands.Add (cmd.name, cmd) }
+        | None ->
+            ()
     
     // yeah yeah ugly mutability I know, but CPU intensive otherwise
     let unloadCmd (state : CommandState) (input : string)  =
@@ -133,17 +128,17 @@ module CommandHandler =
             commandName = cmdName
         }
 
-    let private handleTimeOut (state : CommandState) (msg : SocketMessage) (cmdName : string) (tcallback : Task) : Task =
+    let private handleTimeOut (state : CommandState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =
+        let tcallback = toTask asyncOp
         if not tcallback.IsCompleted then
             async {
-                let! tres = Task.WhenAny(tcallback, Task.Delay(2000)) |> Async.AwaitTask
+                let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(2000)))
                 if not (tres.Equals(tcallback)) then
-                    state.messageSender.Warning(msg, "Time out", sprintf "Your command %s is timing out!" cmdName) 
-                        |> Async.AwaitTask |> ignore
+                    awaitResult (state.messageSender.Warning(msg, "Time out", sprintf "Your command %s is timing out!" cmdName)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmdName)
                 
                 return tres
-            } |> Async.RunSynchronously
+            } |> awaitOp
         else
             Task.CompletedTask
 
@@ -181,14 +176,14 @@ module CommandHandler =
         ctx.logger.Nice(info.head, info.color, info.log)
 
     let private runCmd (state : CommandState) (msg : SocketMessage) (cmdName : string) (input : string) =
-        match state.commands |> Map.tryFind cmdName with
-        | Some cmd ->
+        if state.commands |> Map.containsKey cmdName then
+            let cmd = state.commands.[cmdName]
             let ctx = buildCmdContext state cmdName msg (getCmdArgs state input)
             let task = handleTimeOut state msg cmdName (cmd.callback ctx)
             task.ConfigureAwait(false) |> ignore
-            task |> Async.AwaitTask |> Async.RunSynchronously
+            await task
             logCmd ctx false
-        | None ->
+        else
             state.logger.Warning(sprintf "Could not find command callback for <%s>?!" cmdName)
 
     let handleMessageReceived (msg : SocketMessage) =
@@ -206,8 +201,7 @@ module CommandHandler =
                         runCmd s msg cmdName content
                     else
                         s.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmdName)
-                        s.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now") 
-                            |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+                        awaitResult (s.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) |> ignore
         | None -> 
             printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
             
