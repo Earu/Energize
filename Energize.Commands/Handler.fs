@@ -9,11 +9,11 @@ module CommandHandler =
     open Discord.Rest
     open Context
     open System.Threading.Tasks
-    open Energize.Toolkit
     open System
     open AsyncHelper
     open Command
     open Energize.Commands.Implementation
+    open Energize.Toolkit
 
     type CommandState =
         {
@@ -50,13 +50,50 @@ module CommandHandler =
                             awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
                                 |> ignore
                     })
-                isLoaded = true
+                isEnabled = true
                 usage = "help <cmd>"
                 help = "This command."
                 moduleName = "Core"
                 parameters = 1
+                ownerOnly = false
             }
         registerCmd state helpCmd
+
+    let enableCmd (state : CommandState) (cmdName : string) (enabled : bool) = 
+        match state.commands |> Map.tryFind cmdName with
+        | Some cmd ->
+            cmd.isEnabled <- enabled
+        | None -> ()
+
+    let registerEnableCmd (state : CommandState) =
+        let enableCmd : Command = 
+            {
+                name = "enable"
+                callback = 
+                    (fun ctx -> async {
+                        let cmdName = ctx.arguments.[0].Trim()
+                        let value = int (ctx.arguments.[1].Trim())
+                        if handlerState.Value.commands |> Map.containsKey cmdName then
+                            if value.Equals(0) then
+                                enableCmd state cmdName false
+                                awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully disabled command \'%s\'" cmdName))
+                                    |> ignore
+                            else
+                                enableCmd state cmdName true
+                                awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully enabled command \'%s\'" cmdName))
+                                    |> ignore
+                        else
+                            awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
+                                |> ignore
+                    })
+                isEnabled = true
+                usage = "enable <cmd>,<value>"
+                help = "Enables or disables a command"
+                moduleName = "Core"
+                parameters = 2
+                ownerOnly = true
+            }
+        registerCmd state enableCmd
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) =
@@ -79,12 +116,18 @@ module CommandHandler =
                 prefix = prefix
             }
         
-        newState.logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
-        for cmd in Util.commands do
-            handlerState <- (registerCmd newState cmd)
+        logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
 
-        handlerState <- registerHelpCmd (match handlerState with Some s -> s | None -> newState)
-            
+        for cmd in Util.commands do
+            handlerState <- (registerCmd (match handlerState with Some s -> s | None -> newState) cmd)
+
+        match handlerState with
+        | Some s ->
+            handlerState <- registerEnableCmd s
+            handlerState <- registerHelpCmd handlerState.Value
+        | None -> ()
+
+        logger.Notify("Commands Initialized")
 
     let private getChannelCache (state : CommandState) (id : uint64) : CommandCache =
         match state.caches |> Map.tryFind id with
@@ -111,19 +154,6 @@ module CommandHandler =
             state.client.CurrentUser.Mention.Length
         else
             state.prefix.Length
-    
-    // yeah yeah ugly mutability I know, but CPU intensive otherwise
-    let unloadCmd (state : CommandState) (cmdName : string)  =
-        match state.commands |> Map.tryFind cmdName with
-        | Some cmd ->
-            cmd.isLoaded <- false
-        | None -> ()
-
-    let loadCmd (state : CommandState) (cmdName : string) = 
-        match state.commands |> Map.tryFind cmdName with
-        | Some cmd ->
-            cmd.isLoaded <- true
-        | None -> ()
 
     let private getCmdName (state : CommandState) (input : string) : string =
         input.Substring(getPrefixLength state input).Split(' ').[0]
@@ -135,9 +165,6 @@ module CommandHandler =
             []
         else
             args
-
-    let private isCmdLoaded (cmd : Command) : bool =
-        cmd.isLoaded
     
     let private buildCmdContext (state : CommandState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
         {
@@ -167,38 +194,23 @@ module CommandHandler =
         else
             Task.CompletedTask
 
-    type private CommandLogInfo =
-        {
-            log : string
-            color : ConsoleColor
-            head : string
-            action : string
-        }
-
-    // that function is disgusting
     let private logCmd (ctx : CommandContext) (deleted : bool) =
-        let mutable info = { log = String.Empty; color = ConsoleColor.Blue; head = "DMCommands"; action = "used" }
-        info <-
-            if ctx.isPrivate then
-                info
-            else
+        let color = 
+            if deleted then ConsoleColor.Yellow else
+                if ctx.isPrivate then ConsoleColor.Blue else ConsoleColor.Cyan
+
+        let head = if ctx.isPrivate then "DMCommands" else "Commands"
+        let action = if deleted then "deleted" else "used"
+        let where = 
+            if not ctx.isPrivate then
                 let chan = ctx.message.Channel :?> IGuildChannel
-                let log = info.log + (sprintf "(%s - #%s) " chan.Guild.Name chan.Name)
-                { info with log = log; color = ConsoleColor.Cyan; head = "Commands" }
-
-        info <-
-            if deleted then
-                { info with action = "deleted"; color = ConsoleColor.Yellow }
+                (sprintf "(%s - #%s) " chan.Guild.Name chan.Name)
             else 
-                info
-        info <-
-            let log = sprintf "%s %s <%s>" ctx.message.Author.Username info.action ctx.commandName
-            if String.IsNullOrWhiteSpace ctx.arguments.[0] then
-                { info with log = log + " with no args" }
-            else
-                { info with log = log + (sprintf " => [ %s ]" (String.Join(',', ctx.arguments))) }
+                String.Empty 
+        let cmdLog = sprintf "%s %s <%s>" ctx.message.Author.Username action ctx.commandName
+        let args = if ctx.hasArguments then (sprintf " => [ %s ]" (String.Join(", ", ctx.arguments))) else " with no args"
 
-        ctx.logger.Nice(info.head, info.color, info.log)
+        ctx.logger.Nice(head, color, where + cmdLog + args)
 
     let private runCmd (state : CommandState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let args = getCmdArgs state input
@@ -228,12 +240,15 @@ module CommandHandler =
                     let cmdName = getCmdName state content
                     match state.commands |> Map.tryFind cmdName with
                     | Some cmd ->
-                        if isCmdLoaded cmd then
-                            runCmd state msg cmd content
+                        if cmd.isEnabled then
+                            if cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) then
+                                state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmdName)
+                                awaitResult (state.messageSender.Warning(msg, "Owner-only command", "This is a owner-only feature")) |> ignore
+                            else
+                                runCmd state msg cmd content
                         else
                             state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmdName)
                             awaitResult (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) |> ignore
                     | None -> ()
         | None -> 
             printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
-            

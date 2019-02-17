@@ -20,7 +20,7 @@ namespace Energize
 
             this._Token        = token;
             this.Prefix        = prefix;
-            this.Logger           = new Logger();
+            this.Logger        = new Logger();
             this.MessageSender = new MessageSender(this.Logger);
             this.Discord       = new DiscordShardedClient(new DiscordSocketConfig
             {
@@ -38,7 +38,7 @@ namespace Energize
         public DiscordShardedClient Discord       { get; }
         public DiscordRestClient    DiscordREST   { get; }
         public Logger               Logger           { get; }
-        public MessageSender      MessageSender { get; }
+        public MessageSender        MessageSender { get; }
 
         public async Task InitializeAsync()
         {
@@ -52,7 +52,7 @@ namespace Energize
                 await this.DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
                 await Services.ServiceManager.LoadServicesAsync(this);
 
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",EnergizeConfig.TWITCH_URL);
+                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
                 await this.Discord.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>

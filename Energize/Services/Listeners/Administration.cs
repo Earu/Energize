@@ -29,7 +29,7 @@ namespace Energize.Services.Listeners
 
             SocketGuildChannel chan = msg.Channel as SocketGuildChannel;
             string pattern = @"discord\.gg\/.+\s?";
-            if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != EnergizeConfig.BOT_ID_MAIN)
+            if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
                 DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
                 using(DBContext ctx = await db.GetContext())
@@ -37,7 +37,6 @@ namespace Energize.Services.Listeners
                     DiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
                     if (dbguild.ShouldDeleteInvites)
                     {
-                        CommandHandler chandler = ServiceManager.GetService<CommandHandler>("Commands");
                         try
                         {
                             EmbedBuilder builder = new EmbedBuilder();
