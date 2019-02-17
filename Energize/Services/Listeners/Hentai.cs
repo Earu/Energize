@@ -12,10 +12,15 @@ namespace Energize.Services.Listeners
     [Service("Hentai")]
     public class Hentai
     {
-        private List<string> _Triggers = new List<string>{
+        private readonly List<string> _Triggers = new List<string>{
             "hentai",
             "anime"
         };
+
+        private readonly ServiceManager _ServiceManager;
+
+        public Hentai(EnergizeClient client)
+            => this._ServiceManager = client.ServiceManager;
 
         private bool HasTrigger(string sentence)
         {
@@ -30,8 +35,8 @@ namespace Energize.Services.Listeners
             {
                 if (this.HasTrigger(msg.Content))
                 {
-                    TextStyle style = ServiceManager.GetService<TextStyle>("TextStyle");
-                    WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
+                    TextStyle style = this._ServiceManager.GetService<TextStyle>("TextStyle");
+                    WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
 
                     Random rand = new Random();
                     string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];
