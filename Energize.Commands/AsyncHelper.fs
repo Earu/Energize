@@ -9,6 +9,9 @@ module AsyncHelper =
     let awaitResult<'t> (task : Task<'t>) : 't =
         task |> Async.AwaitTask |> Async.RunSynchronously
 
+    let awaitIgnore<'t> (task : Task<'t>) : unit =
+        awaitResult task |> ignore
+
     let await (task : Task) : unit =
         task |> Async.AwaitTask |> Async.RunSynchronously
     

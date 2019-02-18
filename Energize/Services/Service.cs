@@ -1,4 +1,4 @@
-﻿using Energize.Interfaces;
+﻿using Energize.Interfaces.Services;
 
 namespace Energize.Services
 {

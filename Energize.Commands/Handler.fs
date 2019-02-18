@@ -13,8 +13,10 @@ module CommandHandler =
     open AsyncHelper
     open Command
     open Energize.Toolkit
-    open Energize.Interfaces
     open System.Reflection
+    open Energize.Interfaces.Services
+    open System.IO
+    open System.Text
 
     type CommandHandlerState =
         {
@@ -36,26 +38,48 @@ module CommandHandler =
         state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered <%s> in module [%s]" cmd.name cmd.moduleName)
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
 
+    let private getCmdInfo (cmd : Command) : string =
+        sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
+
+    let generateHelpFile (state : CommandHandlerState) (path : string) =
+        for cmd in state.commands do
+            let lines = [
+                sprintf "--------- %s ---------\n" cmd.Key
+                sprintf "usage: %s\n" cmd.Value.usage
+                sprintf "help: %s\n" cmd.Value.help
+                sprintf "owner-only: %b\n" cmd.Value.ownerOnly
+            ]
+            await (File.AppendAllLinesAsync(path, lines))
+
     let private registerHelpCmd (state : CommandHandlerState) =
         let cmd : Command = 
             {
                 name = "help"
                 callback = CommandCallback(fun ctx -> async {
-                    let cmdName = ctx.arguments.[0].Trim()
-                    match handlerState.Value.commands |> Map.tryFind cmdName with
-                    | Some cmd ->
-                        let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
-                        awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
-                            |> ignore
-                    | None ->
-                        awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
-                            |> ignore
+                    if ctx.hasArguments then
+                        let cmdName = ctx.arguments.[0].Trim()
+                        match handlerState.Value.commands |> Map.tryFind cmdName with
+                        | Some cmd ->
+                            let help = getCmdInfo cmd
+                            awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
+                        | None ->
+                            let warning = sprintf "Could not find any command named \'%s\'" cmdName
+                            awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, warning))
+                    else
+                        let path = "help.txt"
+                        if File.Exists(path) then
+                            awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
+                        else
+                            generateHelpFile state path
+                            awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
+                            File.Delete(path)
+                        ()
                 })
                 isEnabled = true
-                usage = "help <cmd>"
+                usage = "help <cmd|nothing>"
                 help = "This command."
                 moduleName = "Core"
-                parameters = 1
+                parameters = 0
                 ownerOnly = false
             }
         registerCmd state cmd
@@ -249,14 +273,14 @@ module CommandHandler =
     let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args
-        if (args |> List.length).Equals(cmd.parameters) then
+        if (args |> List.length) >= (cmd.parameters) then
             let task = handleTimeOut state msg cmd.name (cmd.callback.Invoke(ctx))
             task.ConfigureAwait(false) |> ignore
             await task
             logCmd ctx false 
         else
-            let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
-            awaitResult (state.messageSender.Warning(msg, sprintf "Bad usage [%s]" cmd.name, help))
+            let help = getCmdInfo cmd
+            awaitResult (state.messageSender.Warning(msg, sprintf "bad usage [ %s ]" cmd.name, help))
                 |> ignore
             logCmd ctx false
               
