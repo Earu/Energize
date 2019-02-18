@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Discord.WebSocket;
 using System.Threading.Tasks;
-using Energize.ServiceInterfaces;
+using Energize.Interfaces;
 
 namespace Energize.Services
 {
