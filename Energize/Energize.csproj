@@ -54,7 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Energize.Commands\Energize.Commands.fsproj" />
-    <ProjectReference Include="..\Energize.ServiceInterfaces\Energize.ServiceInterfaces.csproj" />
+    <ProjectReference Include="..\Energize.ServiceInterfaces\Energize.Interfaces.csproj" />
     <ProjectReference Include="..\Energize.Toolkit\Energize.Toolkit.csproj" />
   </ItemGroup>
 </Project>

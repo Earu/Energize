@@ -7,7 +7,7 @@ module Context =
     open Energize.Toolkit
     open Cache
     open System
-    open Energize.ServiceInterfaces
+    open Energize.Interfaces
     
     type CommandContext =
         {

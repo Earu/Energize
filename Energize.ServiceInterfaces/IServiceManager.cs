@@ -1,4 +1,4 @@
-﻿namespace Energize.ServiceInterfaces
+﻿namespace Energize.Interfaces
 {
     public interface IServiceManager
     {
