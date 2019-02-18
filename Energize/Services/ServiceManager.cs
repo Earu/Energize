@@ -46,7 +46,7 @@ namespace Energize.Services
                 }
                 catch(Exception e)
                 {
-                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e}");
+                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e.Message}");
                 }
 
                 try
