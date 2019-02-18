@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Energize.ServiceInterfaces;
+using Energize.Interfaces;
 using Energize.Services.TextProcessing;
 using Energize.Toolkit;
 using System;

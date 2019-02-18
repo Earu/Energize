@@ -13,14 +13,14 @@ module Util =
         let timestamp = ctx.message.Timestamp
         let diff = timestamp.Millisecond / 10
         awaitResult 
-            (ctx.messageSender.Good(ctx.message, "Pong!", sprintf ":alarm_clock: Discord: %dms\n:clock1: Bot: %dms" diff ctx.client.Latency))
+            (ctx.messageSender.Good(ctx.message, "Pong!", sprintf "⏰ Discord: %dms\n🕐 Bot: %dms" diff ctx.client.Latency))
             |> ignore
     }
 
     [<Command("mem", "mem <nothing>", "Gets the current memory usage")>]
     let mem (ctx : CommandContext) = async {
         let proc = Process.GetCurrentProcess()
-        let mbused = int proc.WorkingSet64 / 1024 / 1024
+        let mbused = proc.WorkingSet64 / 1024L / 1024L
         awaitResult 
             (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Currently using %dMB of memory" mbused))
             |> ignore

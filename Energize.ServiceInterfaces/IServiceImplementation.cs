@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Energize.ServiceInterfaces
+namespace Energize.Interfaces
 {
     public interface IServiceImplementation
     {

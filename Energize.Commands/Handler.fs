@@ -13,7 +13,7 @@ module CommandHandler =
     open AsyncHelper
     open Command
     open Energize.Toolkit
-    open Energize.ServiceInterfaces
+    open Energize.Interfaces
     open System.Reflection
 
     type CommandHandlerState =
@@ -152,7 +152,7 @@ module CommandHandler =
                 serviceManager = serviceManager
             }
         
-        logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
+        logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Registering commands with prefix \'%s\'" prefix)
         loadCmds newState
         match handlerState with
         | Some s ->
