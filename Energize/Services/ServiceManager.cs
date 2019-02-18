@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Discord.WebSocket;
+using Energize.Interfaces.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Discord.WebSocket;
 using System.Threading.Tasks;
-using Energize.Interfaces;
 
 namespace Energize.Services
 {
