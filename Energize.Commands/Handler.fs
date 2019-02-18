@@ -12,9 +12,9 @@ module CommandHandler =
     open System
     open AsyncHelper
     open Command
-    open Energize.Commands.Implementation
     open Energize.Toolkit
     open Energize.ServiceInterfaces
+    open System.Reflection
 
     type CommandHandlerState =
         {
@@ -37,21 +37,20 @@ module CommandHandler =
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
 
     let private registerHelpCmd (state : CommandHandlerState) =
-        let helpCmd : Command = 
+        let cmd : Command = 
             {
                 name = "help"
-                callback = 
-                    (fun ctx -> async {
-                        let cmdName = ctx.arguments.[0].Trim()
-                        match handlerState.Value.commands |> Map.tryFind cmdName with
-                        | Some cmd ->
-                            let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
-                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
-                                |> ignore
-                        | None ->
-                            awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
-                                |> ignore
-                    })
+                callback = CommandCallback(fun ctx -> async {
+                    let cmdName = ctx.arguments.[0].Trim()
+                    match handlerState.Value.commands |> Map.tryFind cmdName with
+                    | Some cmd ->
+                        let help = sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
+                        awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
+                            |> ignore
+                    | None ->
+                        awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
+                            |> ignore
+                })
                 isEnabled = true
                 usage = "help <cmd>"
                 help = "This command."
@@ -59,7 +58,7 @@ module CommandHandler =
                 parameters = 1
                 ownerOnly = false
             }
-        registerCmd state helpCmd
+        registerCmd state cmd
 
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
         match state.commands |> Map.tryFind cmdName with
@@ -68,26 +67,25 @@ module CommandHandler =
         | None -> ()
 
     let private registerEnableCmd (state : CommandHandlerState) =
-        let enableCmd : Command = 
+        let cmd : Command = 
             {
                 name = "enable"
-                callback = 
-                    (fun ctx -> async {
-                        let cmdName = ctx.arguments.[0].Trim()
-                        let value = int (ctx.arguments.[1].Trim())
-                        if handlerState.Value.commands |> Map.containsKey cmdName then
-                            if value.Equals(0) then
-                                enableCmd state cmdName false
-                                awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully disabled command \'%s\'" cmdName))
-                                    |> ignore
-                            else
-                                enableCmd state cmdName true
-                                awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully enabled command \'%s\'" cmdName))
-                                    |> ignore
-                        else
-                            awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
+                callback = CommandCallback(fun ctx -> async {
+                    let cmdName = ctx.arguments.[0].Trim()
+                    let value = int (ctx.arguments.[1].Trim())
+                    if handlerState.Value.commands |> Map.containsKey cmdName then
+                        if value.Equals(0) then
+                            enableCmd state cmdName false
+                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully disabled command \'%s\'" cmdName))
                                 |> ignore
-                    })
+                        else
+                            enableCmd state cmdName true
+                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully enabled command \'%s\'" cmdName))
+                                |> ignore
+                    else
+                        awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
+                            |> ignore
+                })
                 isEnabled = true
                 usage = "enable <cmd>,<value>"
                 help = "Enables or disables a command"
@@ -95,7 +93,42 @@ module CommandHandler =
                 parameters = 2
                 ownerOnly = true
             }
-        registerCmd state enableCmd
+        registerCmd state cmd
+
+    let private loadCmd (state : CommandHandlerState) (callback : CommandCallback) (moduleType : Type) =
+        let infoAtr = callback.Method.GetCustomAttribute<CommandAttribute>()
+        let moduleAtr = moduleType.GetCustomAttribute<CommandModuleAttribute>()
+        
+        let paramAtr = callback.Method.GetCustomAttributes<CommandParametersAttribute>() |> Seq.tryHead
+        let paramCount = match paramAtr with Some atr -> atr.parameters | None -> 0
+        let ownerAtr = callback.Method.GetCustomAttributes<OwnerOnlyCommandAttribute>() |> Seq.tryHead
+        let ownerOnly = match ownerAtr with Some _ -> true | None -> false
+
+        let cmd : Command =
+            {
+                name = infoAtr.name
+                callback = callback
+                isEnabled = true
+                usage = infoAtr.usage
+                help = infoAtr.help
+                moduleName = moduleAtr.name
+                parameters = paramCount
+                ownerOnly = ownerOnly
+            }
+
+        registerCmd state cmd
+
+    let private loadCmds (state : CommandHandlerState) =
+        let moduleTypes = 
+            Assembly.GetExecutingAssembly().GetTypes() 
+                |> Seq.filter 
+                    (fun t -> t.FullName.StartsWith("Energize.Commands.Implementation") && Attribute.IsDefined(t, typedefof<CommandModuleAttribute>))
+
+        for moduleType in moduleTypes do
+            let funcs = moduleType.GetMethods() |> Seq.filter (fun func -> Attribute.IsDefined(func, typedefof<CommandAttribute>))
+            for func in funcs do
+                let dlg = func.CreateDelegate(typedefof<CommandCallback>) :?> CommandCallback
+                handlerState <- loadCmd (match handlerState with Some s -> s | None -> state) dlg moduleType
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) (serviceManager : IServiceManager) =
@@ -120,10 +153,7 @@ module CommandHandler =
             }
         
         logger.Nice("Commands", ConsoleColor.Green, sprintf "Initializing commands with prefix \'%s\'" prefix)
-
-        for cmd in Util.commands do
-            handlerState <- (registerCmd (match handlerState with Some s -> s | None -> newState) cmd)
-
+        loadCmds newState
         match handlerState with
         | Some s ->
             handlerState <- registerEnableCmd s
@@ -220,7 +250,7 @@ module CommandHandler =
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args
         if (args |> List.length).Equals(cmd.parameters) then
-            let task = handleTimeOut state msg cmd.name (cmd.callback ctx)
+            let task = handleTimeOut state msg cmd.name (cmd.callback.Invoke(ctx))
             task.ConfigureAwait(false) |> ignore
             await task
             logCmd ctx false 
