@@ -1,4 +1,4 @@
-﻿namespace Energize.Interfaces
+﻿namespace Energize.Interfaces.Services
 {
     public interface IService
     {

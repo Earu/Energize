@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
-using Energize.Interfaces;
+using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System;
 using System.Threading.Tasks;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Webhook")]
-    class WebhookSender : IServiceImplementation
+    public class WebhookSender : IWebhookSenderService
     {
         private static ulong _ID = 0;
 
@@ -75,7 +75,7 @@ namespace Energize.Services.Listeners
             this._Log.Nice("Webhook", ConsoleColor.Red, log);
         }
 
-        public async Task<ulong> SendRaw(SocketMessage msg,string content,string username,string avatarurl)
+        public async Task<ulong> SendRaw(SocketMessage msg, string content, string username, string avatarurl)
         {
             if(msg.Channel is IGuildChannel)
             {

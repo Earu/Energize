@@ -1,4 +1,4 @@
-﻿using Energize.Interfaces;
+﻿using Energize.Interfaces.Services;
 using Energize.Services.Database.Models;
 using Energize.Toolkit;
 using Microsoft.EntityFrameworkCore;

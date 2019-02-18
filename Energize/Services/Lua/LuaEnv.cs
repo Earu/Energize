@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Interfaces;
+using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using NLua;
 using NLua.Exceptions;
@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.LuaService
 {
     [Service("Lua")]
-    public class LuaEnv : IServiceImplementation
+    public class LuaEnv : ILuaService
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender        _MessageSender;
@@ -29,7 +29,6 @@ namespace Energize.Services.LuaService
             this._MessageSender = client.MessageSender;
         }
 
-        //Service method dont change the signature
         public async Task InitializeAsync()
         {
             _App = await this._Client.GetApplicationInfoAsync();
