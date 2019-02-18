@@ -48,22 +48,19 @@ namespace Energize.Toolkit
 
         public static async Task Load()
         {
-            using (StreamReader reader = File.OpenText("External/data.json"))
-            {
-                string json = await reader.ReadToEndAsync();
-                StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
-                ADJECTIVES = data.Adjectives;
-                NOUNS = data.Nouns;
-                VOWELS = data.Vowels;
-                EIGHT_BALL_ANSWERS = data.EightBallAnswers;
-                PICK_ANSWERS = data.PickAnswers;
-                DRAMA_FILTER = data.DramaFilter;
-                APOLOGIZE_FILTER = data.ApologizeFilter;
-                ANIME_EMOTES = data.AnimeEmotes;
-                ANIME_DECORATIONS = data.AnimeDecorations;
-                HENTAI_QUOTES = data.HentaiQuotes;
-                ZALGO = data.Zalgo;
-            }
+            string json = await File.ReadAllTextAsync("External/data.json");
+            StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
+            ADJECTIVES = data.Adjectives;
+            NOUNS = data.Nouns;
+            VOWELS = data.Vowels;
+            EIGHT_BALL_ANSWERS = data.EightBallAnswers;
+            PICK_ANSWERS = data.PickAnswers;
+            DRAMA_FILTER = data.DramaFilter;
+            APOLOGIZE_FILTER = data.ApologizeFilter;
+            ANIME_EMOTES = data.AnimeEmotes;
+            ANIME_DECORATIONS = data.AnimeDecorations;
+            HENTAI_QUOTES = data.HentaiQuotes;
+            ZALGO = data.Zalgo;
         }
     }
 }
