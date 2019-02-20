@@ -53,6 +53,26 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="External\Lua\Event.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External\Lua\Init.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External\Lua\Linq.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External\Lua\Sandbox.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External\Lua\Table.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="External\Lua\Utils.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Energize.Commands\Energize.Commands.fsproj" />
     <ProjectReference Include="..\Energize.ServiceInterfaces\Energize.Interfaces.csproj" />
     <ProjectReference Include="..\Energize.Toolkit\Energize.Toolkit.csproj" />

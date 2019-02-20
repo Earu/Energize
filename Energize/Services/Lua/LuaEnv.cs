@@ -62,9 +62,9 @@ namespace Energize.Services.LuaService
             IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
             foreach(SocketGuildChannel chan in channels)
             {
-                if (_States.ContainsKey(chan.Id))
+                if (this._States.ContainsKey(chan.Id))
                 {
-                    Lua state = _States[chan.Id];
+                    Lua state = this._States[chan.Id];
                     state["USER"] = user as SocketUser;
                     object[] returns = state.DoString(@"return event.fire('OnMemberJoined',USER)");
                     state["USER"] = null;
@@ -79,9 +79,9 @@ namespace Energize.Services.LuaService
             IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
             foreach (SocketGuildChannel chan in channels)
             {
-                if (_States.ContainsKey(chan.Id))
+                if (this._States.ContainsKey(chan.Id))
                 {
-                    Lua state = _States[chan.Id];
+                    Lua state = this._States[chan.Id];
                     state["USER"] = user as SocketUser;
                     object[] returns = state.DoString(@"return event.fire('OnMemberLeft',USER)");
                     state["USER"] = null;
@@ -94,9 +94,9 @@ namespace Energize.Services.LuaService
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (_States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
+            if (this._States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
             {
-                Lua state = _States[msg.Channel.Id];
+                Lua state = this._States[msg.Channel.Id];
                 state["USER"] = msg.Author;
                 state["MESSAGE"] = msg;
                 object[] returns = state.DoString(@"return event.fire('OnMessageCreated',USER,MESSAGE)");
@@ -109,9 +109,9 @@ namespace Energize.Services.LuaService
         [Event("MessageDeleted")]
         public async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg, ISocketMessageChannel c)
         {
-            if (msg.HasValue && _States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
+            if (msg.HasValue && this._States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
             {
-                Lua state = _States[c.Id];
+                Lua state = this._States[c.Id];
                 state["MESSAGE"] = msg.Value as SocketMessage;
                 state["USER"] = msg.Value.Author as SocketUser;
                 object[] returns = state.DoString(@"return event.fire('OnMessageDeleted',USER,MESSAGE)");
@@ -124,9 +124,9 @@ namespace Energize.Services.LuaService
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel c)
         {
-            if (_States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
+            if (this._States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
             {
-                Lua state = _States[c.Id];
+                Lua state = this._States[c.Id];
                 state["USER"] = msg.Author as SocketUser;
                 state["MESSAGE"] = msg as SocketMessage;
                 object[] returns = state.DoString(@"return event.fire('OnMessageEdited',USER,MESSAGE)");
@@ -139,9 +139,9 @@ namespace Energize.Services.LuaService
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel c, SocketReaction react)
         {
-            if(_States.ContainsKey(c.Id) && react.UserId != _App.Id)
+            if(this._States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
-                Lua state = _States[c.Id];
+                Lua state = this._States[c.Id];
                 state["REACTION"] = react;
                 object[] returns = state.DoString(@"return event.fire('OnReactionAdded',REACTION)");
                 state["REACTION"] = null;
@@ -152,9 +152,9 @@ namespace Energize.Services.LuaService
         [Event("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel c, SocketReaction react)
         {
-            if (_States.ContainsKey(c.Id) && react.UserId != _App.Id)
+            if (this._States.ContainsKey(c.Id) && react.UserId != _App.Id)
             {
-                Lua state = _States[c.Id];
+                Lua state = this._States[c.Id];
                 state["REACTION"] = react;
                 object[] returns = state.DoString(@"return event.fire('OnReactionRemoved',REACTION)");
                 state["REACTION"] = null;
@@ -162,7 +162,7 @@ namespace Energize.Services.LuaService
             }
         }
 
-        private string SafeCode(Lua state,string code)
+        private string SafeCode(Lua state, string code)
         {
             state["UNTRUSTED_CODE"] = code;
             code = code.TrimStart();
@@ -187,67 +187,67 @@ namespace Energize.Services.LuaService
             return state;
         }
 
-        private void Save(SocketChannel chan,string code)
+        private void Save(SocketChannel chan, string code)
         {
             code = code.TrimStart();
             string path =  _Path + "/" + chan.Id + ".lua";
             File.AppendAllText(path,code + _ScriptSeparator);
         }
 
-        public bool Run(SocketMessage msg,string code,out List<object> returns,out string error, Logger log)
+        public bool Run(SocketMessage msg, string code, out List<object> returns, out string error, Logger log)
         {
             SocketChannel chan = msg.Channel as SocketChannel;
-            if (!_States.ContainsKey(chan.Id) || _States[chan.Id] == null)
-                _States[chan.Id] = CreateState(chan.Id);
+            if (!this._States.ContainsKey(chan.Id) || this._States[chan.Id] == null)
+                this._States[chan.Id] = CreateState(chan.Id);
 
             Save(chan, code);
 
-            bool success = true;
-
             try
             {
-                Lua state = _States[chan.Id];
+                Lua state = this._States[chan.Id];
                 code = SafeCode(state,code);
 
                 object[] parts = state.DoString(code,"SANDBOX");
                 returns = new List<object>(parts);
                 error = "";
+
+                return true;
             }
             catch(LuaException e)
             {
                 returns = new List<object>();
                 error = e.Message;
-                success = false;
+
+                return false;
             }
             catch(Exception e) //no lua return basically
             {
                 returns = new List<object>();
                 error = e.Message;
-                success = true;
-            }
 
-            return success;
+                return true;
+            }
         }
 
         public void Reset(ulong chanid, Logger log)
         {
-            if (_States.ContainsKey(chanid) && _States[chanid] != null)
+            if (!this._States.ContainsKey(chanid) || this._States[chanid] == null)
+                return;
+
+            try
             {
-                try
-                {
-                    _States[chanid].DoString("collectgarbage()");
-                }
-                catch
-                {
-                    log.Nice("LuaEnv", ConsoleColor.Red, "The state couldn't call collectgarbage()");
-                }
-                _States[chanid].Close();
-                _States[chanid].Dispose();
+                this._States[chanid].DoString("collectgarbage()");
+                this._States[chanid].Close();
+                this._States[chanid].Dispose();
                 string path = _Path + "/" + chanid + ".lua";
                 File.Delete(path);
+                this._States.Remove(chanid);
             }
-            _States[chanid] = null;
-        }
+            catch (Exception e)
+            {
+                log.Nice("LuaEnv", ConsoleColor.Red, $"Could not end a lua state properly: {e.Message}");
+            }
+    }
 
         public void Initialize() { }
     }

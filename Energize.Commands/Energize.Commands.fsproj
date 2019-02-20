@@ -6,6 +6,9 @@
   
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.0.0-beta-00921" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="2.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.5" />
   </ItemGroup>
   
   <ItemGroup>
