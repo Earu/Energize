@@ -14,6 +14,8 @@ module Util =
     open System.Threading.Tasks
     open System.Text
     open Microsoft.Data.Sqlite
+    open Discord.WebSocket
+    open Discord.Rest
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
@@ -166,4 +168,18 @@ module Util =
     let err (ctx : CommandContext) = async {
         let msg = if ctx.hasArguments then ctx.input else "test"
         raise (Exception(msg))
+    }
+
+    [<OwnerOnlyCommand>]
+    [<CommandParameters(1)>]
+    [<Command("ev", "Evals a F# string", "ev <fsharpstring>")>]
+    let eval (ctx : CommandContext) = async {
+        let evaluator = ctx.serviceManager.GetService<ICSharpEvaluatorService>("Evaluator")
+        let res = awaitResult (evaluator.Eval(ctx.input, ctx))
+
+        match res.ToTuple() with
+        | (0, out) -> ctx.messageSender.Danger(ctx.message, ctx.commandName, out)
+        | (1, out) -> ctx.messageSender.Good(ctx.message, ctx.commandName, out)
+        | (_, out) -> ctx.messageSender.Warning(ctx.message, ctx.commandName, out)
+        |> awaitIgnore
     }

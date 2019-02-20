@@ -5,10 +5,11 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.0.0-beta-00921" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="2.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.5" />
+    <PackageReference Include="Discord.Net" Version="2.0.1" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="26.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="2.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.6" />
   </ItemGroup>
   
   <ItemGroup>
@@ -25,6 +26,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Energize.ServiceInterfaces\Energize.Interfaces.csproj" />
     <ProjectReference Include="..\Energize.Toolkit\Energize.Toolkit.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
   </ItemGroup>
 
 </Project>
