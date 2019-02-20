@@ -40,12 +40,15 @@ module CommandHandler =
         sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
 
     let generateHelpFile (state : CommandHandlerState) (path : string) =
-        for cmd in state.commands do
+        let cmds = state.commands |> Map.toSeq |> Seq.sortBy (fun (_, cmd) -> cmd.name)
+        let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n\n"
+        await (File.AppendAllTextAsync(path, head))
+        for (cmdName, cmd) in cmds do
             let lines = [
-                sprintf "--------- %s ---------\n" cmd.Key
-                sprintf "usage: %s\n" cmd.Value.usage
-                sprintf "help: %s\n" cmd.Value.help
-                sprintf "owner-only: %b\n" cmd.Value.ownerOnly
+                sprintf "--------- %s ---------\n" cmdName
+                sprintf "usage: %s\n" cmd.usage
+                sprintf "help: %s\n" cmd.help
+                sprintf "owner-only: %b\n" cmd.ownerOnly
             ]
             await (File.AppendAllLinesAsync(path, lines))
 
