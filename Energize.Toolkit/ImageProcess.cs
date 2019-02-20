@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Net;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Energize.Toolkit
 {
@@ -55,45 +56,6 @@ namespace Energize.Toolkit
         }
 
         public static void DeleteImage(string path)
-        {
-            File.Delete(path);
-        }
-
-        public static void Resize(string path,int width=500,int height=500)
-        {
-            using (Image<Rgba32> image = Image.Load(path))
-            {
-                image.Mutate(x => x.Resize(width, height));
-                image.Save(path);
-            }
-        }
-
-        public static Image<Rgba32> Get(string path)
-        {
-            return Image.Load(path);
-        }
-
-        public static async Task<string> Create(int width,int height)
-        {
-            string file = ID + ".png";
-            ID++;
-
-            using(Stream inp = File.OpenRead("Masks/blank.png"))
-            using (Stream outp = File.OpenWrite(file))
-            {
-                byte[] buffer = new byte[4096];
-                int br;
-                do
-                {
-                    br = await inp.ReadAsync(buffer, 0, buffer.Length);
-                    await outp.WriteAsync(buffer, 0, br);
-                } while (br != 0);
-            }
-
-            Resize(file, width, height);
-
-            return file;
-        }
-
+            => File.Delete(path);
     }
 }

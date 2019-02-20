@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Energize.Services.LuaService
+namespace Energize.Services.Eval
 {
     [Service("Lua")]
     public class LuaEnv : ILuaService
