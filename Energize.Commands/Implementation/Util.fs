@@ -14,8 +14,6 @@ module Util =
     open System.Threading.Tasks
     open System.Text
     open Microsoft.Data.Sqlite
-    open Discord.WebSocket
-    open Discord.Rest
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
