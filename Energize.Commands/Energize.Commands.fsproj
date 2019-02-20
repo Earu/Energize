@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.6" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.9.0" />
   </ItemGroup>
   
   <ItemGroup>
@@ -19,6 +20,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Command.fs" />
+    <Compile Include="Implementation\Fun.fs" />
     <Compile Include="Implementation\Util.fs" />
     <Compile Include="Handler.fs" />
   </ItemGroup>

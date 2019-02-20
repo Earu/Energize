@@ -12,7 +12,7 @@ module UserHelper =
         | true ->
             None
         | false ->
-            let res = ctx.cache.guildUsers |> Seq.tryFind predicate
+            let res = ctx.guildUsers |> Seq.tryFind predicate
             match res with
             | Some user ->
                 Some (user :> SocketUser)
@@ -37,9 +37,9 @@ module UserHelper =
         | true ->
             None
         | false ->
-            let len = (Seq.length ctx.cache.guildUsers) 
+            let len = (Seq.length ctx.guildUsers) 
             let i = rand.Next(0,len)
-            Some (ctx.cache.guildUsers.[i] :> SocketUser)
+            Some (ctx.guildUsers.[i] :> SocketUser)
     
     let private handleId (ctx : CommandContext) (input : string option) : SocketUser option =
         match input with
@@ -114,7 +114,7 @@ module UserHelper =
     let private findUserByName (ctx : CommandContext) (name : string) : SocketUser option =
         match ctx.isPrivate with
         | false ->
-            match ctx.cache.guildUsers |> List.tryFind (fun user -> matchesName user name) with
+            match ctx.guildUsers |> List.tryFind (fun user -> matchesName user name) with
             | Some user ->
                 Some (user :> SocketUser)
             | None ->
