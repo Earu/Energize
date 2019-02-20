@@ -16,7 +16,6 @@ module CommandHandler =
     open System.Reflection
     open Energize.Interfaces.Services
     open System.IO
-    open System.Text
 
     type CommandHandlerState =
         {
@@ -35,7 +34,6 @@ module CommandHandler =
     let mutable private handlerState : CommandHandlerState option = None
 
     let private registerCmd (state : CommandHandlerState) (cmd : Command) =
-        state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered <%s> in module [%s]" cmd.name cmd.moduleName)
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
 
     let private getCmdInfo (cmd : Command) : string =
@@ -146,7 +144,14 @@ module CommandHandler =
         let moduleTypes = 
             Assembly.GetExecutingAssembly().GetTypes() 
                 |> Seq.filter 
-                    (fun t -> t.FullName.StartsWith("Energize.Commands.Implementation") && Attribute.IsDefined(t, typedefof<CommandModuleAttribute>))
+                    (fun t ->
+                        let atr = t.GetCustomAttributes<CommandModuleAttribute>() |> Seq.tryHead
+                        if t.FullName.StartsWith("Energize.Commands.Implementation") && atr.IsSome then
+                            state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered command module [ %s ]" atr.Value.name)
+                            true
+                        else
+                            false
+                    )
 
         for moduleType in moduleTypes do
             let funcs = moduleType.GetMethods() |> Seq.filter (fun func -> Attribute.IsDefined(func, typedefof<CommandAttribute>))
@@ -182,6 +187,7 @@ module CommandHandler =
         | Some s ->
             handlerState <- registerEnableCmd s
             handlerState <- registerHelpCmd handlerState.Value
+            s.logger.Nice("Commands", ConsoleColor.Green, "Registered command module [ Core ]")
         | None -> ()
 
         logger.Notify("Commands Initialized")
@@ -244,7 +250,7 @@ module CommandHandler =
             async {
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(2000)))
                 if not (tres.Equals(tcallback)) then
-                    awaitResult (state.messageSender.Warning(msg, "Time out", sprintf "Your command %s is timing out!" cmdName)) |> ignore
+                    awaitResult (state.messageSender.Warning(msg, "Time out", sprintf "Your command \'%s\' is timing out!" cmdName)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmdName)
                 
                 return tres
@@ -283,7 +289,40 @@ module CommandHandler =
             awaitResult (state.messageSender.Warning(msg, sprintf "bad usage [ %s ]" cmd.name, help))
                 |> ignore
             logCmd ctx false
-              
+
+    let reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
+        let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
+        state.logger.Warning(ex.Message)
+        let err = sprintf "Something went wrong when using \'%s\' the owner received a report" cmd.name
+        awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
+        
+        let args = String.Join(',', getCmdArgs state input)
+        let argDisplay = if String.IsNullOrWhiteSpace args then "None" else args
+        let builder = EmbedBuilder()
+        builder
+            .WithDescription(sprintf "**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" cmd.name argDisplay ex.Message)
+            .WithTimestamp(msg.CreatedAt)
+            .WithFooter("Command Error")
+            .WithColor(state.messageSender.ColorWarning)
+            |> ignore
+        match msg.Channel :> IChannel with
+        | :? ITextChannel as chan ->
+            awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto)))
+        | _ -> ()
+    
+    let tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
+        if cmd.isEnabled then
+            if cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) then
+                state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
+                awaitIgnore (state.messageSender.Warning(msg, "Owner-only command", "This is a owner-only feature")) 
+            else
+                try
+                    runCmd state msg cmd input
+                with ex ->
+                    reportCmdError state ex msg cmd input
+        else
+            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) 
 
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
@@ -297,16 +336,9 @@ module CommandHandler =
                 if content.ToLower().StartsWith(state.prefix) || (startsWithBotMention state content) then
                     let cmdName = getCmdName state content
                     match state.commands |> Map.tryFind cmdName with
-                    | Some cmd ->
-                        if cmd.isEnabled then
-                            if cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) then
-                                state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmdName)
-                                awaitResult (state.messageSender.Warning(msg, "Owner-only command", "This is a owner-only feature")) |> ignore
-                            else
-                                runCmd state msg cmd content
-                        else
-                            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmdName)
-                            awaitResult (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) |> ignore
-                    | None -> ()
+                    | Some cmd -> 
+                        tryRunCmd state msg cmd content
+                    | None -> 
+                        ()
         | None -> 
             printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
