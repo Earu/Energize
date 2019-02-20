@@ -175,7 +175,6 @@ module CommandHandler =
                         lastDeletedMessage = None
                         lastImageUrl = None
                         lastMessages = List.Empty
-                        guildUsers = List.Empty
                     }
                 commands = Map.empty
                 logger = logger
@@ -206,7 +205,6 @@ module CommandHandler =
                     lastDeletedMessage = None
                     lastImageUrl = None
                     lastMessages = List.Empty
-                    guildUsers = List.Empty
                 }
             let newCaches = state.caches |> Map.add id cache
             handlerState <- Some { state with caches = newCaches }
@@ -233,6 +231,14 @@ module CommandHandler =
             args
     
     let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
+        let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+        let users = 
+            if isPrivate then
+                List.empty
+            else
+                let chan = msg.Channel :?> IGuildChannel
+                seq { for u in (chan.Guild :?> SocketGuild).Users -> u }
+                |> Seq.toList
         {
             client = state.client
             restClient = state.restClient
@@ -242,9 +248,11 @@ module CommandHandler =
             cache = getChannelCache state msg.Channel.Id
             messageSender = state.messageSender
             logger = state.logger
-            isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+            isPrivate = isPrivate
             commandName = cmdName
             serviceManager = state.serviceManager
+            random = Random()
+            guildUsers = users
         }
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =

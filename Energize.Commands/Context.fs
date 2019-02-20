@@ -22,6 +22,8 @@ module Context =
             cache : CommandCache
             commandName : string
             serviceManager : IServiceManager
+            random : Random
+            guildUsers : SocketGuildUser list
         }
 
         member this.hasArguments =

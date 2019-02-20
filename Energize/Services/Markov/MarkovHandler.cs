@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Markov
 {
     [Service("Markov")]
-    public class MarkovHandler : IServiceImplementation
+    public class MarkovHandler : IMarkovService
     {
         private readonly string _Prefix;
         private readonly Logger _Logger;
