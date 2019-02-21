@@ -82,6 +82,7 @@ module CommandHandler =
                 moduleName = "Core"
                 parameters = 0
                 ownerOnly = false
+                guildOnly = false
             }
         registerCmd state cmd
 
@@ -117,6 +118,7 @@ module CommandHandler =
                 moduleName = "Core"
                 parameters = 2
                 ownerOnly = true
+                guildOnly = false
             }
         registerCmd state cmd
 
@@ -128,6 +130,8 @@ module CommandHandler =
         let paramCount = match paramAtr with Some atr -> atr.parameters | None -> 0
         let ownerAtr = callback.Method.GetCustomAttributes<OwnerOnlyCommandAttribute>() |> Seq.tryHead
         let ownerOnly = match ownerAtr with Some _ -> true | None -> false
+        let guildAtr = callback.Method.GetCustomAttributes<GuildOnlyCommandAttribute>() |> Seq.tryHead
+        let guildOnly = match guildAtr with Some _ -> true | None -> false
 
         let cmd : Command =
             {
@@ -139,6 +143,7 @@ module CommandHandler =
                 moduleName = moduleAtr.name
                 parameters = paramCount
                 ownerOnly = ownerOnly
+                guildOnly = guildOnly
             }
 
         registerCmd state cmd
@@ -229,9 +234,9 @@ module CommandHandler =
             []
         else
             args
-    
-    let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list) : CommandContext =
-        let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+       
+    let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list)
+        (isPrivate : bool): CommandContext =
         let users = 
             if isPrivate then
                 List.empty
@@ -287,9 +292,9 @@ module CommandHandler =
 
         ctx.logger.Nice(head, color, where + cmdLog + args)
 
-    let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
+    let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) (isPrivate : bool) =
         let args = getCmdArgs state input
-        let ctx = buildCmdContext state cmd.name msg args
+        let ctx = buildCmdContext state cmd.name msg args isPrivate
         if (args |> List.length) >= (cmd.parameters) then
             let task = handleTimeOut state msg cmd.name (cmd.callback.Invoke(ctx))
             task.ConfigureAwait(false) |> ignore
@@ -327,10 +332,15 @@ module CommandHandler =
                 state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
                 awaitIgnore (state.messageSender.Warning(msg, "Owner-only command", "This is a owner-only feature")) 
             else
-                try
-                    runCmd state msg cmd input
-                with ex ->
-                    reportCmdError state ex msg cmd input
+                let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+                if isPrivate && cmd.guildOnly then
+                    state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
+                    awaitIgnore (state.messageSender.Warning(msg, "Owner-only command", "This is a server-only feature")) 
+                else
+                    try
+                        runCmd state msg cmd input isPrivate
+                    with ex ->
+                        reportCmdError state ex msg cmd input
         else
             state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) 

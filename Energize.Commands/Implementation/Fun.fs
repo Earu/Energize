@@ -14,6 +14,7 @@ module Fun =
     open System.Text.RegularExpressions
     open Energize.Interfaces.Services
     open HtmlAgilityPack
+    open Discord.WebSocket
 
     [<CommandParameters(1)>]
     [<Command("ascii", "Turns a text/sentence into ascii art", "ascii <sentence>")>]
@@ -163,4 +164,36 @@ module Fun =
         | None ->
             ctx.messageSender.Warning(ctx.message, ctx.commandName, "The oldswear source is down!")
         |> awaitIgnore
+    }
+
+    [<CommandParameters(2)>]
+    [<Command("style", "Sets a typing style for yourself or use one on a sentence", "style <style>,<'toggle'|sentence>")>]
+    let textStyle (ctx : CommandContext) = async {
+        let styleService = ctx.serviceManager.GetService<ITextStyleService>("TextStyle")
+        let styleHelp = sprintf "Styles available:\n`%s`" (String.Join(',', styleService.GetStyles()));
+        match styleService.GetStyles() |> Seq.tryFind (fun s -> s.Equals(ctx.arguments.[0].Trim().ToLower())) with
+        | Some style ->
+            match ctx.arguments.[1].Trim().ToLower() with
+            | "toggle" ->
+                let user = ctx.message.Author :?> SocketGuildUser
+                let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
+                let dbctx = awaitResult (db.GetContext())
+                let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
+
+                let wasToggled = dbuser.Style.Equals(style)
+                dbuser.Style <- if wasToggled then "none" else style
+                dbctx.Instance.Save()
+                if wasToggled then
+                    awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, "Untoggling style"))
+                else
+                    awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, "Toggling style"))
+            | _ -> 
+                let input = String.Join(',', ctx.arguments.[1..])
+                if not (String.IsNullOrWhiteSpace input) then
+                    let result = styleService.GetStyleResult(input, style)
+                    awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, result))
+                else
+                    awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, "The input to transform was empty"))
+        | None ->
+            awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, styleHelp))
     }
