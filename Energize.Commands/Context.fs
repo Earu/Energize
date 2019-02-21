@@ -8,7 +8,8 @@ module Context =
     open Cache
     open System
     open Energize.Interfaces.Services
-    
+    open AsyncHelper
+
     type CommandContext =
         {
             client : DiscordShardedClient
@@ -47,3 +48,15 @@ module Context =
                 let author = this.message.Author :?> SocketGuildUser
                 let roles = author.Roles |> Seq.filter (fun role -> role.Name.Equals("EnergizeAdmin") || role.Name.Equals("EBotAdmin"))
                 (roles |> Seq.length > 0) || author.GuildPermissions.Administrator
+
+        member this.sendOK (head : string option) (input : string) =
+            let header = match head with Some h -> h | None -> this.commandName
+            awaitIgnore (this.messageSender.Good(this.message, header, input))
+
+        member this.sendWarn (head : string option) (input : string) =
+            let header = match head with Some h -> h | None -> this.commandName
+            awaitIgnore (this.messageSender.Good(this.message, header, input))
+
+        member this.sendBad (head : string option) (input : string) = 
+            let header = match head with Some h -> h | None -> this.commandName
+            awaitIgnore (this.messageSender.Good(this.message, header, input))
