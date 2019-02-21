@@ -20,6 +20,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Command.fs" />
+    <Compile Include="Implementation\Info.fs" />
     <Compile Include="Implementation\Fun.fs" />
     <Compile Include="Implementation\Util.fs" />
     <Compile Include="Handler.fs" />

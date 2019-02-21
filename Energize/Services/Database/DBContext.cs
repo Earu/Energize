@@ -1,20 +1,21 @@
-﻿using Energize.Toolkit;
+﻿using Energize.Interfaces.Services;
+using Energize.Toolkit;
 using System;
 
 namespace Energize.Services.Database
 {
-    public class DBContext : IDisposable
+    public class DBContext : IDatabaseContext
     {
         private readonly Logger _Log;
 
-        public DBContext(EnergizeDB context, Logger log)
+        public DBContext(Database context, Logger log)
         {
             this.Instance = context;
             this.IsUsed = false;
             this._Log = log;
         }
 
-        public EnergizeDB Instance { get; }
+        public IDatabase Instance { get; }
 
         public bool IsUsed { get; set; }
 
@@ -22,7 +23,7 @@ namespace Energize.Services.Database
         {
             try
             {
-                this.Instance.SaveChanges(true);
+                this.Instance.Save();
                 this.IsUsed = false;
             }
             catch(Exception e)
