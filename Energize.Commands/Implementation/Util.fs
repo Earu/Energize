@@ -20,27 +20,27 @@ module Util =
         let timestamp = ctx.message.Timestamp
         let diff = timestamp.Millisecond / 10
         let res = sprintf "⏰ Discord: %dms\n🕐 Bot: %dms" diff ctx.client.Latency
-        awaitIgnore (ctx.messageSender.Good(ctx.message, "Pong!", res))
+        ctx.sendOK None res
     }
 
     [<Command("mem", "mem <nothing>", "Gets the current memory usage")>]
     let mem (ctx : CommandContext) = async {
         let proc = Process.GetCurrentProcess()
         let mbused = proc.WorkingSet64 / 1024L / 1024L
-        awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Currently using %dMB of memory" mbused))
+        ctx.sendOK None (sprintf "Currently using %dMB of memory" mbused)
     }    
 
     [<Command("uptime", "uptime <nothing>", "Gets the current uptime")>]
     let uptime (ctx : CommandContext) = async {
         let diff = (DateTime.Now - Process.GetCurrentProcess().StartTime).Duration();
         let res = sprintf "%dd%dh%dm" diff.Days diff.Hours diff.Minutes
-        awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, "The current instance has been up for " + res))
+        ctx.sendOK None ("The current instance has been up for " + res)
     }
 
     [<CommandParameters(1)>]
     [<Command("say", "Makes me say something", "say <sentence>")>]
     let say (ctx : CommandContext) = async {
-        awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, ctx.input))   
+        ctx.sendOK None ctx.input
     }
 
     [<CommandParameters(1)>]
@@ -52,21 +52,21 @@ module Util =
         if env.Run(ctx.message, ctx.input, returns, error, ctx.logger) then
             let display = String.Join('\t', returns.contents)
             if String.IsNullOrWhiteSpace display then
-                awaitIgnore (ctx.messageSender.Good(ctx.message, "lua", "👌 (nil or no value was returned)"))
+                ctx.sendOK (Some "lua") "👌 (nil or no value was returned)"
             else
                 if display |> String.length > 2000 then
-                    awaitIgnore (ctx.messageSender.Warning(ctx.message, "lua", "Output was too long to be sent"))
+                    ctx.sendWarn (Some "lua") "Output was too long to be sent"
                 else
-                    awaitIgnore (ctx.messageSender.Good(ctx.message, "lua", display))
+                    ctx.sendWarn (Some "lua") display
         else
-            awaitIgnore (ctx.messageSender.Danger(ctx.message, "lua", sprintf "```\n%s```" (error.contents.Replace("`",""))))
+            ctx.sendBad (Some "lua") (sprintf "```\n%s```" (error.contents.Replace("`","")))
     }
 
     [<Command("lr", "Reset the channel's lua environment", "lr <nothing>")>]
     let luaReset (ctx : CommandContext) = async {
         let env = ctx.serviceManager.GetService<ILuaService>("Lua")
         env.Reset(ctx.message.Channel.Id, ctx.logger)
-        awaitIgnore (ctx.messageSender.Good(ctx.message, "lua", "Lua environment reset in this channel"))
+        ctx.sendOK (Some "lua") "Lua environment reset in this channel"
     }
 
     [<CommandParameters(1)>]
@@ -84,7 +84,7 @@ module Util =
             else
                 ctx.message.Author.ToString()
 
-        awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, "Successfully sent your feedback"))
+        ctx.sendOK None "Successfully sent your feedback"
 
         let builder = EmbedBuilder()
         builder
@@ -106,7 +106,7 @@ module Util =
     let timeOut (ctx : CommandContext) = async {
         let duration = int ctx.input
         await (Task.Delay(duration * 1000))
-        awaitIgnore (ctx.messageSender.Good(ctx.message, "Time Out", sprintf "Timed out during `%d`s" duration))
+        ctx.sendOK (Some "Time Out") (sprintf "Timed out during `%d`s" duration)
     }
 
     [<CommandParameters(1)>]
@@ -116,9 +116,9 @@ module Util =
         let res = Convert.ToBase64String(bytes)
 
         if res |> String.length > 2000 then
-            awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, "Output too long to be sent"))
+            ctx.sendWarn None "Output too long to be sent"
         else
-            awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, res))
+            ctx.sendOK None res
     }
 
     [<CommandParameters(1)>]
@@ -128,9 +128,9 @@ module Util =
         let res = Encoding.UTF8.GetString(bytes);
 
         if res |> String.length > 2000 then
-            awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, "Output too long to be sent"))
+            ctx.sendWarn None "Output too long to be sent"
         else
-            awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, res))
+            ctx.sendOK None res
     }
 
     [<OwnerOnlyCommand>]
@@ -143,7 +143,7 @@ module Util =
             let cmd = new SqliteCommand(ctx.input, conn)
             let reader = cmd.ExecuteReader()
             if not (reader.HasRows) then
-                awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, "No data was gathered for the specified statement"))
+                ctx.sendWarn None "No data was gathered for the specified statement"
             else
                 let builder = StringBuilder()
                 while reader.Read() do
@@ -154,11 +154,11 @@ module Util =
                         |> ignore
                 let res = sprintf "```\n%s\n%s```" (String('-', 50)) (builder.ToString())
                 if res |> String.length > 2000 then
-                    awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, "Output too long to be sent"))
+                    ctx.sendWarn None "Output too long to be sent"
                 else
-                    awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, res))
+                    ctx.sendOK None res
         with ex ->
-            awaitIgnore (ctx.messageSender.Danger(ctx.message, ctx.commandName, "```\n" + ex.Message.Replace("`", "") + "```"))
+            ctx.sendBad None ("```\n" + ex.Message.Replace("`", "") + "```")
     }
 
     [<OwnerOnlyCommand>]
@@ -170,14 +170,13 @@ module Util =
 
     [<OwnerOnlyCommand>]
     [<CommandParameters(1)>]
-    [<Command("ev", "Evals a F# string", "ev <fsharpstring>")>]
+    [<Command("ev", "Evals a C# string", "ev <csharpstring>")>]
     let eval (ctx : CommandContext) = async {
         let evaluator = ctx.serviceManager.GetService<ICSharpEvaluatorService>("Evaluator")
         let res = awaitResult (evaluator.Eval(ctx.input, ctx))
 
         match res.ToTuple() with
-        | (0, out) -> ctx.messageSender.Danger(ctx.message, ctx.commandName, out)
-        | (1, out) -> ctx.messageSender.Good(ctx.message, ctx.commandName, out)
-        | (_, out) -> ctx.messageSender.Warning(ctx.message, ctx.commandName, out)
-        |> awaitIgnore
+        | (0, out) -> ctx.sendBad None out
+        | (1, out) -> ctx.sendOK None out
+        | (_, out) -> ctx.sendWarn None out
     }

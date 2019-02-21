@@ -62,10 +62,10 @@ module CommandHandler =
                         match handlerState.Value.commands |> Map.tryFind cmdName with
                         | Some cmd ->
                             let help = getCmdInfo cmd
-                            awaitIgnore (ctx.messageSender.Good(ctx.message, ctx.commandName, help))
+                            ctx.sendOK None help
                         | None ->
                             let warning = sprintf "Could not find any command named \'%s\'" cmdName
-                            awaitIgnore (ctx.messageSender.Warning(ctx.message, ctx.commandName, warning))
+                            ctx.sendWarn None warning
                     else
                         let path = "help.txt"
                         if File.Exists(path) then
@@ -102,15 +102,12 @@ module CommandHandler =
                     if handlerState.Value.commands |> Map.containsKey cmdName then
                         if value.Equals(0) then
                             enableCmd state cmdName false
-                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully disabled command \'%s\'" cmdName))
-                                |> ignore
+                            ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName)
                         else
                             enableCmd state cmdName true
-                            awaitResult (ctx.messageSender.Good(ctx.message, ctx.commandName, sprintf "Successfully enabled command \'%s\'" cmdName))
-                                |> ignore
+                            ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName)
                     else
-                        awaitResult (ctx.messageSender.Warning(ctx.message, ctx.commandName, sprintf "Could not find any command named \'%s\'" cmdName))
-                            |> ignore
+                        ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName)
                 })
                 isEnabled = true
                 usage = "enable <cmd>,<value>"
@@ -293,6 +290,7 @@ module CommandHandler =
         ctx.logger.Nice(head, color, where + cmdLog + args)
 
     let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) (isPrivate : bool) =
+        await (msg.Channel.TriggerTypingAsync())
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args isPrivate
         if (args |> List.length) >= (cmd.parameters) then
@@ -302,8 +300,7 @@ module CommandHandler =
             logCmd ctx false 
         else
             let help = getCmdInfo cmd
-            awaitResult (state.messageSender.Warning(msg, sprintf "bad usage [ %s ]" cmd.name, help))
-                |> ignore
+            ctx.sendWarn (Some (sprintf "bad usage [ %s ]" cmd.name)) help
             logCmd ctx false
 
     let reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
@@ -327,23 +324,23 @@ module CommandHandler =
         | _ -> ()
     
     let tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
-        if cmd.isEnabled then
-            if cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) then
-                state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
-                awaitIgnore (state.messageSender.Warning(msg, "Owner-only command", "This is a owner-only feature")) 
-            else
-                let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
-                if isPrivate && cmd.guildOnly then
-                    state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
-                    awaitIgnore (state.messageSender.Warning(msg, "Owner-only command", "This is a server-only feature")) 
-                else
-                    try
-                        runCmd state msg cmd input isPrivate
-                    with ex ->
-                        reportCmdError state ex msg cmd input
-        else
+        let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+        match cmd with
+        | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "Disabled command", "This is a disabled feature for now")) 
+            awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
+        | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) ->
+            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
+        | cmd when cmd.guildOnly && isPrivate ->
+            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
+        | cmd ->
+            try
+                runCmd state msg cmd input isPrivate
+            with ex ->
+                reportCmdError state ex msg cmd input
+            
 
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
