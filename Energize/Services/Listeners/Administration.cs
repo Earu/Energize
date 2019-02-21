@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
 using Energize.Services.Database;
-using Energize.Services.Database.Models;
 using Energize.Toolkit;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -13,15 +13,15 @@ namespace Energize.Services.Listeners
     [Service("Administration")]
     class Administration : IServiceImplementation
     {
-        private readonly EnergizeClient _EClient;
+        private readonly EnergizeClient _Client;
         private readonly MessageSender _MessageSender;
         private readonly ServiceManager _ServiceManager;
 
-        public Administration(EnergizeClient eclient)
+        public Administration(EnergizeClient client)
         {
-            this._EClient = eclient;
-            this._MessageSender = eclient.MessageSender;
-            this._ServiceManager = eclient.ServiceManager;
+            this._Client = client;
+            this._MessageSender = client.MessageSender;
+            this._ServiceManager = client.ServiceManager;
         }
 
         [Event("MessageReceived")]
@@ -34,9 +34,9 @@ namespace Energize.Services.Listeners
             if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
                 var db = this._ServiceManager.GetService<DBContextPool>("Database");
-                using(DBContext ctx = await db.GetContext())
+                using(IDatabaseContext ctx = await db.GetContext())
                 {
-                    DiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
+                    IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
                     if (dbguild.ShouldDeleteInvites)
                     {
                         try
@@ -67,9 +67,9 @@ namespace Energize.Services.Listeners
             string content = File.ReadAllText("restartlog.txt");
             if(ulong.TryParse(content, out ulong id))
             {
-                SocketChannel chan = this._EClient.DiscordClient.GetChannel(id);
+                SocketChannel chan = this._Client.DiscordClient.GetChannel(id);
                 if(chan != null)
-                    await this._EClient.MessageSender.Good(chan, "Restart", "Done restarting.");
+                    await this._Client.MessageSender.Good(chan, "Restart", "Done restarting.");
             }
 
             File.Delete("restartlog.txt");

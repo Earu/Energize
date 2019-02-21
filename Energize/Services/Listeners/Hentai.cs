@@ -32,23 +32,22 @@ namespace Energize.Services.Listeners
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (msg.Channel is IGuildChannel && !msg.Author.IsBot)
-            {
-                if (this.HasTrigger(msg.Content))
-                {
-                    TextStyle style = this._ServiceManager.GetService<TextStyle>("TextStyle");
-                    WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
+            if (msg.Author.IsBot || msg.Channel is IDMChannel)
+                return;
+            if (!this.HasTrigger(msg.Content))
+                return;
 
-                    Random rand = new Random();
-                    string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];
-                    quote = quote.Replace("{NAME}", msg.Author.Username);
-                    quote = style.GetStyleResult(quote, "anime");
-                    ITextChannel chan = msg.Channel as ITextChannel;
+            TextStyle style = this._ServiceManager.GetService<TextStyle>("TextStyle");
+            WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
 
-                    await sender.SendRaw(msg, quote,"Hentai-Chan",
-                        "https://dl.dropboxusercontent.com/s/fobfj7jhxfw0mjy/hentai.jpg");
-                }
-            }
+            Random rand = new Random();
+            string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];
+            quote = quote.Replace("{NAME}", msg.Author.Username);
+            quote = style.GetStyleResult(quote, "anime");
+            ITextChannel chan = msg.Channel as ITextChannel;
+
+            await sender.SendRaw(msg, quote,"Hentai-Chan",
+                "https://dl.dropboxusercontent.com/s/fobfj7jhxfw0mjy/hentai.jpg");
         }
 
         public void Initialize() { }

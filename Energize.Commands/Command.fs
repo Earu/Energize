@@ -9,6 +9,9 @@ module Command =
         inherit Attribute()
         member val name : string = name
 
+    type GuildOnlyCommandAttribute() =
+        inherit Attribute()
+
     type OwnerOnlyCommandAttribute() = 
         inherit Attribute()    
 
@@ -35,5 +38,6 @@ module Command =
             moduleName : string
             parameters : int
             ownerOnly : bool
+            guildOnly : bool
         }
 

@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
 using Energize.Services.Database;
-using Energize.Services.Database.Models;
 using Energize.Services.Listeners;
 using Energize.Toolkit;
 using System;
@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.TextProcessing
 {
     [Service("TextStyle")]
-    public class TextStyle : IServiceImplementation
+    public class TextStyle : ITextStyleService
     {
         private delegate string StyleCallback(string input);
         private static Dictionary<string, StyleCallback> StyleCallbacks = new Dictionary<string, StyleCallback>
@@ -233,9 +233,9 @@ namespace Energize.Services.TextProcessing
             {
                 SocketGuildUser user = msg.Author as SocketGuildUser;
                 DBContextPool db = this._ServiceManager.GetService<DBContextPool>("Database");
-                using (DBContext dbctx = await db.GetContext())
+                using (IDatabaseContext dbctx = await db.GetContext())
                 {
-                    DiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
+                    IDiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
                     if(dbuser.Style != "none")
                     {
                         string style = dbuser.Style;

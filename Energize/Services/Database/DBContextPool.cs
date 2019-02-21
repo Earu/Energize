@@ -1,4 +1,5 @@
-﻿using Energize.Interfaces.Services;
+﻿using Energize.Interfaces.DatabaseModels;
+using Energize.Interfaces.Services;
 using Energize.Services.Database.Models;
 using Energize.Toolkit;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Database
 {
-    public class EnergizeDB : DbContext
+    public class Database : DbContext, IDatabase
     {
         private readonly string _ConnectionString;
 
@@ -16,7 +17,7 @@ namespace Energize.Services.Database
         public DbSet<DiscordChannel> Channels { get; set; }
         public DbSet<DiscordUserStats> Stats { get; set; }
 
-        public EnergizeDB(string connectionstring)
+        public Database(string connectionstring)
         {
             this._ConnectionString = connectionstring;
         }
@@ -26,7 +27,10 @@ namespace Energize.Services.Database
             optionsBuilder.UseSqlite(this._ConnectionString);
         }
 
-        public async Task<DiscordUser> GetOrCreateUser(ulong id)
+        public void Save()
+            => this.SaveChanges(true);
+
+        public async Task<IDiscordUser> GetOrCreateUser(ulong id)
         {
             DiscordUser user = await this.Users.FirstOrDefaultAsync(x => x.ID == id);
             if (user != null)
@@ -43,7 +47,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task<DiscordUserStats> GetOrCreateUserStats(ulong id)
+        public async Task<IDiscordUserStats> GetOrCreateUserStats(ulong id)
         {
             DiscordUserStats stats = await this.Stats.FirstOrDefaultAsync(x => x.ID == id);
             if(stats != null)
@@ -60,7 +64,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task<DiscordGuild> GetOrCreateGuild(ulong id)
+        public async Task<IDiscordGuild> GetOrCreateGuild(ulong id)
         {
             DiscordGuild guild = await this.Guilds.FirstOrDefaultAsync(x => x.ID == id);
             if(guild != null)
@@ -79,7 +83,7 @@ namespace Energize.Services.Database
     }
 
     [Service("Database")]
-    public class DBContextPool : IServiceImplementation
+    public class DBContextPool : IDatabaseService
     {
         private readonly string _ConnectionString;
         private List<DBContext> _Pool = new List<DBContext>();
@@ -94,7 +98,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task<DBContext> GetContext()
+        public async Task<IDatabaseContext> GetContext()
         {
             for(int i = 0; i < this._Pool.Count; i++)
             {
@@ -116,9 +120,9 @@ namespace Energize.Services.Database
         public Task InitializeAsync()
             => Task.CompletedTask;
 
-        private EnergizeDB Create()
+        private Database Create()
         {
-            var context = new EnergizeDB(Config.DB_CONNECTION_STRING);
+            var context = new Database(Config.DB_CONNECTION_STRING);
             context.Database.EnsureCreated();
 
             return context;
