@@ -83,6 +83,7 @@ module CommandHandler =
                 parameters = 0
                 ownerOnly = false
                 guildOnly = false
+                isNsfw = false
             }
         registerCmd state cmd
 
@@ -116,6 +117,7 @@ module CommandHandler =
                 parameters = 2
                 ownerOnly = true
                 guildOnly = false
+                isNsfw = false
             }
         registerCmd state cmd
 
@@ -129,6 +131,8 @@ module CommandHandler =
         let ownerOnly = match ownerAtr with Some _ -> true | None -> false
         let guildAtr = callback.Method.GetCustomAttributes<GuildOnlyCommandAttribute>() |> Seq.tryHead
         let guildOnly = match guildAtr with Some _ -> true | None -> false
+        let nsfwAtr = callback.Method.GetCustomAttributes<NsfwCommandAttribute>() |> Seq.tryHead
+        let isNsfw = match nsfwAtr with Some _ -> true | None -> false
 
         let cmd : Command =
             {
@@ -141,6 +145,7 @@ module CommandHandler =
                 parameters = paramCount
                 ownerOnly = ownerOnly
                 guildOnly = guildOnly
+                isNsfw = isNsfw
             }
 
         registerCmd state cmd
@@ -230,7 +235,7 @@ module CommandHandler =
         if args.[0] |> String.IsNullOrWhiteSpace && (args |> List.length).Equals(1) then
             []
         else
-            args
+            args |> List.map (fun arg -> arg.Trim())
        
     let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list)
         (isPrivate : bool): CommandContext =
@@ -255,6 +260,7 @@ module CommandHandler =
             serviceManager = state.serviceManager
             random = Random()
             guildUsers = users
+            commandCount = state.commands.Count
         }
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =
@@ -325,6 +331,9 @@ module CommandHandler =
     
     let tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
+        let isNsfw = 
+            let chan = msg.Channel :?> ITextChannel
+            isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
         match cmd with
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
@@ -335,6 +344,9 @@ module CommandHandler =
         | cmd when cmd.guildOnly && isPrivate ->
             state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
+        | cmd when cmd.isNsfw && not isNsfw ->
+            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used in a non NSFW channel")) 
         | cmd ->
             try
                 runCmd state msg cmd input isPrivate

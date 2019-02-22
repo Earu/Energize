@@ -35,6 +35,8 @@ namespace Energize.Toolkit
         private string SteamAPIKey;
         [DataMember]
         private string DBConnectionString;
+        [DataMember]
+        private string GitHub;
 #pragma warning restore 649
 
         public static string TOKEN_MAIN;
@@ -50,6 +52,7 @@ namespace Energize.Toolkit
         public static string SERVER_INVITE;
         public static string STEAM_API_KEY;
         public static string DB_CONNECTION_STRING;
+        public static string GITHUB;
 
         public static async Task Load()
         {
@@ -69,6 +72,7 @@ namespace Energize.Toolkit
             SERVER_INVITE = config.ServerInvite;
             STEAM_API_KEY = config.SteamAPIKey;
             DB_CONNECTION_STRING = config.DBConnectionString;
+            GITHUB = config.GitHub;
         }
     }
 }

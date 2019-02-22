@@ -30,18 +30,27 @@ namespace Energize
             this.DiscordRestClient = new DiscordRestClient();
             this.ServiceManager = new ServiceManager();
 
-            this.Logger.Nice("Config", ConsoleColor.Yellow, $"Token used => [ {token} ]");
-            this.Logger.Notify("Initializing");
+            if (this.HasToken)
+            {
+                this.Logger.Nice("Config", ConsoleColor.Yellow, $"Token used => [ {token} ]");
+                this.Logger.Notify("Initializing");
 
-            ServiceManager.LoadServices(this);
+                this.ServiceManager.LoadServices(this);
+            }
+            else
+            {
+                this.Logger.Warning("No token was used! You NEED a token to connect to Discord!");
+            }
         }
 
-        public string               Prefix         { get; }
-        public DiscordShardedClient DiscordClient        { get; }
-        public DiscordRestClient    DiscordRestClient    { get; }
-        public Logger               Logger         { get; }
-        public MessageSender        MessageSender  { get; }
-        public ServiceManager       ServiceManager { get; }
+        public string               Prefix            { get; }
+        public DiscordShardedClient DiscordClient     { get; }
+        public DiscordRestClient    DiscordRestClient { get; }
+        public Logger               Logger            { get; }
+        public MessageSender        MessageSender     { get; }
+        public ServiceManager       ServiceManager    { get; }
+
+        public bool HasToken { get => !string.IsNullOrWhiteSpace(this._Token); }
 
         public async Task InitializeAsync()
         {
