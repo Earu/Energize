@@ -25,6 +25,7 @@ module Context =
             serviceManager : IServiceManager
             random : Random
             guildUsers : SocketGuildUser list
+            commandCount : int
         }
 
         member this.hasArguments =
@@ -38,7 +39,7 @@ module Context =
 
         member this.isNSFW = 
             let chan = this.message.Channel :?> ITextChannel
-            chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
+            this.isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
 
         member this.isAuthorAdmin =
             match this.isPrivate with

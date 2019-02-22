@@ -9,6 +9,9 @@ module Command =
         inherit Attribute()
         member val name : string = name
 
+    type NsfwCommandAttribute() = 
+        inherit Attribute()
+
     type GuildOnlyCommandAttribute() =
         inherit Attribute()
 
@@ -39,5 +42,6 @@ module Command =
             parameters : int
             ownerOnly : bool
             guildOnly : bool
+            isNsfw : bool
         }
 

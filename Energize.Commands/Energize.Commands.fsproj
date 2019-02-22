@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.6" />
     <PackageReference Include="HtmlAgilityPack" Version="1.9.0" />
+    <PackageReference Include="YoutubeSearch.dll" Version="1.1.0" />
   </ItemGroup>
   
   <ItemGroup>
@@ -20,6 +21,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Command.fs" />
+    <Compile Include="Implementation\Search.fs" />
     <Compile Include="Implementation\Info.fs" />
     <Compile Include="Implementation\Fun.fs" />
     <Compile Include="Implementation\Util.fs" />
