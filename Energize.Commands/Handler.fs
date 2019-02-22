@@ -41,8 +41,9 @@ module CommandHandler =
 
     let generateHelpFile (state : CommandHandlerState) (path : string) =
         let cmds = state.commands |> Map.toSeq |> Seq.sortBy (fun (_, cmd) -> cmd.name)
-        let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n\n"
-        await (File.AppendAllTextAsync(path, head))
+        let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n"
+        let ascii = StaticData.ASCII_ART
+        await (File.AppendAllTextAsync(path, head + ascii + String('\n', 4)))
         for (cmdName, cmd) in cmds do
             let lines = [
                 sprintf "--------- %s ---------\n" cmdName

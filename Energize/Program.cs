@@ -1,5 +1,4 @@
 ﻿using Energize.Toolkit;
-using System;
 using System.Threading.Tasks;
 
 namespace Energize
@@ -15,15 +14,8 @@ namespace Energize
             await StaticData.Load();
 
             EnergizeClient client = new EnergizeClient(Config.TOKEN_DEV, "]");
-            if (client.HasToken)
-            {
-                await client.InitializeAsync();
-                await Task.Delay(-1);
-            }
-            else
-            {
-                Console.ReadLine();
-            }
+            await client.InitializeAsync();
+            await Task.Delay(-1);
         }
     }
 }

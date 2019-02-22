@@ -32,7 +32,9 @@ namespace Energize
 
             if (this.HasToken)
             {
-                this.Logger.Nice("Config", ConsoleColor.Yellow, $"Token used => [ {token} ]");
+                this.DisplayAsciiArt();
+                bool isdevenv = this._Token == Config.TOKEN_DEV;
+                this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {(isdevenv ? "DEVELOPMENT" : "PRODUCTION")} ]");
                 this.Logger.Notify("Initializing");
 
                 this.ServiceManager.LoadServices(this);
@@ -41,6 +43,27 @@ namespace Energize
             {
                 this.Logger.Warning("No token was used! You NEED a token to connect to Discord!");
             }
+        }
+
+        private void DisplayAsciiArt()
+        {
+            ConsoleColor[] colors =
+            {
+                ConsoleColor.Blue, ConsoleColor.Cyan, ConsoleColor.Green,
+                ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Magenta,
+            };
+            string[] lines = StaticData.ASCII_ART.Split('\n');
+            Random rand = new Random();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                ConsoleColor col = colors[i];
+                Console.ForegroundColor = col;
+                Console.WriteLine($"\t{line}");
+            }
+
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("\n" + new string('-', 70));
         }
 
         public string               Prefix            { get; }
@@ -54,6 +77,8 @@ namespace Energize
 
         public async Task InitializeAsync()
         {
+            if (!this.HasToken) return;
+
             try
             {
                 if(File.Exists("logs.txt"))
