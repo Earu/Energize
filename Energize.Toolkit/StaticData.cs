@@ -45,6 +45,7 @@ namespace Energize.Toolkit
         public static string[][] ANIME_DECORATIONS;
         public static string[] HENTAI_QUOTES;
         public static char[] ZALGO;
+        public static string ASCII_ART;
 
         public static async Task Load()
         {
@@ -61,6 +62,12 @@ namespace Energize.Toolkit
             ANIME_DECORATIONS = data.AnimeDecorations;
             HENTAI_QUOTES = data.HentaiQuotes;
             ZALGO = data.Zalgo;
+            ASCII_ART = @" ______ _   _ ______ _____   _____ _____ ____________
+|  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|
+| |__  |  \| | |__  | |__) | |  __  | |    / /| |__
+|  __| | . ` |  __| |  _  /| | |_ | | |   / / |  __|
+| |____| |\  | |____| | \ \| |__| |_| |_ / /__| |____
+|______|_| \_|______|_|  \_\\_____|_____/_____|______|";
         }
     }
 }
