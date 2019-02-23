@@ -50,8 +50,11 @@ module Context =
             awaitIgnore (this.messageSender.Danger(this.message, header, input))
 
     let isNSFW (msg : SocketMessage) (isPrivate : bool) = 
-        let chan = msg.Channel :?> ITextChannel
-        isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
+        if isPrivate then 
+            true
+        else
+            let chan = msg.Channel :?> ITextChannel
+            chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
 
     let isAuthorAdmin (msg : SocketMessage) (isPrivate : bool) =
         if isPrivate then

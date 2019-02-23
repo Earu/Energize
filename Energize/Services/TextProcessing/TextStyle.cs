@@ -229,52 +229,48 @@ namespace Energize.Services.TextProcessing
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (msg.Channel is IGuildChannel && !msg.Author.IsBot)
+            if (msg.Channel is IDMChannel || msg.Author.IsBot) return;
+
+            SocketGuildUser user = msg.Author as SocketGuildUser;
+            IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
+            using (IDatabaseContext dbctx = await db.GetContext())
             {
-                SocketGuildUser user = msg.Author as SocketGuildUser;
-                DBContextPool db = this._ServiceManager.GetService<DBContextPool>("Database");
-                using (IDatabaseContext dbctx = await db.GetContext())
+                IDiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
+                if (dbuser.Style == "none") return;
+                string style = dbuser.Style;
+
+                if (!StyleCallbacks.ContainsKey(style)) return;
+
+                bool shouldpost = true;
+                try
                 {
-                    IDiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
-                    if(dbuser.Style != "none")
-                    {
-                        string style = dbuser.Style;
-                        if (StyleCallbacks.ContainsKey(style))
-                        {
-                            bool shouldpost = true;
-                            try
-                            {
-                                await msg.DeleteAsync();
-                            }
-                            catch
-                            {
-                                shouldpost = false;
-                            }
+                    await msg.DeleteAsync();
+                }
+                catch
+                {
+                    shouldpost = false;
+                }
 
-                            if (shouldpost)
-                            {
-                                string result = GetStyleResult(msg.Content, style);
-                                string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
-                                string name = msg.Author.Username;
-                                ulong success = 0;
-                                WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
+                if (!shouldpost) return;
 
-                                if (result.Length > 2000)
-                                    success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);
-                                else
-                                    success = await sender.SendRaw(msg, result, name, avatar);
+                string result = GetStyleResult(msg.Content, style);
+                string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
+                string name = msg.Author.Username;
+                ulong success = 0;
+                WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
 
-                                if (success == 0)
-                                {
-                                    string display = $"{msg.Author}: {result}\n`(This feature needs the \"Manage webhooks\" right to work properly)`";
-                                    if (display.Length > 2000)
-                                        await this._MessageSender.Warning(msg, "Style", "Message was over discord limit!");
-                                    else
-                                        await this._MessageSender.SendRaw(msg, display);
-                                }
-                            }
-                        }
-                    }
+                if (result.Length > 2000)
+                    success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);
+                else
+                    success = await sender.SendRaw(msg, result, name, avatar);
+
+                if (success == 0)
+                {
+                    string display = $"{msg.Author}: {result}\n`(This feature needs the \"Manage webhooks\" right to work properly)`";
+                    if (display.Length > 2000)
+                        await this._MessageSender.Warning(msg, "Style", "Message was over discord limit!");
+                    else
+                        await this._MessageSender.SendRaw(msg, display);
                 }
             }
         }

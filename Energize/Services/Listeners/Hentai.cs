@@ -46,7 +46,7 @@ namespace Energize.Services.Listeners
             quote = style.GetStyleResult(quote, "anime");
             ITextChannel chan = msg.Channel as ITextChannel;
 
-            await sender.SendRaw(msg, quote,"Hentai-Chan",
+            await sender.SendRaw(msg, quote, "Hentai-Chan",
                 "https://dl.dropboxusercontent.com/s/fobfj7jhxfw0mjy/hentai.jpg");
         }
 
