@@ -37,27 +37,26 @@ module Context =
         member this.authorMention =
             this.message.Author.Mention
 
-        member this.isNSFW = 
-            let chan = this.message.Channel :?> ITextChannel
-            this.isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
-
-        member this.isAuthorAdmin =
-            match this.isPrivate with
-            | true -> 
-                true
-            | false ->
-                let author = this.message.Author :?> SocketGuildUser
-                let roles = author.Roles |> Seq.filter (fun role -> role.Name.Equals("EnergizeAdmin") || role.Name.Equals("EBotAdmin"))
-                (roles |> Seq.length > 0) || author.GuildPermissions.Administrator
-
         member this.sendOK (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
             awaitIgnore (this.messageSender.Good(this.message, header, input))
 
         member this.sendWarn (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
-            awaitIgnore (this.messageSender.Good(this.message, header, input))
+            awaitIgnore (this.messageSender.Warning(this.message, header, input))
 
         member this.sendBad (head : string option) (input : string) = 
             let header = match head with Some h -> h | None -> this.commandName
-            awaitIgnore (this.messageSender.Good(this.message, header, input))
+            awaitIgnore (this.messageSender.Danger(this.message, header, input))
+
+    let isNSFW (msg : SocketMessage) (isPrivate : bool) = 
+        let chan = msg.Channel :?> ITextChannel
+        isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
+
+    let isAuthorAdmin (msg : SocketMessage) (isPrivate : bool) =
+        if isPrivate then
+            true
+        else
+            let author = msg.Author :?> SocketGuildUser
+            let roles = author.Roles |> Seq.filter (fun role -> role.Name.Equals("EnergizeAdmin") || role.Name.Equals("EBotAdmin"))
+            (roles |> Seq.length > 0) || author.GuildPermissions.Administrator

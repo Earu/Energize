@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -11,26 +12,39 @@ namespace Energize.Toolkit
 #pragma warning disable 649
         [DataMember]
         public string[] Adjectives;
+
         [DataMember]
         public string[] Nouns;
+
         [DataMember]
         public string[] Vowels;
+
         [DataMember]
         public string[] EightBallAnswers;
+
         [DataMember]
         public string[] PickAnswers;
+
         [DataMember]
         public string[] DramaFilter;
+
         [DataMember]
         public string[] ApologizeFilter;
+
         [DataMember]
         public string[] AnimeEmotes;
+
         [DataMember]
         public string[][] AnimeDecorations;
+
         [DataMember]
         public string[] HentaiQuotes;
+
         [DataMember]
         public char[] Zalgo;
+
+        [DataMember]
+        public Dictionary<string, string[]> SocialActions;
 
 #pragma warning restore 649
 
@@ -45,6 +59,7 @@ namespace Energize.Toolkit
         public static string[][] ANIME_DECORATIONS;
         public static string[] HENTAI_QUOTES;
         public static char[] ZALGO;
+        public static Dictionary<string, string[]> SOCIAL_ACTIONS;
         public static string ASCII_ART;
 
         public static async Task Load()
@@ -62,6 +77,7 @@ namespace Energize.Toolkit
             ANIME_DECORATIONS = data.AnimeDecorations;
             HENTAI_QUOTES = data.HentaiQuotes;
             ZALGO = data.Zalgo;
+            SOCIAL_ACTIONS = data.SocialActions;
             ASCII_ART = @" ______ _   _ ______ _____   _____ _____ ____________
 |  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|
 | |__  |  \| | |__  | |__) | |  __  | |    / /| |__
