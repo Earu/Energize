@@ -13,7 +13,6 @@ module Info =
     open Energize.Toolkit
     open Energize.Commands.UserHelper
     open System
-    open System.Diagnostics
 
     [<GuildOnlyCommand>]
     [<Command("server", "Gets information about the server", "server <nothing>")>]
@@ -182,8 +181,8 @@ module Info =
             ctx.sendWarn None "There was nothing to snipe"
     }
 
-    type CommitInfo = { message: string }
-    type Commit = { commit : CommitInfo }
+    type private CommitInfo = { message: string }
+    type private Commit = { commit : CommitInfo }
     [<Command("lastchanges", "Gets the last changes published on GitHub", "lastchanges <nothing>")>]
     let lastChanges (ctx : CommandContext) = async {
         let endpoint = "https://api.github.com/repos/Earu/Energize/commits"
@@ -215,5 +214,10 @@ module Info =
                         )
                         |> Seq.length
                 ) |> Seq.sum
-        ctx.sendOK None (sprintf "There are %d playing %s" sum ctx.input)
+        let display = 
+            if sum > 1 then
+                sprintf "There are %d users playing %s" sum ctx.input
+            else
+                sprintf "There is %d user playing %s" sum ctx.input
+        ctx.sendOK None display
     }

@@ -18,8 +18,8 @@ module Search =
         | n when n > max -> max
         | n -> n
 
-    type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
-    type UrbanObj = { list : WordObj list }
+    type private WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
+    type private UrbanObj = { list : WordObj list }
     [<NsfwCommand>]
     [<CommandParameters(1)>]
     [<Command("urban", "Searches urban for a definition", "urban <term>,<pagenumber|nothing>")>]
