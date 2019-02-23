@@ -121,7 +121,7 @@ module Fun =
             ctx.sendOK (Some "markov") display
     }
 
-    type FactObj = { value : string }
+    type private FactObj = { value : string }
     [<Command("chuck", "Random chuck norris fact", "chuck <nothing>")>]
     let chuck (ctx : CommandContext) = async {
         let endpoint = "https://api.chucknorris.io/jokes/random"

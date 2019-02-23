@@ -18,7 +18,7 @@ module CommandHandler =
     open System.IO
     open System.Diagnostics
 
-    type CommandHandlerState =
+    type private CommandHandlerState =
         {
             client : DiscordShardedClient
             restClient : DiscordRestClient
@@ -40,7 +40,7 @@ module CommandHandler =
     let private getCmdInfo (cmd : Command) : string =
         sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
 
-    let generateHelpFile (state : CommandHandlerState) (path : string) =
+    let private generateHelpFile (state : CommandHandlerState) (path : string) =
         let cmds = state.commands |> Map.toSeq |> Seq.sortBy (fun (_, cmd) -> cmd.name)
         let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n"
         let ascii = StaticData.ASCII_ART
@@ -316,7 +316,7 @@ module CommandHandler =
             ctx.sendWarn (Some (sprintf "bad usage [ %s ]" cmd.name)) help
             logCmd ctx false
 
-    let reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
+    let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
         state.logger.Warning(ex.ToString())
         let err = sprintf "Something went wrong when using \'%s\' the owner received a report" cmd.name
@@ -339,7 +339,7 @@ module CommandHandler =
             awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto)))
         | _ -> ()
     
-    let tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
+    let private tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
         let isNsfw = Context.isNSFW msg isPrivate
         match cmd with
@@ -363,6 +363,16 @@ module CommandHandler =
                 runCmd state msg cmd input isPrivate
             with ex ->
                 reportCmdError state ex msg cmd input
+
+    let handleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
+        match handlerState with
+        | Some state when cache.HasValue ->
+            let oldCache = getChannelCache state chan.Id
+            let newCache = { oldCache with lastDeletedMessage = Some (cache.Value :?> SocketMessage) }
+            let newCaches = state.caches.Add(chan.Id, newCache)
+            handlerState <- Some { state with caches = newCaches }
+        | _ -> 
+            printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
             
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
@@ -372,7 +382,7 @@ module CommandHandler =
                 let oldCache = getChannelCache state msg.Channel.Id
                 let newCache = { oldCache with lastImageUrl = Some url }
                 let newCaches = state.caches.Add(msg.Channel.Id, newCache)
-                handlerState <- Some ({state with caches = newCaches })
+                handlerState <- Some { state with caches = newCaches }
             | None -> ()
 
             if not msg.Author.IsBot then
