@@ -3,6 +3,7 @@ using Energize.Interfaces.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -10,101 +11,113 @@ namespace Energize.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private const string _Namespace = "Energize.Services";
+        private static readonly string      _Namespace                  = typeof(ServiceManager).Namespace;
+        private static readonly Type        _DiscordShardedClientType   = typeof(DiscordShardedClient);
+        private static readonly Type        _ServiceAttributeType       = typeof(ServiceAttribute);
+        private static readonly Type        _EventAttributeType         = typeof(EventAttribute);
+        private static readonly EventInfo[] _DiscordClientEvents        = _DiscordShardedClientType.GetEvents();
 
-        private static readonly Type _DiscordShardedClientType = typeof(DiscordShardedClient);
-        private static readonly EventInfo[] _DiscordClientEvents = _DiscordShardedClientType.GetEvents();
+        private readonly Dictionary<string, IService> _Services;
+        private readonly IEnumerable<Type>            _ServiceTypes;
+        private readonly EnergizeClient               _Client;
 
-        private static List<string> _MethodBlacklist = new List<string>
+        public ServiceManager(EnergizeClient client)
         {
-            "ToString",
-            "Equals",
-            "GetHashCode",
-            "GetType"
-        };
+            this._Services = new Dictionary<string, IService>();
+            this._ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
+            this._Client = client;
+        }
 
-        private readonly Dictionary<string, IService> _Services = new Dictionary<string, IService>();
+        private bool IsService(Type type)
+            => type.FullName.StartsWith(_Namespace) && Attribute.IsDefined(type, _ServiceAttributeType);
 
-        internal void LoadServices(EnergizeClient eclient)
+        private bool IsEventHandler(MethodInfo methodinfo, EventInfo eventinfo)
         {
-            Type satype = typeof(ServiceAttribute);
-            Type eatype = typeof(EventAttribute);
-            
-            IEnumerable<Type> services = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => type.FullName.StartsWith(_Namespace) && Attribute.IsDefined(type,satype));
-
-            foreach(Type service in services)
+            if (Attribute.IsDefined(methodinfo, _EventAttributeType))
             {
-                IServiceImplementation inst = null;
-                try
-                {
-                    if (service.GetConstructor(new Type[] { typeof(EnergizeClient) }) != null)
-                        inst = (IServiceImplementation)Activator.CreateInstance(service, eclient);
-                    else
-                        //Use default constructor
-                        inst = (IServiceImplementation)Activator.CreateInstance(service);
-                }
-                catch(Exception e)
-                {
-                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Failed to instanciate a service: {e.Message}");
-                }
+                EventAttribute atr = methodinfo.GetCustomAttribute<EventAttribute>();
+                return atr.Name.Equals(eventinfo.Name);
+            }
 
-                try
-                {
-                    inst.Initialize();
-                }
-                catch(Exception e)
-                {
-                    eclient.Logger.Nice("Init", ConsoleColor.Red, $"Couldn't initialize a service: {e.Message}");
-                }
+            return false;
+        }
 
-                ServiceAttribute att = service.GetCustomAttributes(satype,false).First() as ServiceAttribute;
-                this._Services[att.Name] = new Service(att.Name, inst as IServiceImplementation);
+        private IServiceImplementation Instanciate(EnergizeClient client, Type type)
+        {
+            if (type.GetConstructor(new Type[] { typeof(EnergizeClient) }) != null)
+                return (IServiceImplementation)Activator.CreateInstance(type, client);
+            else
+                return (IServiceImplementation)Activator.CreateInstance(type);
+        }
 
-                IEnumerable<MethodInfo> servmethods = service.GetMethods()
-                    .Where(x => !_MethodBlacklist.Contains(x.Name));
-                
-                foreach(EventInfo minfo in _DiscordClientEvents)
-                {
-                    IEnumerable<MethodInfo> methods = servmethods
-                        .Where(x => Attribute.IsDefined(x,eatype) && 
-                        (x.GetCustomAttributes(eatype,false).First() as EventAttribute).Name == minfo.Name);
+        private void RegisterService(Type type, IServiceImplementation instance)
+        {
+            ServiceAttribute servatr = type.GetCustomAttribute<ServiceAttribute>();
+            this._Services[servatr.Name] = new Service(servatr.Name, instance);
+        }
 
-                    if(methods.Count() > 0)
-                    {
-                        MethodInfo method = methods.First();
-                        try
-                        {
-                            EventInfo _event = _DiscordShardedClientType.GetEvent(minfo.Name);
-                            _event.AddEventHandler(eclient.DiscordClient, method.CreateDelegate(_event.EventHandlerType, inst));
-                        }
-                        catch
-                        {
-                            eclient.Logger.Nice("Init", ConsoleColor.Red, att.Name 
-                            + $" tried to sub to an event with wrong signature <{method.Name}>");
-                        }
-                    }
-                }
+        private delegate void LogDelegate(Exception ex);
+        private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventinfo, Type type, IServiceImplementation instance)
+        {
+            MethodInfo eventhandler = type.GetMethods().FirstOrDefault(methodinfo => this.IsEventHandler(methodinfo, eventinfo));
+            if (eventhandler != null)
+            {
+                Delegate logdlg = new LogDelegate(this._Client.Logger.Danger);
+                Delegate unsafedlg = eventhandler.CreateDelegate(eventinfo.EventHandlerType, instance);
+                IEnumerable<ParameterExpression> parameters = eventhandler
+                    .GetParameters()
+                    .Select(param => Expression.Parameter(param.ParameterType, param.Name))
+                    .ToArray();
+                ParameterExpression ex = Expression.Parameter(typeof(Exception), "ex");
+                Delegate dlg = 
+                    Expression.Lambda(
+                        unsafedlg.GetType(),
+                        Expression.TryCatch(
+                            Expression.Call(
+                                Expression.Constant(instance), 
+                                eventhandler,
+                                parameters
+                            ), 
+                            Expression.Catch(
+                                ex,
+                                Expression.Block(
+                                    Expression.Call(
+                                        Expression.Constant(this._Client.Logger),
+                                        logdlg.Method,
+                                        ex
+                                    ), 
+                                    Expression.Constant(Task.CompletedTask)
+                                )
+                            )
+                        ),
+                        parameters
+                    ).Compile();
+
+                eventinfo.AddEventHandler(client, dlg);
             }
         }
 
-        internal async Task LoadServicesAsync(EnergizeClient eclient)
+        internal void InitializeServices()
+        {
+            foreach (Type type in this._ServiceTypes)
+            {
+                IServiceImplementation instance = this.Instanciate(this._Client, type);
+                this.RegisterService(type, instance);
+
+                foreach (EventInfo eventinfo in _DiscordClientEvents)
+                    this.RegisterDiscordHandler(this._Client.DiscordClient, eventinfo, type, instance);
+            }
+
+            foreach (KeyValuePair<string, IService> service in this._Services)
+                if (service.Value.Instance != null)
+                    service.Value.Instance.Initialize();
+        }
+
+        internal async Task InitializeServicesAsync(EnergizeClient eclient)
         {
             foreach(KeyValuePair<string, IService> service in this._Services)
-            {
                 if(service.Value.Instance != null)
-                {
-                    try
-                    {
-                        await service.Value.Instance.InitializeAsync();
-                    }
-                    catch (Exception e)
-                    {
-                        eclient.Logger.Nice("Init", ConsoleColor.Red, $"<{service.Key}> something went wrong when "
-                        + $"invoking InitializeAsync: {e.Message}");
-                    }
-                }
-            }
+                    await service.Value.Instance.InitializeAsync();
         }
 
         public T GetService<T>(string name) where T : IServiceImplementation

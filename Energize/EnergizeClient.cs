@@ -23,12 +23,12 @@ namespace Energize
             this.Prefix        = prefix;
             this.Logger        = new Logger();
             this.MessageSender = new MessageSender(this.Logger);
-            this.DiscordClient       = new DiscordShardedClient(new DiscordSocketConfig
+            this.DiscordClient = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
             this.DiscordRestClient = new DiscordRestClient();
-            this.ServiceManager = new ServiceManager();
+            this.ServiceManager = new ServiceManager(this);
 
             if (this.HasToken)
             {
@@ -37,7 +37,7 @@ namespace Energize
                 this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {(isdevenv ? "DEVELOPMENT" : "PRODUCTION")} ]");
                 this.Logger.Notify("Initializing");
 
-                this.ServiceManager.LoadServices(this);
+                this.ServiceManager.InitializeServices();
             }
             else
             {
@@ -87,7 +87,7 @@ namespace Energize
                 await this.DiscordClient.LoginAsync(TokenType.Bot, _Token, true);
                 await this.DiscordClient.StartAsync();
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, _Token, true);
-                await ServiceManager.LoadServicesAsync(this);
+                await this.ServiceManager.InitializeServicesAsync(this);
 
                 StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
                 await this.DiscordClient.SetActivityAsync(game);
@@ -101,7 +101,6 @@ namespace Energize
 
                 int hour = 1000 * 60 * 60;
                 gctimer.Change(hour, hour);
-
             }
             catch (Exception e)
             {

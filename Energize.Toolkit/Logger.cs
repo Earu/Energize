@@ -61,6 +61,15 @@ namespace Energize.Toolkit
             File.AppendAllText("logs.txt", $"[DANGER] >> {msg}\n\n");
         }
 
+        public void Danger(Exception ex)
+        {
+            this.Prefix();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex);
+
+            File.AppendAllText("logs.txt", $"[DANGER] >> {ex}\n\n");
+        }
+
         public void Error(string msg)
         {
             this.Prefix();

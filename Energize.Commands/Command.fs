@@ -9,7 +9,7 @@ module Command =
         inherit Attribute()
         member val name : string = name
 
-    type AdminOnlyAttribute() =
+    type AdminOnlyCommandAttribute() =
         inherit Attribute()
 
     type NsfwCommandAttribute() = 
