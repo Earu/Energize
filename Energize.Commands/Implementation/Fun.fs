@@ -43,21 +43,21 @@ module Fun =
             for _ in 0..times do
                 if ctx.random.Next(0,100) >= 50 then
                     builder
-                        .Append(adjs.[ctx.random.Next(0, adjs.Length - 1)].ToLower() + " ")
-                        .Append(nouns.[ctx.random.Next(0, nouns.Length - 1)].ToLower())
+                        .Append(adjs.[ctx.random.Next(0, adjs.Length)].ToLower() + " ")
+                        .Append(nouns.[ctx.random.Next(0, nouns.Length)].ToLower())
                         .Append(" of the ")
-                        .Append(nouns.[ctx.random.Next(0, nouns.Length - 1)].ToLower())
+                        .Append(nouns.[ctx.random.Next(0, nouns.Length)].ToLower())
                         .Append(" ")
                         |> ignore
                 else
                     builder
-                        .Append(adjs.[ctx.random.Next(0, adjs.Length - 1)].ToLower())
+                        .Append(adjs.[ctx.random.Next(0, adjs.Length)].ToLower())
                         .Append(" ")
                         |> ignore
             let res = 
                 builder
                     .Append(" ")
-                    .Append(nouns.[ctx.random.Next(0, nouns.Length - 1)].ToLower())
+                    .Append(nouns.[ctx.random.Next(0, nouns.Length)].ToLower())
                     .ToString()
                     .Trim()
             let isVowel = 
@@ -97,7 +97,7 @@ module Fun =
     [<Command("8b", "Answers a question positively or negatively", "8b <question>")>]
     let eightBall (ctx : CommandContext) = async {
         let answers = StaticData.EIGHT_BALL_ANSWERS
-        let answer = answers.[ctx.random.Next(0, answers.Length - 1)]
+        let answer = answers.[ctx.random.Next(0, answers.Length)]
         ctx.sendOK None answer
     }
 
@@ -105,8 +105,8 @@ module Fun =
     [<Command("pick", "Makes a choice for you", "pick <choice>,<choice>,<choice|nothing>,etc...")>]
     let pick (ctx : CommandContext) = async {
         let answers = StaticData.PICK_ANSWERS
-        let choice = ctx.arguments.[ctx.random.Next(0, ctx.arguments.Length - 1)].Trim()
-        let answer = answers.[ctx.random.Next(0, answers.Length - 1)].Replace("<answer>", choice)
+        let choice = ctx.arguments.[ctx.random.Next(0, ctx.arguments.Length)].Trim()
+        let answer = answers.[ctx.random.Next(0, answers.Length)].Replace("<answer>", choice)
         ctx.sendOK None answer
     }
 
@@ -136,9 +136,9 @@ module Fun =
         let adjs = StaticData.ADJECTIVES
         let nouns = StaticData.NOUNS
         builder
-            .Append(adjs.[ctx.random.Next(0, adjs.Length - 1)].ToLower())
+            .Append(adjs.[ctx.random.Next(0, adjs.Length)].ToLower())
             .Append("_")
-            .Append(nouns.[ctx.random.Next(0, nouns.Length - 1)].ToLower())
+            .Append(nouns.[ctx.random.Next(0, nouns.Length)].ToLower())
             |> ignore
         
         if ctx.random.Next(1,100) < 75 then
@@ -177,7 +177,7 @@ module Fun =
 
                 let wasToggled = dbuser.Style.Equals(style)
                 dbuser.Style <- if wasToggled then "none" else style
-                dbctx.Instance.Save()
+                dbctx.Dispose()
                 if wasToggled then
                     ctx.sendOK None "Untoggling style"
                 else

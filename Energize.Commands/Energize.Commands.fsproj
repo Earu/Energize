@@ -21,6 +21,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Command.fs" />
+    <Compile Include="Implementation\Social.fs" />
     <Compile Include="Implementation\Search.fs" />
     <Compile Include="Implementation\Info.fs" />
     <Compile Include="Implementation\Fun.fs" />

@@ -136,22 +136,19 @@ module UserHelper =
             None
 
     let findUser (ctx : CommandContext) (input : string) (withId : bool) : SocketUser option =
-        match String.IsNullOrWhiteSpace input with
-        | false ->
-            match input.StartsWith('$') && input |> String.length > 1 with
-            | true ->
-                let (identifier, arg) = getTagInfo (input.Trim().[1..])
-                findUserByTag ctx identifier arg
-            | false -> 
-                let trimedInput = input.Trim()
-                match findUserByMention ctx trimedInput with
+        match input with
+        | input when String.IsNullOrWhiteSpace input ->
+            None 
+        | input when input.StartsWith('$') && input |> String.length > 1 ->
+            let (identifier, arg) = getTagInfo (input.Trim().[1..])
+            findUserByTag ctx identifier arg
+        | input ->
+            match findUserByMention ctx input with
+            | Some user ->
+                Some user
+            | None ->
+                match findUserByName ctx input with
                 | Some user ->
                     Some user
                 | None ->
-                    match findUserByName ctx trimedInput with
-                    | Some user ->
-                        Some user
-                    | None ->
-                        findUserById ctx trimedInput withId
-        | true ->
-            None
+                    findUserById ctx input withId

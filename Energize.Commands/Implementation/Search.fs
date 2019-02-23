@@ -9,18 +9,21 @@ module Search =
     open Energize.Toolkit
     open System.Text
     open Energize.Commands.Context
+    open YoutubeSearch
     
+    let private getProperPage (input : string) (min : int) (max : int) : int =
+        let unclamped = if String.IsNullOrWhiteSpace input then 0 else (int input) - 1
+        match unclamped with
+        | n when n < min -> min
+        | n when n > max -> max
+        | n -> n
+
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }
     [<NsfwCommand>]
     [<CommandParameters(1)>]
     [<Command("urban", "Searches urban for a definition", "urban <term>,<pagenumber|nothing>")>]
     let urban (ctx : CommandContext) = async {
-        let pageNum = 
-            if ctx.arguments |> List.length > 1 then 
-                if String.IsNullOrWhiteSpace ctx.arguments.[1] then 0 else (int ctx.arguments.[1]) - 1
-            else 
-                0
         let search = ctx.arguments.[0]
         let json = awaitResult (HttpClient.Fetch("http://api.urbandictionary.com/v0/define?term=" + search, ctx.logger))
         let urbanObj = JsonPayload.Deserialize<UrbanObj>(json, ctx.logger)
@@ -28,10 +31,10 @@ module Search =
             ctx.sendWarn None "Could not find anything"
         else
             let page = 
-                match urbanObj.list |> Seq.length with
-                | _ when pageNum < 0 -> 0
-                | n when pageNum > n - 1 -> n - 1
-                | _ -> pageNum
+                if ctx.arguments |> List.length > 1 then 
+                    getProperPage ctx.arguments.[1] 0 (urbanObj.list.Length - 1) 
+                else 
+                    0
             let wordObj = urbanObj.list.[page]
             let hasExample = not (String.IsNullOrWhiteSpace wordObj.example)
             let definition =
@@ -52,7 +55,23 @@ module Search =
     }
 
     [<CommandParameters(1)>]
-    [<Command("yt", "Searches youtube for a video", "yt <search>")>]
+    [<Command("yt", "Searches youtube for a video", "yt <search>,<pagenumber|nothing>")>]
     let yt (ctx : CommandContext) = async {
-        () //impl
+        let items = VideoSearch()
+        let videos =
+            try
+                items.SearchQuery(ctx.arguments.[0], 1)
+            with _ ->
+                Collections.Generic.List()
+        if videos.Count > 0 then
+            let page = 
+                if ctx.arguments |> List.length > 1 then 
+                    getProperPage ctx.arguments.[1] 0 (videos.Count - 1) 
+                else 
+                    0
+            let vid = videos.[page]
+            let display = sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page + 1) videos.Count ctx.arguments.[0] vid.Url 
+            awaitIgnore (ctx.messageSender.SendRaw(ctx.message, display))
+        else
+            ctx.sendWarn None "Could not find any videos matching"
     }
