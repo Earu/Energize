@@ -16,6 +16,7 @@ module CommandHandler =
     open System.Reflection
     open Energize.Interfaces.Services
     open System.IO
+    open System.Diagnostics
 
     type CommandHandlerState =
         {
@@ -85,6 +86,7 @@ module CommandHandler =
                 ownerOnly = false
                 guildOnly = false
                 isNsfw = false
+                adminOnly = false
             }
         registerCmd state cmd
 
@@ -119,6 +121,7 @@ module CommandHandler =
                 ownerOnly = true
                 guildOnly = false
                 isNsfw = false
+                adminOnly = false
             }
         registerCmd state cmd
 
@@ -134,6 +137,8 @@ module CommandHandler =
         let guildOnly = match guildAtr with Some _ -> true | None -> false
         let nsfwAtr = callback.Method.GetCustomAttributes<NsfwCommandAttribute>() |> Seq.tryHead
         let isNsfw = match nsfwAtr with Some _ -> true | None -> false
+        let adminAtr = callback.Method.GetCustomAttributes<AdminOnlyAttribute>() |> Seq.tryHead
+        let adminOnly = match adminAtr with Some _ -> true | None -> false
 
         let cmd : Command =
             {
@@ -147,6 +152,7 @@ module CommandHandler =
                 ownerOnly = ownerOnly
                 guildOnly = guildOnly
                 isNsfw = isNsfw
+                adminOnly = adminOnly
             }
 
         registerCmd state cmd
@@ -312,18 +318,21 @@ module CommandHandler =
 
     let reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
-        state.logger.Warning(ex.Message)
+        state.logger.Warning(ex.ToString())
         let err = sprintf "Something went wrong when using \'%s\' the owner received a report" cmd.name
         awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
         let argDisplay = if String.IsNullOrWhiteSpace args then "None" else args
+
+        let frame = StackTrace(ex, true).GetFrame(0)
+        let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
         let builder = EmbedBuilder()
         builder
-            .WithDescription(sprintf "**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" cmd.name argDisplay ex.Message)
+            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay ex.Message)
             .WithTimestamp(msg.CreatedAt)
-            .WithFooter("Command Error")
-            .WithColor(state.messageSender.ColorWarning)
+            .WithFooter(sprintf "Command Error -> %s" source)
+            .WithColor(state.messageSender.ColorDanger)
             |> ignore
         match msg.Channel :> IChannel with
         | :? ITextChannel as chan ->
@@ -332,34 +341,38 @@ module CommandHandler =
     
     let tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
-        let isNsfw = 
-            let chan = msg.Channel :?> ITextChannel
-            isPrivate || chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
+        let isNsfw = Context.isNSFW msg isPrivate
         match cmd with
         | cmd when not (cmd.isEnabled) ->
-            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
         | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) ->
-            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
         | cmd when cmd.guildOnly && isPrivate ->
-            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
         | cmd when cmd.isNsfw && not isNsfw ->
-            state.logger.Nice("Commands", ConsoleColor.Red,sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used in a non NSFW channel")) 
+        | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg isPrivate) ->
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use an admin-only command <%s> but they're not an admin" (msg.Author.ToString()) cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used by non-adminstrator users")) 
         | cmd ->
             try
                 runCmd state msg cmd input isPrivate
             with ex ->
                 reportCmdError state ex msg cmd input
             
-
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
         | Some state ->
             match getLastImgUrl msg with
-            | Some url -> () //impl cache
+            | Some url -> 
+                let oldCache = getChannelCache state msg.Channel.Id
+                let newCache = { oldCache with lastImageUrl = Some url }
+                let newCaches = state.caches.Add(msg.Channel.Id, newCache)
+                handlerState <- Some ({state with caches = newCaches })
             | None -> ()
 
             if not msg.Author.IsBot then
