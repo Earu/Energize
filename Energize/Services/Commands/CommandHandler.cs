@@ -39,7 +39,7 @@ namespace Energize.Services.Commands
             => Energize.Commands.CommandHandler.handleMessageReceived(msg);
 
         [Event("MessageDeleted")]
-        public async Task MessageDeleted(Cacheable<IMessage,ulong> cache,ISocketMessageChannel chan)
-            => this._Logger.Warning(cache.ToString() + chan.ToString());
+        public async Task MessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
+            => Energize.Commands.CommandHandler.handleMessageDeleted(cache, chan);
     }
 }

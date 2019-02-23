@@ -66,7 +66,7 @@ module Social =
             ctx.sendWarn None help
     }
 
-    type LoveObj = { percentage : int; result : string }
+    type private LoveObj = { percentage : int; result : string }
     [<CommandParameters(2)>]
     [<Command("love", "Gets how compatible two users are", "love <user|userid>,<user|userid>")>]
     let love (ctx : CommandContext) = async {
