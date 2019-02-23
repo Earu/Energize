@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
+using System;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Markov
@@ -60,8 +61,16 @@ namespace Energize.Services.Markov
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            ITextChannel chan = msg.Channel as ITextChannel;
-            if (!msg.Author.IsBot && !chan.IsNsfw && !msg.Content.StartsWith(this._Prefix))
+            bool isnsfw = false;
+            if (msg.Channel is IDMChannel)
+                isnsfw = true;
+            else
+            {
+                ITextChannel chan = msg.Channel as ITextChannel;
+                isnsfw = chan.IsNsfw;
+            }
+
+            if (!msg.Author.IsBot && !isnsfw && !msg.Content.StartsWith(this._Prefix))
             {
                 ulong id = 0;
                 if (msg.Channel is IGuildChannel)

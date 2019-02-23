@@ -4,6 +4,7 @@ using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
 using Energize.Services.Database;
 using Energize.Toolkit;
+using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -13,15 +14,17 @@ namespace Energize.Services.Listeners
     [Service("Administration")]
     class Administration : IServiceImplementation
     {
-        private readonly EnergizeClient _Client;
+        private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
         private readonly ServiceManager _ServiceManager;
+        private readonly Logger _Logger;
 
         public Administration(EnergizeClient client)
         {
-            this._Client = client;
+            this._Client = client.DiscordClient;
             this._MessageSender = client.MessageSender;
             this._ServiceManager = client.ServiceManager;
+            this._Logger = client.Logger;
         }
 
         [Event("MessageReceived")]
@@ -34,27 +37,26 @@ namespace Energize.Services.Listeners
             if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
                 var db = this._ServiceManager.GetService<DBContextPool>("Database");
-                using(IDatabaseContext ctx = await db.GetContext())
+                using (IDatabaseContext ctx = await db.GetContext())
                 {
                     IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
-                    if (dbguild.ShouldDeleteInvites)
-                    {
-                        try
-                        {
-                            EmbedBuilder builder = new EmbedBuilder();
-                            _MessageSender.BuilderWithAuthor(msg, builder);
-                            builder.WithDescription("Your message was removed, it contained an invitation link");
-                            builder.WithFooter("Invite Checker");
-                            builder.WithColor(_MessageSender.ColorWarning);
+                    if (!dbguild.ShouldDeleteInvites) return;
 
-                            await msg.DeleteAsync();
-                            await _MessageSender.Send(msg, builder.Build());
-                        }
-                        catch
-                        {
-                            await _MessageSender.Danger(msg, "Invite Checker", "I couldn't delete this message"
-                                + " because I don't have the rights necessary for that");
-                        }
+                    try
+                    {
+                        EmbedBuilder builder = new EmbedBuilder();
+                        this._MessageSender.BuilderWithAuthor(msg, builder);
+                        builder.WithDescription("Your message was removed, it contained an invitation link");
+                        builder.WithFooter("Invite Checker");
+                        builder.WithColor(_MessageSender.ColorWarning);
+
+                        await msg.DeleteAsync();
+                        await this._MessageSender.Send(msg, builder.Build());
+                    }
+                    catch
+                    {
+                        await this._MessageSender.Danger(msg, "Invite Checker", "I couldn't delete this message"
+                            + " because I don't have the rights necessary for that");
                     }
                 }
             }
@@ -67,9 +69,9 @@ namespace Energize.Services.Listeners
             string content = File.ReadAllText("restartlog.txt");
             if(ulong.TryParse(content, out ulong id))
             {
-                SocketChannel chan = this._Client.DiscordClient.GetChannel(id);
+                SocketChannel chan = this._Client.GetChannel(id);
                 if(chan != null)
-                    await this._Client.MessageSender.Good(chan, "Restart", "Done restarting.");
+                    await this._MessageSender.Good(chan, "Restart", "Done restarting.");
             }
 
             File.Delete("restartlog.txt");

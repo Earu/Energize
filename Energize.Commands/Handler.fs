@@ -1,5 +1,8 @@
 ﻿namespace Energize.Commands
 
+open Command
+
+[<CommandModule("Core")>]
 module CommandHandler =
     open Discord.WebSocket
     open ImageUrlProvider
@@ -11,7 +14,6 @@ module CommandHandler =
     open System.Threading.Tasks
     open System
     open AsyncHelper
-    open Command
     open Energize.Toolkit
     open System.Reflection
     open Energize.Interfaces.Services
@@ -23,7 +25,6 @@ module CommandHandler =
             client : DiscordShardedClient
             restClient : DiscordRestClient
             caches : Map<uint64, CommandCache>
-            globalCache : CommandCache
             commands : Map<string, Command>
             logger : Logger
             messageSender : MessageSender
@@ -54,91 +55,65 @@ module CommandHandler =
             ]
             await (File.AppendAllLinesAsync(path, lines))
 
-    let private registerHelpCmd (state : CommandHandlerState) =
-        let cmd : Command = 
-            {
-                name = "help"
-                callback = CommandCallback(fun ctx -> async {
-                    if ctx.hasArguments then
-                        let cmdName = ctx.arguments.[0].Trim()
-                        match handlerState.Value.commands |> Map.tryFind cmdName with
-                        | Some cmd ->
-                            let help = getCmdInfo cmd
-                            ctx.sendOK None help
-                        | None ->
-                            let warning = sprintf "Could not find any command named \'%s\'" cmdName
-                            ctx.sendWarn None warning
-                    else
-                        let path = "help.txt"
-                        if File.Exists(path) then
-                            awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
-                        else
-                            generateHelpFile state path
-                            awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
-                            File.Delete(path)
-                        ()
-                })
-                isEnabled = true
-                usage = "help <cmd|nothing>"
-                help = "This command."
-                moduleName = "Core"
-                parameters = 0
-                ownerOnly = false
-                guildOnly = false
-                isNsfw = false
-                adminOnly = false
-            }
-        registerCmd state cmd
+    [<Command("help", "This command", "help <cmd|nothing>")>]
+    let help (ctx : CommandContext) = async {
+        if ctx.hasArguments then
+            let cmdName = ctx.arguments.[0].Trim()
+            match handlerState.Value.commands |> Map.tryFind cmdName with
+            | Some cmd ->
+                let help = getCmdInfo cmd
+                ctx.sendOK None help
+            | None ->
+                let warning = sprintf "Could not find any command named \'%s\'" cmdName
+                ctx.sendWarn None warning
+        else
+            let path = "help.txt"
+            if File.Exists(path) then
+                awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
+            else
+                match handlerState with
+                | Some state ->
+                    generateHelpFile state path
+                    awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
+                    File.Delete(path)
+                | None -> ()
+    }
 
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
         match state.commands |> Map.tryFind cmdName with
         | Some cmd ->
             cmd.isEnabled <- enabled
         | None -> ()
+    
+    [<OwnerOnlyCommand>]
+    [<CommandParameters(2)>]
+    [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
+    let enable (ctx : CommandContext) = async {
+        let cmdName = ctx.arguments.[0].Trim()
+        let value = int (ctx.arguments.[1].Trim())
+        match handlerState with
+        | Some state ->
+            if state.commands |> Map.containsKey cmdName then
+                if value.Equals(0) then
+                    enableCmd state cmdName false
+                    ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName)
+                else
+                    enableCmd state cmdName true
+                    ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName)
+            else
+                ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName)
+        | None -> ()
+    }
 
-    let private registerEnableCmd (state : CommandHandlerState) =
-        let cmd : Command = 
-            {
-                name = "enable"
-                callback = CommandCallback(fun ctx -> async {
-                    let cmdName = ctx.arguments.[0].Trim()
-                    let value = int (ctx.arguments.[1].Trim())
-                    if handlerState.Value.commands |> Map.containsKey cmdName then
-                        if value.Equals(0) then
-                            enableCmd state cmdName false
-                            ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName)
-                        else
-                            enableCmd state cmdName true
-                            ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName)
-                    else
-                        ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName)
-                })
-                isEnabled = true
-                usage = "enable <cmd>,<value>"
-                help = "Enables or disables a command"
-                moduleName = "Core"
-                parameters = 2
-                ownerOnly = true
-                guildOnly = false
-                isNsfw = false
-                adminOnly = false
-            }
-        registerCmd state cmd
+    let private isCmdX<'atr when 'atr :> Attribute > (methodInfo : MethodInfo) =
+        let atr = methodInfo.GetCustomAttributes<'atr>() |> Seq.tryHead
+        match atr with Some _ -> true | None -> false
 
     let private loadCmd (state : CommandHandlerState) (callback : CommandCallback) (moduleType : Type) =
         let infoAtr = callback.Method.GetCustomAttribute<CommandAttribute>()
         let moduleAtr = moduleType.GetCustomAttribute<CommandModuleAttribute>()
-        
         let paramAtr = callback.Method.GetCustomAttributes<CommandParametersAttribute>() |> Seq.tryHead
         let paramCount = match paramAtr with Some atr -> atr.parameters | None -> 0
-        let ownerAtr = callback.Method.GetCustomAttributes<OwnerOnlyCommandAttribute>() |> Seq.tryHead
-        let ownerOnly = match ownerAtr with Some _ -> true | None -> false
-        let guildAtr = callback.Method.GetCustomAttributes<GuildOnlyCommandAttribute>() |> Seq.tryHead
-        let guildOnly = match guildAtr with Some _ -> true | None -> false
-        let nsfwAtr = callback.Method.GetCustomAttributes<NsfwCommandAttribute>() |> Seq.tryHead
-        let isNsfw = match nsfwAtr with Some _ -> true | None -> false
-        let adminAtr = callback.Method.GetCustomAttributes<AdminOnlyAttribute>() |> Seq.tryHead
-        let adminOnly = match adminAtr with Some _ -> true | None -> false
 
         let cmd : Command =
             {
@@ -149,10 +124,10 @@ module CommandHandler =
                 help = infoAtr.help
                 moduleName = moduleAtr.name
                 parameters = paramCount
-                ownerOnly = ownerOnly
-                guildOnly = guildOnly
-                isNsfw = isNsfw
-                adminOnly = adminOnly
+                ownerOnly = isCmdX<OwnerOnlyCommandAttribute> callback.Method
+                guildOnly = isCmdX<GuildOnlyCommandAttribute> callback.Method
+                isNsfw = isCmdX<NsfwCommandAttribute> callback.Method
+                adminOnly = isCmdX<AdminOnlyCommandAttribute> callback.Method
             }
 
         registerCmd state cmd
@@ -160,15 +135,16 @@ module CommandHandler =
     let private loadCmds (state : CommandHandlerState) =
         let moduleTypes = 
             Assembly.GetExecutingAssembly().GetTypes() 
-                |> Seq.filter 
-                    (fun t ->
-                        let atr = t.GetCustomAttributes<CommandModuleAttribute>() |> Seq.tryHead
-                        if t.FullName.StartsWith("Energize.Commands.Implementation") && atr.IsSome then
-                            state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered command module [ %s ]" atr.Value.name)
-                            true
-                        else
-                            false
-                    )
+            |> Seq.rev
+            |> Seq.filter 
+                (fun t ->
+                    let atr = t.GetCustomAttributes<CommandModuleAttribute>() |> Seq.tryHead
+                    if t.FullName.StartsWith("Energize.Commands") && atr.IsSome then
+                        state.logger.Nice("Commands", ConsoleColor.Green, sprintf "Registered command module [ %s ]" atr.Value.name)
+                        true
+                    else
+                        false
+                )
 
         for moduleType in moduleTypes do
             let funcs = moduleType.GetMethods() |> Seq.filter (fun func -> Attribute.IsDefined(func, typedefof<CommandAttribute>))
@@ -183,13 +159,6 @@ module CommandHandler =
                 client = client
                 restClient = restClient
                 caches = Map.empty
-                globalCache = 
-                    {
-                        lastMessage = None
-                        lastDeletedMessage = None
-                        lastImageUrl = None
-                        lastMessages = List.Empty
-                    }
                 commands = Map.empty
                 logger = logger
                 messageSender = messageSender
@@ -199,13 +168,6 @@ module CommandHandler =
         
         logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Registering commands with prefix \'%s\'" prefix)
         loadCmds newState
-        match handlerState with
-        | Some s ->
-            handlerState <- registerEnableCmd s
-            handlerState <- registerHelpCmd handlerState.Value
-            s.logger.Nice("Commands", ConsoleColor.Green, "Registered command module [ Core ]")
-        | None -> ()
-
         logger.Notify("Commands Initialized")
 
     let private getChannelCache (state : CommandHandlerState) (id : uint64) : CommandCache =
