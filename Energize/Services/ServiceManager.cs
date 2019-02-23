@@ -56,42 +56,32 @@ namespace Energize.Services
             this._Services[servatr.Name] = new Service(servatr.Name, instance);
         }
 
-        private delegate void LogDelegate(Exception ex);
+        private void ContinueWithHandler(Task t)
+        {
+            if (t.IsFaulted)
+                this._Client.Logger.Danger(t.Exception);
+        }
+
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventinfo, Type type, IServiceImplementation instance)
         {
             MethodInfo eventhandler = type.GetMethods().FirstOrDefault(methodinfo => this.IsEventHandler(methodinfo, eventinfo));
             if (eventhandler != null)
             {
-                Delegate logdlg = new LogDelegate(this._Client.Logger.Danger);
-                Delegate unsafedlg = eventhandler.CreateDelegate(eventinfo.EventHandlerType, instance);
-                IEnumerable<ParameterExpression> parameters = eventhandler
-                    .GetParameters()
-                    .Select(param => Expression.Parameter(param.ParameterType, param.Name))
-                    .ToArray();
-                ParameterExpression ex = Expression.Parameter(typeof(Exception), "ex");
-                Delegate dlg = 
-                    Expression.Lambda(
-                        unsafedlg.GetType(),
-                        Expression.TryCatch(
-                            Expression.Call(
-                                Expression.Constant(instance), 
-                                eventhandler,
-                                parameters
-                            ), 
-                            Expression.Catch(
-                                ex,
-                                Expression.Block(
-                                    Expression.Call(
-                                        Expression.Constant(this._Client.Logger),
-                                        logdlg.Method,
-                                        ex
-                                    ), 
-                                    Expression.Constant(Task.CompletedTask)
-                                )
-                            )
+                ParameterExpression[] parameters = Array.ConvertAll(eventhandler.GetParameters(),
+                    param => Expression.Parameter(param.ParameterType));
+                Delegate dlg = Expression.Lambda(
+                    eventinfo.EventHandlerType,
+                    Expression.Call(
+                        Expression.Call(
+                            Expression.Constant(instance),
+                            eventhandler,
+                            parameters
                         ),
-                        parameters
-                    ).Compile();
+                        typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
+                        Expression.Constant((Action<Task>)this.ContinueWithHandler)
+                    ),
+                    parameters
+                ).Compile();
 
                 eventinfo.AddEventHandler(client, dlg);
             }
