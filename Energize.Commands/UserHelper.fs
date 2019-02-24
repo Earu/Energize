@@ -4,6 +4,8 @@ module UserHelper =
     open Discord.WebSocket
     open Context
     open System
+    open Discord
+    open Energize.Commands.AsyncHelper
 
     let private rand = Random()
 
@@ -152,3 +154,20 @@ module UserHelper =
                     Some user
                 | None ->
                     findUserById ctx input withId
+
+    let getOrCreateRole (user : SocketGuildUser) (name : string) : IRole = 
+        match user.Guild.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
+        | Some role ->
+            role :> IRole
+        | None ->
+            awaitResult (user.Guild.CreateRoleAsync(name)) :> IRole
+
+    let hasRole (user : SocketGuildUser) (name : string) = 
+        match user.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
+        | Some _ -> true
+        | None -> false
+
+    let hasRoleStartingWith (user : SocketGuildUser) (input : string) = 
+        match user.Roles |> Seq.tryFind (fun role -> role.Name.StartsWith(input)) with
+        | Some _ -> true
+        | None -> false
