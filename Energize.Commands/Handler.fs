@@ -280,18 +280,18 @@ module CommandHandler =
 
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
-        state.logger.Warning(ex.ToString())
+        state.logger.Warning(ex.InnerException.ToString())
         let err = sprintf "Something went wrong when using \'%s\' the owner received a report" cmd.name
         awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
         let argDisplay = if String.IsNullOrWhiteSpace args then "None" else args
 
-        let frame = StackTrace(ex, true).GetFrame(0)
+        let frame = StackTrace(ex.InnerException, true).GetFrame(0)
         let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
         let builder = EmbedBuilder()
         builder
-            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay ex.Message)
+            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay ex.InnerException.Message)
             .WithTimestamp(msg.CreatedAt)
             .WithFooter(sprintf "Command Error -> %s" source)
             .WithColor(state.messageSender.ColorDanger)

@@ -9,13 +9,12 @@ namespace Energize.Toolkit
         {
             try
             {
-                T deserialized = JsonConvert.DeserializeObject<T>(json);
-                return deserialized;
+                T obj = JsonConvert.DeserializeObject<T>(json);
+                return obj;
             }
             catch
             {
                 log.Nice("JSON", ConsoleColor.Red, "Couldn't deserialize a string!");
-
                 return default(T);
             }
         }
@@ -30,7 +29,6 @@ namespace Energize.Toolkit
             catch
             {
                 log.Nice("JSON", ConsoleColor.Red, "Couldn't serialize a string!");
-
                 return string.Empty;
             }
         }

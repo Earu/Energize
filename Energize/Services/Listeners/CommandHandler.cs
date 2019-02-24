@@ -5,7 +5,7 @@ using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Commands
+namespace Energize.Services.Listeners
 {
     [Service("Commands")]
     public class CommandHandler : IServiceImplementation

@@ -2,10 +2,9 @@
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
-using System;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Markov
+namespace Energize.Services.Generation
 {
     [Service("Markov")]
     public class MarkovHandler : IMarkovService
