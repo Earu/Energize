@@ -3,8 +3,11 @@
 module AsyncHelper =
     open System.Threading.Tasks
 
-    let toTask<'t> (asyncOp : Async<'t>) : Task<'t> =
+    let toTaskResult<'t> (asyncOp : Async<'t>) : Task<'t> =
         asyncOp |> Async.StartAsTask
+
+    let toTask (asyncOp : Async<unit>) : Task =
+        asyncOp |> Async.StartAsTask :> Task
 
     let awaitResult<'t> (task : Task<'t>) : 't =
         task |> Async.AwaitTask |> Async.RunSynchronously
@@ -16,4 +19,4 @@ module AsyncHelper =
         task |> Async.AwaitTask |> Async.RunSynchronously
     
     let awaitOp<'t> (asyncOp : Async<'t>) : 't =
-       awaitResult (toTask asyncOp)
+       awaitResult (toTaskResult asyncOp)
