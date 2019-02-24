@@ -236,11 +236,10 @@ module CommandHandler =
         let tcallback = toTask asyncOp
         if not tcallback.IsCompleted then
             async {
-                let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(2000)))
-                if not (tres.Equals(tcallback)) then
+                let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
+                if not tcallback.IsCompleted then
                     awaitResult (state.messageSender.Warning(msg, "Time out", sprintf "Your command \'%s\' is timing out!" cmdName)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmdName)
-                
                 return tres
             } |> awaitOp
         else
@@ -285,7 +284,7 @@ module CommandHandler =
         awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
-        let argDisplay = if String.IsNullOrWhiteSpace args then "None" else args
+        let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
 
         let frame = StackTrace(ex.InnerException, true).GetFrame(0)
         let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
@@ -296,10 +295,11 @@ module CommandHandler =
             .WithFooter(sprintf "Command Error -> %s" source)
             .WithColor(state.messageSender.ColorDanger)
             |> ignore
-        match msg.Channel :> IChannel with
-        | :? ITextChannel as chan ->
+        match state.client.GetChannel(Config.FEEDBACK_CHANNEL_ID) with
+        | null -> ()
+        | c ->
+            let chan = c :> IChannel :?> ITextChannel
             awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto)))
-        | _ -> ()
     
     let private tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
