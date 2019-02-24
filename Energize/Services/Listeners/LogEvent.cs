@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Logs
+namespace Energize.Services.Listeners
 {
     [Service("EventLogs")]
     public class LogEvent : IServiceImplementation
@@ -14,12 +14,12 @@ namespace Energize.Services.Logs
         public LogEvent(EnergizeClient eclient)
         {
             this.Client     = eclient.DiscordClient;
-            this.RESTClient = eclient.DiscordRestClient;
+            this.RestClient = eclient.DiscordRestClient;
             this.Prefix     = eclient.Prefix;
             this.Log        = eclient.Logger;
         }
 
-        public DiscordRestClient    RESTClient { get; }
+        public DiscordRestClient    RestClient { get; }
         public DiscordShardedClient Client     { get; }
         public string               Prefix     { get; }
         public Logger               Log        { get; }

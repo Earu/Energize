@@ -181,8 +181,8 @@ module Info =
             ctx.sendWarn None "There was nothing to snipe"
     }
 
-    type private CommitInfo = { message: string }
-    type private Commit = { commit : CommitInfo }
+    type CommitInfo = { message: string }
+    type Commit = { commit : CommitInfo }
     [<Command("lastchanges", "Gets the last changes published on GitHub", "lastchanges <nothing>")>]
     let lastChanges (ctx : CommandContext) = async {
         let endpoint = "https://api.github.com/repos/Earu/Energize/commits"
