@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Energize.Services.Markov
+namespace Energize.Services.Generation
 {
     public class MarkovChain
     {

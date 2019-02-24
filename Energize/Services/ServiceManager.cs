@@ -59,7 +59,7 @@ namespace Energize.Services
         private void ContinueWithHandler(Task t)
         {
             if (t.IsFaulted)
-                this._Client.Logger.Danger(t.Exception);
+                this._Client.Logger.Danger(t.Exception.InnerException);
         }
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventinfo, Type type, IServiceImplementation instance)
