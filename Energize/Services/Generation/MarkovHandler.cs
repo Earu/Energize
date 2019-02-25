@@ -38,25 +38,18 @@ namespace Energize.Services.Generation
         {
             MarkovChain chain = new MarkovChain();
 
-            if (data == string.Empty)
+            data = data.ToLower();
+            string firstpart = string.Empty;
+            string[] parts = data.Split(_Separators);
+            if(parts.Length > _MaxDepth)
             {
-                return chain.Generate(40);
+                firstpart = string.Join(' ', parts, parts.Length - _MaxDepth, _MaxDepth);
+                return $"{data } {chain.Generate(firstpart,40).TrimStart()}";
             }
             else
             {
-                data = data.ToLower();
-                string firstpart = string.Empty;
-                string[] parts = data.Split(_Separators);
-                if(parts.Length > _MaxDepth)
-                {
-                    firstpart = string.Join(' ', parts, parts.Length - _MaxDepth, _MaxDepth);
-                    return data + " " + chain.Generate(firstpart,40).TrimStart();
-                }
-                else
-                {
-                    firstpart = string.Join(' ', parts);
-                    return firstpart + " " + chain.Generate(firstpart,40).TrimStart();
-                }
+                firstpart = string.Join(' ', parts);
+                return $"{firstpart} {chain.Generate(firstpart,40).TrimStart()}";
             }
         }
 
