@@ -280,7 +280,7 @@ module CommandHandler =
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
         state.logger.Warning(ex.InnerException.ToString())
-        let err = sprintf "Something went wrong when using \'%s\' the owner received a report" cmd.name
+        let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
         awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
@@ -333,8 +333,8 @@ module CommandHandler =
             let newCache = { oldCache with lastDeletedMessage = Some (cache.Value :?> SocketMessage) }
             let newCaches = state.caches.Add(chan.Id, newCache)
             handlerState <- Some { state with caches = newCaches }
-        | _ -> 
-            printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
+        | Some _ -> ()
+        | _ -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
             
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
