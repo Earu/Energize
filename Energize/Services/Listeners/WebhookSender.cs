@@ -1,10 +1,12 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.Webhook;
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -40,7 +42,21 @@ namespace Energize.Services.Listeners
         private async Task<DiscordWebhookClient> GetOrCreateWebhook(ITextChannel chan)
         {
             SocketSelfUser bot = this._Client.DiscordClient.CurrentUser;
-            IReadOnlyCollection<IWebhook> webhooks = await chan.GetWebhooksAsync();
+            IReadOnlyCollection<IWebhook> webhooks = new ReadOnlyCollection<IWebhook>(new List<IWebhook>());
+
+            try
+            {
+                webhooks = await chan.GetWebhooksAsync();
+            }
+            catch (HttpException)
+            {
+                this.LogFailedMessage(chan);
+            }
+            catch (Exception e)
+            {
+                this._Logger.Danger(e);
+            }
+
             IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == bot.Username);
 
             return webhook == null ? await this.CreateWebhook(chan) : new DiscordWebhookClient(webhook);
@@ -85,9 +101,13 @@ namespace Energize.Services.Listeners
                 {
                     id = await webhook.SendMessageAsync(content, false, null, username, avatarurl);
                 }
-                catch
+                catch (HttpException)
                 {
                     this.LogFailedMessage(msg);
+                }
+                catch (Exception e)
+                {
+                    this._Logger.Danger(e);
                 }
             }
 
@@ -107,9 +127,13 @@ namespace Energize.Services.Listeners
                 {
                     id = await webhook.SendMessageAsync(content, false, null, username, avatarurl);
                 }
-                catch
+                catch (HttpException)
                 {
                     this.LogFailedMessage(chan);
+                }
+                catch (Exception e)
+                {
+                    this._Logger.Danger(e);
                 }
             }
 
@@ -130,9 +154,13 @@ namespace Energize.Services.Listeners
                 {
                     id = await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarurl);
                 }
-                catch
+                catch (HttpException)
                 {
                     this.LogFailedMessage(msg);
+                }
+                catch (Exception e)
+                {
+                    this._Logger.Danger(e);
                 }
             }
 
@@ -149,9 +177,13 @@ namespace Energize.Services.Listeners
                 {
                     id = await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarurl);
                 }
-                catch
+                catch (HttpException)
                 {
                     this.LogFailedMessage(chan);
+                }
+                catch (Exception e)
+                {
+                    this._Logger.Danger(e);
                 }
             }
 
