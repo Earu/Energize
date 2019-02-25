@@ -6,7 +6,7 @@ namespace Energize.Toolkit
 {
     public class Logger
     {
-        private string _Prefix = "> ";
+        private readonly string _Prefix = "> ";
 
         private void Prefix()
         {
@@ -61,6 +61,15 @@ namespace Energize.Toolkit
             File.AppendAllText("logs.txt", $"[DANGER] >> {msg}\n\n");
         }
 
+        public void Danger(Exception ex)
+        {
+            this.Prefix();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex);
+
+            File.AppendAllText("logs.txt", $"[DANGER] >> {ex}\n\n");
+        }
+
         public void Error(string msg)
         {
             this.Prefix();
@@ -82,9 +91,7 @@ namespace Energize.Toolkit
         }
 
         public void Notify(string msg)
-        {
-            Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
-        }
+            => Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
 
         public static void Debug(string msg)
         {
@@ -98,9 +105,7 @@ namespace Energize.Toolkit
         public static void Debug(List<string> msgs)
         {
             foreach (string msg in msgs)
-            {
                 Debug(msg);
-            }
         }
     }
 }
