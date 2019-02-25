@@ -34,7 +34,23 @@ namespace Energize.Toolkit
 
         private void LogFailedMessage(SocketChannel chan)
         {
-            string log = "";
+            string log = string.Empty;
+            if (!(chan is IDMChannel))
+            {
+                IGuildChannel c = chan as IGuildChannel;
+                log += $"({c.Guild.Name} - #{c.Name}) doesn't have <send message> right";
+            }
+            else
+            {
+                IDMChannel c = chan as IDMChannel;
+                log += $"(DM) {c.Recipient} blocked a message";
+            }
+            this.Log.Nice("Message", ConsoleColor.Red, log);
+        }
+
+        private void LogFailedMessage(RestChannel chan)
+        {
+            string log = string.Empty;
             if (!(chan is IDMChannel))
             {
                 IGuildChannel c = chan as IGuildChannel;
@@ -151,7 +167,22 @@ namespace Energize.Toolkit
             }
             catch
             {
-                this.LogFailedMessage(chan as SocketChannel);
+                this.LogFailedMessage(chan);
+            }
+
+            return null;
+        }
+
+        public async Task<IUserMessage> Send(RestChannel chan, Embed embed = null)
+        {
+            try
+            {
+                IMessageChannel c = chan as IMessageChannel;
+                return await c.SendMessageAsync("", false, embed);
+            }
+            catch
+            {
+                this.LogFailedMessage(chan);
             }
 
             return null;

@@ -6,6 +6,7 @@ using Discord;
 using Discord.Rest;
 using System.IO;
 using Energize.Toolkit;
+using Energize.Services;
 
 namespace Energize
 {
@@ -20,55 +21,90 @@ namespace Energize
 
             this._Token        = token;
             this.Prefix        = prefix;
-            this.Log           = new Logger();
-            this.MessageSender = new MessageSender(this.Log);
-            this.Discord       = new DiscordShardedClient(new DiscordSocketConfig
+            this.Logger        = new Logger();
+            this.MessageSender = new MessageSender(this.Logger);
+            this.DiscordClient = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 1000,
             });
-            this.DiscordREST = new DiscordRestClient();
+            this.DiscordRestClient = new DiscordRestClient();
+            this.ServiceManager = new ServiceManager(this);
 
-            this.Log.Nice("Config", ConsoleColor.Yellow, "Token used => [ " + token + " ]");
-            this.Log.Notify("Initializing");
+            if (this.HasToken)
+            {
+                this.DisplayAsciiArt();
+                bool isdevenv = this._Token == Config.TOKEN_DEV;
+                this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {(isdevenv ? "DEVELOPMENT" : "PRODUCTION")} ]");
+                this.Logger.Notify("Initializing");
 
-            Services.ServiceManager.LoadServices(this);
+                this.ServiceManager.InitializeServices();
+            }
+            else
+            {
+                this.Logger.Warning("No token was used! You NEED a token to connect to Discord!");
+            }
         }
 
-        public string               Prefix        { get; }
-        public DiscordShardedClient Discord       { get; }
-        public DiscordRestClient    DiscordREST   { get; }
-        public Logger               Log           { get; }
-        public MessageSender      MessageSender { get; }
+        private void DisplayAsciiArt()
+        {
+            ConsoleColor[] colors =
+            {
+                ConsoleColor.Blue, ConsoleColor.Cyan, ConsoleColor.Green,
+                ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Magenta,
+            };
+            string[] lines = StaticData.ASCII_ART.Split('\n');
+            Random rand = new Random();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                ConsoleColor col = colors[i];
+                Console.ForegroundColor = col;
+                Console.WriteLine($"\t{line}");
+            }
+
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("\n" + new string('-', 70));
+        }
+
+        public string               Prefix            { get; }
+        public DiscordShardedClient DiscordClient     { get; }
+        public DiscordRestClient    DiscordRestClient { get; }
+        public Logger               Logger            { get; }
+        public MessageSender        MessageSender     { get; }
+        public ServiceManager       ServiceManager    { get; }
+
+        public bool HasToken { get => !string.IsNullOrWhiteSpace(this._Token); }
 
         public async Task InitializeAsync()
         {
+            if (!this.HasToken) return;
+
             try
             {
                 if(File.Exists("logs.txt"))
                     File.Delete("logs.txt");
 
-                await this.Discord.LoginAsync(TokenType.Bot, _Token, true);
-                await this.Discord.StartAsync();
-                await this.DiscordREST.LoginAsync(TokenType.Bot, _Token, true);
-                await Services.ServiceManager.LoadServicesAsync(this);
+                await this.DiscordClient.LoginAsync(TokenType.Bot, _Token, true);
+                await this.DiscordClient.StartAsync();
+                await this.DiscordRestClient.LoginAsync(TokenType.Bot, _Token, true);
+                await this.ServiceManager.InitializeServicesAsync(this);
 
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",EnergizeConfig.TWITCH_URL);
-                await this.Discord.SetActivityAsync(game);
+                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
+                await this.DiscordClient.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>
                 {
                     long mb = GC.GetTotalMemory(false) / 1024 / 1024; //b to mb
                     GC.Collect();
-                    this.Log.Nice("GC", ConsoleColor.Gray, "Collected " + mb + "MB of garbage");
+                    this.Logger.Nice("GC", ConsoleColor.Gray, $"Collected {mb}MB of garbage");
                 });
 
                 int hour = 1000 * 60 * 60;
                 gctimer.Change(hour, hour);
-
             }
             catch (Exception e)
             {
-                this.Log.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
+                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
             }
         }
     }

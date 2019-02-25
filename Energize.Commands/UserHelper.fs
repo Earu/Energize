@@ -4,6 +4,8 @@ module UserHelper =
     open Discord.WebSocket
     open Context
     open System
+    open Discord
+    open Energize.Commands.AsyncHelper
 
     let private rand = Random()
 
@@ -12,7 +14,7 @@ module UserHelper =
         | true ->
             None
         | false ->
-            let res = ctx.cache.guildUsers |> Seq.tryFind predicate
+            let res = ctx.guildUsers |> Seq.tryFind predicate
             match res with
             | Some user ->
                 Some (user :> SocketUser)
@@ -37,9 +39,9 @@ module UserHelper =
         | true ->
             None
         | false ->
-            let len = (Seq.length ctx.cache.guildUsers) 
+            let len = (Seq.length ctx.guildUsers) 
             let i = rand.Next(0,len)
-            Some (ctx.cache.guildUsers.[i] :> SocketUser)
+            Some (ctx.guildUsers.[i] :> SocketUser)
     
     let private handleId (ctx : CommandContext) (input : string option) : SocketUser option =
         match input with
@@ -114,7 +116,7 @@ module UserHelper =
     let private findUserByName (ctx : CommandContext) (name : string) : SocketUser option =
         match ctx.isPrivate with
         | false ->
-            match ctx.cache.guildUsers |> List.tryFind (fun user -> matchesName user name) with
+            match ctx.guildUsers |> List.tryFind (fun user -> matchesName user name) with
             | Some user ->
                 Some (user :> SocketUser)
             | None ->
@@ -136,22 +138,36 @@ module UserHelper =
             None
 
     let findUser (ctx : CommandContext) (input : string) (withId : bool) : SocketUser option =
-        match String.IsNullOrWhiteSpace input with
-        | false ->
-            match input.StartsWith('$') && input |> String.length > 1 with
-            | true ->
-                let (identifier, arg) = getTagInfo (input.Trim().[1..])
-                findUserByTag ctx identifier arg
-            | false -> 
-                let trimedInput = input.Trim()
-                match findUserByMention ctx trimedInput with
+        match input with
+        | input when String.IsNullOrWhiteSpace input ->
+            None 
+        | input when input.StartsWith('$') && input |> String.length > 1 ->
+            let (identifier, arg) = getTagInfo (input.Trim().[1..])
+            findUserByTag ctx identifier arg
+        | input ->
+            match findUserByMention ctx input with
+            | Some user ->
+                Some user
+            | None ->
+                match findUserByName ctx input with
                 | Some user ->
                     Some user
                 | None ->
-                    match findUserByName ctx trimedInput with
-                    | Some user ->
-                        Some user
-                    | None ->
-                        findUserById ctx trimedInput withId
-        | true ->
-            None
+                    findUserById ctx input withId
+
+    let getOrCreateRole (user : SocketGuildUser) (name : string) : IRole = 
+        match user.Guild.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
+        | Some role ->
+            role :> IRole
+        | None ->
+            awaitResult (user.Guild.CreateRoleAsync(name)) :> IRole
+
+    let hasRole (user : SocketGuildUser) (name : string) = 
+        match user.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
+        | Some _ -> true
+        | None -> false
+
+    let hasRoleStartingWith (user : SocketGuildUser) (input : string) = 
+        match user.Roles |> Seq.tryFind (fun role -> role.Name.StartsWith(input)) with
+        | Some _ -> true
+        | None -> false
