@@ -110,7 +110,8 @@ module Fun =
         ctx.sendOK None answer
     }
 
-    [<Command("m", "Generates a human-like sentence based on input", "m <input|nothing>")>]
+    [<CommandParameters(1)>]
+    [<Command("m", "Generates a human-like sentence based on input", "m <input>")>]
     let markov (ctx : CommandContext) = async {
         let markov = ctx.serviceManager.GetService<IMarkovService>("Markov")
         let result = markov.Generate(ctx.input)

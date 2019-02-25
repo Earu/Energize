@@ -47,21 +47,6 @@ namespace Energize.Services.Generation
             }
         }
 
-        public string Generate(int? max=null)
-        {
-            max = max ?? int.MaxValue;
-            Random rand = new Random();
-            DirectoryInfo dirinfo = new DirectoryInfo(_Path);
-            FileInfo[] files = dirinfo.GetFiles("*.markov", SearchOption.TopDirectoryOnly);
-
-            if (files.Length == 0)
-                return string.Empty;
-
-            FileInfo info = files[rand.Next(0, files.Length)];
-            string word = info.Name.Substring(0, info.Name.Length - _Extension.Length);
-            return $"{word} {this.Generate(word, max.Value)}".Replace('_', ' ');
-        }
-
         public string Generate(string firstpart, int wordcount)
         {
             Random rand = new Random();
