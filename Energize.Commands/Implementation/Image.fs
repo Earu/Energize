@@ -53,13 +53,13 @@ module Image =
             let builder = EmbedBuilder()
             ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
             builder
-                .WithFooter(ctx.commandName)
+                .WithFooter("emote")
                 .WithImageUrl(e.Value.Url)
                 .WithColor(ctx.messageSender.ColorGood)
                 |> ignore
             awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
         else
-            ctx.sendWarn None "A guild emoji is expected as parameter"
+            ctx.sendWarn (Some "emote") "A guild emoji is expected as parameter"
     }
 
     //rework old image commands
