@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
+using System;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Generation
@@ -27,22 +28,24 @@ namespace Energize.Services.Generation
             {   
                 chain.Learn(content);
             }
-            //Yeah fuck that this log is too verbose
-            catch{ }
+            catch(Exception e)
+            {
+                this._Logger.Danger(e);
+            }
         }
 
         public string Generate(string data)
         {
             MarkovChain chain = new MarkovChain();
 
-            if (data == "")
+            if (data == string.Empty)
             {
                 return chain.Generate(40);
             }
             else
             {
                 data = data.ToLower();
-                string firstpart = "";
+                string firstpart = string.Empty;
                 string[] parts = data.Split(_Separators);
                 if(parts.Length > _MaxDepth)
                 {
