@@ -10,6 +10,7 @@ module Game =
     open System.Text
     open System
     open Energize.Interfaces.Services
+    open System.IO
 
     type VanityResponseObj = { steamid : string; success : int }
     type VanityObj = { response : VanityResponseObj }

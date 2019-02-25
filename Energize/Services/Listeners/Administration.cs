@@ -4,7 +4,6 @@ using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
 using Energize.Services.Database;
 using Energize.Toolkit;
-using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Administration")]
-    class Administration : IServiceImplementation
+    class Administration : IAdministrationService
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
