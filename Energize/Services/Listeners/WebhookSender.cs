@@ -51,10 +51,12 @@ namespace Energize.Services.Listeners
             catch (HttpException)
             {
                 this.LogFailedMessage(chan);
+                return null;
             }
             catch (Exception e)
             {
                 this._Logger.Danger(e);
+                return null;
             }
 
             IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == bot.Username);

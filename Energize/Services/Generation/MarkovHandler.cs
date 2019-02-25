@@ -49,12 +49,12 @@ namespace Energize.Services.Generation
                 string[] parts = data.Split(_Separators);
                 if(parts.Length > _MaxDepth)
                 {
-                    firstpart = string.Join(' ',parts,parts.Length - _MaxDepth,_MaxDepth);
+                    firstpart = string.Join(' ', parts, parts.Length - _MaxDepth, _MaxDepth);
                     return data + " " + chain.Generate(firstpart,40).TrimStart();
                 }
                 else
                 {
-                    firstpart = string.Join(' ',parts);
+                    firstpart = string.Join(' ', parts);
                     return firstpart + " " + chain.Generate(firstpart,40).TrimStart();
                 }
             }
