@@ -187,7 +187,10 @@ module CommandHandler =
             cache
 
     let private startsWithBotMention (state : CommandHandlerState) (input : string) : bool =
-        Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
+        if state.client.CurrentUser.Equals(null) then 
+            false // prevents executing commands starting with bot mention if current user is null
+        else
+            Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
 
     let private getPrefixLength (state : CommandHandlerState) (input : string) : int =
         if startsWithBotMention state input then
