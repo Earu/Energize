@@ -15,6 +15,7 @@ module Administration =
     open Energize.Interfaces.Services
     open Energize.Commands
     open Discord.Rest
+    open System.Linq
 
     [<AdminOnlyCommand>]
     [<GuildOnlyCommand>]
@@ -45,19 +46,28 @@ module Administration =
         | None ->
             ctx.sendWarn None "Could not find any user for your input"
     }
+    
+    let private isMsgOld (msg : IMessage) =
+        let diff = (DateTime.Now.Date.Ticks - msg.CreatedAt.Date.Ticks)
+        diff > (DateTime()).AddDays(15.0).Ticks
 
-    let clearCmdBase (ctx : CommandContext) (amountInput : string) (predicate : IMessage -> bool) =
+    let private clearCmdBase (ctx : CommandContext) (input : string) (predicate : IMessage -> bool) =
         let amount =
             let out = ref 0
-            if Int32.TryParse(amountInput, out) then
-                Math.Clamp(out.Value, 1, 100)
+            if ctx.hasArguments && Int32.TryParse(input, out) then
+                Math.Clamp(out.Value, 1, 200)
             else
-                10
-        let msgsAsync = ctx.message.Channel.GetMessagesAsync(100, CacheMode.AllowDownload)
-        let msgs = (msgsAsync :?> IAsyncEnumerable<IEnumerable<IMessage>>).Flatten() :?> IEnumerable<IMessage> |> Seq.toList
+                25
+        let opts = RequestOptions()
+        opts.AuditLogReason <- sprintf "Energize: %s from %s" ctx.commandName (ctx.message.Author.ToString())
+        opts.RetryMode <- Nullable(RetryMode.AlwaysRetry)
+        opts.Timeout <- Nullable(10)
+        let msgsAsync = ctx.message.Channel.GetMessagesAsync(amount, CacheMode.AllowDownload, opts)
+        let msgsFlattened = (msgsAsync :?> IAsyncEnumerable<IEnumerable<IMessage>>).Flatten() 
+        let msgs = msgsFlattened.ToEnumerable() |> Seq.toList
         let toDelete = 
             (if msgs.Length > amount then msgs.[..amount] else msgs) 
-            |> List.filter predicate
+            |> List.filter (fun msg -> if isMsgOld msg then false else predicate msg)
         try
             let chan = ctx.message.Channel :?> ITextChannel
             await (chan.DeleteMessagesAsync(toDelete))
@@ -69,21 +79,14 @@ module Administration =
     [<GuildOnlyCommand>]
     [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
     let clear (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.arguments.[0] (fun msg -> 
-            let diff = (DateTime.Now.Date.Ticks - msg.CreatedAt.Date.Ticks)
-            let old = diff > (DateTime()).AddDays(15.0).Ticks
-            if not old then
-                msg.Author.Id.Equals(Config.BOT_ID_MAIN) 
-            else
-                false
-        )
+        clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
     }
 
     [<AdminOnlyCommand>]
     [<GuildOnlyCommand>]
     [<Command("clearbots", "Clear bot messages", "clearbots <amounttoremove|nothing>")>]
     let clearBots (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.arguments.[0] (fun msg -> msg.Author.IsBot)
+        clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
     }
 
     [<AdminOnlyCommand>]
@@ -102,7 +105,7 @@ module Administration =
     [<GuildOnlyCommand>]
     [<Command("clearaw", "Clear a specified amount of messages", "clearaw <amounttoremove|nothing>")>]
     let clearRaw (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.arguments.[0] (fun _ -> true)
+        clearCmdBase ctx ctx.input (fun _ -> true)
     }
 
     [<AdminOnlyCommand>]
@@ -121,7 +124,7 @@ module Administration =
         dbctx.Dispose()
     }
 
-    let createHOFChannel (ctx : CommandContext) = 
+    let private createHOFChannel (ctx : CommandContext) = 
         let name = "⭐hall-of-fames"
         let desc = sprintf "Where %s will post unique messages" (ctx.client.CurrentUser.ToString())
         let guser = ctx.message.Author :?> SocketGuildUser
@@ -133,11 +136,7 @@ module Administration =
         await (created.ModifyAsync(Action<TextChannelProperties>(fun prop -> prop.Topic <- Optional(desc))))
         created :> ITextChannel
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
-    [<CommandParameters(1)>]
-    [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
-    let fame (ctx : CommandContext) = async {
+    let private getOrCreateHOFChannel (ctx : CommandContext) = 
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
         let dbctx = awaitResult (db.GetContext())
         let guild = (ctx.message.Author :?> SocketGuildUser).Guild :> IGuild
@@ -147,7 +146,6 @@ module Administration =
                 Some ((awaitResult (guild.GetChannelAsync(dbguild.HallOfShameID))) :?> ITextChannel)
             else
                 try
-
                     let c = createHOFChannel ctx
                     dbguild.HallOfShameID <- c.Id
                     dbguild.HasHallOfShames <- true
@@ -155,6 +153,35 @@ module Administration =
                 with _ ->
                     None
         dbctx.Dispose()
+        chan
+
+    let private trySendFameMsg (ctx : CommandContext) (chan : ITextChannel option) (msg : IMessage) = 
+        let builder = EmbedBuilder()
+        builder
+            .WithAuthor(msg.Author)
+            .WithDescription(msg.Content)
+            .WithFooter("#" + msg.Channel.Name)
+            .WithTimestamp(msg.CreatedAt)
+            .WithColor(ctx.messageSender.ColorNormal)
+            |> ignore
+        match ImageUrlProvider.getLastImgUrl msg with
+        | Some url ->
+            builder.WithImageUrl(url) |> ignore
+        | None -> ()
+
+        match chan.Value with
+        | :? SocketChannel as chan ->
+            Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
+        | :? RestChannel as chan ->
+            Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
+        | _ -> None
+
+    [<AdminOnlyCommand>]
+    [<GuildOnlyCommand>]
+    [<CommandParameters(1)>]
+    [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
+    let fame (ctx : CommandContext) = async {
+        let chan = getOrCreateHOFChannel ctx
         let msgId = ref 0UL
         if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
             let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
@@ -162,28 +189,7 @@ module Administration =
             | null ->
                 ctx.sendWarn None "Could not find any message for your input"
             | m ->
-                let builder = EmbedBuilder()
-                builder
-                    .WithAuthor(msg.Author)
-                    .WithDescription(msg.Content)
-                    .WithFooter("#" + msg.Channel.Name)
-                    .WithTimestamp(msg.CreatedAt)
-                    .WithColor(ctx.messageSender.ColorNormal)
-                    |> ignore
-                match ImageUrlProvider.getLastImgUrl m with
-                | Some url ->
-                    builder.WithImageUrl(url) |> ignore
-                | None -> ()
-
-                let posted = 
-                    match chan.Value with
-                    | :? SocketChannel as chan ->
-                        Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
-                    | :? RestChannel as chan ->
-                        Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
-                    | _ -> None
-
-                match posted with
+                match trySendFameMsg ctx chan m with
                 | None ->
                     ctx.sendWarn None "There was an error when posting the message into hall of fames"
                 | Some p when not (p.Equals(null)) ->
