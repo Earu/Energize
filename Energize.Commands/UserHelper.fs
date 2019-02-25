@@ -98,7 +98,8 @@ module UserHelper =
         let name = 
             match user.Nickname with
             | null -> 
-                user.Username
+                // This can be null thanks C#!!
+                if user.Username.Equals(null) then String.Empty else user.Username
             | _ ->
                 user.Nickname
         name.ToLower().Contains(input.ToLower())
