@@ -59,7 +59,7 @@ namespace Energize.Services.Eval
         [Event("UserJoined")]
         public async Task OnUserJoined(SocketGuildUser user)
         {
-            IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
+            IReadOnlyCollection<SocketGuildChannel> channels = user.Guild.Channels;
             foreach(SocketGuildChannel chan in channels)
             {
                 if (this._States.ContainsKey(chan.Id))
@@ -76,7 +76,7 @@ namespace Energize.Services.Eval
         [Event("UserLeft")]
         public async Task OnUserLeft(SocketGuildUser user)
         {
-            IReadOnlyList<SocketGuildChannel> channels = user.Guild.Channels as IReadOnlyList<SocketGuildChannel>;
+            IReadOnlyCollection<SocketGuildChannel> channels = user.Guild.Channels;
             foreach (SocketGuildChannel chan in channels)
             {
                 if (this._States.ContainsKey(chan.Id))
