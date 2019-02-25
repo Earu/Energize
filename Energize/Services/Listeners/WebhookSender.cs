@@ -1,33 +1,33 @@
 ﻿using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
     [Service("Webhook")]
-    class WebhookSender
+    public class WebhookSender : IWebhookSenderService
     {
-        private static ulong _ID = 0;
+        private readonly EnergizeClient _Client;
+        private readonly Logger _Logger;
 
-        private readonly EnergizeClient _EClient;
-        private readonly Logger _Log;
-
-        public WebhookSender(EnergizeClient eclient)
+        public WebhookSender(EnergizeClient client)
         {
-            this._EClient = eclient;
-            this._Log = eclient.Log;
+            this._Client = client;
+            this._Logger = client.Logger;
         }
 
         private async Task<DiscordWebhookClient> CreateWebhook(ITextChannel chan)
         {
             try
             {
-                SocketSelfUser bot = this._EClient.Discord.CurrentUser;
-                IWebhook webhook = await chan.CreateWebhookAsync(bot.Username + _ID);
-                _ID++;
+                SocketSelfUser bot = this._Client.DiscordClient.CurrentUser;
+                IWebhook webhook = await chan.CreateWebhookAsync(bot.Username);
 
                 return new DiscordWebhookClient(webhook);
             }
@@ -37,16 +37,13 @@ namespace Energize.Services.Listeners
             }
         }
 
-        private async Task DeleteWebhook(DiscordWebhookClient webhook)
+        private async Task<DiscordWebhookClient> GetOrCreateWebhook(ITextChannel chan)
         {
-            try
-            {
-                await webhook.DeleteWebhookAsync();
-            }
-            catch(Exception e)
-            {
-                this._Log.Nice("Webhook", ConsoleColor.Red, $"Couldn't get rid of a webhook: {e.Message}");
-            }
+            SocketSelfUser bot = this._Client.DiscordClient.CurrentUser;
+            IReadOnlyCollection<IWebhook> webhooks = await chan.GetWebhooksAsync();
+            IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == bot.Username);
+
+            return webhook == null ? await this.CreateWebhook(chan) : new DiscordWebhookClient(webhook);
         }
 
         private void LogFailedMessage(SocketMessage msg)
@@ -55,53 +52,54 @@ namespace Energize.Services.Listeners
             if (!(msg.Channel is IDMChannel))
             {
                 IGuildChannel chan = msg.Channel as IGuildChannel;
-                log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username} doesn't have <send message> right";
+                log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username} doesn't have <send message> permission";
             }
             else
             {
                 log += $"(DM) {msg.Author.Username} blocked a message";
             }
-            this._Log.Nice("Webhook", ConsoleColor.Red, log);
+            this._Logger.Nice("Webhook", ConsoleColor.Red, log);
         }
 
         private void LogFailedMessage(ITextChannel chan)
         {
             string log = string.Empty;
             if (!(chan is IDMChannel))
-                log += $"({chan.Guild.Name} - #{chan.Name}) doesn't have <send message> right";
+                log += $"({chan.Guild.Name} - #{chan.Name}) doesn't have <send message> permission";
             else
                 log += $"(DM) {chan.Name} blocked a message";
-            this._Log.Nice("Webhook", ConsoleColor.Red, log);
+            this._Logger.Nice("Webhook", ConsoleColor.Red, log);
         }
 
-        public async Task<ulong> SendRaw(SocketMessage msg,string content,string username,string avatarurl)
+        public async Task<ulong> SendRaw(SocketMessage msg, string content, string username, string avatarurl)
         {
-            if(msg.Channel is IGuildChannel)
-            {
-                ITextChannel chan = msg.Channel as ITextChannel;
-                DiscordWebhookClient webhook = await this.CreateWebhook(chan);
-                ulong id = 0;
-                if(webhook != null)
-                {
-                    try
-                    {
-                        id = await webhook.SendMessageAsync(content, false, null, username, avatarurl);
-                    }
-                    catch
-                    {
-                        this.LogFailedMessage(msg);
-                    }
-                }
+            if (!(msg.Channel is IGuildChannel))
+                return 0;
 
-                await this.DeleteWebhook(webhook);
-                return id;
+            ITextChannel chan = msg.Channel as ITextChannel;
+            DiscordWebhookClient webhook = await this.GetOrCreateWebhook(chan);
+            ulong id = 0;
+            if(webhook != null)
+            {
+                try
+                {
+                    id = await webhook.SendMessageAsync(content, false, null, username, avatarurl);
+                }
+                catch
+                {
+                    this.LogFailedMessage(msg);
+                }
             }
-            return 0;
+
+            return id;
         }
 
         public async Task<ulong> SendRaw(ITextChannel chan, string content, string username, string avatarurl)
         {
-            DiscordWebhookClient webhook = await this.CreateWebhook(chan);
+            if (!(chan is IGuildChannel))
+                return 0;
+
+            DiscordWebhookClient webhook = await this.GetOrCreateWebhook(chan);
             ulong id = 0;
             if (webhook != null)
             {
@@ -113,9 +111,6 @@ namespace Energize.Services.Listeners
                 {
                     this.LogFailedMessage(chan);
                 }
-
-                await this.DeleteWebhook(webhook);
-                return id;
             }
 
             return id;
@@ -123,49 +118,49 @@ namespace Energize.Services.Listeners
 
         public async Task<ulong> SendEmbed(SocketMessage msg, Embed embed, string username, string avatarurl)
         {
-            if (msg.Channel is IGuildChannel)
-            {
-                ITextChannel chan = msg.Channel as ITextChannel;
-                DiscordWebhookClient webhook = await this.CreateWebhook(chan);
-                ulong id = 0;
-                if (webhook != null)
-                {
-                    try
-                    {
-                        id = await webhook.SendMessageAsync("", false, new Embed[] { embed }, username, avatarurl);
-                    }
-                    catch
-                    {
-                        this.LogFailedMessage(msg);
-                    }
+            if (!(msg.Channel is IGuildChannel))
+                return 0;
 
-                    await this.DeleteWebhook(webhook);
-                }
-                return id;
-            }
-
-            return 0;
-        }
-
-        public async Task<ulong> SendEmbed(ITextChannel chan, Embed embed, string username, string avatarurl)
-        {
-            DiscordWebhookClient webhook = await this.CreateWebhook(chan);
+            ITextChannel chan = msg.Channel as ITextChannel;
+            DiscordWebhookClient webhook = await this.GetOrCreateWebhook(chan);
             ulong id = 0;
             if (webhook != null)
             {
                 try
                 {
-                    id = await webhook.SendMessageAsync("", false, new Embed[] { embed }, username, avatarurl);
+                    id = await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarurl);
+                }
+                catch
+                {
+                    this.LogFailedMessage(msg);
+                }
+            }
+
+            return id;
+        }
+
+        public async Task<ulong> SendEmbed(ITextChannel chan, Embed embed, string username, string avatarurl)
+        {
+            DiscordWebhookClient webhook = await this.GetOrCreateWebhook(chan);
+            ulong id = 0;
+            if (webhook != null)
+            {
+                try
+                {
+                    id = await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarurl);
                 }
                 catch
                 {
                     this.LogFailedMessage(chan);
                 }
-
-                await this.DeleteWebhook(webhook);
             }
 
             return id;
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }

@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Energize.Interfaces.DatabaseModels;
+using System.ComponentModel.DataAnnotations;
 
 namespace Energize.Services.Database.Models
 {
-    public class DiscordUser
+    public class DiscordUser : IDiscordUser
     {
         [Key]
         public int Identity { get; set; }

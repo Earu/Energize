@@ -1,21 +1,19 @@
-﻿using System.Threading.Tasks;
+﻿using Energize.Toolkit;
+using System.Threading.Tasks;
 
 namespace Energize
 {
     class Program
     {
         static void Main(string[] args)
-        {
-            MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
+            => MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 
         static async Task MainAsync(string[] args)
         {
-            await EnergizeConfig.Load();
-            await EnergizeData.Load();
+            await Config.Load();
+            await StaticData.Load();
 
-            EnergizeClient client = new EnergizeClient(EnergizeConfig.TOKEN_DEV, "]");
-
+            EnergizeClient client = new EnergizeClient(Config.TOKEN_DEV, "]");
             await client.InitializeAsync();
             await Task.Delay(-1);
         }

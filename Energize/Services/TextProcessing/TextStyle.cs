@@ -1,7 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Energize.Interfaces.DatabaseModels;
+using Energize.Interfaces.Services;
 using Energize.Services.Database;
-using Energize.Services.Database.Models;
 using Energize.Services.Listeners;
 using Energize.Toolkit;
 using System;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.TextProcessing
 {
     [Service("TextStyle")]
-    public class TextStyle
+    public class TextStyle : ITextStyleService
     {
         private delegate string StyleCallback(string input);
         private static Dictionary<string, StyleCallback> StyleCallbacks = new Dictionary<string, StyleCallback>
@@ -25,20 +26,14 @@ namespace Energize.Services.TextProcessing
                     .Replace("L", "W");
                 Random rand = new Random();
                 if (rand.Next(0, 100) > 50)
-                {
                     result += "~";
-                }
 
                 if (rand.Next(0, 100) < 25)
                 {
                     if (rand.Next(0, 100) > 50)
-                    {
                         result += " owo";
-                    }
                     else
-                    {
                         result += " uwu";
-                    }
                 }
 
                 return result;
@@ -51,13 +46,9 @@ namespace Energize.Services.TextProcessing
                 {
                     string part = letter.ToString();
                     if (rand.Next(1, 100) >= 50)
-                    {
                         part = part.ToUpper();
-                    }
                     else
-                    {
                         part = part.ToLower();
-                    }
 
                     result += part;
                 }
@@ -103,32 +94,22 @@ namespace Energize.Services.TextProcessing
 
                 Random rand = new Random();
                 if (rand.Next(0, 100) > 90)
-                {
                     result += "～";
-                }
 
                 if (rand.Next(0, 100) > 75)
-                {
                     result += "．．";
-                }
 
                 if (rand.Next(0, 100) > 75)
-                {
                     result += "！！";
-                }
 
-                string[] decoration = EnergizeData.ANIME_DECORATIONS[rand.Next(0, EnergizeData.ANIME_DECORATIONS.Length - 1)];
+                string[] decoration = StaticData.ANIME_DECORATIONS[rand.Next(0, StaticData.ANIME_DECORATIONS.Length - 1)];
                 result = decoration[0] + result + decoration[1];
 
-                string emote = EnergizeData.ANIME_EMOTES[rand.Next(0, EnergizeData.ANIME_EMOTES.Length - 1)];
+                string emote = StaticData.ANIME_EMOTES[rand.Next(0, StaticData.ANIME_EMOTES.Length - 1)];
                 if (rand.Next(0, 100) > 50)
-                {
                     result = emote + " － " + result;
-                }
                 else
-                {
                     result = result + " － " + emote;
-                }
 
                 return result;
             },
@@ -209,9 +190,7 @@ namespace Energize.Services.TextProcessing
                     string toput = string.Empty;
                     int count = rand.Next(5, 20);
                     for(uint i =0; i < count; i++)
-                    {
-                        toput += EnergizeData.ZALGO[rand.Next(0, EnergizeData.ZALGO.Length - 1)];
-                    }
+                        toput += StaticData.ZALGO[rand.Next(0, StaticData.ZALGO.Length - 1)];
 
                     ret += toput + c;
                 }
@@ -219,34 +198,30 @@ namespace Energize.Services.TextProcessing
             }
         };
 
-        private readonly Logger _Log;
+        private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
+        private readonly ServiceManager _ServiceManager;
 
         public TextStyle(EnergizeClient client)
         {
-            this._Log = client.Log;
+            this._Logger = client.Logger;
             this._MessageSender = client.MessageSender;
+            this._ServiceManager = client.ServiceManager;
         }
 
         public string GetStyleResult(string input, string style)
         {
             if (StyleCallbacks.ContainsKey(style))
-            {
                 return StyleCallbacks[style](input);
-            }
             else
-            {
                 return input;
-            }
         }
 
         public List<string> GetStyles()
         {
             List<string> styles = new List<string>();
             foreach (KeyValuePair<string, StyleCallback> callback in StyleCallbacks)
-            {
                 styles.Add(callback.Key);
-            }
 
             return styles;
         }
@@ -254,62 +229,55 @@ namespace Energize.Services.TextProcessing
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (msg.Channel is IGuildChannel && !msg.Author.IsBot)
+            if (msg.Channel is IDMChannel || msg.Author.IsBot) return;
+
+            SocketGuildUser user = msg.Author as SocketGuildUser;
+            IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
+            using (IDatabaseContext dbctx = await db.GetContext())
             {
-                SocketGuildUser user = msg.Author as SocketGuildUser;
-                DBContextPool db = ServiceManager.GetService<DBContextPool>("Database");
-                using (DBContext dbctx = await db.GetContext())
+                IDiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
+                if (dbuser.Style == "none") return;
+                string style = dbuser.Style;
+
+                if (!StyleCallbacks.ContainsKey(style)) return;
+
+                bool shouldpost = true;
+                try
                 {
-                    DiscordUser dbuser = await dbctx.Instance.GetOrCreateUser(user.Id);
-                    if(dbuser.Style != "none")
-                    {
-                        string style = dbuser.Style;
-                        if (StyleCallbacks.ContainsKey(style))
-                        {
-                            bool shouldpost = true;
-                            try
-                            {
-                                await msg.DeleteAsync();
-                            }
-                            catch
-                            {
-                                shouldpost = false;
-                            }
+                    await msg.DeleteAsync();
+                }
+                catch
+                {
+                    shouldpost = false;
+                }
 
-                            if (shouldpost)
-                            {
-                                string result = GetStyleResult(msg.Content, style);
-                                string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
-                                string name = msg.Author.Username;
-                                ulong success = 0;
-                                WebhookSender sender = ServiceManager.GetService<WebhookSender>("Webhook");
+                if (!shouldpost) return;
 
-                                if (result.Length > 2000)
-                                {
-                                    success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);
-                                }
-                                else
-                                {
-                                    success = await sender.SendRaw(msg, result, name, avatar);
-                                }
+                string result = GetStyleResult(msg.Content, style);
+                string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
+                string name = msg.Author.Username;
+                ulong success = 0;
+                WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
 
-                                if (success == 0)
-                                {
-                                    string display = $"{msg.Author}: {result}\n`(This feature needs the \"Manage webhooks\" right to work properly)`";
-                                    if (display.Length > 2000)
-                                    {
-                                        await this._MessageSender.Warning(msg, "Style", "Message was over discord limit!");
-                                    }
-                                    else
-                                    {
-                                        await this._MessageSender.SendRaw(msg, display);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if (result.Length > 2000)
+                    success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);
+                else
+                    success = await sender.SendRaw(msg, result, name, avatar);
+
+                if (success == 0)
+                {
+                    string display = $"{msg.Author}: {result}\n`(This feature needs the \"Manage webhooks\" right to work properly)`";
+                    if (display.Length > 2000)
+                        await this._MessageSender.Warning(msg, "Style", "Message was over discord limit!");
+                    else
+                        await this._MessageSender.SendRaw(msg, display);
                 }
             }
         }
+
+        public void Initialize() { }
+
+        public Task InitializeAsync()
+            => Task.CompletedTask;
     }
 }
