@@ -57,7 +57,7 @@ module Util =
                 if display |> String.length > 2000 then
                     ctx.sendWarn (Some "lua") "Output was too long to be sent"
                 else
-                    ctx.sendWarn (Some "lua") display
+                    ctx.sendOK (Some "lua") display
         else
             ctx.sendBad (Some "lua") (sprintf "```\n%s```" (error.contents.Replace("`","")))
     }
