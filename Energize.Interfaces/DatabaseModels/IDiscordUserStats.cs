@@ -16,5 +16,6 @@
         ulong NomedCount { get; set; }
         ulong LickedCount { get; set; }
         ulong BittenCount { get; set; }
+        ulong FlexCount { get; set; }
     }
 }
