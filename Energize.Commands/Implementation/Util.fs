@@ -14,6 +14,7 @@ module Util =
     open System.Threading.Tasks
     open System.Text
     open Microsoft.Data.Sqlite
+    open System.IO
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
@@ -180,3 +181,12 @@ module Util =
         | (1, out) -> ctx.sendOK None out
         | (_, out) -> ctx.sendWarn None out
     }
+
+    [<OwnerOnlyCommand>]
+    [<Command("restart", "Restarts the bot", "restart <nothing>")>]
+    let restart (ctx : CommandContext) = async {
+        File.WriteAllText("restartlog.txt", ctx.message.Channel.Id.ToString())
+        ctx.sendWarn None "Restarting..."
+        Process.GetCurrentProcess().Kill()
+    }
+

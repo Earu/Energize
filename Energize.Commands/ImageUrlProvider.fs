@@ -4,7 +4,7 @@ module ImageUrlProvider =
     open Discord
     open System.Text.RegularExpressions
 
-    let getLastAttachmentUrl (msg : IMessage) = 
+    let private getLastAttachmentUrl (msg : IMessage) = 
         let imgAttachs = msg.Attachments |> Seq.filter (fun attach -> attach.Width.HasValue) 
         match imgAttachs |> Seq.tryLast with
         | Some attach ->
@@ -12,7 +12,7 @@ module ImageUrlProvider =
         | None -> 
             None
 
-    let getLastEmbedUrl (msg : IMessage) =
+    let private getLastEmbedUrl (msg : IMessage) =
         let imgEmbeds = msg.Embeds |> Seq.filter (fun embed -> embed.Image.HasValue)
         match imgEmbeds |> Seq.tryLast with
         | Some embed ->
@@ -20,7 +20,7 @@ module ImageUrlProvider =
         | None ->
             None
 
-    let getLastParsedImgUrl (msg : IMessage) =
+    let private getLastParsedImgUrl (msg : IMessage) =
         let imgPattern = "(https?:\/\/.+\.(jpg|png|gif))"
         match Regex.Matches(msg.Content, imgPattern) |> Seq.tryLast with
         | Some img ->
@@ -28,7 +28,7 @@ module ImageUrlProvider =
         | None ->
             None
 
-    let getLastParsedGiphyUrl (msg : IMessage) = 
+    let private getLastParsedGiphyUrl (msg : IMessage) = 
         let giphyPattern = "https:\/\/giphy\.com\/gifs\/(.+-)?([A-Za-z0-9]+)\s?"
         match Regex.Matches(msg.Content, giphyPattern) |> Seq.tryLast with
         | Some gif ->
@@ -37,16 +37,11 @@ module ImageUrlProvider =
             None
 
     let getLastImgUrl (msg : IMessage) : string option = 
-        let lastUrl =
+        let url = 
             [
                 (getLastAttachmentUrl msg);
                 (getLastEmbedUrl msg);
                 (getLastParsedImgUrl msg);
                 (getLastParsedGiphyUrl msg);
             ] |> List.tryLast
-        match lastUrl with
-        | Some url ->
-            url
-        | None ->
-            None
-
+        if url.IsSome then url.Value else None
