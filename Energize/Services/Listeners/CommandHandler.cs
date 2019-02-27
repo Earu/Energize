@@ -3,6 +3,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
@@ -28,18 +29,34 @@ namespace Energize.Services.Listeners
         }
 
         public void Initialize()
-            => Energize.Commands.CommandHandler.initialize(this._Client, this._RestClient, this._Logger, 
+            => Commands.CommandHandler.initialize(this._Client, this._RestClient, this._Logger, 
                 this._MessageSender, this._Prefix, this._ServiceManager);
 
         public Task InitializeAsync()
             => Task.CompletedTask;
 
+        [Event("ShardReady")]
+        public async Task OnShardReady(DiscordSocketClient _)
+        {
+            if (!File.Exists("restartlog.txt")) return;
+
+            string content = File.ReadAllText("restartlog.txt");
+            if (ulong.TryParse(content, out ulong id))
+            {
+                SocketChannel chan = this._Client.GetChannel(id);
+                if (chan != null)
+                    await this._MessageSender.Good(chan, "Restart", "Done restarting.");
+            }
+
+            File.Delete("restartlog.txt");
+        }
+
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
-            => Energize.Commands.CommandHandler.handleMessageReceived(msg);
+            => Commands.CommandHandler.handleMessageReceived(msg);
 
         [Event("MessageDeleted")]
         public async Task MessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
-            => Energize.Commands.CommandHandler.handleMessageDeleted(cache, chan);
+            => Commands.CommandHandler.handleMessageDeleted(cache, chan);
     }
 }
