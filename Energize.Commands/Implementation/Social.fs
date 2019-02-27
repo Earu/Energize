@@ -33,6 +33,7 @@ module Social =
             | "yiff" -> dbuser.YiffedCount <- dbuser.YiffedCount + 1UL
             | "bite" -> dbuser.BittenCount <- dbuser.BittenCount + 1UL
             | "boop" -> dbuser.BoopedCount <- dbuser.BoopedCount + 1UL
+            | "flex" -> dbuser.FlexCount <- dbuser.FlexCount + 1UL
             | _ -> ()
         dbctx.Dispose()
 
@@ -50,7 +51,7 @@ module Social =
                     |> List.distinctBy (fun user -> user.Id)
                 if allUsers |> List.length > 3 then allUsers.[..3] else allUsers
             registerAction ctx users ctx.arguments.[0]
-            let userMentions = users |> List.map (fun user -> user.Mention)
+            let userMentions = users |> List.map (fun user -> if user.Id.Equals(ctx.message.Author.Id) then "themself" else user.Mention)
             let userDisplays = String.Join(" and ", userMentions)
             if userMentions |> List.isEmpty then
                 ctx.sendWarn None "Could not find any user(s) to interact with for your input"
@@ -137,6 +138,7 @@ module Social =
                 .Append(sprintf "**YIFFS:** %d\n" dbstats.YiffedCount)
                 .Append(sprintf "**BITES:** %d\n" dbstats.BittenCount)
                 .Append(sprintf "**BOOPS:** %d\n" dbstats.BoopedCount)
+                .Append(sprintf "**FLEXES:** %d\n" dbstats.FlexCount)
                 |> ignore
             let res = builder.ToString()
             if res |> String.length > 2000 then
