@@ -61,20 +61,8 @@ namespace Energize.Services.Listeners
             }
         }
 
-        public async Task InitializeAsync()
-        {
-            if (!File.Exists("restartlog.txt")) return;
-
-            string content = File.ReadAllText("restartlog.txt");
-            if(ulong.TryParse(content, out ulong id))
-            {
-                SocketChannel chan = this._Client.GetChannel(id);
-                if(chan != null)
-                    await this._MessageSender.Good(chan, "Restart", "Done restarting.");
-            }
-
-            File.Delete("restartlog.txt");
-        }
+        public Task InitializeAsync()
+            => Task.CompletedTask;
 
         public void Initialize() { }
     }

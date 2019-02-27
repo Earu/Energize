@@ -9,7 +9,11 @@ module Image =
     open Discord
     open Energize.Commands.AsyncHelper
     open Discord.WebSocket
-    
+    open System.Drawing
+    open Energize.Commands.ImageUrlProvider
+    open System.Text.RegularExpressions
+    open Energize.Toolkit
+
     [<CommandParameters(1)>]
     [<Command("avatar", "Gets the avatar of a user", "avatar <user|userid>")>]
     let avatar (ctx : CommandContext) = async {
@@ -62,4 +66,33 @@ module Image =
             ctx.sendWarn (Some "emote") "A guild emoji is expected as parameter"
     }
 
-    //rework old image commands
+    [<Command("inspiro", "Quotes from inspirobot", "inspiro <nothing>")>]
+    let inspiro (ctx : CommandContext) = async {
+        let endpoint = "http://inspirobot.me/api?generate=true"
+        let url = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let builder = EmbedBuilder()
+        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+        builder
+            .WithColor(ctx.messageSender.ColorGood)
+            .WithImageUrl(url)
+            .WithFooter(ctx.commandName)
+            |> ignore
+        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+    }
+
+    [<Command("wew", "wews a picture (WIP)", "wew <url|user|userid|nothing>")>]
+    let wew (ctx : CommandContext) = async {
+        let url = 
+            if ctx.hasArguments then
+                match findUser ctx ctx.input false with
+                | Some user -> Some (user.GetAvatarUrl(ImageFormat.Auto))
+                | None -> getLastImgUrl ctx.message
+            else
+                ctx.cache.lastImageUrl
+
+        match url with
+        | Some url ->
+            ctx.sendOK None url
+        | None ->
+            ctx.sendWarn None "Could not find any image to use"
+    }
