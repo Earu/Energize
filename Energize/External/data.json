@@ -1941,66 +1941,71 @@
         "\u0337", "\u0361", "\u0489"
     ],
 
-    "SocialActions" : {
-        "hug" : [
+    "SocialActions": {
+        "hug": [
             "<origin> comes up close to <user> and hugs them",
             "<origin> sneaks behind <user> and hugs them",
             "<origin> gives <user> a warm friendly hug"
         ],
-        "boop" : [
+        "boop": [
             "<user> got booped by <origin>",
             "<origin> proceeds to gently boop <user>",
             "<origin> ropes down toward <user> and sneakily boops them"
         ],
-        "slap" : [
+        "slap": [
             "<origin> slaps <user> angrily",
             "<origin> gets mad and slaps <user> in the face",
             "<origin> slaps <user> into another dimension!"
         ],
-        "kiss" : [
+        "kiss": [
             "<origin> gives a big kiss to <user>",
             "<origin> gently kisses <user>",
             "<origin> kisses <user>"
         ],
-        "snuggle" : [
+        "snuggle": [
             "<origin> snuggles against <user>",
             "<origin> snuggles <user>",
             "<origin> lovingly snuggles <user>"
         ],
-        "shoot" : [
+        "shoot": [
             "<origin> shoots at <user>",
             "<origin> pulls out a gun and shoots <user>",
             "<origin> takes out a rifle and shoots <user>"
         ],
-        "pet" : [
+        "pet": [
             "<origin> comes up to <user> and pets their head(s)",
             "<origin> gives <user> a gentle pet",
             "<origin> gets close to <user> and proceeds to pet them"
         ],
-        "spank" : [
+        "spank": [
             "<origin> gives a large spank to <user>",
             "<origin> spanks <user>, hard.",
             "<origin> spanks in a kinky way <user>"
         ],
-        "yiff" : [
+        "yiff": [
             "<origin> yiffs <user> *cringe*",
             "<origin> wildy yiffs <user> *cringe*",
             "With a lack of self-esteem <origin> yiffs <user> *cringe*"
         ],
-        "nom" : [
+        "nom": [
             "<origin> noms <user>",
             "<origin> gently noms <user>",
             "<user> has been nomed by <origin>"
         ],
-        "lick" : [
+        "lick": [
             "<origin> softly licks <user>",
             "<origin> licks <user> across their faces",
             "<origin> gives a big wet lick to <user>"
         ],
-        "bite" : [
+        "bite": [
             "<origin> angrily bites <user>",
             "<origin> bites <user> hard",
             "With all their strength bite <action>s <user>"
+        ],
+        "flex": [
+            "<origin> flexes on <user>",
+            "<origin> pulls out a weird flex on <user>",
+            "<origin> starts flexing really oddly on <user>"
         ]
     }
 }

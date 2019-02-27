@@ -20,6 +20,7 @@ namespace Energize.Services.Database.Models
         public ulong NomedCount { get; set; }
         public ulong LickedCount { get; set; }
         public ulong BittenCount { get; set; }
+        public ulong FlexCount { get; set; }
 
         public DiscordUserStats() { }
 
@@ -38,6 +39,7 @@ namespace Energize.Services.Database.Models
             this.NomedCount = 0;
             this.LickedCount = 0;
             this.BittenCount = 0;
+            this.FlexCount = 0;
         }
     }
 }
