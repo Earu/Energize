@@ -64,6 +64,7 @@ namespace Energize.Services.Listeners
             {
                 IUserMessage posted = await this._MessageSender.Send(msg, embed);
                 await posted.AddReactionAsync(_PreviousEmote);
+                await posted.AddReactionAsync(_CloseEmote);
                 await posted.AddReactionAsync(_NextEmote);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
