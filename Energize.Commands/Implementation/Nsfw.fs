@@ -9,16 +9,17 @@ module Nsfw =
     open Energize.Toolkit
     open Discord
     open System.Xml
+    open Energize.Interfaces.Services
+    open System
 
-    let private buildNsfwEmbed (ctx : CommandContext) (pic : string) (url : string) = 
-        let builder = EmbedBuilder()
+    let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
         ctx.messageSender.BuilderWithAuthor(ctx.message,builder)
         builder
             .WithColor(ctx.messageSender.ColorGood)
             .WithImageUrl(pic)
             .WithFooter(ctx.commandName)
             .WithDescription(sprintf "\n[**CHECK ON %s**](%s)" (ctx.commandName.ToUpper()) url)
-            .Build()
+            |> ignore
 
     type E621Obj = { sample_url : string; id : string }
     [<NsfwCommand>]
@@ -31,9 +32,10 @@ module Nsfw =
         if e621Objs |> List.isEmpty then
             ctx.sendWarn None "Nothing was found"
         else
-            let e621Obj = e621Objs.[ctx.random.Next(0,e621Objs.Length)]
-            let embed = buildNsfwEmbed ctx e621Obj.sample_url (sprintf "https://e621.net/post/show/%s/" e621Obj.id)
-            awaitIgnore (ctx.messageSender.Send(ctx.message, embed))
+            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+            await (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
+                buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
+            )))
     }
 
     let private getDApiResult (ctx : CommandContext) (uri : string) = 
@@ -46,23 +48,33 @@ module Nsfw =
         if nodes.Count < 1 then
             None
         else
-            let node = nodes.[ctx.random.Next(0, nodes.Count)]
-            let url = 
-                let n = node.SelectSingleNode("@file_url")
-                if n.Value.StartsWith("//") then
-                    sprintf "http:%s" n.Value
-                else 
-                    n.Value
-            let id = node.SelectSingleNode("@id").Value
-            let page = sprintf "http://%s/index.php?page=post&s=view&id=%s" uri id
-            Some (url, page)
+            let results =
+                nodes 
+                |> Seq.cast<XmlNode>
+                |> Seq.map (fun node -> 
+                    let url = 
+                        let n = node.SelectSingleNode("@file_url")
+                        if n.Value.StartsWith("//") then
+                            sprintf "http:%s" n.Value
+                        else 
+                            n.Value
+                    let id = node.SelectSingleNode("@id").Value
+                    let page = sprintf "http://%s/index.php?page=post&s=view&id=%s" uri id
+                    (url, page)
+                )
+                |> Seq.distinct
+                |> Seq.toList
+
+            Some results
 
     let private callDApiCmd (ctx : CommandContext) (uri : string) = async {
         let result = getDApiResult ctx uri
         match result with
-        | Some (url, page) ->
-            let embed = buildNsfwEmbed ctx url page
-            awaitIgnore (ctx.messageSender.Send(ctx.message, embed))
+        | Some results ->
+            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+            await (paginator.SendPaginator(ctx.message, ctx.commandName, results, Action<(string * string), EmbedBuilder>(fun (url, page) builder ->
+                 buildNsfwEmbed builder ctx url page
+            )))
         | None ->
             ctx.sendWarn None "Nothing was found"
     }
