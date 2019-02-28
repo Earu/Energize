@@ -59,7 +59,7 @@ namespace Energize.Services.Listeners
                 .WithColor(this._MessageSender.ColorGood)
                 .WithFooter(head);
             Embed embed = builder.Build();
-            Paginator<T> paginator = new Paginator<T>(data, displaycallback, embed);
+            Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback, embed);
             try
             {
                 IUserMessage posted = await this._MessageSender.Send(msg, embed);
@@ -88,7 +88,7 @@ namespace Energize.Services.Listeners
             if (data.Count() > 0)
                 displaycallback(data.First(), builder);
             Embed embed = builder.Build();
-            Paginator<T> paginator = new Paginator<T>(data, displaycallback, embed);
+            Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback, embed);
             try
             {
                 IUserMessage posted = await this._MessageSender.Send(msg, embed);
@@ -110,7 +110,7 @@ namespace Energize.Services.Listeners
 
         public async Task SendPaginatorRaw<T>(SocketMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
-            Paginator<T> paginator = new Paginator<T>(data, displaycallback);
+            Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
             try
             {
@@ -142,9 +142,12 @@ namespace Energize.Services.Listeners
         {
             if (!cache.HasValue || !this.IsOKEmote(reaction)) return;
             if (!this._Paginators.ContainsKey(cache.Value.Id)) return;
+
+            Paginator<object> paginator = this._Paginators[cache.Value.Id];
+            if (paginator.UserID != reaction.UserId) return;
+
             try
-            {
-                Paginator<object> paginator = this._Paginators[cache.Value.Id];
+            { 
                 IEmote emote = reaction.Emote;
                 if (emote.Name == _PreviousEmote.Name)
                     await paginator.Previous();
