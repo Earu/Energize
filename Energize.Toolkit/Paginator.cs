@@ -62,7 +62,7 @@ namespace Energize.Toolkit
         {
             if (this._DisplayCallback != null)
             {
-                return new Paginator<object>(this._Data, obj => this._DisplayCallback((T)obj))
+                return new Paginator<object>(this.UserID, this._Data, obj => this._DisplayCallback((T)obj))
                 {
                     Message = this.Message,
                     _Embed = this._Embed,
@@ -70,7 +70,7 @@ namespace Energize.Toolkit
             }
             else
             {
-                return new Paginator<object>(this._Data, (obj, builder) => this._DisplayEmbedCallback((T)obj, builder))
+                return new Paginator<object>(this.UserID, this._Data, (obj, builder) => this._DisplayEmbedCallback((T)obj, builder))
                 {
                     Message = this.Message,
                     _Embed = this._Embed,
