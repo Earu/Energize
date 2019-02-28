@@ -16,18 +16,21 @@ namespace Energize.Services.Listeners
     {
         private static readonly IEmote _NextEmote = new Emoji("▶");
         private static readonly IEmote _PreviousEmote = new Emoji("◀");
+        private static readonly IEmote _CloseEmote = new Emoji("⏹");
 
         private Dictionary<ulong, Paginator<object>> _Paginators;
 
         private readonly MessageSender _MessageSender;
         private readonly Logger _Logger;
         private readonly Timer _PaginatorCleanup;
+        private readonly DiscordShardedClient _Client;
 
         public PaginatorSender(EnergizeClient client)
         {
             this._Paginators = new Dictionary<ulong, Paginator<object>>();
             this._MessageSender = client.MessageSender;
             this._Logger = client.Logger;
+            this._Client = client.DiscordClient;
 
             Timer timer = new Timer(_ =>
             {
@@ -67,7 +70,37 @@ namespace Energize.Services.Listeners
             }
             catch (HttpException)
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator successfully, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+            }
+            catch (Exception ex)
+            {
+                this._Logger.Danger(ex);
+            }
+        }
+
+        public async Task SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            this._MessageSender.BuilderWithAuthor(msg, builder);
+            builder
+                .WithColor(this._MessageSender.ColorGood)
+                .WithFooter(head);
+            if (data.Count() > 0)
+                displaycallback(data.First(), builder);
+            Embed embed = builder.Build();
+            Paginator<T> paginator = new Paginator<T>(data, displaycallback, embed);
+            try
+            {
+                IUserMessage posted = await this._MessageSender.Send(msg, embed);
+                await posted.AddReactionAsync(_PreviousEmote);
+                await posted.AddReactionAsync(_CloseEmote);
+                await posted.AddReactionAsync(_NextEmote);
+                paginator.Message = posted;
+                this._Paginators.Add(posted.Id, paginator.ToObject());
+            }
+            catch (HttpException)
+            {
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
             }
             catch (Exception ex)
             {
@@ -83,13 +116,14 @@ namespace Energize.Services.Listeners
             {
                 IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
                 await posted.AddReactionAsync(_PreviousEmote);
+                await posted.AddReactionAsync(_CloseEmote);
                 await posted.AddReactionAsync(_NextEmote);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
             }
             catch (HttpException)
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator successfully, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
             }
             catch (Exception ex)
             {
@@ -99,14 +133,16 @@ namespace Energize.Services.Listeners
 
         private bool IsOKEmote(SocketReaction reaction)
         {
-            if (reaction.UserId == Config.BOT_ID_MAIN) return false;
+            if (reaction.UserId == this._Client.CurrentUser.Id) return false;
             IEmote emote = reaction.Emote;
-            return emote.Name == _NextEmote.Name || emote.Name == _PreviousEmote.Name;
+            return emote.Name == _NextEmote.Name || emote.Name == _PreviousEmote.Name || emote.Name == _CloseEmote.Name;
         }
 
-        private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, SocketReaction reaction)
+        private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (cache.HasValue && this._Paginators.ContainsKey(cache.Value.Id) && this.IsOKEmote(reaction))
+            if (!cache.HasValue || !this.IsOKEmote(reaction)) return;
+            if (!this._Paginators.ContainsKey(cache.Value.Id)) return;
+            try
             {
                 Paginator<object> paginator = this._Paginators[cache.Value.Id];
                 IEmote emote = reaction.Emote;
@@ -114,16 +150,29 @@ namespace Energize.Services.Listeners
                     await paginator.Previous();
                 else if (emote.Name == _NextEmote.Name)
                     await paginator.Next();
+                else if (emote.Name == _CloseEmote.Name)
+                {
+                    this._Paginators.Remove(cache.Value.Id);
+                    await chan.DeleteMessageAsync(paginator.Message);
+                }
+            }
+            catch (HttpException)
+            {
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not mutate paginator, missing permissions");
+            }
+            catch (Exception ex)
+            {
+                this._Logger.Danger(ex);
             }
         }
 
         [Event("ReactionAdded")]
-        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
-            => await this.OnReaction(cache, reaction);
+        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+            => await this.OnReaction(cache, chan, reaction);
 
         [Event("ReactionRemoved")]
-        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
-            => await this.OnReaction(cache, reaction);
+        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+            => await this.OnReaction(cache, chan, reaction);
 
         public void Initialize() { }
 
