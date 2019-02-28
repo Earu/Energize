@@ -34,7 +34,7 @@ module Image =
             ctx.sendWarn None "Could not find any user for your input"
     }
 
-    [<GuildOnlyCommand>]
+    [<GuildCommandAttribute>]
     [<Command("icon", "Gets the avatar of the guild", "icon <nothing>")>]
     let icon (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
