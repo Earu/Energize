@@ -13,7 +13,7 @@ namespace Energize.Toolkit
         private DateTime _TimeToLive;
         private Embed _Embed;
 
-        public Paginator(IEnumerable<T> data, Func<T, string> displaycallback, Embed embed=null)
+        public Paginator(ulong userid, IEnumerable<T> data, Func<T, string> displaycallback, Embed embed=null)
         {
             this._Data = new List<T>(data);
             this._DisplayCallback = displaycallback;
@@ -21,9 +21,10 @@ namespace Energize.Toolkit
             this.CurrentIndex = 0;
             this._TimeToLive = DateTime.Now.AddMinutes(5);
             this._Embed = embed;
+            this.UserID = userid;
         }
 
-        public Paginator(IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback, Embed embed=null)
+        public Paginator(ulong userid, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback, Embed embed=null)
         {
             this._Data = new List<T>(data);
             this._DisplayCallback = null;
@@ -31,11 +32,13 @@ namespace Energize.Toolkit
             this.CurrentIndex = 0;
             this._TimeToLive = DateTime.Now.AddMinutes(5);
             this._Embed = embed;
+            this.UserID = userid;
         }
 
         public IUserMessage Message { get; set; }
         public bool IsExpired { get => this._TimeToLive > DateTime.Now; }
         public int CurrentIndex { get; private set; }
+        public ulong UserID { get; private set; }
 
         public async Task Next()
         {
