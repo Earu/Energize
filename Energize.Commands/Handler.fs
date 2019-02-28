@@ -19,6 +19,7 @@ module CommandHandler =
     open Energize.Interfaces.Services
     open System.IO
     open System.Diagnostics
+    open System.Text
 
     type private CommandHandlerState =
         {
@@ -67,6 +68,17 @@ module CommandHandler =
                 let warning = sprintf "Could not find any command named \'%s\'" cmdName
                 ctx.sendWarn None warning
         else
+            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+            let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
+            await (paginator.SendPaginator(ctx.message, ctx.commandName, commands, fun (moduleName, cmds) -> 
+                let builder = StringBuilder()
+                builder.Append(sprintf "**%s:**\n" (moduleName.ToUpper())) |> ignore
+                let cmdNames = cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
+                builder
+                    .Append(String.Join(',', cmdNames))
+                    .ToString()
+            ))
+
             let path = "help.txt"
             if File.Exists(path) then
                 awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
