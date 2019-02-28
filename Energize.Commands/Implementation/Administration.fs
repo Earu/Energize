@@ -17,8 +17,8 @@ module Administration =
     open Discord.Rest
     open System.Linq
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<CommandParameters(2)>]
     [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
     let op (ctx : CommandContext) = async {
@@ -75,41 +75,41 @@ module Administration =
         with _ ->
             ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions"
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
     let clear (ctx : CommandContext) = async {
         clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
     }
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<Command("clearbots", "Clear bot messages", "clearbots <amounttoremove|nothing>")>]
     let clearBots (ctx : CommandContext) = async {
         clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
     }
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("clearuser", "Clear a user messages", "clearuser <user|userid>,<amounttoremove|nothing>")>]
     let clearUser (ctx : CommandContext) = async {
         match findUser ctx ctx.arguments.[0] true with
         | Some user ->
-            clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.Id.Equals(user.Id))
+            clearCmdBase ctx (if ctx.arguments.Length > 1 then ctx.arguments.[1] else "25") (fun msg -> msg.Author.Id.Equals(user.Id))
         | None ->   
             ctx.sendWarn None "No user could be found for your input"
     }
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<Command("clearaw", "Clear a specified amount of messages", "clearaw <amounttoremove|nothing>")>]
     let clearRaw (ctx : CommandContext) = async {
         clearCmdBase ctx ctx.input (fun _ -> true)
     }
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<Command("delinvs", "Deletes messages containing discord invites (toggleable)", "delinvs <nothing>")>]
     let delInvs (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
@@ -176,8 +176,8 @@ module Administration =
             Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
         | _ -> None
 
-    [<AdminOnlyCommand>]
-    [<GuildOnlyCommand>]
+    [<AdminCommandAttribute>]
+    [<GuildCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
     let fame (ctx : CommandContext) = async {

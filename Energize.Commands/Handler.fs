@@ -85,7 +85,7 @@ module CommandHandler =
             cmd.isEnabled <- enabled
         | None -> ()
     
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<CommandParameters(2)>]
     [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
     let enable (ctx : CommandContext) = async {
@@ -124,10 +124,10 @@ module CommandHandler =
                 help = infoAtr.help
                 moduleName = moduleAtr.name
                 parameters = paramCount
-                ownerOnly = isCmdX<OwnerOnlyCommandAttribute> callback.Method
-                guildOnly = isCmdX<GuildOnlyCommandAttribute> callback.Method
-                isNsfw = isCmdX<NsfwCommandAttribute> callback.Method
-                adminOnly = isCmdX<AdminOnlyCommandAttribute> callback.Method
+                ownerOnly = isCmdX<OwnerCommandAttribute> callback.Method
+                guildOnly = isCmdX<GuildCommandAttribute> callback.Method
+                NsfwOnly = isCmdX<NsfwCommandAttribute> callback.Method
+                adminOnly = isCmdX<AdminCommandAttribute> callback.Method
             }
 
         registerCmd state cmd
@@ -317,7 +317,7 @@ module CommandHandler =
         | cmd when cmd.guildOnly && isPrivate ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
-        | cmd when cmd.isNsfw && not isNsfw ->
+        | cmd when cmd.NsfwOnly && not isNsfw ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used in a non NSFW channel")) 
         | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg isPrivate) ->

@@ -101,7 +101,7 @@ module Util =
             ctx.logger.Warning("Feedback channel wasnt a text channel?!")
     }
 
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("to", "Timing out test", "to <seconds>")>]
     let timeOut (ctx : CommandContext) = async {
@@ -134,7 +134,7 @@ module Util =
             ctx.sendOK None res
     }
 
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("sql", "Runs an sql statement in the database", "sql <sqlstring>")>]
     let sql (ctx : CommandContext) = async {
@@ -162,14 +162,14 @@ module Util =
             ctx.sendBad None ("```\n" + ex.Message.Replace("`", "") + "```")
     }
 
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<Command("err", "Throws an error for testing", "err <nothing|message>")>]
     let err (ctx : CommandContext) = async {
         let msg = if ctx.hasArguments then ctx.input else "test"
         raise (Exception(msg))
     }
 
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("ev", "Evals a C# string", "ev <csharpstring>")>]
     let eval (ctx : CommandContext) = async {
@@ -182,7 +182,7 @@ module Util =
         | (_, out) -> ctx.sendWarn None out
     }
 
-    [<OwnerOnlyCommand>]
+    [<OwnerCommandAttribute>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) = async {
         File.WriteAllText("restartlog.txt", ctx.message.Channel.Id.ToString())
