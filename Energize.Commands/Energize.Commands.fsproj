@@ -25,6 +25,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="UserHelper.fs" />
     <Compile Include="Command.fs" />
+    <Compile Include="Implementation\Audio.fs" />
     <Compile Include="Implementation\Deprecated.fs" />
     <Compile Include="Implementation\Image.fs" />
     <Compile Include="Implementation\Administration.fs" />

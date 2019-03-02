@@ -6,7 +6,6 @@ module Cache =
     type CommandCache = 
         {
             lastImageUrl : string option
-            lastMessages : SocketMessage list
             lastMessage : SocketMessage option
             lastDeletedMessage : SocketMessage option
         }

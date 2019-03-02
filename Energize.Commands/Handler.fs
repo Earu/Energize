@@ -192,7 +192,6 @@ module CommandHandler =
                     lastMessage = None
                     lastDeletedMessage = None
                     lastImageUrl = None
-                    lastMessages = List.Empty
                 }
             let newCaches = state.caches |> Map.add id cache
             handlerState <- Some { state with caches = newCaches }
@@ -253,7 +252,7 @@ module CommandHandler =
             async {
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
                 if not tcallback.IsCompleted then
-                    awaitResult (state.messageSender.Warning(msg, "Time out", sprintf "Your command \'%s\' is timing out!" cmdName)) |> ignore
+                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command \'%s\' is timing out!" cmdName)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmdName)
                 return tres
             } |> awaitOp
@@ -296,7 +295,7 @@ module CommandHandler =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
         state.logger.Warning(ex.InnerException.ToString())
         let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
-        awaitIgnore (state.messageSender.Warning(msg, "Internal Error", err))
+        awaitIgnore (state.messageSender.Warning(msg, "internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
         let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
@@ -307,7 +306,7 @@ module CommandHandler =
         builder
             .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay ex.InnerException.Message)
             .WithTimestamp(msg.CreatedAt)
-            .WithFooter(sprintf "Command Error -> %s" source)
+            .WithFooter(source)
             .WithColor(state.messageSender.ColorDanger)
             |> ignore
         match state.client.GetChannel(Config.FEEDBACK_CHANNEL_ID) with
@@ -350,26 +349,27 @@ module CommandHandler =
             handlerState <- Some { state with caches = newCaches }
         | Some _ -> ()
         | _ -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
-            
+
+    let private updateChannelCache (state : CommandHandlerState) (msg : SocketMessage) (cb : CommandCache -> CommandCache) =
+        let oldCache = getChannelCache state msg.Channel.Id
+        let newCache = cb oldCache
+        let newCaches = state.caches.Add(msg.Channel.Id, newCache)
+        handlerState <- Some { state with caches = newCaches }
+        
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
         | Some state ->
-            match getLastImgUrl msg with
-            | Some url -> 
-                let oldCache = getChannelCache state msg.Channel.Id
-                let newCache = { oldCache with lastImageUrl = Some url }
-                let newCaches = state.caches.Add(msg.Channel.Id, newCache)
-                handlerState <- Some { state with caches = newCaches }
-            | None -> ()
-
+            updateChannelCache state msg (fun oldCache -> 
+                let lastUrl = match getLastImgUrl msg with Some url -> Some url | None -> oldCache.lastImageUrl
+                let lastMsg = if msg.Author.IsBot then oldCache.lastMessage else Some msg
+                { oldCache with lastImageUrl = lastUrl; lastMessage = lastMsg }
+            )
             if not msg.Author.IsBot then
                 let content = msg.Content
                 if content.ToLower().StartsWith(state.prefix) || (startsWithBotMention state content) then
                     let cmdName = getCmdName state content
                     match state.commands |> Map.tryFind cmdName with
-                    | Some cmd -> 
-                        tryRunCmd state msg cmd content
-                    | None -> 
-                        ()
+                    | Some cmd -> tryRunCmd state msg cmd content
+                    | None -> ()
         | None -> 
             printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"

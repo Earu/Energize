@@ -75,7 +75,7 @@ module Fun =
     let letters (ctx : CommandContext) = async {
         let indicator = ":regional_indicator_"
         let builder = StringBuilder()
-        for i in 0..ctx.input.Length do
+        for i in 0..(ctx.input.Length - 1) do
             let char = ctx.input.[i].ToString().ToLower()
             if Regex.IsMatch(char, "[A-Za-z]") then
                 builder.Append(indicator + char + ": ") |> ignore
