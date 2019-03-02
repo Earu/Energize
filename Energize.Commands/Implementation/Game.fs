@@ -11,6 +11,7 @@ module Game =
     open System
     open Energize.Interfaces.Services
     open System.IO
+    open Discord
 
     type VanityResponseObj = { steamid : string; success : int }
     type VanityObj = { response : VanityResponseObj }
@@ -75,25 +76,24 @@ module Game =
                     dt.AddSeconds(float ply.timecreated).ToLocalTime()
                 let isPublic = ply.communityvisibilitystate.Equals(3)
                 let visibility = if isPublic then "Public" else "Private"
-                (*let desc = impl description parsing or whatev
-                    if isPublic then
-                        let doc = HtmlDocument()
-                        let html = awaitResult (HttpClient.Fetch(ply.profileurl, ctx.logger))
-                        doc.LoadHtml(html)
-                        let nodes = doc.DocumentNode.SelectNodes("//div[contains(@class,'profile_summary')]")
-                        let node = nodes.[0]
-                    else
-                        " - "*)
-                let builder = StringBuilder()
+                let fields = [
+                    ctx.embedField "Name" ply.personaname true
+                    ctx.embedField "Status" (getState ply) true
+                    ctx.embedField "Creation Date" created true
+                    ctx.embedField "Visibility" visibility true
+                    ctx.embedField "SteamID64" ply.steamid true
+                    ctx.embedField "URL" ply.profileurl true
+                ]
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 builder
-                    .Append(sprintf "**NAME:** %s\n" ply.personaname)
-                    .Append(sprintf "**STATUS:** %s\n" (getState ply))
-                    .Append(sprintf "**CREATED ON:** %s\n" (created.ToString()))
-                    .Append(sprintf "**VISIBILITY:** %s\n" visibility)
-                    .Append(sprintf "**STEAMID64:** %s\n" (ply.steamid.ToString()))
-                    .Append(sprintf "**URL:** %s\n" ply.profileurl)
+                    .WithFields(fields)
+                    .WithThumbnailUrl(ply.avatarfull)
+                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithFooter(ctx.commandName)
                     |> ignore
-                awaitIgnore (ctx.messageSender.Send(ctx.message, ctx.commandName, builder.ToString(), ctx.messageSender.ColorGood, ply.avatarfull))
+
+                awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
             | None ->
                 ctx.sendWarn None "Could not find any user for your input"
         | None ->
