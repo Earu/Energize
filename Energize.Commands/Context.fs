@@ -10,6 +10,12 @@ module Context =
     open Energize.Interfaces.Services
     open AsyncHelper
 
+    let private properOutput (input : string) =
+        if input.Length < 2048 then
+            input
+        else
+            input.Substring(0,2045) + "..."
+
     type CommandContext =
         {
             client : DiscordShardedClient
@@ -39,15 +45,15 @@ module Context =
 
         member this.sendOK (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
-            awaitIgnore (this.messageSender.Good(this.message, header, input))
+            awaitIgnore (this.messageSender.Good(this.message, header, properOutput input))
 
         member this.sendWarn (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
-            awaitIgnore (this.messageSender.Warning(this.message, header, input))
+            awaitIgnore (this.messageSender.Warning(this.message, header, properOutput input))
 
         member this.sendBad (head : string option) (input : string) = 
             let header = match head with Some h -> h | None -> this.commandName
-            awaitIgnore (this.messageSender.Danger(this.message, header, input))
+            awaitIgnore (this.messageSender.Danger(this.message, header, properOutput input))
 
     let isNSFW (msg : SocketMessage) (isPrivate : bool) = 
         if isPrivate then 
