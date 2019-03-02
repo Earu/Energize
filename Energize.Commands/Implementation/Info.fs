@@ -23,54 +23,61 @@ module Info =
             let time = guild.CreatedAt.ToString()
             time.Remove(time.Length - 7)
         let region = guild.VoiceRegionId.ToString().ToUpper()
-        let builder = StringBuilder()
+
+        let aemotes =
+            guild.Emotes |> Seq.filter (fun e -> e.Animated) |> Seq.map(fun e -> e.ToString())
+        let emotes = 
+            guild.Emotes |> Seq.filter (fun e -> not e.Animated) |> Seq.map(fun e -> e.ToString())
+        
+        let fields = [
+            ctx.embedField "ID" guild.Id true
+            ctx.embedField "Owner" (match owner with null -> "Unknown" | _ -> owner.Mention) true
+            ctx.embedField "Members" guild.MemberCount true
+            ctx.embedField "Region" region true
+            ctx.embedField "Creation Date" createdAt true
+            ctx.embedField "Main Channel" guild.DefaultChannel.Name true
+            ctx.embedField "Emotes" (String.Join(' ', emotes)) true
+            ctx.embedField "Animated Emotes" (String.Join(' ', aemotes)) true
+        ]
+
+        let builder = EmbedBuilder()
+        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
-            .Append(sprintf "**ID:** %d\n" guild.Id)
-            .Append(sprintf "**OWNER:** %s\n" (match owner with null -> "Unknown" | _ -> owner.Mention))
-            .Append(sprintf "**MEMBERS:** %d\n" guild.MemberCount)
-            .Append(sprintf "**REGION:** %s\n" region)
-            .Append(sprintf "**CREATED ON:** %s\n" createdAt)
-            .Append(sprintf "**MAIN CHANNEL:** %s\n" guild.DefaultChannel.Name)
+            .WithFields(fields)
+            .WithThumbnailUrl(guild.IconUrl)
+            .WithColor(ctx.messageSender.ColorGood)
+            .WithFooter(guild.Name)
             |> ignore
 
-        let len = guild.Emotes |> Seq.length
-        if len > 0 then
-            builder.Append("\n--- Emotes ---\n") |> ignore
-            for i in 0..(len - 1) do
-                let emoji = guild.Emotes |> Seq.tryItem i
-                match emoji with
-                | Some e ->
-                    builder.Append(" " + e.ToString() + " ") |> ignore
-                    if (i % 10).Equals(0) then
-                        builder.Append('\n') |> ignore
-                | None -> ()
-        
-        let result = builder.ToString()
-        if result.Length > 2048 then
-            ctx.sendWarn None "Output was too long to be displayed"
-        else
-            awaitIgnore (ctx.messageSender.Send(ctx.message, guild.Name, result, ctx.messageSender.ColorGood, guild.IconUrl))
+        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
     }
 
     [<Command("info", "Gets information about the bot", "info <nothing>")>]
     let info (ctx : CommandContext) = async {
         let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.BOT_ID_MAIN
-        let server = Config.SERVER_INVITE
         let github = Config.GITHUB
         let owner = match ctx.client.GetUser(Config.OWNER_ID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users) |> Seq.length
-        let builder = StringBuilder()
+        let fields = [
+            ctx.embedField "Name" ctx.client.CurrentUser true
+            ctx.embedField "Prefix" ctx.prefix true
+            ctx.embedField "Command Count" ctx.commandCount true
+            ctx.embedField "Server Count" ctx.client.Guilds.Count true
+            ctx.embedField "User count" usercount true
+            ctx.embedField "Owner" owner true
+        ]
+
+        let builder = EmbedBuilder()
+        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
-            .Append(sprintf "**NAME:** %s\n" (ctx.client.CurrentUser.ToString()))
-            .Append(sprintf "**PREFIX:** %s\n" ctx.prefix)
-            .Append(sprintf "**COMMANDS:** %d\n" ctx.commandCount)
-            .Append(sprintf "**SERVERS:** %d\n" ctx.client.Guilds.Count)
-            .Append(sprintf "**USERS: ** %d\n" usercount)
-            .Append(sprintf "**OWNER: ** %s\n" (owner.ToString()))
+            .WithFields(fields)
+            .WithThumbnailUrl(ctx.client.CurrentUser.GetAvatarUrl())
+            .WithColor(ctx.messageSender.ColorGood)
+            .WithFooter("info")
             |> ignore
 
-        awaitIgnore (ctx.messageSender.Send(ctx.message, "info", builder.ToString(), ctx.messageSender.ColorGood, ctx.client.CurrentUser.GetAvatarUrl()))
-        awaitIgnore (ctx.messageSender.SendRaw(ctx.message, sprintf "Official server: %s\nInvite link: %s\nGithub: %s" server invite github))
+        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+        awaitIgnore (ctx.messageSender.SendRaw(ctx.message, sprintf "Invite link: %s\nGithub: %s" invite github))
     }
 
     [<Command("invite", "Gets the bot invite links", "invite <nothing>")>]
@@ -103,38 +110,42 @@ module Info =
             let moreGuilds = if leftGuilds > 0 then (sprintf " and %d more...") leftGuilds else String.Empty
             let clampGuild = (if max >= guildNames.Length then guildNames.Length - 1 else max)
             let userGuilds = (String.Join(',', guildNames.[..clampGuild])) + moreGuilds
-            let builder = StringBuilder()
+            let builder = EmbedBuilder()
+            let fields = 
+                if not (ctx.isPrivate) then
+                    let guser = user :> IUser :?> IGuildUser
+                    let time = guser.JoinedAt.ToString()
+                    let joinedTime = if time.Length >= 7 then time.Remove(time.Length - 7) else time
+                    let roleNames = guser.RoleIds |> Seq.map (fun id -> guser.Guild.GetRole(id).Name) |> Seq.toList
+                    let leftRoles = match (roleNames |> Seq.length) - max with n when n < 0 -> 0 | n -> n
+                    let nick = match guser.Nickname with null -> " - " | name -> name
+                    let moreNames = if leftRoles > 0 then (sprintf " and %d more..." leftRoles) else String.Empty
+                    let clampRoles = (if max >= roleNames.Length then roleNames.Length - 1 else max)
+                    let userNames = (String.Join(',', roleNames.[..clampRoles])) + moreNames
+                    [
+                        ctx.embedField "Nickname" nick true
+                        ctx.embedField "Join Date" joinedTime true
+                        ctx.embedField "Roles" userNames true
+                    ]
+                else
+                    List.Empty
+                |> List.append ([
+                    ctx.embedField "ID" user.Id true
+                    ctx.embedField "Name" user.Username true
+                    ctx.embedField "Bot" user.IsBot true
+                    ctx.embedField "Status" user.Status true
+                    ctx.embedField "Creation Date" createdTime true
+                    ctx.embedField "Seen On" userGuilds true
+                ])
+                    
+            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
             builder
-                .Append(sprintf "**ID:** %d\n" user.Id)
-                .Append(sprintf "**NAME:** %s\n" user.Username)
-                .Append(sprintf "**BOT:** %b\n" user.IsBot)
-                .Append(sprintf "**STATUS:** %s\n" (user.Status.ToString()))
-                .Append(sprintf "**CREATED ON:** %s\n" createdTime)
-                .Append(sprintf "**SEEN ON:** %s\n" userGuilds)
+                .WithFields(fields)
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(ctx.messageSender.ColorGood)
+                .WithFooter("info")
                 |> ignore
-
-            if not (ctx.isPrivate) then
-                let guser = user :> IUser :?> IGuildUser
-                let time = guser.JoinedAt.ToString()
-                let joinedTime = if time.Length >= 7 then time.Remove(time.Length - 7) else time
-                let roleNames = guser.RoleIds |> Seq.map (fun id -> guser.Guild.GetRole(id).Name) |> Seq.toList
-                let leftRoles = match (roleNames |> Seq.length) - max with n when n < 0 -> 0 | n -> n
-                let nick = match guser.Nickname with null -> "none" | name -> name
-                let moreNames = if leftRoles > 0 then (sprintf " and %d more..." leftRoles) else String.Empty
-                let clampRoles = (if max >= roleNames.Length then roleNames.Length - 1 else max)
-                let userNames = (String.Join(',', roleNames.[..clampRoles])) + moreNames
-                builder
-                    .Append("\n--- Guild Related Info ---\n")
-                    .Append(sprintf "**NICKNAME:** %s\n" nick)
-                    .Append(sprintf "**JOINED ON:** %s\n" joinedTime)
-                    .Append(sprintf "**ROLES:** %s\n" userNames)
-                    |> ignore
-
-            let res = builder.ToString()
-            if res.Length > 2000 then
-                ctx.sendWarn None "Output was too long to be displayed"
-            else
-                awaitIgnore (ctx.messageSender.Send(ctx.message, ctx.commandName, builder.ToString(), ctx.messageSender.ColorGood, user.GetAvatarUrl()))
+            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
         | None ->
             ctx.sendWarn None "No user could be found for your input"
     }

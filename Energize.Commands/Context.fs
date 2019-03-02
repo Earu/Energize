@@ -55,6 +55,16 @@ module Context =
             let header = match head with Some h -> h | None -> this.commandName
             awaitIgnore (this.messageSender.Danger(this.message, header, properOutput input))
 
+        member _this.embedField (name: string) (value : obj) (isinline : bool) =
+            let display = 
+                let str = value.ToString()
+                if str.Length > 1024 then str.Substring(0,1021) + "..." else str
+            let field = EmbedFieldBuilder()
+            field
+                .WithIsInline(isinline)
+                .WithName(name)
+                .WithValue(display)
+
     let isNSFW (msg : SocketMessage) (isPrivate : bool) = 
         if isPrivate then 
             true

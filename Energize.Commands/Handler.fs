@@ -39,9 +39,6 @@ module CommandHandler =
     let private registerCmd (state : CommandHandlerState) (cmd : Command) =
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
 
-    let private getCmdInfo (cmd : Command) : string =
-        sprintf "**USAGE:**\n``%s``\n**HELP:**\n``%s``" cmd.usage cmd.help
-
     let private generateHelpFile (state : CommandHandlerState) (path : string) =
         let cmds = state.commands |> Map.toSeq |> Seq.sortBy (fun (_, cmd) -> cmd.name)
         let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n"
@@ -56,28 +53,39 @@ module CommandHandler =
             ]
             await (File.AppendAllLinesAsync(path, lines))
 
+    let private postCmdHelp (cmd : Command) (ctx : CommandContext) (iswarn : bool) =
+        let fields = [
+            ctx.embedField "Usage" (sprintf "`%s`" cmd.usage) false
+            ctx.embedField "Help" (sprintf "`%s`" cmd.help) false
+        ]
+        let builder = EmbedBuilder()
+        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+        builder
+            .WithFields(fields)
+            .WithColor(if iswarn then ctx.messageSender.ColorWarning else ctx.messageSender.ColorGood)
+            .WithFooter(sprintf (if iswarn then "bad usage [ %s ]" else "help [ %s ]") cmd.name)
+            |> ignore
+        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+
     [<Command("help", "This command", "help <cmd|nothing>")>]
     let help (ctx : CommandContext) = async {
         if ctx.hasArguments then
             let cmdName = ctx.arguments.[0].Trim()
             match handlerState.Value.commands |> Map.tryFind cmdName with
             | Some cmd ->
-                let help = getCmdInfo cmd
-                ctx.sendOK None help
+                postCmdHelp cmd ctx false
             | None ->
                 let warning = sprintf "Could not find any command named \'%s\'" cmdName
                 ctx.sendWarn None warning
         else
             let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
             let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
-            await (paginator.SendPaginator(ctx.message, ctx.commandName, commands, fun (moduleName, cmds) -> 
-                let builder = StringBuilder()
-                builder.Append(sprintf "**%s:**\n" (moduleName.ToUpper())) |> ignore
-                let cmdNames = cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
-                builder
-                    .Append(String.Join(',', cmdNames))
-                    .ToString()
-            ))
+            await (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
+                let cmdsDisplay = 
+                    cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
+                builder.WithFields(ctx.embedField moduleName (String.Join(',', cmdsDisplay)) true)
+                |> ignore
+            )))
 
             let path = "help.txt"
             if File.Exists(path) then
@@ -287,8 +295,7 @@ module CommandHandler =
             await task
             logCmd ctx false 
         else
-            let help = getCmdInfo cmd
-            ctx.sendWarn (Some (sprintf "bad usage [ %s ]" cmd.name)) help
+            postCmdHelp cmd ctx true
             logCmd ctx false
 
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =

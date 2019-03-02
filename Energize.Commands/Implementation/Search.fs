@@ -7,14 +7,14 @@ module Search =
     open System
     open Energize.Commands.AsyncHelper
     open Energize.Toolkit
-    open System.Text
     open Energize.Commands.Context
     open YoutubeSearch
     open Energize.Interfaces.Services
+    open Discord
 
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }
-    [<NsfwCommand>]
+    //[<NsfwCommand>]
     [<CommandParameters(1)>]
     [<Command("urban", "Searches urban for a definition", "urban <term>")>]
     let urban (ctx : CommandContext) = async {
@@ -25,22 +25,22 @@ module Search =
             ctx.sendWarn None "Could not find anything"
         else
             let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator");
-            await (paginator.SendPaginator(ctx.message, ctx.commandName, urbanObj.list, fun word -> 
+            await (paginator.SendPaginator(ctx.message, ctx.commandName, urbanObj.list, Action<WordObj, EmbedBuilder>(fun word builder -> 
                 let hasExample = not (String.IsNullOrWhiteSpace word.example)
                 let definition =
                     if word.definition |> String.length > 300 then 
                         word.definition.Remove(300) + "..." 
                     else 
                         word.definition
-                let builder = StringBuilder()
-                let example = if hasExample then "\n**EXAMPLE:**\n" + word.example else String.Empty
-                builder
-                    .Append(sprintf "**%s**\n\n" word.permalink)
-                    .Append(definition + "\n")
-                    .Append(example + "\n")
-                    .Append(sprintf "\n👍 x%d\t👎 x%d" word.thumbs_up word.thumbs_down)
-                    .ToString()
-            ))
+                
+                let fields = [
+                    ctx.embedField "Definition" definition true
+                    ctx.embedField "Example" (if hasExample then word.example else " - ") false
+                    ctx.embedField "👍 Up-Votes" word.thumbs_up true
+                    ctx.embedField "👎 Down-Votes" word.thumbs_down true
+                ]
+                builder.WithFields(fields) |> ignore
+            )))
     }
 
     [<CommandParameters(1)>]

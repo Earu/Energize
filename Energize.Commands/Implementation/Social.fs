@@ -13,6 +13,7 @@ module Social =
     open Energize.Interfaces.Services
     open System.Text
     open Discord.WebSocket
+    open Discord
 
     let private actions = StaticData.SOCIAL_ACTIONS |> Seq.map (|KeyValue|) |> Map.ofSeq
 
@@ -124,27 +125,30 @@ module Social =
             let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
             let dbctx = awaitResult (db.GetContext())
             let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
-            let builder = StringBuilder()
+            let builder = EmbedBuilder()
+            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+            let fields = [
+               ctx.embedField "Hugs" dbstats.HuggedCount true
+               ctx.embedField "Kisses" dbstats.KissedCount true
+               ctx.embedField "Snuggles" dbstats.SnuggledCount true
+               ctx.embedField "Pets" dbstats.PetCount true
+               ctx.embedField "Noms" dbstats.NomedCount true
+               ctx.embedField "Spanks" dbstats.SpankedCount true
+               ctx.embedField "Shots" dbstats.ShotCount true
+               ctx.embedField "Slaps" dbstats.SlappedCount true
+               ctx.embedField "Yiffs" dbstats.YiffedCount true
+               ctx.embedField "Bites" dbstats.BittenCount true
+               ctx.embedField "Boops" dbstats.BoopedCount true
+               ctx.embedField "Flexes" dbstats.FlexCount true
+            ]
             builder
-                .Append(sprintf "%s got:\n" user.Mention)
-                .Append(sprintf "**HUGS:** %d\n" dbstats.HuggedCount)
-                .Append(sprintf "**KISSES:** %d\n" dbstats.KissedCount)
-                .Append(sprintf "**SNUGGLES:** %d\n" dbstats.SnuggledCount)
-                .Append(sprintf "**PETS:** %d\n" dbstats.PetCount)
-                .Append(sprintf "**NOMS:** %d\n" dbstats.NomedCount)
-                .Append(sprintf "**SPANKS:** %d\n" dbstats.SpankedCount)
-                .Append(sprintf "**SHOTS:** %d\n" dbstats.ShotCount)
-                .Append(sprintf "**SLAPS:** %d\n" dbstats.SlappedCount)
-                .Append(sprintf "**YIFFS:** %d\n" dbstats.YiffedCount)
-                .Append(sprintf "**BITES:** %d\n" dbstats.BittenCount)
-                .Append(sprintf "**BOOPS:** %d\n" dbstats.BoopedCount)
-                .Append(sprintf "**FLEXES:** %d\n" dbstats.FlexCount)
+                .WithFields(fields)
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(ctx.messageSender.ColorGood)
+                .WithFooter(ctx.commandName)
                 |> ignore
-            let res = builder.ToString()
-            if res |> String.length > 2000 then
-                ctx.sendWarn None "The output was too long to be displayed"
-            else
-                ctx.sendOK None (builder.ToString())
+
+            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
             dbctx.Dispose()
         | None ->
             ctx.sendWarn None "Could not find any user for your input"
