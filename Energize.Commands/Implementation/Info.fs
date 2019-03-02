@@ -46,7 +46,10 @@ module Info =
                 | None -> ()
         
         let result = builder.ToString()
-        awaitIgnore (ctx.messageSender.Send(ctx.message, guild.Name, result, ctx.messageSender.ColorGood, guild.IconUrl))
+        if result.Length > 2048 then
+            ctx.sendWarn None "Output was too long to be displayed"
+        else
+            awaitIgnore (ctx.messageSender.Send(ctx.message, guild.Name, result, ctx.messageSender.ColorGood, guild.IconUrl))
     }
 
     [<Command("info", "Gets information about the bot", "info <nothing>")>]
@@ -86,7 +89,14 @@ module Info =
         match user with
         | Some user ->
             let max = 15
-            let guildNames = (ctx.client.Guilds |> Seq.map (fun g -> g.Name)) |> Seq.toList
+            let guildNames = 
+                ctx.client.Guilds 
+                |> Seq.filter (fun g -> 
+                    let opt = 
+                        g.Users |> Seq.tryFind (fun u -> u.Id.Equals(user.Id))
+                    match opt with Some _ -> true | None -> false
+                ) |> Seq.map (fun g -> g.Name)
+                |> Seq.toList
             let leftGuilds = match (guildNames |> Seq.length) - max  with n when n < 0 -> 0 | n -> n
             let time = user.CreatedAt.ToString()
             let createdTime = time.Remove(time.Length - 7)
