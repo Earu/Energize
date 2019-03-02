@@ -94,15 +94,21 @@ module UserHelper =
                 None 
         (identifier, arg)
 
+    // welcome to the null hole
     let private matchesName (user : SocketGuildUser) (input : string) : bool =
-        let name = 
-            match user.Nickname with
-            | null -> 
-                // This can be null thanks C#!!
-                if user.Username.Equals(null) then String.Empty else user.Username
-            | _ ->
-                user.Nickname
-        name.ToLower().Contains(input.ToLower())
+        match user with
+        | null -> false
+        | user ->
+            let name = 
+                match user.Nickname with
+                | null -> 
+                    if user.Username.Equals(null) then 
+                        String.Empty 
+                    else 
+                        user.Username
+                | _ ->
+                    user.Nickname
+            name.ToLower().Contains(input.ToLower())
 
     let private findUserByMention (ctx : CommandContext) (input : string) : SocketUser option =
         match ctx.message.MentionedUsers |> Seq.length > 0 with
