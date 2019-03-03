@@ -49,7 +49,7 @@ module Info =
             .WithFooter(guild.Name)
             |> ignore
 
-        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+        return [ ctx.sendEmbed (builder.Build()) ]
     }
 
     [<Command("info", "Gets information about the bot", "info <nothing>")>]
@@ -57,7 +57,7 @@ module Info =
         let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.BOT_ID_MAIN
         let github = Config.GITHUB
         let owner = match ctx.client.GetUser(Config.OWNER_ID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
-        let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users) |> Seq.length
+        let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [
             ctx.embedField "Name" ctx.client.CurrentUser true
             ctx.embedField "Prefix" ctx.prefix true
@@ -76,14 +76,16 @@ module Info =
             .WithFooter("info")
             |> ignore
 
-        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
-        awaitIgnore (ctx.messageSender.SendRaw(ctx.message, sprintf "Invite link: %s\nGithub: %s" invite github))
+        return [
+            ctx.sendEmbed (builder.Build())
+            ctx.sendRaw (sprintf "Invite link: %s\nGithub: %s" invite github)
+        ]
     }
 
     [<Command("invite", "Gets the bot invite links", "invite <nothing>")>]
     let invite (ctx : CommandContext) = async {
         let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.BOT_ID_MAIN
-        awaitIgnore (ctx.messageSender.SendRaw(ctx.message, invite + "\n" + Config.SERVER_INVITE))
+        return [ ctx.sendRaw (invite + "\n" + Config.SERVER_INVITE) ]
     }
 
     [<Command("user", "Gets information about a specific user", "user <user|userid|nothing>")>]
@@ -145,61 +147,64 @@ module Info =
                 .WithColor(ctx.messageSender.ColorGood)
                 .WithFooter("info")
                 |> ignore
-            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+            return [ ctx.sendEmbed (builder.Build()) ]
         | None ->
-            ctx.sendWarn None "No user could be found for your input"
+            return [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
     [<GuildCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("isadmin", "Shows if a user is an admin", "isadmin <user|userid>")>]
     let isAdmin (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user  ->
-            let guser = user :?> SocketGuildUser
-            let res = sprintf "%s is %san administrator" (user.ToString()) (if guser.GuildPermissions.Administrator then String.Empty else "not ")
-            ctx.sendOK None res
-        | None ->
-            ctx.sendWarn None "No user could be found for your input"
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user  ->
+                let guser = user :?> SocketGuildUser
+                let res = sprintf "%s is %san administrator" (user.ToString()) (if guser.GuildPermissions.Administrator then String.Empty else "not ")
+                [ ctx.sendOK None res ]
+            | None ->
+                [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
     [<GuildCommandAttribute>]
     [<CommandParameters(1)>]
     [<Command("roles", "Gets a user roles and role ids", "roles <user|userid>")>]
     let roles (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            let guser = user :?> SocketGuildUser
-            let builder = StringBuilder()
-            builder.Append("```") |> ignore
-            for role in guser.Roles do
-                builder.Append(sprintf "%s\t\t%d\n" role.Name role.Id) |> ignore
-            builder.Append("```") |> ignore
-            ctx.sendOK None (builder.ToString())
-        | None ->
-            ctx.sendWarn None "No user could be found for your input"
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                let guser = user :?> SocketGuildUser
+                let builder = StringBuilder()
+                builder.Append("```") |> ignore
+                for role in guser.Roles do
+                    builder.Append(sprintf "%s\t\t%d\n" role.Name role.Id) |> ignore
+                builder.Append("```") |> ignore
+                [ ctx.sendOK None (builder.ToString()) ]
+            | None ->
+                [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
     [<Command("snipe", "Snipes the last deleted message in the channel", "snipe <nothing>")>]
     let snipe (ctx : CommandContext) = async {
-        match ctx.cache.lastDeletedMessage with
-        | Some msg ->
-            let avurl = msg.Author.GetAvatarUrl(ImageFormat.Auto, 32us)
-            let builder = EmbedBuilder()
-            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
-            builder
-                .WithColor(ctx.messageSender.ColorGood)
-                .WithFooter("message sniped from " + msg.Author.ToString(), avurl)
-                .WithTimestamp(msg.CreatedAt)
-                .WithDescription(msg.Content)
-                |> ignore
-            match ImageUrlProvider.getLastImgUrl msg with
-            | Some url -> builder.WithImageUrl(url) |> ignore
-            | None -> ()
+        return 
+            match ctx.cache.lastDeletedMessage with
+            | Some msg ->
+                let avurl = msg.Author.GetAvatarUrl(ImageFormat.Auto, 32us)
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                builder
+                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithFooter("message sniped from " + msg.Author.ToString(), avurl)
+                    .WithTimestamp(msg.CreatedAt)
+                    .WithDescription(msg.Content)
+                    |> ignore
+                match ImageUrlProvider.getLastImgUrl msg with
+                | Some url -> builder.WithImageUrl(url) |> ignore
+                | None -> ()
 
-            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
-        | None ->
-            ctx.sendWarn None "There was nothing to snipe"
+                [ ctx.sendEmbed (builder.Build()) ]
+            | None ->
+                [ ctx.sendWarn None "There was nothing to snipe" ]
     }
 
     type CommitInfo = { message: string }
@@ -209,14 +214,15 @@ module Info =
         let endpoint = "https://api.github.com/repos/Earu/Energize/commits"
         let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
         let commits = JsonPayload.Deserialize<Commit list>(json, ctx.logger)
-        if not (commits.Equals(null)) && commits |> List.length > 0 then
-            match commits |> List.tryHead with
-            | Some entry ->
-                ctx.sendOK None (sprintf "```\n%s\n```" entry.commit.message)
-            | None ->
-                ctx.sendWarn None "Could not find any commits"
-        else
-            ctx.sendWarn None "There was a problem fetching last changes"
+        return 
+            if not (commits.Equals(null)) && commits |> List.length > 0 then
+                match commits |> List.tryHead with
+                | Some entry ->
+                    [ ctx.sendOK None (sprintf "```\n%s\n```" entry.commit.message) ]
+                | None ->
+                    [ ctx.sendWarn None "Could not find any commits" ]
+            else
+                [ ctx.sendWarn None "There was a problem fetching last changes" ]
     }
 
     [<CommandParameters(1)>]
@@ -240,5 +246,5 @@ module Info =
                 sprintf "There are %d users playing %s" sum ctx.input
             else
                 sprintf "There is %d user playing %s" sum ctx.input
-        ctx.sendOK None display
+        return [ ctx.sendOK None display ]
     }

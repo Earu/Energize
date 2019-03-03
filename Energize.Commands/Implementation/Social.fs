@@ -41,31 +41,32 @@ module Social =
     [<CommandParameters(2)>]
     [<Command("act", "Social interaction with up to 3 users", "act <action>,<user|userid>,<user|userid|nothing>,<user|userid|nothing>")>]
     let act (ctx : CommandContext) = async {
-        match actions |> Map.tryFind ctx.arguments.[0] with
-        | Some sentences ->
-            let users = 
-                let allUsers = 
-                    ctx.arguments.[1..] 
-                    |> List.map (fun arg -> findUser ctx arg true) 
-                    |> List.filter (fun opt -> opt.IsSome)
-                    |> List.map (fun user -> user.Value)
-                    |> List.distinctBy (fun user -> user.Id)
-                if allUsers |> List.length > 3 then allUsers.[..3] else allUsers
-            registerAction ctx users ctx.arguments.[0]
-            let userMentions = users |> List.map (fun user -> if user.Id.Equals(ctx.message.Author.Id) then "themself" else user.Mention)
-            let userDisplays = String.Join(" and ", userMentions)
-            if userMentions |> List.isEmpty then
-                ctx.sendWarn None "Could not find any user(s) to interact with for your input"
-            else
-                let sentence = 
-                    sentences.[ctx.random.Next(0, sentences.Length)]
-                        .Replace("<origin>", ctx.authorMention)
-                        .Replace("<user>", userDisplays)
-                ctx.sendOK None sentence
-        | None ->
-            let actionNames = actions |> Map.toList |> List.map (fun (name, _) -> name)
-            let help = sprintf "Actions available are:\n`%s`" (String.Join(',', actionNames))
-            ctx.sendWarn None help
+        return 
+            match actions |> Map.tryFind ctx.arguments.[0] with
+            | Some sentences ->
+                let users = 
+                    let allUsers = 
+                        ctx.arguments.[1..] 
+                        |> List.map (fun arg -> findUser ctx arg true) 
+                        |> List.filter (fun opt -> opt.IsSome)
+                        |> List.map (fun user -> user.Value)
+                        |> List.distinctBy (fun user -> user.Id)
+                    if allUsers |> List.length > 3 then allUsers.[..3] else allUsers
+                registerAction ctx users ctx.arguments.[0]
+                let userMentions = users |> List.map (fun user -> if user.Id.Equals(ctx.message.Author.Id) then "themself" else user.Mention)
+                let userDisplays = String.Join(" and ", userMentions)
+                if userMentions |> List.isEmpty then
+                    [ ctx.sendWarn None "Could not find any user(s) to interact with for your input" ]
+                else
+                    let sentence = 
+                        sentences.[ctx.random.Next(0, sentences.Length)]
+                            .Replace("<origin>", ctx.authorMention)
+                            .Replace("<user>", userDisplays)
+                    [ ctx.sendOK None sentence ]
+            | None ->
+                let actionNames = actions |> Map.toList |> List.map (fun (name, _) -> name)
+                let help = sprintf "Actions available are:\n`%s`" (String.Join(',', actionNames))
+                [ ctx.sendWarn None help ]
     }
 
     type LoveObj = { percentage : int; result : string }
@@ -74,22 +75,23 @@ module Social =
     let love (ctx : CommandContext) = async {
         let user1 = findUser ctx ctx.arguments.[0] true
         let user2 = findUser ctx ctx.arguments.[1] true
-        match (user1, user2) with
-        | (Some u1, Some u2) ->
-            let endpoint = 
-                let u1arg = sprintf "fname=%s&" u1.Username
-                let u2arg = sprintf "sname=%s" u2.Username
-                sprintf "https://love-calculator.p.mashape.com/getPercentage?%s%s" u1arg u2arg
-            let json = 
-                let cb (req : HttpWebRequest) =
-                    req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
-                    req.Headers.["X-Mashape-Key"] <- Config.MASHAPE_KEY
-                awaitResult (HttpClient.Fetch(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
-            let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
-            let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
-            ctx.sendOK None display
-        | _ ->
-            ctx.sendWarn None "Could not find any user(s) for your input"
+        return 
+            match (user1, user2) with
+            | (Some u1, Some u2) ->
+                let endpoint = 
+                    let u1arg = sprintf "fname=%s&" u1.Username
+                    let u2arg = sprintf "sname=%s" u2.Username
+                    sprintf "https://love-calculator.p.mashape.com/getPercentage?%s%s" u1arg u2arg
+                let json = 
+                    let cb (req : HttpWebRequest) =
+                        req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
+                        req.Headers.["X-Mashape-Key"] <- Config.MASHAPE_KEY
+                    awaitResult (HttpClient.Fetch(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
+                let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
+                let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
+                [ ctx.sendOK None display ]
+            | _ ->
+                [ ctx.sendWarn None "Could not find any user(s) for your input" ]
     }
 
     [<CommandParameters(1)>]
@@ -100,56 +102,58 @@ module Social =
         let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(ctx.message.Author.Id))
         dbuser.Description <- ctx.input
         dbctx.Dispose()
-        ctx.sendOK None "Description successfully changed"
+        return [ ctx.sendOK None "Description successfully changed" ]
     }
 
     [<CommandParameters(1)>]
     [<Command("desc", "Gets a user description", "desc <user|userid>")>]
     let desc (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-            let dbctx = awaitResult (db.GetContext())
-            let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
-            ctx.sendOK None (sprintf "%s description is: `%s`" user.Mention dbuser.Description)
-            dbctx.Dispose()
-        | None ->
-            ctx.sendWarn None "Could not find any user for your input"
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
+                let dbctx = awaitResult (db.GetContext())
+                let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
+                dbctx.Dispose()
+                [ ctx.sendOK None (sprintf "%s description is: `%s`" user.Mention dbuser.Description) ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any user for your input" ]
     }
 
     [<CommandParameters(1)>]
     [<Command("stats", "Gets a user social interaction stats", "stats <user|userid>")>]
     let stats (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-            let dbctx = awaitResult (db.GetContext())
-            let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
-            let builder = EmbedBuilder()
-            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
-            let fields = [
-               ctx.embedField "Hugs" dbstats.HuggedCount true
-               ctx.embedField "Kisses" dbstats.KissedCount true
-               ctx.embedField "Snuggles" dbstats.SnuggledCount true
-               ctx.embedField "Pets" dbstats.PetCount true
-               ctx.embedField "Noms" dbstats.NomedCount true
-               ctx.embedField "Spanks" dbstats.SpankedCount true
-               ctx.embedField "Shots" dbstats.ShotCount true
-               ctx.embedField "Slaps" dbstats.SlappedCount true
-               ctx.embedField "Yiffs" dbstats.YiffedCount true
-               ctx.embedField "Bites" dbstats.BittenCount true
-               ctx.embedField "Boops" dbstats.BoopedCount true
-               ctx.embedField "Flexes" dbstats.FlexCount true
-            ]
-            builder
-                .WithFields(fields)
-                .WithThumbnailUrl(user.GetAvatarUrl())
-                .WithColor(ctx.messageSender.ColorGood)
-                .WithFooter(ctx.commandName)
-                |> ignore
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
+                let dbctx = awaitResult (db.GetContext())
+                let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                let fields = [
+                   ctx.embedField "Hugs" dbstats.HuggedCount true
+                   ctx.embedField "Kisses" dbstats.KissedCount true
+                   ctx.embedField "Snuggles" dbstats.SnuggledCount true
+                   ctx.embedField "Pets" dbstats.PetCount true
+                   ctx.embedField "Noms" dbstats.NomedCount true
+                   ctx.embedField "Spanks" dbstats.SpankedCount true
+                   ctx.embedField "Shots" dbstats.ShotCount true
+                   ctx.embedField "Slaps" dbstats.SlappedCount true
+                   ctx.embedField "Yiffs" dbstats.YiffedCount true
+                   ctx.embedField "Bites" dbstats.BittenCount true
+                   ctx.embedField "Boops" dbstats.BoopedCount true
+                   ctx.embedField "Flexes" dbstats.FlexCount true
+                ]
+                builder
+                    .WithFields(fields)
+                    .WithThumbnailUrl(user.GetAvatarUrl())
+                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithFooter(ctx.commandName)
+                    |> ignore
 
-            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
-            dbctx.Dispose()
-        | None ->
-            ctx.sendWarn None "Could not find any user for your input"
+                dbctx.Dispose()
+                [ ctx.sendEmbed (builder.Build()) ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any user for your input" ]
     }

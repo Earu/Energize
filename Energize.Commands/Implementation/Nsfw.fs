@@ -29,13 +29,14 @@ module Nsfw =
         let endpoint = "https://e621.net/post/index.json?tags=" + ctx.input
         let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
         let e621Objs = JsonPayload.Deserialize<E621Obj list>(json, ctx.logger)
-        if e621Objs |> List.isEmpty then
-            ctx.sendWarn None "Nothing was found"
-        else
-            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-            await (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
-                buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
-            )))
+        return 
+            if e621Objs |> List.isEmpty then
+                [ ctx.sendWarn None "Nothing was found" ]
+            else
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
+                    buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
+                ))) ]
     }
 
     let private getDApiResult (ctx : CommandContext) (uri : string) = 
@@ -69,14 +70,15 @@ module Nsfw =
 
     let private callDApiCmd (ctx : CommandContext) (uri : string) = async {
         let result = getDApiResult ctx uri
-        match result with
-        | Some results ->
-            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-            await (paginator.SendPaginator(ctx.message, ctx.commandName, results, Action<(string * string), EmbedBuilder>(fun (url, page) builder ->
-                 buildNsfwEmbed builder ctx url page
-            )))
-        | None ->
-            ctx.sendWarn None "Nothing was found"
+        return 
+            match result with
+            | Some results ->
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, results, Action<(string * string), EmbedBuilder>(fun (url, page) builder ->
+                     buildNsfwEmbed builder ctx url page
+                ))) ]
+            | None ->
+                [ ctx.sendWarn None "Nothing was found" ]
     }
 
     [<NsfwCommand>]
