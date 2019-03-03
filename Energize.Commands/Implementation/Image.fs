@@ -17,21 +17,22 @@ module Image =
     [<CommandParameters(1)>]
     [<Command("avatar", "Gets the avatar of a user", "avatar <user|userid>")>]
     let avatar (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            let avurl = 
-                let url = user.GetAvatarUrl(ImageFormat.Auto)
-                url.Remove(url.Length - 9)
-            let builder = EmbedBuilder()
-            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
-            builder
-                .WithFooter(ctx.commandName)
-                .WithImageUrl(avurl)
-                .WithColor(ctx.messageSender.ColorGood)
-                |> ignore
-            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
-        | None ->
-            ctx.sendWarn None "Could not find any user for your input"
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                let avurl = 
+                    let url = user.GetAvatarUrl(ImageFormat.Auto)
+                    url.Remove(url.Length - 9)
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                builder
+                    .WithFooter(ctx.commandName)
+                    .WithImageUrl(avurl)
+                    .WithColor(ctx.messageSender.ColorGood)
+                    |> ignore
+                [ ctx.sendEmbed (builder.Build()) ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any user for your input" ]
     }
 
     [<GuildCommandAttribute>]
@@ -46,24 +47,25 @@ module Image =
             .WithImageUrl(guild.IconUrl)
             .WithColor(ctx.messageSender.ColorGood)
             |> ignore
-        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+        return [ ctx.sendEmbed (builder.Build()) ]
     }
 
     [<CommandParameters(1)>]
     [<Command("e", "Gets the picture of a guild emoji","e <guildemoji>")>]
     let emoji (ctx : CommandContext) = async {
         let e = ref null
-        if Emote.TryParse(ctx.arguments.[0], e) then
-            let builder = EmbedBuilder()
-            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
-            builder
-                .WithFooter("emote")
-                .WithImageUrl(e.Value.Url)
-                .WithColor(ctx.messageSender.ColorGood)
-                |> ignore
-            awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
-        else
-            ctx.sendWarn (Some "emote") "A guild emoji is expected as parameter"
+        return
+            if Emote.TryParse(ctx.arguments.[0], e) then
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                builder
+                    .WithFooter("emote")
+                    .WithImageUrl(e.Value.Url)
+                    .WithColor(ctx.messageSender.ColorGood)
+                    |> ignore
+                [ ctx.sendEmbed (builder.Build()) ]
+            else
+                [ ctx.sendWarn (Some "emote") "A guild emoji is expected as parameter" ]
     }
 
     [<Command("inspiro", "Quotes from inspirobot", "inspiro <nothing>")>]
@@ -77,7 +79,7 @@ module Image =
             .WithImageUrl(url)
             .WithFooter(ctx.commandName)
             |> ignore
-        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+        return [ ctx.sendEmbed (builder.Build()) ]
     }
 
     [<Command("wew", "wews a picture (WIP)", "wew <url|user|userid|nothing>")>]
@@ -90,9 +92,10 @@ module Image =
             else
                 ctx.cache.lastImageUrl
 
-        match url with
-        | Some url ->
-            ctx.sendOK None url
-        | None ->
-            ctx.sendWarn None "Could not find any image to use"
+        return 
+            match url with
+            | Some url ->
+                [ ctx.sendOK None url ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any image to use" ]
     }

@@ -13,7 +13,7 @@ namespace Energize
             await Config.Load();
             await StaticData.Load();
 
-            EnergizeClient client = new EnergizeClient(Config.TOKEN_DEV, "]");
+            EnergizeClient client = new EnergizeClient(Config.TOKEN_DEV, "xx");
             await client.InitializeAsync();
             await Task.Delay(-1);
         }

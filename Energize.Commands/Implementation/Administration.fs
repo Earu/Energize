@@ -22,29 +22,30 @@ module Administration =
     [<CommandParameters(2)>]
     [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
     let op (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            try
-                let guser = user :?> SocketGuildUser
-                let role = getOrCreateRole guser "EnergizeAdmin"
-                let out = ref 0
-                if Int32.TryParse(ctx.arguments.[1], out) then
-                    if out.Value.Equals(0) then
-                        await (guser.RemoveRoleAsync(role))
-                        let display = sprintf "User %s was succesfully demoted" (user.ToString())
-                        ctx.sendOK None display
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                try
+                    let guser = user :?> SocketGuildUser
+                    let role = getOrCreateRole guser "EnergizeAdmin"
+                    let out = ref 0
+                    if Int32.TryParse(ctx.arguments.[1], out) then
+                        if out.Value.Equals(0) then
+                            await (guser.RemoveRoleAsync(role))
+                            let display = sprintf "User %s was succesfully demoted" (user.ToString())
+                            [ ctx.sendOK None display ]
+                        else
+                            await (guser.AddRoleAsync(role))
+                            let display = sprintf "User %s was succesfully promoted" (user.ToString())
+                            [ ctx.sendOK None display ]
                     else
-                        await (guser.AddRoleAsync(role))
-                        let display = sprintf "User %s was succesfully promoted" (user.ToString())
-                        ctx.sendOK None display
-                else
-                    ctx.sendWarn None "Incorrect value as second argument (Needs to be 0 or 1)"
-            with _ ->
-                let display = 
-                    sprintf "There was an issue when promoting %s, it is most likely due to missing permissions" (user.ToString())
-                ctx.sendWarn None display
-        | None ->
-            ctx.sendWarn None "Could not find any user for your input"
+                        [ ctx.sendWarn None "Incorrect value as second argument (Needs to be 0 or 1)" ]
+                with _ ->
+                    let display = 
+                        sprintf "There was an issue when promoting %s, it is most likely due to missing permissions" (user.ToString())
+                    [ ctx.sendWarn None display ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any user for your input" ]
     }
     
     let private isMsgOld (msg : IMessage) =
@@ -71,22 +72,22 @@ module Administration =
         try
             let chan = ctx.message.Channel :?> ITextChannel
             await (chan.DeleteMessagesAsync(toDelete))
-            ctx.sendOK None (sprintf "Cleared %d messages among %d checked messages" toDelete.Length msgs.Length)
+            [ ctx.sendOK None (sprintf "Cleared %d messages among %d checked messages" toDelete.Length msgs.Length) ]
         with _ ->
-            ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions"
+            [ ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions" ]
 
     [<AdminCommandAttribute>]
     [<GuildCommandAttribute>]
     [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
     let clear (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
+        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
     }
 
     [<AdminCommandAttribute>]
     [<GuildCommandAttribute>]
     [<Command("clearbots", "Clear bot messages", "clearbots <amounttoremove|nothing>")>]
     let clearBots (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
+        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
     }
 
     [<AdminCommandAttribute>]
@@ -94,18 +95,19 @@ module Administration =
     [<CommandParameters(1)>]
     [<Command("clearuser", "Clear a user messages", "clearuser <user|userid>,<amounttoremove|nothing>")>]
     let clearUser (ctx : CommandContext) = async {
-        match findUser ctx ctx.arguments.[0] true with
-        | Some user ->
-            clearCmdBase ctx (if ctx.arguments.Length > 1 then ctx.arguments.[1] else "25") (fun msg -> msg.Author.Id.Equals(user.Id))
-        | None ->   
-            ctx.sendWarn None "No user could be found for your input"
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                clearCmdBase ctx (if ctx.arguments.Length > 1 then ctx.arguments.[1] else "25") (fun msg -> msg.Author.Id.Equals(user.Id))
+            | None ->   
+                [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
     [<AdminCommandAttribute>]
     [<GuildCommandAttribute>]
     [<Command("clearaw", "Clear a specified amount of messages", "clearaw <amounttoremove|nothing>")>]
     let clearRaw (ctx : CommandContext) = async {
-        clearCmdBase ctx ctx.input (fun _ -> true)
+        return clearCmdBase ctx ctx.input (fun _ -> true)
     }
 
     [<AdminCommandAttribute>]
@@ -117,11 +119,13 @@ module Administration =
         let dbctx = awaitResult (db.GetContext())
         let dbguild = awaitResult (dbctx.Instance.GetOrCreateGuild(guser.Guild.Id))
         dbguild.ShouldDeleteInvites <- not dbguild.ShouldDeleteInvites
-        if dbguild.ShouldDeleteInvites then
-            ctx.sendOK None "Invite links will now be automatically deleted"
-        else
-            ctx.sendOK None "Invite links will now be permitted"
         dbctx.Dispose()
+
+        return
+            if dbguild.ShouldDeleteInvites then
+                [ ctx.sendOK None "Invite links will now be automatically deleted" ]
+            else
+                [ ctx.sendOK None "Invite links will now be permitted" ]
     }
 
     let private createHOFChannel (ctx : CommandContext) = 
@@ -183,21 +187,22 @@ module Administration =
     let fame (ctx : CommandContext) = async {
         let chan = getOrCreateHOFChannel ctx
         let msgId = ref 0UL
-        if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
-            let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
-            match msg with
-            | null ->
-                ctx.sendWarn None "Could not find any message for your input"
-            | m ->
-                match trySendFameMsg ctx chan m with
-                | None ->
-                    ctx.sendWarn None "There was an error when posting the message into hall of fames"
-                | Some p when not (p.Equals(null)) ->
-                    try
-                        await (p.AddReactionAsync(Emoji("🌟")))
-                    with _ -> ()
-                    ctx.sendOK None "Message successfully added to hall of fames"
-                | _ -> ()
-        else
-            ctx.sendWarn None "This command is expecting a number (message id)"
+        return 
+            if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
+                let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
+                match msg with
+                | null ->
+                    [ ctx.sendWarn None "Could not find any message for your input" ]
+                | m ->
+                    match trySendFameMsg ctx chan m with
+                    | None ->
+                        [ ctx.sendWarn None "There was an error when posting the message into hall of fames" ]
+                    | Some p when not (p.Equals(null)) ->
+                        try
+                            await (p.AddReactionAsync(Emoji("🌟")))
+                        with _ -> ()
+                        [ ctx.sendOK None "Message successfully added to hall of fames" ]
+                    | _ -> []
+            else
+                [ ctx.sendWarn None "This command is expecting a number (message id)" ]
     }

@@ -4,6 +4,7 @@ open System
 
 module Command =
     open Context
+    open Discord
 
     type CommandModuleAttribute(name : string) =
         inherit Attribute()
@@ -32,7 +33,7 @@ module Command =
         member val parameters : int = count
 
     type CommandCallback = 
-        delegate of CommandContext -> Async<unit>
+        delegate of CommandContext -> Async<IUserMessage list>
 
     type Command =
         {

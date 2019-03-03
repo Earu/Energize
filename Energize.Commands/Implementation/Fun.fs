@@ -20,10 +20,11 @@ module Fun =
     [<Command("ascii", "Turns a text/sentence into ascii art", "ascii <sentence>")>]
     let ascii (ctx : CommandContext) = async {
         let body = awaitResult (HttpClient.Fetch("http://artii.herokuapp.com/make?text=" + ctx.input, ctx.logger))
-        if body |> String.length > 2000 then
-            ctx.sendWarn None "The word or sentence you provided is too long!"
-        else
-            awaitIgnore (ctx.messageSender.SendRaw(ctx.message, "```\n" + body + "\n```"))
+        return 
+            if body |> String.length > 2000 then
+                [ ctx.sendWarn None "The word or sentence you provided is too long!" ]
+            else
+                [ ctx.sendRaw ("```\n" + body + "\n```") ]
     }
 
     [<Command("describe", "Generates a user description", "describe <user|nothing>")>]
@@ -65,9 +66,9 @@ module Fun =
                 | Some _ -> true
                 | None -> false
             let display = u.Mention + " is " + (if isVowel then "an" else "a") + " " + res
-            ctx.sendOK None display
+            return [ ctx.sendOK None display ]
         | None ->
-            ctx.sendWarn None "No user could be found for your input"
+            return [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
     [<CommandParameters(1)>]
@@ -84,13 +85,14 @@ module Fun =
 
         let res = builder.ToString()
         let len = res |> String.length
-        match len with
-        | 0 ->
-            ctx.sendWarn None "Your input did not contain any letter"
-        | n when n > 2000 ->
-            ctx.sendWarn None "The output was too long to be displayed"
-        | _ -> 
-            ctx.sendOK None res
+        return 
+            match len with
+            | 0 ->
+                [ ctx.sendWarn None "Your input did not contain any letter" ]
+            | n when n > 2000 ->
+                [ ctx.sendWarn None "The output was too long to be displayed" ]
+            | _ -> 
+                [ ctx.sendOK None res ]
     }
 
     [<CommandParameters(1)>]
@@ -98,7 +100,7 @@ module Fun =
     let eightBall (ctx : CommandContext) = async {
         let answers = StaticData.EIGHT_BALL_ANSWERS
         let answer = answers.[ctx.random.Next(0, answers.Length)]
-        ctx.sendOK None answer
+        return [ ctx.sendOK None answer ]
     }
 
     [<CommandParameters(2)>]
@@ -107,7 +109,7 @@ module Fun =
         let answers = StaticData.PICK_ANSWERS
         let choice = ctx.arguments.[ctx.random.Next(0, ctx.arguments.Length)].Trim()
         let answer = answers.[ctx.random.Next(0, answers.Length)].Replace("<answer>", choice)
-        ctx.sendOK None answer
+        return [ ctx.sendOK None answer ]
     }
 
     [<CommandParameters(1)>]
@@ -115,11 +117,12 @@ module Fun =
     let markov (ctx : CommandContext) = async {
         let markov = ctx.serviceManager.GetService<IMarkovService>("Markov")
         let result = markov.Generate(ctx.input)
-        if String.IsNullOrWhiteSpace result then
-            ctx.sendWarn (Some "markov") "Nothing was generated ... ?!"
-        else
-            let display = Regex.Replace(result, "\\s\\s", " ")
-            ctx.sendOK (Some "markov") display
+        return 
+            if String.IsNullOrWhiteSpace result then
+                [ ctx.sendWarn (Some "markov") "Nothing was generated ... ?!" ]
+            else
+                let display = Regex.Replace(result, "\\s\\s", " ")
+                [ ctx.sendOK (Some "markov") display ]
     }
 
     type FactObj = { value : string }
@@ -128,7 +131,7 @@ module Fun =
         let endpoint = "https://api.chucknorris.io/jokes/random"
         let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
         let fact = JsonPayload.Deserialize<FactObj>(json, ctx.logger)
-        ctx.sendOK None fact.value
+        return [ ctx.sendOK None fact.value ]
     }
 
     [<Command("gname", "Generates a random gAmER name", "gname <nothing>")>]
@@ -145,7 +148,7 @@ module Fun =
         if ctx.random.Next(1,100) < 75 then
             builder.Append(ctx.random.Next(1,1000)) |> ignore
 
-        ctx.sendOK None (builder.ToString().Replace("-", "").ToLower())
+        return [ ctx.sendOK None (builder.ToString().Replace("-", "").ToLower()) ]
     }
 
     [<Command("oldswear", "Insults from another era", "oldswear <nothing>")>]
@@ -155,11 +158,12 @@ module Fun =
         doc.LoadHtml(html)
         let node = doc.DocumentNode.SelectNodes("//font") |> Seq.tryHead
 
-        match node with
-        | Some n ->
-            ctx.sendOK None n.InnerText
-        | None ->
-            ctx.sendWarn None "The oldswear source is down!"
+        return
+            match node with
+            | Some n ->
+                [ ctx.sendOK None n.InnerText ]
+            | None ->
+                [ ctx.sendWarn None "The oldswear source is down!" ]
     }
 
     [<CommandParameters(2)>]
@@ -167,29 +171,30 @@ module Fun =
     let textStyle (ctx : CommandContext) = async {
         let styleService = ctx.serviceManager.GetService<ITextStyleService>("TextStyle")
         let styleHelp = sprintf "Styles available:\n`%s`" (String.Join(',', styleService.GetStyles()));
-        match styleService.GetStyles() |> Seq.tryFind (fun s -> s.Equals(ctx.arguments.[0].Trim().ToLower())) with
-        | Some style ->
-            match ctx.arguments.[1].Trim().ToLower() with
-            | "toggle" ->
-                let user = ctx.message.Author :?> SocketGuildUser
-                let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-                let dbctx = awaitResult (db.GetContext())
-                let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
+        return 
+            match styleService.GetStyles() |> Seq.tryFind (fun s -> s.Equals(ctx.arguments.[0].Trim().ToLower())) with
+            | Some style ->
+                match ctx.arguments.[1].Trim().ToLower() with
+                | "toggle" ->
+                    let user = ctx.message.Author :?> SocketGuildUser
+                    let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
+                    let dbctx = awaitResult (db.GetContext())
+                    let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
 
-                let wasToggled = dbuser.Style.Equals(style)
-                dbuser.Style <- if wasToggled then "none" else style
-                dbctx.Dispose()
-                if wasToggled then
-                    ctx.sendOK None "Untoggling style"
-                else
-                    ctx.sendOK None "Toggling style"
-            | _ -> 
-                let input = String.Join(',', ctx.arguments.[1..])
-                if not (String.IsNullOrWhiteSpace input) then
-                    let result = styleService.GetStyleResult(input, style)
-                    ctx.sendOK None result
-                else
-                    ctx.sendWarn None "The input to transform was empty"
-        | None ->
-            ctx.sendWarn None styleHelp
+                    let wasToggled = dbuser.Style.Equals(style)
+                    dbuser.Style <- if wasToggled then "none" else style
+                    dbctx.Dispose()
+                    if wasToggled then
+                        [ ctx.sendOK None "Untoggling style" ]
+                    else
+                        [ ctx.sendOK None "Toggling style" ]
+                | _ -> 
+                    let input = String.Join(',', ctx.arguments.[1..])
+                    if not (String.IsNullOrWhiteSpace input) then
+                        let result = styleService.GetStyleResult(input, style)
+                        [ ctx.sendOK None result ]
+                    else
+                        [ ctx.sendWarn None "The input to transform was empty" ]
+            | None ->
+                [ ctx.sendWarn None styleHelp ]
     }

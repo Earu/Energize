@@ -19,7 +19,6 @@ module CommandHandler =
     open Energize.Interfaces.Services
     open System.IO
     open System.Diagnostics
-    open System.Text
 
     type private CommandHandlerState =
         {
@@ -31,6 +30,7 @@ module CommandHandler =
             messageSender : MessageSender
             prefix : string
             serviceManager : IServiceManager
+            commandCache : (uint64 * IUserMessage list) list
         }
 
     // I had to.
@@ -65,38 +65,42 @@ module CommandHandler =
             .WithColor(if iswarn then ctx.messageSender.ColorWarning else ctx.messageSender.ColorGood)
             .WithFooter(sprintf (if iswarn then "bad usage [ %s ]" else "help [ %s ]") cmd.name)
             |> ignore
-        awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+        ctx.sendEmbed (builder.Build())
 
     [<Command("help", "This command", "help <cmd|nothing>")>]
     let help (ctx : CommandContext) = async {
-        if ctx.hasArguments then
-            let cmdName = ctx.arguments.[0].Trim()
-            match handlerState.Value.commands |> Map.tryFind cmdName with
-            | Some cmd ->
-                postCmdHelp cmd ctx false
-            | None ->
-                let warning = sprintf "Could not find any command named \'%s\'" cmdName
-                ctx.sendWarn None warning
-        else
-            let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-            let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
-            await (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
-                let cmdsDisplay = 
-                    cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
-                builder.WithFields(ctx.embedField moduleName (String.Join(',', cmdsDisplay)) true)
-                |> ignore
-            )))
-
-            let path = "help.txt"
-            if File.Exists(path) then
-                awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
+        return
+            if ctx.hasArguments then
+                let cmdName = ctx.arguments.[0].Trim()
+                match handlerState.Value.commands |> Map.tryFind cmdName with
+                | Some cmd ->
+                    [ postCmdHelp cmd ctx false ]
+                | None ->
+                    let warning = sprintf "Could not find any command named \'%s\'" cmdName
+                    [ ctx.sendWarn None warning ]
             else
-                match handlerState with
-                | Some state ->
-                    generateHelpFile state path
-                    awaitIgnore (ctx.messageSender.SendFile(ctx.message, path))
-                    File.Delete(path)
-                | None -> ()
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
+                let pageMsg = awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
+                    let cmdsDisplay = 
+                        cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
+                    builder.WithFields(ctx.embedField moduleName (String.Join(',', cmdsDisplay)) true)
+                    |> ignore
+                )))
+
+                let path = "help.txt"
+                let msgs =
+                    if File.Exists(path) then
+                         [ awaitResult (ctx.messageSender.SendFile(ctx.message, path)) :> IUserMessage ]
+                    else
+                        match handlerState with
+                        | Some state ->
+                            generateHelpFile state path
+                            let fileMsg = awaitResult (ctx.messageSender.SendFile(ctx.message, path))
+                            File.Delete(path)
+                            [ fileMsg ]
+                        | None -> []
+                pageMsg :: msgs
     }
 
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
@@ -113,16 +117,17 @@ module CommandHandler =
         let value = int (ctx.arguments.[1].Trim())
         match handlerState with
         | Some state ->
-            if state.commands |> Map.containsKey cmdName then
-                if value.Equals(0) then
-                    enableCmd state cmdName false
-                    ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName)
+            return
+                if state.commands |> Map.containsKey cmdName then
+                    if value.Equals(0) then
+                        enableCmd state cmdName false
+                        [ ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName) ]
+                    else
+                        enableCmd state cmdName true
+                        [ ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName) ]
                 else
-                    enableCmd state cmdName true
-                    ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName)
-            else
-                ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName)
-        | None -> ()
+                    [ ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName) ]
+        | None -> return []
     }
 
     let private isCmdX<'atr when 'atr :> Attribute > (methodInfo : MethodInfo) =
@@ -168,9 +173,12 @@ module CommandHandler =
 
         for moduleType in moduleTypes do
             let funcs = moduleType.GetMethods() |> Seq.filter (fun func -> Attribute.IsDefined(func, typedefof<CommandAttribute>))
-            for func in funcs do
-                let dlg = func.CreateDelegate(typedefof<CommandCallback>) :?> CommandCallback
-                handlerState <- loadCmd (match handlerState with Some s -> s | None -> state) dlg moduleType
+            try 
+                for func in funcs do
+                    let dlg = func.CreateDelegate(typedefof<CommandCallback>) :?> CommandCallback
+                    handlerState <- loadCmd (match handlerState with Some s -> s | None -> state) dlg moduleType
+            with ex ->
+                state.logger.Danger(ex.ToString())
 
     let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) (serviceManager : IServiceManager) =
@@ -184,6 +192,7 @@ module CommandHandler =
                 messageSender = messageSender
                 prefix = prefix
                 serviceManager = serviceManager
+                commandCache = List.empty
             }
         
         logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Registering commands with prefix \'%s\'" prefix)
@@ -254,8 +263,17 @@ module CommandHandler =
             commandCount = state.commands.Count
         }
 
-    let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<unit>) : Task =
-        let tcallback = toTask asyncOp
+    let private registerCommandCacheEntry (msgId : uint64) (msgs : IUserMessage list) =
+        match handlerState with
+        | Some state ->
+            let newCommandCache = 
+                let cache = (msgId, msgs) :: state.commandCache
+                if cache.Length > 50 then cache.[..50] else cache
+            handlerState <- Some { state with commandCache = newCommandCache }
+        | None -> ()
+
+    let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<IUserMessage list>) : Task =
+        let tcallback = (toTaskResult asyncOp).ContinueWith(Action<Task<IUserMessage list>>(fun t -> registerCommandCacheEntry msg.Id (awaitResult t)))
         if not tcallback.IsCompleted then
             async {
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
@@ -295,7 +313,8 @@ module CommandHandler =
             await task
             logCmd ctx false 
         else
-            postCmdHelp cmd ctx true
+            let msg = postCmdHelp cmd ctx true 
+            registerCommandCacheEntry msg.Id [ msg ]
             logCmd ctx false
 
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
@@ -347,6 +366,14 @@ module CommandHandler =
             with ex ->
                 reportCmdError state ex msg cmd input
 
+    let private deleteCmdMsgs (state : CommandHandlerState) (cmdMsgId : uint64) = 
+        match state.commandCache |> List.tryFind (fun (id, _) -> cmdMsgId.Equals(id)) with
+        | Some (id, msgs) -> 
+            for msg in msgs do await (msg.DeleteAsync())
+            let newCmdCache = state.commandCache |> List.except [ (id, msgs) ]
+            handlerState <- Some { state with commandCache = newCmdCache }
+        | None -> ()
+
     let handleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
         match handlerState with
         | Some state when cache.HasValue ->
@@ -354,7 +381,8 @@ module CommandHandler =
             let newCache = { oldCache with lastDeletedMessage = Some (cache.Value :?> SocketMessage) }
             let newCaches = state.caches.Add(chan.Id, newCache)
             handlerState <- Some { state with caches = newCaches }
-        | Some _ -> ()
+            deleteCmdMsgs state cache.Id
+        | Some state -> deleteCmdMsgs state cache.Id
         | _ -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
 
     let private updateChannelCache (state : CommandHandlerState) (msg : SocketMessage) (cb : CommandCache -> CommandCache) =

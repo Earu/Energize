@@ -63,41 +63,42 @@ module Game =
     [<Command("steam", "Searches steam for a profile", "steam <name|steamid|steamid64>")>]
     let steam (ctx : CommandContext) = async {
         let id64 = tryGetSteamId64 ctx
-        match id64 with
-        | Some id ->    
-            let endpoint = 
-                sprintf "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%d" Config.STEAM_API_KEY id
-            let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
-            let steamPlyObj = JsonPayload.Deserialize<SteamPlySummaryObj>(json, ctx.logger)
-            match steamPlyObj.response.players |> Seq.tryHead with
-            | Some ply ->
-                let created = 
-                    let dt = DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                    dt.AddSeconds(float ply.timecreated).ToLocalTime()
-                let isPublic = ply.communityvisibilitystate.Equals(3)
-                let visibility = if isPublic then "Public" else "Private"
-                let fields = [
-                    ctx.embedField "Name" ply.personaname true
-                    ctx.embedField "Status" (getState ply) true
-                    ctx.embedField "Creation Date" created true
-                    ctx.embedField "Visibility" visibility true
-                    ctx.embedField "SteamID64" ply.steamid true
-                    ctx.embedField "URL" ply.profileurl true
-                ]
-                let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
-                builder
-                    .WithFields(fields)
-                    .WithThumbnailUrl(ply.avatarfull)
-                    .WithColor(ctx.messageSender.ColorGood)
-                    .WithFooter(ctx.commandName)
-                    |> ignore
+        return 
+            match id64 with
+            | Some id ->    
+                let endpoint = 
+                    sprintf "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%d" Config.STEAM_API_KEY id
+                let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+                let steamPlyObj = JsonPayload.Deserialize<SteamPlySummaryObj>(json, ctx.logger)
+                match steamPlyObj.response.players |> Seq.tryHead with
+                | Some ply ->
+                    let created = 
+                        let dt = DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        dt.AddSeconds(float ply.timecreated).ToLocalTime()
+                    let isPublic = ply.communityvisibilitystate.Equals(3)
+                    let visibility = if isPublic then "Public" else "Private"
+                    let fields = [
+                        ctx.embedField "Name" ply.personaname true
+                        ctx.embedField "Status" (getState ply) true
+                        ctx.embedField "Creation Date" created true
+                        ctx.embedField "Visibility" visibility true
+                        ctx.embedField "SteamID64" ply.steamid true
+                        ctx.embedField "URL" ply.profileurl true
+                    ]
+                    let builder = EmbedBuilder()
+                    ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                    builder
+                        .WithFields(fields)
+                        .WithThumbnailUrl(ply.avatarfull)
+                        .WithColor(ctx.messageSender.ColorGood)
+                        .WithFooter(ctx.commandName)
+                        |> ignore
 
-                awaitIgnore (ctx.messageSender.Send(ctx.message, builder.Build()))
+                    [ ctx.sendEmbed (builder.Build()) ]
+                | None ->
+                    [ ctx.sendWarn None "Could not find any user for your input" ]
             | None ->
-                ctx.sendWarn None "Could not find any user for your input"
-        | None ->
-            ctx.sendWarn None "Could not find any user for your input"
+                [ ctx.sendWarn None "Could not find any user for your input" ]
     }
 
     [<CommandParameters(3)>]
@@ -106,16 +107,17 @@ module Game =
         let width = int ctx.arguments.[0]
         let height = int ctx.arguments.[1]
         let mineAmount = int ctx.arguments.[2]
-        match (width, height) with
-        | (w, h) when w > 10 || h > 10 ->
-            ctx.sendWarn None "Maximum width and height is 10"
-        | (w, h) when mineAmount > h * w ->
-            ctx.sendWarn None "Cannot have more mines than squares"
-        | (w, h) ->
-            let minesweeper = ctx.serviceManager.GetService<IMinesweeperService>("Minesweeper")
-            let res = minesweeper.Generate(w, h, mineAmount)
-            if res.Length > 2000 then
-                ctx.sendWarn None "Output is too long to be displayed"
-            else
-                ctx.sendOK None res
+        return 
+            match (width, height) with
+            | (w, h) when w > 10 || h > 10 ->
+                [ ctx.sendWarn None "Maximum width and height is 10" ]
+            | (w, h) when mineAmount > h * w ->
+                [ ctx.sendWarn None "Cannot have more mines than squares" ]
+            | (w, h) ->
+                let minesweeper = ctx.serviceManager.GetService<IMinesweeperService>("Minesweeper")
+                let res = minesweeper.Generate(w, h, mineAmount)
+                if res.Length > 2000 then
+                    [ ctx.sendWarn None "Output is too long to be displayed" ]
+                else
+                    [ ctx.sendOK None res ]
     }
