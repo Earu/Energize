@@ -272,18 +272,19 @@ module CommandHandler =
             handlerState <- Some { state with commandCache = newCommandCache }
         | None -> ()
 
-    let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<IUserMessage list>) : Task =
-        let tcallback = (toTaskResult asyncOp).ContinueWith(Action<Task<IUserMessage list>>(fun t -> registerCmdCacheEntry msg.Id (awaitResult t)))
-        if not tcallback.IsCompleted then
-            async {
+    let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (ctx : CommandContext) : Task<Task> =
+        async {
+            let asyncOp = cmd.callback.Invoke(ctx)
+            let tcallback = (toTaskResult asyncOp).ContinueWith((fun t -> registerCmdCacheEntry msg.Id (awaitResult t)))
+            if not tcallback.IsCompleted then
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
                 if not tcallback.IsCompleted then
-                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command \'%s\' is timing out!" cmdName)) |> ignore
-                    state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmdName)
+                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command \'%s\' is timing out!" cmd.name)) |> ignore
+                    state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmd.name)
                 return tres
-            } |> awaitOp
-        else
-            Task.CompletedTask
+            else
+                return Task.CompletedTask
+        } |> toTaskResult
 
     let private logCmd (ctx : CommandContext) =
         let color = if ctx.isPrivate then ConsoleColor.Blue else ConsoleColor.Cyan
@@ -305,9 +306,8 @@ module CommandHandler =
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args isPrivate
         if args.Length >= cmd.parameters then
-            let task = handleTimeOut state msg cmd.name (cmd.callback.Invoke(ctx))
+            let task = handleTimeOut state msg cmd ctx
             task.ConfigureAwait(false) |> ignore
-            await task
             logCmd ctx
         else
             let msgs = [ postCmdHelp cmd ctx true ]
@@ -316,18 +316,19 @@ module CommandHandler =
 
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
-        state.logger.Warning(ex.InnerException.ToString())
+        let realEx = match ex.InnerException with null -> ex | _ -> ex
+        state.logger.Warning(realEx.ToString())
         let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
         awaitIgnore (state.messageSender.Warning(msg, "internal Error", err))
         
         let args = String.Join(',', getCmdArgs state input)
         let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
 
-        let frame = StackTrace(ex.InnerException, true).GetFrame(0)
+        let frame = StackTrace(realEx, true).GetFrame(0)
         let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
         let builder = EmbedBuilder()
         builder
-            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay ex.InnerException.Message)
+            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay realEx.Message)
             .WithTimestamp(msg.CreatedAt)
             .WithFooter(source)
             .WithColor(state.messageSender.ColorDanger)
