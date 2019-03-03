@@ -56,7 +56,11 @@ namespace Energize.Services.Listeners
             => Commands.CommandHandler.handleMessageReceived(msg);
 
         [Event("MessageDeleted")]
-        public async Task MessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
+        public async Task OnMessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
             => Commands.CommandHandler.handleMessageDeleted(cache, chan);
+
+        [Event("MessageUpdated")]
+        public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
+            => Commands.CommandHandler.handleMessageEdited(cache, msg, chan);
     }
 }
