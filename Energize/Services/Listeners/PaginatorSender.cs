@@ -43,9 +43,9 @@ namespace Energize.Services.Listeners
                     this._Paginators.Remove(msgid);
                 
                 if(toremove.Count > 0)
-                    this._Logger.Nice("Paginator", ConsoleColor.Gray, $"Cleared {toremove.Count} paginator isntances");
+                    this._Logger.Nice("Paginator", ConsoleColor.Gray, $"Cleared {toremove.Count} paginator instance{(toremove.Count == 1 ? string.Empty : "s")}");
             });
-            timer.Change(60000 * 5, 60000 * 5);
+            timer.Change(300000, 300000); //5 mins
             this._PaginatorCleanup = timer;
         }
 
