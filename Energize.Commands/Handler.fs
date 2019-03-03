@@ -263,7 +263,7 @@ module CommandHandler =
             commandCount = state.commands.Count
         }
 
-    let private registerCommandCacheEntry (msgId : uint64) (msgs : IUserMessage list) =
+    let private registerCmdCacheEntry (msgId : uint64) (msgs : IUserMessage list) =
         match handlerState with
         | Some state ->
             let newCommandCache = 
@@ -273,7 +273,7 @@ module CommandHandler =
         | None -> ()
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmdName : string) (asyncOp : Async<IUserMessage list>) : Task =
-        let tcallback = (toTaskResult asyncOp).ContinueWith(Action<Task<IUserMessage list>>(fun t -> registerCommandCacheEntry msg.Id (awaitResult t)))
+        let tcallback = (toTaskResult asyncOp).ContinueWith(Action<Task<IUserMessage list>>(fun t -> registerCmdCacheEntry msg.Id (awaitResult t)))
         if not tcallback.IsCompleted then
             async {
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
@@ -285,13 +285,10 @@ module CommandHandler =
         else
             Task.CompletedTask
 
-    let private logCmd (ctx : CommandContext) (deleted : bool) =
-        let color = 
-            if deleted then ConsoleColor.Yellow else
-                if ctx.isPrivate then ConsoleColor.Blue else ConsoleColor.Cyan
-
+    let private logCmd (ctx : CommandContext) =
+        let color = if ctx.isPrivate then ConsoleColor.Blue else ConsoleColor.Cyan
         let head = if ctx.isPrivate then "DMCommands" else "Commands"
-        let action = if deleted then "deleted" else "used"
+        let action = "used"
         let where = 
             if not ctx.isPrivate then
                 let chan = ctx.message.Channel :?> IGuildChannel
@@ -307,15 +304,15 @@ module CommandHandler =
         await (msg.Channel.TriggerTypingAsync())
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args isPrivate
-        if (args |> List.length) >= (cmd.parameters) then
+        if args.Length >= cmd.parameters then
             let task = handleTimeOut state msg cmd.name (cmd.callback.Invoke(ctx))
             task.ConfigureAwait(false) |> ignore
             await task
-            logCmd ctx false 
+            logCmd ctx
         else
-            let msg = postCmdHelp cmd ctx true 
-            registerCommandCacheEntry msg.Id [ msg ]
-            logCmd ctx false
+            let msgs = [ postCmdHelp cmd ctx true ]
+            registerCmdCacheEntry msg.Id msgs
+            logCmd ctx
 
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
         let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
@@ -366,12 +363,15 @@ module CommandHandler =
             with ex ->
                 reportCmdError state ex msg cmd input
 
-    let private deleteCmdMsgs (state : CommandHandlerState) (cmdMsgId : uint64) = 
-        match state.commandCache |> List.tryFind (fun (id, _) -> cmdMsgId.Equals(id)) with
-        | Some (id, msgs) -> 
-            for msg in msgs do await (msg.DeleteAsync())
-            let newCmdCache = state.commandCache |> List.except [ (id, msgs) ]
-            handlerState <- Some { state with commandCache = newCmdCache }
+    let private deleteCmdMsgs (cmdMsgId : uint64) = 
+        match handlerState with
+        | Some state ->
+            match state.commandCache |> List.tryFind (fun (id, _) -> cmdMsgId.Equals(id)) with
+            | Some (id, msgs) -> 
+                for msg in msgs do await (msg.DeleteAsync())
+                let newCmdCache = state.commandCache |> List.except [ (id, msgs) ]
+                handlerState <- Some { state with commandCache = newCmdCache }
+            | None -> ()
         | None -> ()
 
     let handleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
@@ -381,20 +381,23 @@ module CommandHandler =
             let newCache = { oldCache with lastDeletedMessage = Some (cache.Value :?> SocketMessage) }
             let newCaches = state.caches.Add(chan.Id, newCache)
             handlerState <- Some { state with caches = newCaches }
-            deleteCmdMsgs state cache.Id
-        | Some state -> deleteCmdMsgs state cache.Id
+            deleteCmdMsgs cache.Id
+        | Some _ -> deleteCmdMsgs cache.Id
         | _ -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
 
-    let private updateChannelCache (state : CommandHandlerState) (msg : SocketMessage) (cb : CommandCache -> CommandCache) =
-        let oldCache = getChannelCache state msg.Channel.Id
-        let newCache = cb oldCache
-        let newCaches = state.caches.Add(msg.Channel.Id, newCache)
-        handlerState <- Some { state with caches = newCaches }
+    let private updateChannelCache (msg : SocketMessage) (cb : CommandCache -> CommandCache) =
+        match handlerState with
+        | Some state ->
+            let oldCache = getChannelCache state msg.Channel.Id
+            let newCache = cb oldCache
+            let newCaches = state.caches.Add(msg.Channel.Id, newCache)
+            handlerState <- Some { state with caches = newCaches }
+        | None -> ()
         
     let handleMessageReceived (msg : SocketMessage) =
         match handlerState with
         | Some state ->
-            updateChannelCache state msg (fun oldCache -> 
+            updateChannelCache msg (fun oldCache -> 
                 let lastUrl = match getLastImgUrl msg with Some url -> Some url | None -> oldCache.lastImageUrl
                 let lastMsg = if msg.Author.IsBot then oldCache.lastMessage else Some msg
                 { oldCache with lastImageUrl = lastUrl; lastMessage = lastMsg }
@@ -406,5 +409,13 @@ module CommandHandler =
                     match state.commands |> Map.tryFind cmdName with
                     | Some cmd -> tryRunCmd state msg cmd content
                     | None -> ()
-        | None -> 
-            printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
+        | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
+
+    let handleMessageEdited _ (msg : SocketMessage) _ =
+        match handlerState with
+        | Some _ ->
+            let diff = DateTime.Now.ToUniversalTime() - msg.Timestamp.DateTime
+            if diff.TotalHours < 1.0 then
+                deleteCmdMsgs msg.Id
+                handleMessageReceived msg
+        | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
