@@ -49,7 +49,14 @@ namespace Energize.Services.Listeners
             this._PaginatorCleanup = timer;
         }
 
-        public async Task SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
+        private async Task AddReactions(IUserMessage msg)
+        {
+            await msg.AddReactionAsync(_PreviousEmote);
+            await msg.AddReactionAsync(_CloseEmote);
+            await msg.AddReactionAsync(_NextEmote);
+        }
+
+        public async Task<IUserMessage> SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
             EmbedBuilder builder = new EmbedBuilder();
@@ -63,11 +70,11 @@ namespace Energize.Services.Listeners
             try
             {
                 IUserMessage posted = await this._MessageSender.Send(msg, embed);
-                await posted.AddReactionAsync(_PreviousEmote);
-                await posted.AddReactionAsync(_CloseEmote);
-                await posted.AddReactionAsync(_NextEmote);
+                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+
+                return posted;
             }
             catch (HttpException)
             {
@@ -77,9 +84,11 @@ namespace Energize.Services.Listeners
             {
                 this._Logger.Danger(ex);
             }
+
+            return null;
         }
 
-        public async Task SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
+        public async Task<IUserMessage> SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
         {
             EmbedBuilder builder = new EmbedBuilder();
             this._MessageSender.BuilderWithAuthor(msg, builder);
@@ -93,11 +102,11 @@ namespace Energize.Services.Listeners
             try
             {
                 IUserMessage posted = await this._MessageSender.Send(msg, embed);
-                await posted.AddReactionAsync(_PreviousEmote);
-                await posted.AddReactionAsync(_CloseEmote);
-                await posted.AddReactionAsync(_NextEmote);
+                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+
+                return posted;
             }
             catch (HttpException)
             {
@@ -107,20 +116,22 @@ namespace Energize.Services.Listeners
             {
                 this._Logger.Danger(ex);
             }
+
+            return null;
         }
 
-        public async Task SendPaginatorRaw<T>(SocketMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
+        public async Task<IUserMessage> SendPaginatorRaw<T>(SocketMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
             try
             {
                 IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
-                await posted.AddReactionAsync(_PreviousEmote);
-                await posted.AddReactionAsync(_CloseEmote);
-                await posted.AddReactionAsync(_NextEmote);
+                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+
+                return posted;
             }
             catch (HttpException)
             {
@@ -130,6 +141,8 @@ namespace Energize.Services.Listeners
             {
                 this._Logger.Danger(ex);
             }
+
+            return null;
         }
 
         private bool IsOKEmote(SocketReaction reaction)

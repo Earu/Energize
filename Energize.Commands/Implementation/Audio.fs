@@ -13,17 +13,18 @@ module Audio =
     [<Command("join", "Joins the voice channel you are in", "join <nothing>")>]
     let join (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
-        match guser.VoiceChannel with
-        | null -> 
-            ctx.sendWarn None "You are not in a voice chat"
-        | vc ->
-            vc.ConnectAsync() |> ignore //needs to be awaited in another tread
-            ctx.sendOK None "OK, joining"
+        return 
+            match guser.VoiceChannel with
+            | null -> 
+                [ ctx.sendWarn None "You are not in a voice chat" ]
+            | vc ->
+                vc.ConnectAsync() |> ignore //needs to be awaited in another tread
+                [ ctx.sendOK None "OK, joining" ]
     }
 
     [<GuildCommand>]
     [<Command("leave", "Leaves the voice channel", "leave <nothing>")>]
-    let leave (ctx : CommandContext) = async {
-        1
+    let leave (ctx : CommandContext) : Async<IUserMessage list> = async {
+        return []
     }
 
