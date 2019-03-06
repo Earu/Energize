@@ -53,14 +53,14 @@ namespace Energize.Services.Listeners
 
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
-            => Commands.CommandHandler.handleMessageReceived(msg);
+            => Commands.CommandHandler.HandleMessageReceived(msg);
 
         [Event("MessageDeleted")]
         public async Task OnMessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
-            => Commands.CommandHandler.handleMessageDeleted(cache, chan);
+            => Commands.CommandHandler.HandleMessageDeleted(cache, chan);
 
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
-            => Commands.CommandHandler.handleMessageEdited(cache, msg, chan);
+            => Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
     }
 }
