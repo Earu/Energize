@@ -17,7 +17,6 @@ module CommandHandler =
     open Energize.Toolkit
     open System.Reflection
     open Energize.Interfaces.Services
-    open System.IO
     open System.Diagnostics
 
     type private CommandHandlerState =
@@ -38,20 +37,6 @@ module CommandHandler =
 
     let private registerCmd (state : CommandHandlerState) (cmd : Command) =
         Some { state with commands = state.commands.Add (cmd.name, cmd) }
-
-    let private generateHelpFile (state : CommandHandlerState) (path : string) =
-        let cmds = state.commands |> Map.toSeq |> Seq.sortBy (fun (_, cmd) -> cmd.name)
-        let head = "Hi there, commands are sorted alphabetically. Hope you find what you're looking for!\n"
-        let ascii = StaticData.ASCII_ART
-        await (File.AppendAllTextAsync(path, head + ascii + String('\n', 4)))
-        for (cmdName, cmd) in cmds do
-            let lines = [
-                sprintf "--------- %s ---------\n" cmdName
-                sprintf "usage: %s\n" cmd.usage
-                sprintf "help: %s\n" cmd.help
-                sprintf "owner-only: %b\n" cmd.ownerOnly
-            ]
-            await (File.AppendAllLinesAsync(path, lines))
 
     let private postCmdHelp (cmd : Command) (ctx : CommandContext) (iswarn : bool) =
         let fields = [
@@ -81,26 +66,12 @@ module CommandHandler =
             else
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                 let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
-                let pageMsg = awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
+                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
                     let cmdsDisplay = 
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
                     builder.WithFields(ctx.embedField moduleName (String.Join(',', cmdsDisplay)) true)
                     |> ignore
-                )))
-
-                let path = "help.txt"
-                let msgs =
-                    if File.Exists(path) then
-                         [ awaitResult (ctx.messageSender.SendFile(ctx.message, path)) :> IUserMessage ]
-                    else
-                        match handlerState with
-                        | Some state ->
-                            generateHelpFile state path
-                            let fileMsg = awaitResult (ctx.messageSender.SendFile(ctx.message, path))
-                            File.Delete(path)
-                            [ fileMsg ]
-                        | None -> []
-                pageMsg :: msgs
+                ))) ]
     }
 
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
@@ -215,10 +186,9 @@ module CommandHandler =
             cache
 
     let private startsWithBotMention (state : CommandHandlerState) (input : string) : bool =
-        if state.client.CurrentUser.Equals(null) then 
-            false // prevents executing commands starting with bot mention if current user is null
-        else
-            Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
+        match state.client.CurrentUser with
+        | null -> false
+        | _ -> Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
 
     let private getPrefixLength (state : CommandHandlerState) (input : string) : int =
         if startsWithBotMention state input then
@@ -227,12 +197,13 @@ module CommandHandler =
             state.prefix.Length
 
     let private getCmdName (state : CommandHandlerState) (input : string) : string =
-        input.Substring(getPrefixLength state input).Split(' ').[0]
+        let offset = getPrefixLength state input
+        if offset >= input.Length then String.Empty else input.[offset..].Split(' ').[0]
 
     let private getCmdArgs (state : CommandHandlerState) (input : string) : string list =
-        let offset = (getPrefixLength state input) + ((getCmdName state input) |> String.length)
+        let offset = (getPrefixLength state input) + (getCmdName state input).Length
         let args = input.[offset..].TrimStart().Split(',') |> Array.toList
-        if args.[0] |> String.IsNullOrWhiteSpace && (args |> List.length).Equals(1) then
+        if args.[0] |> String.IsNullOrWhiteSpace && args.Length.Equals(1) then
             []
         else
             args |> List.map (fun arg -> arg.Trim())
@@ -271,11 +242,42 @@ module CommandHandler =
                 if cache.Length > 50 then cache.[..50] else cache
             handlerState <- Some { state with commandCache = newCommandCache }
         | None -> ()
+    
+    let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
+        let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
+        let realEx = match ex.InnerException with null -> ex | exIn -> exIn
+        state.logger.Warning(realEx.ToString())
+        
+        let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
+        let msgs = [ awaitResult (state.messageSender.Warning(msg, "internal Error", err)) :> IUserMessage ]
+        registerCmdCacheEntry msg.Id msgs
+        
+        let args = String.Join(',', getCmdArgs state input)
+        let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
+        let frame = StackTrace(realEx, true).GetFrame(0)
+        let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
+        let builder = EmbedBuilder()
+        builder
+            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay realEx.Message)
+            .WithTimestamp(msg.CreatedAt)
+            .WithFooter(source)
+            .WithColor(state.messageSender.ColorDanger)
+            |> ignore
+        match state.client.GetChannel(Config.FEEDBACK_CHANNEL_ID) with
+        | null -> ()
+        | c ->
+            let chan = c :> IChannel :?> ITextChannel
+            awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto))) 
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (ctx : CommandContext) : Task<Task> =
         async {
             let asyncOp = cmd.callback.Invoke(ctx)
-            let tcallback = (toTaskResult asyncOp).ContinueWith((fun t -> registerCmdCacheEntry msg.Id (awaitResult t)))
+            let tcallback = (toTaskResult asyncOp).ContinueWith(fun (t : Task<_>) -> 
+                if t.IsFaulted then  
+                    reportCmdError state t.Exception msg cmd ctx.input
+                else
+                    registerCmdCacheEntry msg.Id (awaitResult t)
+            )
             if not tcallback.IsCompleted then
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
                 if not tcallback.IsCompleted then
@@ -313,35 +315,8 @@ module CommandHandler =
             let msgs = [ postCmdHelp cmd ctx true ]
             registerCmdCacheEntry msg.Id msgs
             logCmd ctx
-
-    let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
-        let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
-        let realEx = match ex.InnerException with null -> ex | _ -> ex
-        state.logger.Warning(realEx.ToString())
-        let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
-        awaitIgnore (state.messageSender.Warning(msg, "internal Error", err))
-        
-        let args = String.Join(',', getCmdArgs state input)
-        let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
-
-        let frame = StackTrace(realEx, true).GetFrame(0)
-        let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
-        let builder = EmbedBuilder()
-        builder
-            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay realEx.Message)
-            .WithTimestamp(msg.CreatedAt)
-            .WithFooter(source)
-            .WithColor(state.messageSender.ColorDanger)
-            |> ignore
-        match state.client.GetChannel(Config.FEEDBACK_CHANNEL_ID) with
-        | null -> ()
-        | c ->
-            let chan = c :> IChannel :?> ITextChannel
-            awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto)))
     
-    let private tryRunCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
-        let isPrivate = match msg.Channel with :? IDMChannel -> true | _ -> false
-        let isNsfw = Context.isNSFW msg isPrivate
+    let private handleCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         match cmd with
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
@@ -349,20 +324,17 @@ module CommandHandler =
         | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
-        | cmd when cmd.guildOnly && isPrivate ->
+        | cmd when cmd.guildOnly && (Context.isPrivate msg) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
-        | cmd when cmd.NsfwOnly && not isNsfw ->
+        | cmd when cmd.NsfwOnly && not (Context.isNSFW msg) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used in a non NSFW channel")) 
-        | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg isPrivate) ->
+        | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use an admin-only command <%s> but they're not an admin" (msg.Author.ToString()) cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used by non-adminstrator users")) 
         | cmd ->
-            try
-                runCmd state msg cmd input isPrivate
-            with ex ->
-                reportCmdError state ex msg cmd input
+            runCmd state msg cmd input (Context.isPrivate msg)
 
     let private deleteCmdMsgs (cmdMsgId : uint64) = 
         match handlerState with
@@ -375,7 +347,7 @@ module CommandHandler =
             | None -> ()
         | None -> ()
 
-    let handleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
+    let HandleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
         match handlerState with
         | Some state when cache.HasValue ->
             let oldCache = getChannelCache state chan.Id
@@ -394,8 +366,19 @@ module CommandHandler =
             let newCaches = state.caches.Add(msg.Channel.Id, newCache)
             handlerState <- Some { state with caches = newCaches }
         | None -> ()
-        
-    let handleMessageReceived (msg : SocketMessage) =
+     
+    let private findAndRunCmd (state : CommandHandlerState) (msg : SocketMessage) (content : string) (botMention : bool) =
+        let cmdName = getCmdName state content
+        match state.commands |> Map.tryFind cmdName with
+        | Some cmd -> handleCmd state msg cmd content
+        | None when botMention -> 
+            let showCmd cmdName = state.prefix + cmdName
+            let helper =
+                sprintf "Hey there %s, looking for something? Use %s or %s!" msg.Author.Mention (showCmd "help") (showCmd "info")
+            awaitIgnore (state.messageSender.SendRaw(msg, helper))
+        | None -> ()
+
+    let HandleMessageReceived (msg : SocketMessage) =
         match handlerState with
         | Some state ->
             updateChannelCache msg (fun oldCache -> 
@@ -403,20 +386,20 @@ module CommandHandler =
                 let lastMsg = if msg.Author.IsBot then oldCache.lastMessage else Some msg
                 { oldCache with lastImageUrl = lastUrl; lastMessage = lastMsg }
             )
-            if not msg.Author.IsBot then
-                let content = msg.Content
-                if content.ToLower().StartsWith(state.prefix) || (startsWithBotMention state content) then
-                    let cmdName = getCmdName state content
-                    match state.commands |> Map.tryFind cmdName with
-                    | Some cmd -> tryRunCmd state msg cmd content
-                    | None -> ()
+            match msg.Content with
+            | content when msg.Author.IsBot || msg.Author.IsWebhook || content |> String.IsNullOrWhiteSpace -> () // to the trash it goes
+            | content when startsWithBotMention state content ->
+                findAndRunCmd state msg content true
+            | content when content.ToLower().StartsWith(state.prefix) ->
+                findAndRunCmd state msg content false
+            | _ -> ()
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
 
-    let handleMessageEdited _ (msg : SocketMessage) _ =
+    let HandleMessageUpdated _ (msg : SocketMessage) _ =
         match handlerState with
         | Some _ ->
             let diff = DateTime.Now.ToUniversalTime() - msg.Timestamp.DateTime
             if diff.TotalHours < 1.0 then
                 deleteCmdMsgs msg.Id
-                handleMessageReceived msg
+                HandleMessageReceived msg
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"

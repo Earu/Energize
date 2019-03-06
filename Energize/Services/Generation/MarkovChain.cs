@@ -21,7 +21,7 @@ namespace Energize.Services.Generation
 
             sentence = sentence.Trim().ToLower();
             sentence = Regex.Replace(sentence,@"https?://\S*","LINK-REMOVED ");
-            sentence = sentence.Replace("\\","/").Replace("/"," ");
+            sentence = sentence.Replace("\\", "/").Replace("/", " ").Replace("\"", string.Empty);
 
             string[] words = sentence.Split(_Separators);
 

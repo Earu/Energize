@@ -76,15 +76,20 @@ module Context =
                 .WithName(name)
                 .WithValue(display)
 
-    let isNSFW (msg : SocketMessage) (isPrivate : bool) = 
-        if isPrivate then 
+    let isPrivate (msg : SocketMessage) =
+        match msg.Channel with 
+        | :? IDMChannel -> true 
+        | _ -> false
+
+    let isNSFW (msg : SocketMessage) = 
+        if isPrivate msg then 
             true
         else
             let chan = msg.Channel :?> ITextChannel
             chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
 
-    let isAuthorAdmin (msg : SocketMessage) (isPrivate : bool) =
-        if isPrivate then
+    let isAuthorAdmin (msg : SocketMessage) =
+        if isPrivate msg then
             true
         else
             let author = msg.Author :?> SocketGuildUser

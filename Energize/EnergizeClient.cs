@@ -84,12 +84,12 @@ namespace Energize
                 if(File.Exists("logs.txt"))
                     File.Delete("logs.txt");
 
-                await this.DiscordClient.LoginAsync(TokenType.Bot, _Token, true);
+                await this.DiscordClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.DiscordClient.StartAsync();
-                await this.DiscordRestClient.LoginAsync(TokenType.Bot, _Token, true);
+                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.ServiceManager.InitializeServicesAsync(this);
 
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info",Config.TWITCH_URL);
+                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.TWITCH_URL);
                 await this.DiscordClient.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>
