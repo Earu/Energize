@@ -212,7 +212,7 @@ module Info =
     [<Command("lastchanges", "Gets the last changes published on GitHub", "lastchanges <nothing>")>]
     let lastChanges (ctx : CommandContext) = async {
         let endpoint = "https://api.github.com/repos/Earu/Energize/commits"
-        let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let commits = JsonPayload.Deserialize<Commit list>(json, ctx.logger)
         return 
             if not (commits.Equals(null)) && commits |> List.length > 0 then

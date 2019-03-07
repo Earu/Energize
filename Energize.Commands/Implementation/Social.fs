@@ -86,7 +86,7 @@ module Social =
                     let cb (req : HttpWebRequest) =
                         req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
                         req.Headers.["X-Mashape-Key"] <- Config.MASHAPE_KEY
-                    awaitResult (HttpClient.Fetch(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
+                    awaitResult (HttpClient.GetAsync(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
                 let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
                 let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
                 [ ctx.sendOK None display ]

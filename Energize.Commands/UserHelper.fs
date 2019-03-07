@@ -88,12 +88,10 @@ module UserHelper =
             let name = 
                 match user.Nickname with
                 | null -> 
-                    if user.Username.Equals(null) then 
-                        String.Empty 
-                    else 
-                        user.Username
-                | _ ->
-                    user.Nickname
+                    match user.Username with
+                    | null -> String.Empty 
+                    | _ -> user.Username
+                | _ -> user.Nickname
             name.ToLower().Contains(input.ToLower())
 
     let private findUserByMention (ctx : CommandContext) (input : string) : SocketUser option =

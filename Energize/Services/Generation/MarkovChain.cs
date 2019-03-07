@@ -20,8 +20,10 @@ namespace Energize.Services.Generation
                 Directory.CreateDirectory(_Path);
 
             sentence = sentence.Trim().ToLower();
-            sentence = Regex.Replace(sentence,@"https?://\S*","LINK-REMOVED ");
-            sentence = sentence.Replace("\\", "/").Replace("/", " ").Replace("\"", string.Empty);
+            sentence = Regex.Replace(sentence,@"https?://\S*","LINK-REMOVED ")
+                .Replace("\\", "/")
+                .Replace("/", " ")
+                .Replace("\"", string.Empty);
 
             string[] words = sentence.Split(_Separators);
 
