@@ -43,8 +43,6 @@ module Deprecated =
     [<Command("bite","Deprecated use act instead","deprecated")>]
     let bite (ctx : CommandContext) = async { return [ ctx.sendWarn None "Deprecated, use act instead" ] }
 
-
-
     // image processing
     [<Command("bw", "Under rewrite, WIP", "WIP")>]
     let bw (ctx : CommandContext) = async { return [ ctx.sendWarn None "Under rewrite, WIP" ] }
@@ -72,3 +70,10 @@ module Deprecated =
 
     [<Command("deepfry", "Under rewrite, WIP", "WIP")>]
     let deepfry (ctx : CommandContext) = async { return [ ctx.sendWarn None "Under rewrite, WIP" ] }
+
+    // name changes
+    [<Command("furrybooru", "Use furb command instead", "use furb instead")>]
+    let furb (ctx : CommandContext) = async { return [ ctx.sendWarn None "Use furb instead" ] }
+
+    [<Command("gelbooru", "Use gelb command instead", "use gelb instead")>]
+    let gelb (ctx : CommandContext) = async { return [ ctx.sendWarn None "Use gelb instead" ] }

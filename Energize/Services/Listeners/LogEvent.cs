@@ -4,6 +4,7 @@ using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
@@ -32,8 +33,12 @@ namespace Energize.Services.Listeners
             => this.Log.Nice("Shard", ConsoleColor.Magenta, $"Shard {clientshard.ShardId} ready || Online on {clientshard.Guilds.Count} guilds");
 
         [Event("ShardDisconnected")]
-        public async Task OnShardDisconnected(Exception e,DiscordSocketClient clientshard)
-            => this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds\n{e}");
+        public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientshard)
+        {
+            if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                return;
+            this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds\n{e}");
+        }
 
         [Event("JoinedGuild")]
         public async Task OnJoinedGuild(SocketGuild guild)

@@ -19,7 +19,7 @@ module Fun =
     [<CommandParameters(1)>]
     [<Command("ascii", "Turns a text/sentence into ascii art", "ascii <sentence>")>]
     let ascii (ctx : CommandContext) = async {
-        let body = awaitResult (HttpClient.Fetch("http://artii.herokuapp.com/make?text=" + ctx.input, ctx.logger))
+        let body = awaitResult (HttpClient.GetAsync("http://artii.herokuapp.com/make?text=" + ctx.input, ctx.logger))
         return 
             if body |> String.length > 2000 then
                 [ ctx.sendWarn None "The word or sentence you provided is too long!" ]
@@ -129,7 +129,7 @@ module Fun =
     [<Command("chuck", "Random chuck norris fact", "chuck <nothing>")>]
     let chuck (ctx : CommandContext) = async {
         let endpoint = "https://api.chucknorris.io/jokes/random"
-        let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let fact = JsonPayload.Deserialize<FactObj>(json, ctx.logger)
         return [ ctx.sendOK None fact.value ]
     }
@@ -153,7 +153,7 @@ module Fun =
 
     [<Command("oldswear", "Insults from another era", "oldswear <nothing>")>]
     let oldSwear (ctx : CommandContext) = async {
-        let html = awaitResult (HttpClient.Fetch("http://www.pangloss.com/seidel/Shaker/", ctx.logger))
+        let html = awaitResult (HttpClient.GetAsync("http://www.pangloss.com/seidel/Shaker/", ctx.logger))
         let doc = HtmlDocument()
         doc.LoadHtml(html)
         let node = doc.DocumentNode.SelectNodes("//font") |> Seq.tryHead

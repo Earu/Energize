@@ -8,43 +8,47 @@ namespace Energize.Toolkit
 {
     public class HttpClient
     {
-        private static readonly string UserAgent = "Energize Discord(Earu's Bot)";
+        private static readonly string _Useragent = "Energize Discord(Earu's Bot)";
 
-        public static async Task<string> Fetch(string url, Logger log, string useragent = null, Action<HttpWebRequest> callback = null)
+        public static async Task<string> GetAsync(string url, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "GET";
-                request.Timeout = 1000 * 60;
-                request.Headers[HttpRequestHeader.UserAgent] = useragent ?? UserAgent;
+                request.Timeout = 60000;
+                request.Headers[HttpRequestHeader.UserAgent] = useragent ?? _Useragent;
                 callback?.Invoke(request);
 
                 using (WebResponse answer = await request.GetResponseAsync())
                 using (StreamReader reader = new StreamReader(answer.GetResponseStream(), Encoding.UTF8))
                     return reader.ReadToEnd();
             }
-            catch(WebException e)
+            catch (WebException e)
             {
                 switch (e.Status)
                 {
                     case WebExceptionStatus.Timeout:
-                        log.Nice("HTTP", ConsoleColor.Red, "Request timed out for [ " + url + " ]");
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Request timed out for [ {url} ]");
                         break;
                     case WebExceptionStatus.ConnectFailure:
-                        log.Nice("HTTP", ConsoleColor.Red, "(404) Couln't reach [ " + url + " ]");
+                        logger.Nice("HTTP", ConsoleColor.Red, $"(404) Couln't reach [ {url} ]");
                         break;
                     case WebExceptionStatus.ProtocolError:
-                        log.Nice("HTTP", ConsoleColor.Red, "Protocol error (most likely 403) [ " + url + " ]");
-                        log.Danger(e.Message);
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Protocol error (most likely 403) [ {url} ]");
+                        logger.Danger(e.Message);
                         break;
                     default:
-                        log.Nice("HTTP", ConsoleColor.Red, "Unknown error [ " + url + " ]\n" + e.ToString());
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Unknown error [ {url} ]\n{e.ToString()}");
                         break;
                 }
-
-                return string.Empty;
             }
+            catch (Exception e)
+            {
+                logger.Nice("HTTP", ConsoleColor.Red, e.Message);
+            }
+
+            return string.Empty;
         }
     }
 }

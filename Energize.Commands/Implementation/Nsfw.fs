@@ -27,7 +27,7 @@ module Nsfw =
     [<Command("e621", "Searches e621", "e621 <tag|search>")>]
     let e621 (ctx : CommandContext) = async {
         let endpoint = "https://e621.net/post/index.json?tags=" + ctx.input
-        let json = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let e621Objs = JsonPayload.Deserialize<E621Obj list>(json, ctx.logger)
         return 
             if e621Objs |> List.isEmpty then
@@ -42,7 +42,7 @@ module Nsfw =
     let private getDApiResult (ctx : CommandContext) (uri : string) = 
         let endpoint = 
             sprintf "http://%s/index.php?page=dapi&s=post&q=index&tags=%s" uri ctx.input
-        let xml = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let xml = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let doc = XmlDocument()
         doc.LoadXml(xml)
         let nodes = doc.SelectNodes("//post")
@@ -83,8 +83,8 @@ module Nsfw =
 
     [<NsfwCommand>]
     [<CommandParameters(1)>]
-    [<Command("furrybooru", "Searches furrybooru", "furrybooru <tags|search>")>]
-    let furryBooru (ctx : CommandContext) = 
+    [<Command("furb", "Searches furrybooru", "furb <tags|search>")>]
+    let furb (ctx : CommandContext) = 
         callDApiCmd ctx "furry.booru.org"
 
     [<NsfwCommand>]
@@ -95,6 +95,6 @@ module Nsfw =
 
     [<NsfwCommand>]
     [<CommandParameters(1)>]
-    [<Command("gelbooru", "Searches gelbooru", "gelbooru <tags|search>")>]
-    let gelBooru (ctx : CommandContext) =
+    [<Command("gelb", "Searches gelbooru", "gelb <tags|search>")>]
+    let gelb (ctx : CommandContext) =
         callDApiCmd ctx "gelbooru.com"
