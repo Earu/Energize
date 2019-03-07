@@ -12,9 +12,9 @@ namespace Energize.Toolkit
                 T obj = JsonConvert.DeserializeObject<T>(json);
                 return obj;
             }
-            catch
+            catch (Exception e)
             {
-                log.Nice("JSON", ConsoleColor.Red, "Couldn't deserialize a string!");
+                log.Nice("JSON", ConsoleColor.Red, e.Message);
                 return default(T);
             }
         }
@@ -26,9 +26,9 @@ namespace Energize.Toolkit
                 string json = JsonConvert.SerializeObject(obj);
                 return json;
             }
-            catch
+            catch (Exception e)
             {
-                log.Nice("JSON", ConsoleColor.Red, "Couldn't serialize a string!");
+                log.Nice("JSON", ConsoleColor.Red, e.Message);
                 return string.Empty;
             }
         }

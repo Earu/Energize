@@ -71,7 +71,7 @@ module Image =
     [<Command("inspiro", "Quotes from inspirobot", "inspiro <nothing>")>]
     let inspiro (ctx : CommandContext) = async {
         let endpoint = "http://inspirobot.me/api?generate=true"
-        let url = awaitResult (HttpClient.Fetch(endpoint, ctx.logger))
+        let url = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let builder = EmbedBuilder()
         ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder

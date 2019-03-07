@@ -76,8 +76,7 @@ module CommandHandler =
 
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
         match state.commands |> Map.tryFind cmdName with
-        | Some cmd ->
-            cmd.isEnabled <- enabled
+        | Some cmd -> cmd.isEnabled <- enabled
         | None -> ()
     
     [<OwnerCommandAttribute>]
@@ -86,9 +85,9 @@ module CommandHandler =
     let enable (ctx : CommandContext) = async {
         let cmdName = ctx.arguments.[0].Trim()
         let value = int (ctx.arguments.[1].Trim())
-        match handlerState with
-        | Some state ->
-            return
+        return
+            match handlerState with
+            | Some state ->
                 if state.commands |> Map.containsKey cmdName then
                     if value.Equals(0) then
                         enableCmd state cmdName false
@@ -98,7 +97,7 @@ module CommandHandler =
                         [ ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName) ]
                 else
                     [ ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName) ]
-        | None -> return []
+            | None -> []
     }
 
     let private isCmdX<'atr when 'atr :> Attribute > (methodInfo : MethodInfo) =
@@ -252,7 +251,7 @@ module CommandHandler =
         let msgs = [ awaitResult (state.messageSender.Warning(msg, "internal Error", err)) :> IUserMessage ]
         registerCmdCacheEntry msg.Id msgs
         
-        let args = String.Join(',', getCmdArgs state input)
+        let args = input.Trim()
         let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
         let frame = StackTrace(realEx, true).GetFrame(0)
         let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
@@ -273,7 +272,7 @@ module CommandHandler =
         async {
             let asyncOp = cmd.callback.Invoke(ctx)
             let tcallback = (toTaskResult asyncOp).ContinueWith(fun (t : Task<_>) -> 
-                if t.IsFaulted then  
+                if t.Status.Equals(TaskStatus.Faulted) then  
                     reportCmdError state t.Exception msg cmd ctx.input
                 else
                     registerCmdCacheEntry msg.Id (awaitResult t)
@@ -317,22 +316,23 @@ module CommandHandler =
             logCmd ctx
     
     let private handleCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
+        let author = msg.Author.ToString()
         match cmd with
         | cmd when not (cmd.isEnabled) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
         | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
         | cmd when cmd.guildOnly && (Context.isPrivate msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" (msg.Author.ToString()) cmd.name)
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
         | cmd when cmd.NsfwOnly && not (Context.isNSFW msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" (msg.Author.ToString()) cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used in a non NSFW channel")) 
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" author cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "nsfw-only command", "This cannot be used in a non NSFW channel")) 
         | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use an admin-only command <%s> but they're not an admin" (msg.Author.ToString()) cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This cannot be used by non-adminstrator users")) 
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use an admin-only command <%s> but they're not an admin" author cmd.name)
+            awaitIgnore (state.messageSender.Warning(msg, "admin-only command", "This cannot be used by non-adminstrator users")) 
         | cmd ->
             runCmd state msg cmd input (Context.isPrivate msg)
 

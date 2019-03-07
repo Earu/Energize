@@ -19,7 +19,7 @@ module Search =
     [<Command("urban", "Searches urban for a definition", "urban <term>")>]
     let urban (ctx : CommandContext) = async {
         let search = ctx.arguments.[0]
-        let json = awaitResult (HttpClient.Fetch("http://api.urbandictionary.com/v0/define?term=" + search, ctx.logger))
+        let json = awaitResult (HttpClient.GetAsync("http://api.urbandictionary.com/v0/define?term=" + search, ctx.logger))
         let urbanObj = JsonPayload.Deserialize<UrbanObj>(json, ctx.logger)
         return
             if urbanObj.list |> Seq.isEmpty then
