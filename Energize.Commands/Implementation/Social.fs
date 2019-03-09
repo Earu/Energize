@@ -11,13 +11,12 @@ module Social =
     open Energize.Commands.AsyncHelper
     open System.Net
     open Energize.Interfaces.Services
-    open System.Text
     open Discord.WebSocket
     open Discord
 
     let private actions = StaticData.SOCIAL_ACTIONS |> Seq.map (|KeyValue|) |> Map.ofSeq
 
-    let registerAction (ctx : CommandContext) (users : SocketUser list) (action : string) =
+    let registerAction (ctx : CommandContext) (users : IUser list) (action : string) =
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
         let dbctx = awaitResult (db.GetContext())
         for user in users do

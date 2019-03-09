@@ -17,8 +17,8 @@ module Administration =
     open Discord.Rest
     open System.Linq
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<CommandParameters(2)>]
     [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
     let op (ctx : CommandContext) = async {
@@ -26,7 +26,7 @@ module Administration =
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
                 try
-                    let guser = user :?> SocketGuildUser
+                    let guser = user :?> IGuildUser
                     let role = getOrCreateRole guser "EnergizeAdmin"
                     let out = ref 0
                     if Int32.TryParse(ctx.arguments.[1], out) then
@@ -76,22 +76,22 @@ module Administration =
         with _ ->
             [ ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions" ]
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
     let clear (ctx : CommandContext) = async {
         return clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
     }
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<Command("clearbots", "Clear bot messages", "clearbots <amounttoremove|nothing>")>]
     let clearBots (ctx : CommandContext) = async {
         return clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
     }
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<CommandParameters(1)>]
     [<Command("clearuser", "Clear a user messages", "clearuser <user|userid>,<amounttoremove|nothing>")>]
     let clearUser (ctx : CommandContext) = async {
@@ -103,15 +103,15 @@ module Administration =
                 [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<Command("clearaw", "Clear a specified amount of messages", "clearaw <amounttoremove|nothing>")>]
     let clearRaw (ctx : CommandContext) = async {
         return clearCmdBase ctx ctx.input (fun _ -> true)
     }
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<Command("delinvs", "Deletes messages containing discord invites (toggleable)", "delinvs <nothing>")>]
     let delInvs (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
@@ -180,8 +180,8 @@ module Administration =
             Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
         | _ -> None
 
-    [<AdminCommandAttribute>]
-    [<GuildCommandAttribute>]
+    [<AdminCommand>]
+    [<GuildCommand>]
     [<CommandParameters(1)>]
     [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
     let fame (ctx : CommandContext) = async {

@@ -15,6 +15,7 @@ module Fun =
     open Energize.Interfaces.Services
     open HtmlAgilityPack
     open Discord.WebSocket
+    open Discord
 
     [<CommandParameters(1)>]
     [<Command("ascii", "Turns a text/sentence into ascii art", "ascii <sentence>")>]
@@ -35,7 +36,7 @@ module Fun =
             if ctx.hasArguments then 
                 findUser ctx ctx.input true 
             else
-                Some ctx.message.Author
+                Some (ctx.message.Author :> IUser)
         
         match user with
         | Some u -> 
