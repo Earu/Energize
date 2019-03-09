@@ -15,29 +15,29 @@ module UserHelper =
         | false ->
             let res = ctx.guildUsers |> Seq.tryFind predicate
             match res with
-            | Some user -> Some (user :> SocketUser)
+            | Some user -> Some (user :> IUser)
             | None -> None
 
-    let private handleMe (ctx : CommandContext) _ : SocketUser option =
-        Some ctx.message.Author
+    let private handleMe (ctx : CommandContext) _ : IUser option =
+        Some (ctx.message.Author :> IUser)
 
-    let private handleLast (ctx : CommandContext) _ : SocketUser option =
+    let private handleLast (ctx : CommandContext) _ : IUser option =
         match ctx.cache.lastMessage with
-        | Some msg -> Some msg.Author
+        | Some msg -> Some (msg.Author :> IUser)
         | None -> None
 
-    let private handleAdmin (ctx : CommandContext) _ : SocketUser option = 
+    let private handleAdmin (ctx : CommandContext) _ : IUser option = 
         tryFindGuildUser ctx (fun user -> user.GuildPermissions.Administrator)
     
-    let private handleRandom (ctx : CommandContext) _ : SocketUser option = 
+    let private handleRandom (ctx : CommandContext) _ : IUser option = 
         match ctx.isPrivate with
         | true -> None
         | false ->
             let len = (Seq.length ctx.guildUsers) 
             let i = rand.Next(0,len)
-            Some (ctx.guildUsers.[i] :> SocketUser)
+            Some (ctx.guildUsers.[i] :> IUser)
     
-    let private handleId (ctx : CommandContext) (input : string option) : SocketUser option =
+    let private handleId (ctx : CommandContext) (input : string option) : IUser option =
         match input with
         | Some arg ->
             try
@@ -46,7 +46,7 @@ module UserHelper =
             with _ -> None
         | None -> None
 
-    let private handleRole (ctx : CommandContext) (input : string option) : SocketUser option =
+    let private handleRole (ctx : CommandContext) (input : string option) : IUser option =
         match input with
         | Some arg ->
             match ctx.isPrivate with
@@ -65,7 +65,7 @@ module UserHelper =
         ("role", handleRole)
     ]
 
-    let private findUserByTag (ctx : CommandContext) (tag : string) (arg : string option) : SocketUser option =
+    let private findUserByTag (ctx : CommandContext) (tag : string) (arg : string option) : IUser option =
         let res = handles |> List.tryFind (fun (name, _) -> name.Equals(tag))
         match res with
         | Some (_, handle) -> handle ctx arg
@@ -94,36 +94,40 @@ module UserHelper =
                 | _ -> user.Nickname
             name.ToLower().Contains(input.ToLower())
 
-    let private findUserByMention (ctx : CommandContext) (input : string) : SocketUser option =
+    let private findUserByMention (ctx : CommandContext) (input : string) : IUser option =
         match ctx.message.MentionedUsers |> Seq.length > 0 with
         | true ->
-            ctx.message.MentionedUsers |> Seq.tryFind 
-                (fun user -> 
-                    input.Contains(@"<@" + user.Id.ToString() + ">") 
-                    || input.Contains(@"<@!" + user.Id.ToString() + ">")
-                )
+            let sUser =
+                ctx.message.MentionedUsers |> Seq.tryFind 
+                    (fun user -> 
+                        input.Contains(@"<@" + user.Id.ToString() + ">") 
+                        || input.Contains(@"<@!" + user.Id.ToString() + ">")
+                    )
+            match sUser with
+            | Some user -> Some (user :> IUser)
+            | None -> None
         | false -> None
 
-    let private findUserByName (ctx : CommandContext) (name : string) : SocketUser option =
+    let private findUserByName (ctx : CommandContext) (name : string) : IUser option =
         match ctx.isPrivate with
         | false ->
             match ctx.guildUsers |> List.tryFind (fun user -> matchesName user name) with
-            | Some user -> Some (user :> SocketUser)
+            | Some user -> Some (user :> IUser)
             | None -> None
         | true -> None
 
-    let private findUserById (ctx : CommandContext) (input : string) (withId : bool) : SocketUser option =
+    let private findUserById (ctx : CommandContext) (input : string) (withId : bool) : IUser option =
         match withId with
         | true ->
             try
                 let id = uint64 input
                 match ctx.client.GetUser(id) with
                 | null -> None
-                | user -> Some user
+                | user -> Some (user :> IUser)
             with _ -> None
         | false -> None
 
-    let findUser (ctx : CommandContext) (input : string) (withId : bool) : SocketUser option =
+    let findUser (ctx : CommandContext) (input : string) (withId : bool) : IUser option =
         match input with
         | input when String.IsNullOrWhiteSpace input -> None 
         | input when input.StartsWith('$') && input |> String.length > 1 ->
@@ -137,10 +141,10 @@ module UserHelper =
                 | Some user -> Some user
                 | None -> findUserById ctx input withId
 
-    let getOrCreateRole (user : SocketGuildUser) (name : string) : IRole = 
+    let getOrCreateRole (user : IGuildUser) (name : string) : IRole = 
         match user.Guild.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
-        | Some role -> role :> IRole
-        | None -> awaitResult (user.Guild.CreateRoleAsync(name)) :> IRole
+        | Some role -> role
+        | None -> awaitResult (user.Guild.CreateRoleAsync(name))
 
     let hasRole (user : SocketGuildUser) (name : string) = 
         match user.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with

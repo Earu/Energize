@@ -347,9 +347,15 @@ module CommandHandler =
             | None -> ()
         | None -> ()
 
+    let isBlacklisted (id : uint64) =
+        let ids = Blacklist.IDS |> Seq.toList
+        match ids |> List.tryFind (fun i -> i.Equals(id)) with
+        | Some _ -> true
+        | None -> false
+
     let HandleMessageDeleted (cache : Cacheable<IMessage, uint64>) (chan : ISocketMessageChannel) =
         match handlerState with
-        | Some state when cache.HasValue ->
+        | Some state when cache.HasValue && not (isBlacklisted cache.Value.Author.Id) ->
             let oldCache = getChannelCache state chan.Id
             let newCache = { oldCache with lastDeletedMessage = Some (cache.Value :?> SocketMessage) }
             let newCaches = state.caches.Add(chan.Id, newCache)
@@ -380,7 +386,7 @@ module CommandHandler =
 
     let HandleMessageReceived (msg : SocketMessage) =
         match handlerState with
-        | Some state ->
+        | Some state when not (isBlacklisted msg.Author.Id) ->
             updateChannelCache msg (fun oldCache -> 
                 let lastUrl = match getLastImgUrl msg with Some url -> Some url | None -> oldCache.lastImageUrl
                 let lastMsg = if msg.Author.IsBot then oldCache.lastMessage else Some msg
@@ -393,13 +399,15 @@ module CommandHandler =
             | content when content.ToLower().StartsWith(state.prefix) ->
                 findAndRunCmd state msg content false
             | _ -> ()
+        | Some _ -> ()
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
 
     let HandleMessageUpdated _ (msg : SocketMessage) _ =
         match handlerState with
-        | Some _ ->
+        | Some _ when not (isBlacklisted msg.Author.Id) ->
             let diff = DateTime.Now.ToUniversalTime() - msg.Timestamp.DateTime
             if diff.TotalHours < 1.0 then
                 deleteCmdMsgs msg.Id
                 HandleMessageReceived msg
+        | Some _ -> ()
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
