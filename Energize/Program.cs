@@ -12,6 +12,7 @@ namespace Energize
         {
             await Config.Load();
             await StaticData.Load();
+            await Blacklist.Load();
 
             EnergizeClient client = new EnergizeClient(Config.TOKEN_DEV, "xx");
             await client.InitializeAsync();

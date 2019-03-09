@@ -14,11 +14,11 @@ module Info =
     open Energize.Commands.UserHelper
     open System
 
-    [<GuildCommandAttribute>]
+    [<GuildCommand>]
     [<Command("server", "Gets information about the server", "server <nothing>")>]
     let server (ctx : CommandContext) = async {
         let guild = (ctx.message.Channel :?> IGuildChannel).Guild :?> SocketGuild
-        let owner = awaitResult (ctx.restClient.GetUserAsync(guild.Owner.Id))
+        let owner = awaitResult (ctx.restClient.GetUserAsync(guild.OwnerId))
         let createdAt =
             let time = guild.CreatedAt.ToString()
             time.Remove(time.Length - 7)
@@ -36,8 +36,8 @@ module Info =
             ctx.embedField "Region" region true
             ctx.embedField "Creation Date" createdAt true
             ctx.embedField "Main Channel" guild.DefaultChannel.Name true
-            ctx.embedField "Emotes" (String.Join(' ', emotes)) true
-            ctx.embedField "Animated Emotes" (String.Join(' ', aemotes)) true
+            ctx.embedField "Emotes" (String.Join(String.Empty, emotes)) true
+            ctx.embedField "Animated Emotes" (String.Join(String.Empty, aemotes)) true
         ]
 
         let builder = EmbedBuilder()
@@ -94,7 +94,7 @@ module Info =
             if ctx.hasArguments then
                 findUser ctx ctx.arguments.[0] true
             else
-                Some (ctx.message.Author)
+                Some (ctx.message.Author :> IUser)
         match user with
         | Some user ->
             let max = 15
@@ -111,11 +111,11 @@ module Info =
             let createdTime = time.Remove(time.Length - 7)
             let moreGuilds = if leftGuilds > 0 then (sprintf " and %d more...") leftGuilds else String.Empty
             let clampGuild = (if max >= guildNames.Length then guildNames.Length - 1 else max)
-            let userGuilds = (String.Join(',', guildNames.[..clampGuild])) + moreGuilds
+            let userGuilds = (String.Join(", ", guildNames.[..clampGuild])) + moreGuilds
             let builder = EmbedBuilder()
             let fields = 
                 if not (ctx.isPrivate) then
-                    let guser = user :> IUser :?> IGuildUser
+                    let guser = user :?> IGuildUser
                     let time = guser.JoinedAt.ToString()
                     let joinedTime = if time.Length >= 7 then time.Remove(time.Length - 7) else time
                     let roleNames = guser.RoleIds |> Seq.map (fun id -> guser.Guild.GetRole(id).Name) |> Seq.toList
@@ -123,7 +123,7 @@ module Info =
                     let nick = match guser.Nickname with null -> " - " | name -> name
                     let moreNames = if leftRoles > 0 then (sprintf " and %d more..." leftRoles) else String.Empty
                     let clampRoles = (if max >= roleNames.Length then roleNames.Length - 1 else max)
-                    let userNames = (String.Join(',', roleNames.[..clampRoles])) + moreNames
+                    let userNames = (String.Join(", ", roleNames.[..clampRoles])) + moreNames
                     [
                         ctx.embedField "Nickname" nick true
                         ctx.embedField "Join Date" joinedTime true
@@ -152,7 +152,7 @@ module Info =
             return [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
-    [<GuildCommandAttribute>]
+    [<GuildCommand>]
     [<CommandParameters(1)>]
     [<Command("isadmin", "Shows if a user is an admin", "isadmin <user|userid>")>]
     let isAdmin (ctx : CommandContext) = async {
@@ -166,7 +166,7 @@ module Info =
                 [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
-    [<GuildCommandAttribute>]
+    [<GuildCommand>]
     [<CommandParameters(1)>]
     [<Command("roles", "Gets a user roles and role ids", "roles <user|userid>")>]
     let roles (ctx : CommandContext) = async {
