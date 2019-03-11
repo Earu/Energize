@@ -1,11 +1,10 @@
 ﻿using Discord;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Energize.Toolkit
+namespace Energize.Toolkit.MessageConstructs
 {
     public class Vote
     {

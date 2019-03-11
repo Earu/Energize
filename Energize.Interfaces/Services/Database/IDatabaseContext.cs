@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Database
 {
     public interface IDatabaseContext : IDisposable
     {

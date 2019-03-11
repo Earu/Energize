@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Interfaces.DatabaseModels;
-using Energize.Interfaces.Services;
-using Energize.Services.Database;
-using Energize.Services.Listeners;
+using Energize.Interfaces.Services.Database;
+using Energize.Interfaces.Services.Generation;
+using Energize.Interfaces.Services.Senders;
 using Energize.Services.Senders;
 using Energize.Toolkit;
 using System;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Energize.Services.TextProcessing
+namespace Energize.Services.Generation
 {
     [Service("TextStyle")]
     public class TextStyle : ITextStyleService
@@ -258,7 +258,7 @@ namespace Energize.Services.TextProcessing
                 string avatar = msg.Author.GetAvatarUrl(ImageFormat.Auto);
                 string name = msg.Author.Username;
                 ulong success = 0;
-                WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
+                IWebhookSenderService sender = this._ServiceManager.GetService<IWebhookSenderService>("Webhook");
 
                 if (result.Length > 2000)
                     success = await sender.SendRaw(msg, "Message was over discord limit!", name, avatar);

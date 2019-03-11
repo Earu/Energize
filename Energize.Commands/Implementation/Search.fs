@@ -9,8 +9,8 @@ module Search =
     open Energize.Toolkit
     open Energize.Commands.Context
     open YoutubeSearch
-    open Energize.Interfaces.Services
     open Discord
+    open Energize.Interfaces.Services.Senders
 
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }

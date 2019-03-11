@@ -12,10 +12,10 @@ module Administration =
     open Discord
     open System.Collections.Generic
     open Energize.Toolkit
-    open Energize.Interfaces.Services
     open Energize.Commands
     open Discord.Rest
     open System.Linq
+    open Energize.Interfaces.Services.Database
 
     [<AdminCommand>]
     [<GuildCommand>]

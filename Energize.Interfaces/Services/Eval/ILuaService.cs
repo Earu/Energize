@@ -2,7 +2,7 @@
 using Energize.Toolkit;
 using System.Collections.Generic;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Eval
 {
     public interface ILuaService : IServiceImplementation
     {

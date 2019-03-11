@@ -10,9 +10,8 @@ module Social =
     open Energize.Commands.UserHelper
     open Energize.Commands.AsyncHelper
     open System.Net
-    open Energize.Interfaces.Services
-    open Discord.WebSocket
     open Discord
+    open Energize.Interfaces.Services.Database
 
     let private actions = StaticData.SOCIAL_ACTIONS |> Seq.map (|KeyValue|) |> Map.ofSeq
 

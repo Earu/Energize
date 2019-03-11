@@ -1,8 +1,9 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
-using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Senders;
 using Energize.Toolkit;
+using Energize.Toolkit.MessageConstructs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

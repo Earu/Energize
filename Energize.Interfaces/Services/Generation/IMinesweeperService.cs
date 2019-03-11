@@ -1,4 +1,4 @@
-﻿namespace Energize.Interfaces.Services
+﻿namespace Energize.Interfaces.Services.Generation
 {
     public interface IMinesweeperService : IServiceImplementation
     {

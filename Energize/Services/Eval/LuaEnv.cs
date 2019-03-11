@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Eval;
 using Energize.Toolkit;
 using NLua;
 using NLua.Exceptions;
