@@ -17,9 +17,9 @@ namespace Energize.Toolkit
         public Color ColorWarning { get; } = new Color(226, 123, 68);
         public Color ColorDanger { get; } = new Color(226, 68, 68);
 
-        private void LogFailedMessage(SocketMessage msg)
+        private void LogFailedMessage(IMessage msg)
         {
-            string log = "";
+            string log = string.Empty;
             if (!(msg.Channel is IDMChannel))
             {
                 IGuildChannel chan = msg.Channel as IGuildChannel;
@@ -32,7 +32,7 @@ namespace Energize.Toolkit
             this.Log.Nice("Message", ConsoleColor.Red, log);
         }
 
-        private void LogFailedMessage(SocketChannel chan)
+        private void LogFailedMessage(IChannel chan)
         {
             string log = string.Empty;
             if (!(chan is IDMChannel))
@@ -64,11 +64,11 @@ namespace Energize.Toolkit
             this.Log.Nice("Message", ConsoleColor.Red, log);
         }
 
-        public void BuilderWithAuthor(SocketMessage msg, EmbedBuilder builder)
+        public void BuilderWithAuthor(IMessage msg, EmbedBuilder builder)
         {
-            if (msg.Channel is SocketGuildChannel)
+            if (msg.Channel is IGuildChannel)
             {
-                SocketGuildUser author = msg.Author as SocketGuildUser;
+                IGuildUser author = msg.Author as IGuildUser;
                 string nick = author.Nickname != null ? author.Nickname + " (" + author.ToString() + ")" : author.ToString();
                 string url = author.GetAvatarUrl(ImageFormat.Auto, 32);
                 builder.WithAuthor(nick, url);
@@ -79,7 +79,7 @@ namespace Energize.Toolkit
             }
         }
 
-        public async Task<RestUserMessage> Send(SocketMessage msg, string header = "", string content = "", Color color = new Color(), string picurl = null)
+        public async Task<IUserMessage> Send(IMessage msg, string header = "", string content = "", Color color = new Color(), string picurl = null)
         {
             try
             {
@@ -91,14 +91,10 @@ namespace Energize.Toolkit
                 this.BuilderWithAuthor(msg, builder);
 
                 if (picurl != null)
-                {
                     builder.WithThumbnailUrl(picurl);
-                }
 
                 if (!string.IsNullOrWhiteSpace(content))
-                {
-                    return await msg.Channel.SendMessageAsync("", false, builder.Build());
-                }
+                    return await msg.Channel.SendMessageAsync(string.Empty, false, builder.Build());
             }
             catch
             {
@@ -108,7 +104,7 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<RestUserMessage> Send(ISocketMessageChannel chan, string header = "", string content = "", Color color = new Color())
+        public async Task<IUserMessage> Send(ISocketMessageChannel chan, string header = "", string content = "", Color color = new Color())
         {
             try
             {
@@ -118,23 +114,21 @@ namespace Energize.Toolkit
                 builder.WithFooter(header);
 
                 if (!string.IsNullOrWhiteSpace(content))
-                {
-                    return await chan.SendMessageAsync("", false, builder.Build());
-                }
+                    return await chan.SendMessageAsync(string.Empty, false, builder.Build());
             }
             catch
             {
-                this.LogFailedMessage(chan as SocketChannel);
+                this.LogFailedMessage(chan as IChannel);
             }
 
             return null;
         }
 
-        public async Task<RestUserMessage> Send(SocketMessage msg, Embed embed = null)
+        public async Task<IUserMessage> Send(IMessage msg, Embed embed = null)
         {
             try
             {
-                return await msg.Channel.SendMessageAsync("", false, embed);
+                return await msg.Channel.SendMessageAsync(string.Empty, false, embed);
             }
             catch
             {
@@ -144,7 +138,7 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<RestUserMessage> SendRaw(SocketMessage msg, string content)
+        public async Task<IUserMessage> SendRaw(IMessage msg, string content)
         {
             try
             {
@@ -158,12 +152,12 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<IUserMessage> Send(SocketChannel chan, Embed embed = null)
+        public async Task<IUserMessage> Send(IChannel chan, Embed embed = null)
         {
             try
             {
                 IMessageChannel c = chan as IMessageChannel;
-                return await c.SendMessageAsync("", false, embed);
+                return await c.SendMessageAsync(string.Empty, false, embed);
             }
             catch
             {
@@ -173,22 +167,7 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<IUserMessage> Send(RestChannel chan, Embed embed = null)
-        {
-            try
-            {
-                IMessageChannel c = chan as IMessageChannel;
-                return await c.SendMessageAsync("", false, embed);
-            }
-            catch
-            {
-                this.LogFailedMessage(chan);
-            }
-
-            return null;
-        }
-
-        public async Task<IUserMessage> SendRaw(SocketChannel chan, string content)
+        public async Task<IUserMessage> SendRaw(IChannel chan, string content)
         {
             try
             {
@@ -203,7 +182,7 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<IUserMessage> RespondByDM(SocketMessage msg, string header = "", string content = "")
+        public async Task<IUserMessage> RespondByDM(IMessage msg, string header = "", string content = "")
         {
             try
             {
@@ -214,7 +193,7 @@ namespace Energize.Toolkit
                 builder.WithAuthor(msg.Author);
 
                 IDMChannel chan = await msg.Author.GetOrCreateDMChannelAsync();
-                return await chan.SendMessageAsync("", false, builder.Build());
+                return await chan.SendMessageAsync(string.Empty, false, builder.Build());
             }
             catch
             {
@@ -224,34 +203,34 @@ namespace Energize.Toolkit
             return null;
         }
 
-        public async Task<RestUserMessage> Normal(SocketMessage msg, string header, string content)
+        public async Task<IUserMessage> Normal(IMessage msg, string header, string content)
             => await this.Send(msg, header, content, this.ColorNormal);
 
-        public async Task<RestUserMessage> Normal(SocketChannel chan, string header, string content)
+        public async Task<IUserMessage> Normal(IChannel chan, string header, string content)
             => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorNormal);
 
-        public async Task<RestUserMessage> Warning(SocketMessage msg, string header, string content)
+        public async Task<IUserMessage> Warning(IMessage msg, string header, string content)
             => await this.Send(msg, header, content, this.ColorWarning);
 
-        public async Task<RestUserMessage> Warning(SocketChannel chan, string header, string content)
+        public async Task<IUserMessage> Warning(IChannel chan, string header, string content)
             => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorWarning);
 
-        public async Task<RestUserMessage> Danger(SocketMessage msg, string header, string content)
+        public async Task<IUserMessage> Danger(IMessage msg, string header, string content)
             => await this.Send(msg, header, content, this.ColorDanger);
 
-        public async Task<RestUserMessage> Danger(SocketChannel chan, string header, string content)
+        public async Task<IUserMessage> Danger(IChannel chan, string header, string content)
             => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorDanger);
 
-        public async Task<RestUserMessage> Good(SocketMessage msg, string header, string content)
+        public async Task<IUserMessage> Good(IMessage msg, string header, string content)
             => await this.Send(msg, header, content, this.ColorGood);
 
-        public async Task<RestUserMessage> Good(SocketChannel chan, string header, string content)
+        public async Task<IUserMessage> Good(IChannel chan, string header, string content)
             => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorGood);
 
         public async Task Disconnect(DiscordSocketClient client)
             => await client.LogoutAsync();
 
-        public async Task<RestUserMessage> SendFile(SocketMessage msg, string path)
+        public async Task<IUserMessage> SendFile(IMessage msg, string path)
         {
             try
             {
