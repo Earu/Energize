@@ -13,7 +13,7 @@ namespace Energize.Toolkit
         private readonly string _Description;
         private readonly Dictionary<string, int> _Choices;
         private readonly List<string> _ChoiceIndexes;
-        private readonly Dictionary<IUser, int> _Voters;
+        private readonly Dictionary<ulong, int> _VoterIds;
         private readonly Timer _Timer;
         private readonly DateTime _EndTime;
 
@@ -33,9 +33,9 @@ namespace Energize.Toolkit
                 this._Choices.Add(choice, 0);
 
             this._ChoiceIndexes = choices;
-            this._Voters = new Dictionary<IUser, int>();
+            this._VoterIds = new Dictionary<ulong, int>();
             this._IsFinished = false;
-            this._EndTime = DateTime.Now.AddMinutes(5.0).ToUniversalTime();
+            this._EndTime = DateTime.Now.AddMinutes(5.0);
 
             this.UpdateEmbed();
 
@@ -83,7 +83,7 @@ namespace Energize.Toolkit
             int i = 1;
             foreach (KeyValuePair<string, int> kv in this._Choices)
             {
-                double perc = this._TotalVotes == 0 ? 0.0 : kv.Value / this._TotalVotes * 100.0;
+                double perc = this._TotalVotes == 0 ? 0.0 : kv.Value / (double)this._TotalVotes * 100.0;
                 string plural = kv.Value > 1 ? "s" : string.Empty;
                 builder.AddField($"{i++}. {kv.Key}", $"{perc}% ({kv.Value} vote{plural})", true);
             }
@@ -110,12 +110,12 @@ namespace Energize.Toolkit
         public async Task AddVote(IUser voter, int choiceindex)
         {
             if (this._IsFinished) return;
-            if (this._Voters.ContainsKey(voter)) return;
+            if (this._VoterIds.ContainsKey(voter.Id)) return;
             if (this.IsValidIndex(choiceindex))
             {
                 string choice = this._ChoiceIndexes[choiceindex];
                 this._Choices[choice]++;
-                this._Voters.Add(voter, choiceindex);
+                this._VoterIds.Add(voter.Id, choiceindex);
                 this._TotalVotes++;
                 await this.Update();
             }
@@ -124,12 +124,12 @@ namespace Energize.Toolkit
         public async Task RemoveVote(IUser voter, int choiceindex)
         {
             if(this._IsFinished) return;
-            if (!this._Voters.ContainsKey(voter)) return;
-            if (this.IsValidIndex(choiceindex) && this._Voters[voter] == choiceindex)
+            if (!this._VoterIds.ContainsKey(voter.Id)) return;
+            if (this.IsValidIndex(choiceindex) && this._VoterIds[voter.Id] == choiceindex)
             {
                 string choice = this._ChoiceIndexes[choiceindex];
                 this._Choices[choice]--;
-                this._Voters.Remove(voter);
+                this._VoterIds.Remove(voter.Id);
                 this._TotalVotes--;
                 await this.Update();
             }
