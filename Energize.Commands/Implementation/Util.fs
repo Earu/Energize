@@ -183,3 +183,15 @@ module Util =
         return []
     }
 
+    [<CommandParameters(3)>]
+    [<Command("vote","Creates a 5 minutes vote with up to 9 choices","vote <description>,<choice>,<choice>,<choice|nothing>,...")>]
+    let vote (ctx : CommandContext) = async {
+        let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
+        let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
+        let result = awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) 
+
+        return
+            match result.ToTuple() with
+            | (true, msg) -> [ msg ]
+            | (false, _) -> [ ctx.sendWarn None "You already have another vote started" ]
+    }

@@ -9,7 +9,7 @@ module UserHelper =
 
     let private rand = Random()
 
-    let private tryFindGuildUser (ctx : CommandContext) (predicate : SocketGuildUser -> bool) =
+    let private tryFindGuildUser (ctx : CommandContext) (predicate : IGuildUser -> bool) =
         match ctx.isPrivate with
         | true -> None
         | false ->
@@ -19,7 +19,7 @@ module UserHelper =
             | None -> None
 
     let private handleMe (ctx : CommandContext) _ : IUser option =
-        Some (ctx.message.Author :> IUser)
+        Some ctx.message.Author
 
     let private handleLast (ctx : CommandContext) _ : IUser option =
         match ctx.cache.lastMessage with
@@ -53,7 +53,7 @@ module UserHelper =
             | true -> None
             | false ->
                 tryFindGuildUser ctx
-                    (fun user -> user.Roles |> Seq.exists (fun role -> role.Name.Equals(arg)))
+                    (fun user -> (user :?> SocketGuildUser).Roles |> Seq.exists (fun role -> role.Name.Equals(arg)))
         | None -> None
 
     let private handles = [
@@ -81,7 +81,7 @@ module UserHelper =
         (identifier, arg)
 
     // welcome to the null hole
-    let private matchesName (user : SocketGuildUser) (input : string) : bool =
+    let private matchesName (user : IGuildUser) (input : string) : bool =
         match user with
         | null -> false
         | user ->
@@ -95,13 +95,14 @@ module UserHelper =
             name.ToLower().Contains(input.ToLower())
 
     let private findUserByMention (ctx : CommandContext) (input : string) : IUser option =
-        match ctx.message.MentionedUsers |> Seq.length > 0 with
+        let msg = ctx.message :?> SocketMessage
+        match msg.MentionedUsers |> Seq.length > 0 with
         | true ->
             let sUser =
-                ctx.message.MentionedUsers |> Seq.tryFind 
+                msg.MentionedUsers |> Seq.tryFind 
                     (fun user -> 
-                        input.Contains(@"<@" + user.Id.ToString() + ">") 
-                        || input.Contains(@"<@!" + user.Id.ToString() + ">")
+                        input.Contains(sprintf "<@%d>" user.Id) 
+                        || input.Contains(sprintf "<@!%d>" user.Id)
                     )
             match sUser with
             | Some user -> Some (user :> IUser)

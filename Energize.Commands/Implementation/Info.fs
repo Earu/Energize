@@ -94,7 +94,7 @@ module Info =
             if ctx.hasArguments then
                 findUser ctx ctx.arguments.[0] true
             else
-                Some (ctx.message.Author :> IUser)
+                Some ctx.message.Author
         match user with
         | Some user ->
             let max = 15

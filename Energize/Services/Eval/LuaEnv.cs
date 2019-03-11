@@ -21,7 +21,8 @@ namespace Energize.Services.Eval
         private readonly string               _ScriptSeparator = "\n-- GEN --\n";
 
         private RestApplication _App;
-        private Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
+
+        private readonly Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
 
         public LuaEnv(EnergizeClient client)
         {
@@ -187,20 +188,20 @@ namespace Energize.Services.Eval
             return state;
         }
 
-        private void Save(SocketChannel chan, string code)
+        private void Save(IChannel chan, string code)
         {
             code = code.TrimStart();
             string path =  _Path + "/" + chan.Id + ".lua";
             File.AppendAllText(path,code + _ScriptSeparator);
         }
 
-        public bool Run(SocketMessage msg, string code, out List<object> returns, out string error, Logger log)
+        public bool Run(IMessage msg, string code, out List<object> returns, out string error, Logger log)
         {
-            SocketChannel chan = msg.Channel as SocketChannel;
+            IChannel chan = msg.Channel as SocketChannel;
             if (!this._States.ContainsKey(chan.Id) || this._States[chan.Id] == null)
                 this._States[chan.Id] = CreateState(chan.Id);
 
-            Save(chan, code);
+            this.Save(chan, code);
 
             try
             {

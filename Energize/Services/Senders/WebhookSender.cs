@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.Webhook;
-using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
 using System;
@@ -10,7 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Listeners
+namespace Energize.Services.Senders
 {
     [Service("Webhook")]
     public class WebhookSender : IWebhookSenderService
@@ -28,7 +27,7 @@ namespace Energize.Services.Listeners
         {
             try
             {
-                SocketSelfUser bot = this._Client.DiscordClient.CurrentUser;
+                IUser bot = this._Client.DiscordClient.CurrentUser;
                 IWebhook webhook = await chan.CreateWebhookAsync(bot.Username);
 
                 return new DiscordWebhookClient(webhook);
@@ -41,7 +40,7 @@ namespace Energize.Services.Listeners
 
         private async Task<DiscordWebhookClient> GetOrCreateWebhook(ITextChannel chan)
         {
-            SocketSelfUser bot = this._Client.DiscordClient.CurrentUser;
+            IUser bot = this._Client.DiscordClient.CurrentUser;
             IReadOnlyCollection<IWebhook> webhooks = new ReadOnlyCollection<IWebhook>(new List<IWebhook>());
 
             try
@@ -64,7 +63,7 @@ namespace Energize.Services.Listeners
             return webhook == null ? await this.CreateWebhook(chan) : new DiscordWebhookClient(webhook);
         }
 
-        private void LogFailedMessage(SocketMessage msg)
+        private void LogFailedMessage(IMessage msg)
         {
             string log = string.Empty;
             if (!(msg.Channel is IDMChannel))
@@ -89,7 +88,7 @@ namespace Energize.Services.Listeners
             this._Logger.Nice("Webhook", ConsoleColor.Red, log);
         }
 
-        public async Task<ulong> SendRaw(SocketMessage msg, string content, string username, string avatarurl)
+        public async Task<ulong> SendRaw(IMessage msg, string content, string username, string avatarurl)
         {
             if (!(msg.Channel is IGuildChannel))
                 return 0;
@@ -142,7 +141,7 @@ namespace Energize.Services.Listeners
             return id;
         }
 
-        public async Task<ulong> SendEmbed(SocketMessage msg, Embed embed, string username, string avatarurl)
+        public async Task<ulong> SendEmbed(IMessage msg, Embed embed, string username, string avatarurl)
         {
             if (!(msg.Channel is IGuildChannel))
                 return 0;
