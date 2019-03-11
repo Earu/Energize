@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Database
 {
     public interface IDatabaseService : IServiceImplementation
     {

@@ -7,11 +7,9 @@ module Game =
     open Energize.Commands.Context
     open Energize.Commands.AsyncHelper
     open Energize.Toolkit
-    open System.Text
     open System
-    open Energize.Interfaces.Services
-    open System.IO
     open Discord
+    open Energize.Interfaces.Services.Generation
 
     type VanityResponseObj = { steamid : string; success : int }
     type VanityObj = { response : VanityResponseObj }

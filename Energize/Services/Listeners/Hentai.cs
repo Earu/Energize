@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
-using Energize.Services.Senders;
-using Energize.Services.TextProcessing;
+using Energize.Interfaces.Services.Generation;
+using Energize.Interfaces.Services.Senders;
 using Energize.Toolkit;
 using System;
 using System.Collections.Generic;
@@ -38,8 +38,8 @@ namespace Energize.Services.Listeners
             if (!this.HasTrigger(msg.Content))
                 return;
 
-            TextStyle style = this._ServiceManager.GetService<TextStyle>("TextStyle");
-            WebhookSender sender = this._ServiceManager.GetService<WebhookSender>("Webhook");
+            ITextStyleService style = this._ServiceManager.GetService<ITextStyleService>("TextStyle");
+            IWebhookSenderService sender = this._ServiceManager.GetService<IWebhookSenderService>("Webhook");
 
             Random rand = new Random();
             string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];

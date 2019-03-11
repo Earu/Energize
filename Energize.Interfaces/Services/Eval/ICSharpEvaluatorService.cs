@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Eval
 {
     public interface ICSharpEvaluatorService : IServiceImplementation
     {

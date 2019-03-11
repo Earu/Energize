@@ -12,10 +12,10 @@ module Fun =
     open UserHelper
     open System.Text
     open System.Text.RegularExpressions
-    open Energize.Interfaces.Services
     open HtmlAgilityPack
     open Discord.WebSocket
-    open Discord
+    open Energize.Interfaces.Services.Generation
+    open Energize.Interfaces.Services.Database
 
     [<CommandParameters(1)>]
     [<Command("ascii", "Turns a text/sentence into ascii art", "ascii <sentence>")>]
