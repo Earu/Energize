@@ -2,16 +2,15 @@
 using Discord.WebSocket;
 using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
-using Energize.Services.Database;
+using Energize.Interfaces.Services.Database;
 using Energize.Toolkit;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
     [Service("Administration")]
-    class Administration : IAdministrationService
+    class Administration : IServiceImplementation
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
@@ -35,7 +34,7 @@ namespace Energize.Services.Listeners
             string pattern = @"discord\.gg\/.+\s?";
             if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
             {
-                var db = this._ServiceManager.GetService<DBContextPool>("Database");
+                IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
                 using (IDatabaseContext ctx = await db.GetContext())
                 {
                     IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);

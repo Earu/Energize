@@ -8,13 +8,14 @@ module Util =
     open System.Diagnostics
     open Energize.Commands.Context
     open System
-    open Energize.Interfaces.Services
     open Energize.Toolkit
     open Discord
     open System.Threading.Tasks
     open System.Text
     open Microsoft.Data.Sqlite
     open System.IO
+    open Energize.Interfaces.Services.Eval
+    open Energize.Interfaces.Services.Senders
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {

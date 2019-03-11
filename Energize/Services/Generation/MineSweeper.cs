@@ -1,4 +1,4 @@
-﻿using Energize.Interfaces.Services;
+﻿using Energize.Interfaces.Services.Generation;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

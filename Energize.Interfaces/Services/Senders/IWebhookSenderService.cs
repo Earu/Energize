@@ -1,7 +1,7 @@
 ﻿using Discord;
 using System.Threading.Tasks;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Senders
 {
     public interface IWebhookSenderService : IServiceImplementation
     {

@@ -18,6 +18,7 @@ module CommandHandler =
     open System.Reflection
     open Energize.Interfaces.Services
     open System.Diagnostics
+    open Energize.Interfaces.Services.Senders
 
     type private CommandHandlerState =
         {

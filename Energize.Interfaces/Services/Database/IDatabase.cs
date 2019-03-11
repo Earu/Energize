@@ -1,7 +1,7 @@
 ﻿using Energize.Interfaces.DatabaseModels;
 using System.Threading.Tasks;
 
-namespace Energize.Interfaces.Services
+namespace Energize.Interfaces.Services.Database
 {
     public interface IDatabase
     {

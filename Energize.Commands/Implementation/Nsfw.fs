@@ -9,8 +9,8 @@ module Nsfw =
     open Energize.Toolkit
     open Discord
     open System.Xml
-    open Energize.Interfaces.Services
     open System
+    open Energize.Interfaces.Services.Senders
 
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
         ctx.messageSender.BuilderWithAuthor(ctx.message,builder)

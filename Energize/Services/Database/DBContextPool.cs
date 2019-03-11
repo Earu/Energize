@@ -1,5 +1,5 @@
 ﻿using Energize.Interfaces.DatabaseModels;
-using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Database;
 using Energize.Services.Database.Models;
 using Energize.Toolkit;
 using Microsoft.EntityFrameworkCore;
