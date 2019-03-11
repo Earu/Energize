@@ -214,7 +214,7 @@ module CommandHandler =
                 List.empty
             else
                 let chan = msg.Channel :?> IGuildChannel
-                seq { for u in (chan.Guild :?> SocketGuild).Users -> u }
+                seq { for u in (chan.Guild :?> SocketGuild).Users -> u :> IGuildUser }
                 |> Seq.toList
         {
             client = state.client
@@ -248,7 +248,7 @@ module CommandHandler =
         state.logger.Warning(realEx.ToString())
         
         let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
-        let msgs = [ awaitResult (state.messageSender.Warning(msg, "internal Error", err)) :> IUserMessage ]
+        let msgs = [ awaitResult (state.messageSender.Warning(msg, "internal Error", err)) ]
         registerCmdCacheEntry msg.Id msgs
         
         let args = input.Trim()

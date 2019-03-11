@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Toolkit;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using Discord.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Energize.Services.Listeners
+namespace Energize.Services.Senders
 {
     [Service("Paginator")]
     public class PaginatorSender : IPaginatorSenderService
@@ -56,7 +56,7 @@ namespace Energize.Services.Listeners
             await msg.AddReactionAsync(_NextEmote);
         }
 
-        public async Task<IUserMessage> SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
+        public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
             EmbedBuilder builder = new EmbedBuilder();
@@ -88,7 +88,7 @@ namespace Energize.Services.Listeners
             return null;
         }
 
-        public async Task<IUserMessage> SendPaginator<T>(SocketMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
+        public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
         {
             EmbedBuilder builder = new EmbedBuilder();
             this._MessageSender.BuilderWithAuthor(msg, builder);
@@ -120,7 +120,7 @@ namespace Energize.Services.Listeners
             return null;
         }
 
-        public async Task<IUserMessage> SendPaginatorRaw<T>(SocketMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
+        public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
@@ -145,7 +145,7 @@ namespace Energize.Services.Listeners
             return null;
         }
 
-        private bool IsOKEmote(SocketReaction reaction)
+        private bool IsValidEmote(SocketReaction reaction)
         {
             if (reaction.UserId == this._Client.CurrentUser.Id) return false;
             IEmote emote = reaction.Emote;
@@ -154,7 +154,7 @@ namespace Energize.Services.Listeners
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (!cache.HasValue || !this.IsOKEmote(reaction)) return;
+            if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
             if (!this._Paginators.ContainsKey(cache.Value.Id)) return;
 
             Paginator<object> paginator = this._Paginators[cache.Value.Id];

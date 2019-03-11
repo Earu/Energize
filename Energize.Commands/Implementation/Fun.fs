@@ -36,7 +36,7 @@ module Fun =
             if ctx.hasArguments then 
                 findUser ctx ctx.input true 
             else
-                Some (ctx.message.Author :> IUser)
+                Some ctx.message.Author
         
         match user with
         | Some u -> 
