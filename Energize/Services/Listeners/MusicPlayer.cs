@@ -1,58 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Energize.Interfaces.Services;
+﻿using Discord.WebSocket;
+using Energize.Interfaces.Services.Listeners;
 using Energize.Toolkit;
+using System;
+using System.Threading.Tasks;
 using Victoria;
 
 namespace Energize.Services.Listeners
 {
-    public class MusicPlayer : IServiceImplementation
+    [Service("Music")]
+    public class MusicPlayer : IMusicPlayerService
     {
         private readonly DiscordShardedClient _Client;
-        private readonly LavaShardClient _LavaClient;
-        private readonly Dictionary<ulong, LavaPlayer> _Players;
 
-        private LavaRestClient _LavaRestClient;
+        private bool _Initialized;
 
         public MusicPlayer(EnergizeClient client)
         {
+            this._Initialized = false;
             this._Client = client.DiscordClient;
-            this._LavaClient = new LavaShardClient();
-            this._Players = new Dictionary<ulong, LavaPlayer>();
+            this.LavaClient = new LavaShardClient();
         }
 
-        public async Task ConnectAsync(IVoiceChannel vc)
-        {
-            LavaPlayer ply = await this._LavaClient.ConnectAsync(vc);
-            this._Players.Add(vc.GuildId, ply);
-        }
-
-        public async Task<LavaPlayer> GetOrCreatePlayer(IVoiceChannel vc)
-        {
-            if (!this._Players.ContainsKey(vc.GuildId))
-                await this.ConnectAsync(vc);
-
-            return this._Players[vc.GuildId];
-        }
+        public LavaShardClient LavaClient { get; }
+        public LavaRestClient LavaRestClient { get; private set; }
 
         public void Initialize() { }
 
-        public async Task InitializeAsync()
+        public Task InitializeAsync()
+            => Task.CompletedTask;
+
+        [Event("ShardReady")]
+        public async Task OnShardReady(DiscordSocketClient clientshard)
         {
-            Configuration lavalinkconfig = new Configuration
+            if (this._Initialized) return;
+            Configuration config = new Configuration
             {
                 ReconnectInterval = TimeSpan.FromSeconds(15.0),
                 ReconnectAttempts = 3,
                 Host = Config.LVK_HOST,
                 Port = Config.LVK_PORT,
                 Password = Config.LVK_PASSWORD,
+                SelfDeaf = false,
             };
 
-            this._LavaRestClient = new LavaRestClient(lavalinkconfig);
-            await this._LavaClient.StartAsync(this._Client, lavalinkconfig);
+            this.LavaRestClient = new LavaRestClient(config);
+            await this.LavaClient.StartAsync(this._Client, config);
+            this._Initialized = true;
         }
     }
 }

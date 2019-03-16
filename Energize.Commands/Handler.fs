@@ -238,7 +238,7 @@ module CommandHandler =
         match handlerState with
         | Some state ->
             let newCommandCache = 
-                let cache = (msgId, msgs) :: state.commandCache
+                let cache = (msgId, msgs |> List.filter (fun msg -> match msg with null -> false | _ -> true)) :: state.commandCache
                 if cache.Length > 50 then cache.[..50] else cache
             handlerState <- Some { state with commandCache = newCommandCache }
         | None -> ()
@@ -342,7 +342,13 @@ module CommandHandler =
         | Some state ->
             match state.commandCache |> List.tryFind (fun (id, _) -> cmdMsgId.Equals(id)) with
             | Some (id, msgs) -> 
-                for msg in msgs do await (msg.DeleteAsync())
+                try
+                    seq { for msg in msgs -> match msg with null -> Task.CompletedTask | _ -> msg.DeleteAsync() } 
+                    |> Task.WhenAll 
+                    |> await
+                with _ ->
+                    let ex = "A message was removed but the command message associated could not be removed"
+                    state.logger.Nice("Commands", ConsoleColor.Yellow, ex)
                 let newCmdCache = state.commandCache |> List.except [ (id, msgs) ]
                 handlerState <- Some { state with commandCache = newCmdCache }
             | None -> ()

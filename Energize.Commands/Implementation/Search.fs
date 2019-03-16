@@ -8,9 +8,10 @@ module Search =
     open Energize.Commands.AsyncHelper
     open Energize.Toolkit
     open Energize.Commands.Context
-    open YoutubeSearch
     open Discord
     open Energize.Interfaces.Services.Senders
+    open Energize.Interfaces.Services.Listeners
+    open Victoria.Entities
 
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }
@@ -44,22 +45,29 @@ module Search =
                 ))) ]
     }
 
-    [<CommandParameters(1)>]
-    [<Command("yt", "Searches youtube for a video", "yt <search>")>]
-    let yt (ctx : CommandContext) = async {
-        let items = VideoSearch()
-        let videos =
-            try
-                items.SearchQuery(ctx.arguments.[0], 1)
-            with _ ->
-                Collections.Generic.List()
+    let private baseSongSearch (ctx : CommandContext) (result : SearchResult) = async {
+        let len = result.Tracks |> Seq.length
         return 
-            if videos.Count > 0 then
+            if len > 0 then
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPaginatorRaw(ctx.message, videos, fun vid ->
-                    let page = videos |> Seq.tryFindIndex (fun v -> v.Url.Equals(vid.Url))
-                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) videos.Count ctx.arguments.[0] vid.Url 
+                [ awaitResult (paginator.SendPaginatorRaw(ctx.message, result.Tracks, fun track ->
+                    let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
+                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
                 )) ]
             else
-                [ ctx.sendWarn None "Could not find any videos matching" ]
+                [ ctx.sendWarn None "Could not find any songs" ]
     }
+
+    [<CommandParameters(1)>]
+    [<Command("yt", "Searches youtube for a video", "yt <search>")>]
+    let youtube (ctx : CommandContext) = 
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.arguments.[0]))
+        baseSongSearch ctx res
+
+    [<CommandParameters(1)>]
+    [<Command("sc", "Searches soundcloud for a song", "sc <search>")>]
+    let soundcloud (ctx : CommandContext) =
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.arguments.[0]))
+        baseSongSearch ctx res
