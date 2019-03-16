@@ -88,7 +88,7 @@ namespace Energize.Toolkit.MessageConstructs
             }
                
             builder.WithAuthor(this._Author);
-            builder.WithFooter(this._IsFinished ? "Expired" : "Valid for 5 minutes");
+            builder.WithFooter(this._IsFinished ? "Vote results" : "Valid for 5 minutes");
 
             this.VoteEmbed = builder.Build();
         }

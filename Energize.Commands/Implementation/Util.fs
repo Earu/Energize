@@ -189,10 +189,6 @@ module Util =
     let vote (ctx : CommandContext) = async {
         let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
         let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
-        let result = awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) 
-
-        return
-            match result.ToTuple() with
-            | (true, msg) -> [ msg ]
-            | (false, _) -> [ ctx.sendWarn None "You already have another vote started" ]
+        let msg = awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) 
+        return [ msg ]
     }
