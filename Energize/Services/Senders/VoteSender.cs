@@ -1,8 +1,10 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using Energize.Interfaces.Services.Senders;
 using Energize.Toolkit;
 using Energize.Toolkit.MessageConstructs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,7 +24,6 @@ namespace Energize.Services.Senders
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
         private readonly Dictionary<ulong, Vote> _Votes;
-        private readonly List<ulong> _VoterIds;
 
         public VoteSender(EnergizeClient client)
         {
@@ -30,7 +31,6 @@ namespace Energize.Services.Senders
             this._Logger = client.Logger;
             this._MessageSender = client.MessageSender;
             this._Votes = new Dictionary<ulong, Vote>();
-            this._VoterIds = new List<ulong>();
         }
 
         private async Task AddReactions(IUserMessage msg, int choicecount)
@@ -39,27 +39,34 @@ namespace Energize.Services.Senders
                 await msg.AddReactionAsync(new Emoji($"{i + 1}\u20e3"));
         }
 
-        public async Task<(bool, IUserMessage)> SendVote(IMessage msg, string description, IEnumerable<string> choices)
+        public async Task<IUserMessage> SendVote(IMessage msg, string description, IEnumerable<string> choices)
         {
-            if (this._VoterIds.Contains(msg.Author.Id)) return (false, null);
-
-            Vote vote = new Vote(msg.Author, description, choices.ToList());
-            vote.Message = await this._MessageSender.Send(msg, vote.VoteEmbed);
-            vote.VoteFinished += async result =>
+            try
             {
-                if (string.IsNullOrWhiteSpace(result))
-                    await this._MessageSender.SendRaw(msg, $"{msg.Author.Mention}, your vote did not get any result");
-                else
-                    await this._MessageSender.SendRaw(msg, $"{msg.Author.Mention}, your vote's result is: \'{result}\'");
-                this._Votes.Remove(vote.Message.Id);
-                this._VoterIds.Remove(msg.Author.Id);
-            };
-            this._Votes.Add(vote.Message.Id, vote);
-            this._VoterIds.Add(msg.Author.Id);
+                Vote vote = new Vote(msg.Author, description, choices.ToList());
+                vote.Message = await this._MessageSender.Send(msg, vote.VoteEmbed);
+                vote.VoteFinished += async result =>
+                {
+                    await vote.Message.DeleteAsync();
+                    await this._MessageSender.Send(msg, vote.VoteEmbed);
+                    
+                    this._Votes.Remove(vote.Message.Id);
+                };
+                this._Votes.Add(vote.Message.Id, vote);
+                await this.AddReactions(vote.Message, vote.ChoiceCount);
 
-            await this.AddReactions(vote.Message, vote.ChoiceCount);
+                return vote.Message;
+            }
+            catch (HttpException)
+            {
+                this._Logger.Nice("Vote", ConsoleColor.Red, "Could not create vote, missing permissions");
+            }
+            catch (Exception ex)
+            {
+                this._Logger.Danger(ex);
+            }
 
-            return (true, vote.Message);
+            return null;
         }
 
         private bool IsValidEmote(SocketReaction reaction)

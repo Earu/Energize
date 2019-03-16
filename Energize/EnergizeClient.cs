@@ -37,7 +37,14 @@ namespace Energize
                 this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {(isdevenv ? "DEVELOPMENT" : "PRODUCTION")} ]");
                 this.Logger.Notify("Initializing");
 
-                this.ServiceManager.InitializeServices();
+                try
+                {
+                    this.ServiceManager.InitializeServices();
+                }
+                catch (Exception e)
+                {
+                    this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e}");
+                }
             }
             else
             {
@@ -104,7 +111,7 @@ namespace Energize
             }
             catch (Exception e)
             {
-                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e.Message}");
+                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e}");
             }
         }
     }
