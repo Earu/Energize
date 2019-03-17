@@ -36,7 +36,7 @@ module Voice =
 
     [<CommandParameters(1)>]
     [<GuildCommand>]
-    [<Command("play", "Plays a track", "play <url>")>]
+    [<Command("play", "Plays a track", "play <song name>")>]
     let play (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.arguments.[0]))
@@ -46,7 +46,8 @@ module Voice =
                 let textChan = ctx.message.Channel :?> ITextChannel
                 awaitIgnore (music.ConnectAsync(vc, textChan))
                 await (music.AddTrack(vc, textChan, tr))
-                [ ctx.sendOK None (sprintf "🎶 Adding %s by %s (%s) to the queue" tr.Title tr.Author (tr.Length.ToString())) ]
+                let msg = awaitResult (music.SendQueue(vc, ctx.message))
+                [ msg ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any track for your input" ]
         )

@@ -65,14 +65,15 @@ namespace Energize.Services.Listeners
             if (ply.IsPlaying)
                 ply.Queue.Enqueue(track);
             else
-                await ply.PlayAsync(track, true);
+                await ply.PlayAsync(track, false);
         }
 
         public async Task ClearTracks(IVoiceChannel vc, ITextChannel chan)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, chan);
             ply.Queue.Clear();
-            await ply.SkipAsync();
+            if (ply.IsPlaying)
+                await ply.StopAsync();
         }
 
         public async Task PauseTrack(IVoiceChannel vc, ITextChannel chan)
@@ -90,7 +91,8 @@ namespace Energize.Services.Listeners
         public async Task SkipTrack(IVoiceChannel vc, ITextChannel chan)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, chan);
-            await ply.StopAsync();
+            if (ply.IsPlaying)
+                await ply.StopAsync();
         }
 
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, ITextChannel chan)
@@ -130,7 +132,7 @@ namespace Energize.Services.Listeners
                 EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
                 fieldbuilder.WithIsInline(false);
                 fieldbuilder.WithName("🎶 Currently Playing");
-                fieldbuilder.WithValue($"`{newtrack.Title}` by `{newtrack.Author}` ({newtrack.Length})");
+                fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | {newtrack.Position}/{newtrack.Length}");
                 fieldbuilders.Add(fieldbuilder);
             }
 
@@ -145,7 +147,7 @@ namespace Energize.Services.Listeners
                 foreach (IQueueObject obj in ply.Queue.Items)
                 {
                     LavaTrack tr = obj as LavaTrack;
-                    queuedisplay += $"{count} - `{tr.Title}` by `{tr.Author}` ({tr.Length})\n";
+                    queuedisplay += $"{count} - **{tr.Title}** from **{tr.Author}** | {tr.Length}\n";
                     count++;
                 }
                 fieldbuilder.WithValue(queuedisplay);
@@ -168,18 +170,19 @@ namespace Energize.Services.Listeners
             {
                 LavaTrack newtrack = ply.Queue.Dequeue() as LavaTrack;
                 await ply.PlayAsync(newtrack);
-
-                Embed embed = this.GetQueueEmbed(ply);
-                await this._MessageSender.Send(ply.TextChannel, embed);
             }
+
+            Embed embed = this.GetQueueEmbed(ply);
+            await this._MessageSender.Send(ply.TextChannel, embed);
         }
 
         private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track)
         {
-            string msg = $"There was a problem with a track, skipping. ({track.Title})";
+            string msg = $"There was a problem with a track, skipped \'{track.Title}\'";
             this._Logger.Nice("MusicPlayer", ConsoleColor.Red, msg);
             await this._MessageSender.Warning(ply.TextChannel, "music player", msg);
-            await ply.SkipAsync();
+            if (ply.IsPlaying)
+                await ply.StopAsync();
         }
 
         [Event("ShardReady")]
