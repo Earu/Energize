@@ -63,13 +63,13 @@ module Context =
 
         member _this.embedField (name: string) (value : obj) (isinline : bool) =
             let display = 
-                let str = value.ToString()
+                let str = match value with null -> String.Empty | _ -> value.ToString()
                 if str.Length > 1024 then str.Substring(0,1021) + "..." else str
             let field = EmbedFieldBuilder()
             field
                 .WithIsInline(isinline)
                 .WithName(name)
-                .WithValue(display)
+                .WithValue(if String.IsNullOrWhiteSpace display then " - " else display)
 
     let isPrivate (msg : SocketMessage) =
         match msg.Channel with 
