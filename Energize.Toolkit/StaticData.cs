@@ -18,21 +18,11 @@ namespace Energize.Toolkit
         public Dictionary<string, string[]> SocialActions;
         
         public string AsciiArt { get; private set; }
-
-        private static StaticData _Instance;
-        public static StaticData Instance
-        {
-            get
-            {
-                if (_Instance == null)
-                    _Instance = Load();
-                return _Instance;
-            }
-        }
+        public static StaticData Instance { get; } = Load();
 
         private static StaticData Load()
         {
-            string json = File.ReadAllText("External/config.json");
+            string json = File.ReadAllText("External/data.json");
             StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
             data.AsciiArt = @" ______ _   _ ______ _____   _____ _____ ____________
 |  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|
