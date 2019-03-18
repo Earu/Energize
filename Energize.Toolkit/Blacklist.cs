@@ -8,16 +8,7 @@ namespace Energize.Toolkit
     {
         public List<ulong> IDs;
 
-        private static Blacklist _Instance;
-        public static Blacklist Instance
-        {
-            get
-            {
-                if (_Instance == null)
-                    _Instance = Load();
-                return _Instance;
-            }
-        }
+        public static Blacklist Instance { get; } = Load();
 
         private static Blacklist Load()
         {

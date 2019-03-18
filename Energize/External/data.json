@@ -367,24 +367,6 @@
         "\"<answer>\" seems like a good choice"
     ],
 
-    "DramaFilter": [
-        "fuck", "fucker", "ass", "dick", "cunt", "fag", "fgt", "faggot", "asshole", "nigger", "negro",
-        "fucking", "arse", "bastard", "bitch", "motherfucker", "nigga", "twat", "hitler", "cuck",
-        "dip", "dipshit", "cock", "whore", "drama", "dickhead", "fuckface", "dickhole", "retard",
-        "retarded", "dogshit", "douche", "douchebag", "dumb", "dumbass", "idiot", "fuccboi", "fucc",
-        "furfag", "mf", "minge", "bs", "bullshit", "prick", "pussy", "sadfuck", "scumbag", "scumfuck",
-        "scum", "slut", "smartass", "shitty", "wanker", "ban", "kick", "banni", "jew", "racist", "homophobic",
-        "mess", "messing", "boosted", "csgo", "trash", "garbage", "rank", "elo", "hacker", "aimbot", "aimbotter",
-        "cs", "suck", "sucking", "skill", "competitive", "competition", "skills", "shitpost", "kill", "kys",
-        "kid", "kiddy", "kidding", "skid", "kids", "stupid", "annoying", "annoy", "annoys", "judge", "lag",
-        "lagging", "laggy", "noob", "noobs", "newbie", "fucktard", "spam", "spamming", "braindead", "underage",
-        "mentally", "stop", "stopping", "bad", "worse", "worst", "omg", "wtf", "ffs"
-    ],
-
-    "ApologizeFilter": ["sorry", "sry", "whoops", "oops", "apologize"],
-
-    "IllegalGif": "https://i.imgur.com/G9elKgE.gif",
-
     "AnimeEmotes": [
         "ヽ(ｏ`皿′ｏ)ﾉ",
         "ヽ(≧Д≦)ノ",
