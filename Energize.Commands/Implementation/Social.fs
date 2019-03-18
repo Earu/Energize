@@ -13,7 +13,7 @@ module Social =
     open Discord
     open Energize.Interfaces.Services.Database
 
-    let private actions = StaticData.SOCIAL_ACTIONS |> Seq.map (|KeyValue|) |> Map.ofSeq
+    let private actions = StaticData.Instance.SocialActions |> Seq.map (|KeyValue|) |> Map.ofSeq
 
     let registerAction (ctx : CommandContext) (users : IUser list) (action : string) =
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
@@ -83,7 +83,7 @@ module Social =
                 let json = 
                     let cb (req : HttpWebRequest) =
                         req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
-                        req.Headers.["X-Mashape-Key"] <- Config.MASHAPE_KEY
+                        req.Headers.["X-Mashape-Key"] <- Config.Instance.Keys.MashapeKey
                     awaitResult (HttpClient.GetAsync(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
                 let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
                 let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result

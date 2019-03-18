@@ -90,7 +90,7 @@ namespace Energize.Services.Database
 
         public DBContextPool(EnergizeClient client)
         {
-            this._ConnectionString = Config.DB_CONNECTION_STRING;
+            this._ConnectionString = Config.Instance.DBConnectionString;
 
             for (uint i = 0; i < 10; i++)
             {
@@ -122,7 +122,7 @@ namespace Energize.Services.Database
 
         private Database Create()
         {
-            var context = new Database(Config.DB_CONNECTION_STRING);
+            var context = new Database(Config.Instance.DBConnectionString);
             context.Database.EnsureCreated();
 
             return context;

@@ -263,7 +263,7 @@ module CommandHandler =
             .WithFooter(source)
             .WithColor(state.messageSender.ColorDanger)
             |> ignore
-        match state.client.GetChannel(Config.FEEDBACK_CHANNEL_ID) with
+        match state.client.GetChannel(Config.Instance.Discord.FeedbackChannelID) with
         | null -> ()
         | c ->
             let chan = c :> IChannel :?> ITextChannel
@@ -322,7 +322,7 @@ module CommandHandler =
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
-        | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.OWNER_ID)) ->
+        | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.Instance.Discord.OwnerID)) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
         | cmd when cmd.guildOnly && (Context.isPrivate msg) ->
@@ -355,7 +355,7 @@ module CommandHandler =
         | None -> ()
 
     let isBlacklisted (id : uint64) =
-        let ids = Blacklist.IDS |> Seq.toList
+        let ids = Blacklist.Instance.IDs |> Seq.toList
         match ids |> List.tryFind (fun i -> i.Equals(id)) with
         | Some _ -> true
         | None -> false

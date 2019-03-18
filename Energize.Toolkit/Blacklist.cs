@@ -1,26 +1,30 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Threading.Tasks;
 
 namespace Energize.Toolkit
 {
-    [DataContract]
     public class Blacklist
     {
-#pragma warning disable 649
-        [DataMember]
-        private List<ulong> IDs;
-#pragma warning restore 649
+        public List<ulong> IDs;
 
-        public static List<ulong> IDS;
-
-        public static async Task Load()
+        private static Blacklist _Instance;
+        public static Blacklist Instance
         {
-            string json = await File.ReadAllTextAsync("External/blacklist.json");
+            get
+            {
+                if (_Instance == null)
+                    _Instance = Load();
+                return _Instance;
+            }
+        }
+
+        private static Blacklist Load()
+        {
+            string json = File.ReadAllText("External/blacklist.json");
             Blacklist list = JsonConvert.DeserializeObject<Blacklist>(json);
-            IDS = list.IDs;
+
+            return list;
         }
     }
 }

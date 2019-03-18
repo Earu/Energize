@@ -33,7 +33,11 @@ namespace Energize
             if (this.HasToken)
             {
                 this.DisplayAsciiArt();
-                bool isdevenv = this._Token == Config.TOKEN_DEV;
+#if DEBUG
+                bool isdevenv = true;
+#else
+                bool isdevenv = false;
+#endif
                 this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {(isdevenv ? "DEVELOPMENT" : "PRODUCTION")} ]");
                 this.Logger.Notify("Initializing");
 
@@ -59,7 +63,7 @@ namespace Energize
                 ConsoleColor.Blue, ConsoleColor.Cyan, ConsoleColor.Green,
                 ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Magenta,
             };
-            string[] lines = StaticData.ASCII_ART.Split('\n');
+            string[] lines = StaticData.Instance.AsciiArt.Split('\n');
             Random rand = new Random();
             for (int i = 0; i < lines.Length; i++)
             {
@@ -96,7 +100,7 @@ namespace Energize
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.ServiceManager.InitializeServicesAsync(this);
 
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.TWITCH_URL);
+                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.TwitchURL);
                 await this.DiscordClient.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>

@@ -30,8 +30,8 @@ module Fun =
 
     [<Command("describe", "Generates a user description", "describe <user|nothing>")>]
     let describe (ctx : CommandContext) = async {
-        let adjs = StaticData.ADJECTIVES
-        let nouns = StaticData.NOUNS
+        let adjs = StaticData.Instance.Adjectives
+        let nouns = StaticData.Instance.Nouns
         let user = 
             if ctx.hasArguments then 
                 findUser ctx ctx.input true 
@@ -63,7 +63,7 @@ module Fun =
                     .ToString()
                     .Trim()
             let isVowel = 
-                match StaticData.VOWELS |> Seq.tryFind (fun vowel -> res.StartsWith(vowel)) with
+                match StaticData.Instance.Vowels |> Seq.tryFind (fun vowel -> res.StartsWith(vowel)) with
                 | Some _ -> true
                 | None -> false
             let display = u.Mention + " is " + (if isVowel then "an" else "a") + " " + res
@@ -99,7 +99,7 @@ module Fun =
     [<CommandParameters(1)>]
     [<Command("8b", "Answers a question positively or negatively", "8b <question>")>]
     let eightBall (ctx : CommandContext) = async {
-        let answers = StaticData.EIGHT_BALL_ANSWERS
+        let answers = StaticData.Instance.EightBallAnswers
         let answer = answers.[ctx.random.Next(0, answers.Length)]
         return [ ctx.sendOK None answer ]
     }
@@ -107,7 +107,7 @@ module Fun =
     [<CommandParameters(2)>]
     [<Command("pick", "Makes a choice for you", "pick <choice>,<choice>,<choice|nothing>,etc...")>]
     let pick (ctx : CommandContext) = async {
-        let answers = StaticData.PICK_ANSWERS
+        let answers = StaticData.Instance.PickAnswers
         let choice = ctx.arguments.[ctx.random.Next(0, ctx.arguments.Length)].Trim()
         let answer = answers.[ctx.random.Next(0, answers.Length)].Replace("<answer>", choice)
         return [ ctx.sendOK None answer ]
@@ -138,8 +138,8 @@ module Fun =
     [<Command("gname", "Generates a random gAmER name", "gname <nothing>")>]
     let gname (ctx : CommandContext) = async {
         let builder = StringBuilder()
-        let adjs = StaticData.ADJECTIVES
-        let nouns = StaticData.NOUNS
+        let adjs = StaticData.Instance.Adjectives
+        let nouns = StaticData.Instance.Nouns
         builder
             .Append(adjs.[ctx.random.Next(0, adjs.Length)].ToLower())
             .Append("_")

@@ -103,10 +103,10 @@ namespace Energize.Services.Generation
                 if (rand.Next(0, 100) > 75)
                     result += "！！";
 
-                string[] decoration = StaticData.ANIME_DECORATIONS[rand.Next(0, StaticData.ANIME_DECORATIONS.Length - 1)];
+                string[] decoration = StaticData.Instance.AnimeDecorations[rand.Next(0, StaticData.Instance.AnimeDecorations.Length - 1)];
                 result = decoration[0] + result + decoration[1];
 
-                string emote = StaticData.ANIME_EMOTES[rand.Next(0, StaticData.ANIME_EMOTES.Length - 1)];
+                string emote = StaticData.Instance.AnimeEmotes[rand.Next(0, StaticData.Instance.AnimeEmotes.Length - 1)];
                 if (rand.Next(0, 100) > 50)
                     result = emote + " － " + result;
                 else
@@ -191,7 +191,7 @@ namespace Energize.Services.Generation
                     string toput = string.Empty;
                     int count = rand.Next(5, 20);
                     for(uint i =0; i < count; i++)
-                        toput += StaticData.ZALGO[rand.Next(0, StaticData.ZALGO.Length - 1)];
+                        toput += StaticData.Instance.Zalgo[rand.Next(0, StaticData.Instance.Zalgo.Length - 1)];
 
                     ret += toput + c;
                 }

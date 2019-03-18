@@ -80,7 +80,7 @@ module Administration =
     [<GuildCommand>]
     [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
     let clear (ctx : CommandContext) = async {
-        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.BOT_ID_MAIN))
+        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.Instance.Discord.BotID))
     }
 
     [<AdminCommand>]

@@ -32,7 +32,7 @@ namespace Energize.Services.Listeners
 
             SocketGuildChannel chan = msg.Channel as SocketGuildChannel;
             string pattern = @"discord\.gg\/.+\s?";
-            if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.BOT_ID_MAIN)
+            if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.Instance.Discord.BotID)
             {
                 IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
                 using (IDatabaseContext ctx = await db.GetContext())
