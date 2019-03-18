@@ -1,0 +1,25 @@
+{
+  "Discord": {
+    "TokenDev": "discord dev token",
+    "TokenMain": "discord production token",
+    "BotIDMain": "bot id production",
+    "BotIDDev": "bot id dev",
+    "ServerInvite": "discord server invite link",
+    "OwnerID": "your id",
+    "FeedbackChannelID": "channel feedback id"
+  },
+  "Lavalink": {
+    "Host": "lavalink server address",
+    "Port": 0000,
+    "Password": "lavalink password"
+  },
+  "Keys": {
+    "GoogleAPIKey": "google api token",
+    "MashapeKey": "mashape api token",
+    "WebSearchToken": "websearch api token",
+    "SteamAPIKey": "steam api token"
+  },
+  "TwitchURL": "twitch profile link",
+  "DBConnectionString": "db connection string",
+  "GitHub": "bot github repo link"
+}
