@@ -79,7 +79,7 @@ module Util =
         let feedback = ctx.input
         let name = ctx.message.Author.Username
         let avatar = ctx.message.Author.GetAvatarUrl(ImageFormat.Auto)
-        let chan = ctx.client.GetChannel(Config.FEEDBACK_CHANNEL_ID)
+        let chan = ctx.client.GetChannel(Config.Instance.Discord.FeedbackChannelID)
         let log = 
             if not ctx.isPrivate then
                 let c = ctx.message.Channel :?> IGuildChannel
@@ -132,7 +132,7 @@ module Util =
     [<CommandParameters(1)>]
     [<Command("sql", "Runs an sql statement in the database", "sql <sqlstring>")>]
     let sql (ctx : CommandContext) = async {
-        let conn = new SqliteConnection(Config.DB_CONNECTION_STRING)
+        let conn = new SqliteConnection(Config.Instance.DBConnectionString)
         return
             try
                 await (conn.OpenAsync())

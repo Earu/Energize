@@ -42,7 +42,7 @@ namespace Energize.Services.Listeners
             IWebhookSenderService sender = this._ServiceManager.GetService<IWebhookSenderService>("Webhook");
 
             Random rand = new Random();
-            string quote = StaticData.HENTAI_QUOTES[rand.Next(0, StaticData.HENTAI_QUOTES.Length - 1)];
+            string quote = StaticData.Instance.HentaiQuotes[rand.Next(0, StaticData.Instance.HentaiQuotes.Length - 1)];
             quote = quote.Replace("{NAME}", msg.Author.Username);
             quote = style.GetStyleResult(quote, "anime");
             ITextChannel chan = msg.Channel as ITextChannel;
