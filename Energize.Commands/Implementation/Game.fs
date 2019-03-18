@@ -29,7 +29,7 @@ module Game =
                 None
         | input ->
             let endpoint = 
-                sprintf "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1?key=%s&vanityurl=%s" Config.STEAM_API_KEY input
+                sprintf "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1?key=%s&vanityurl=%s" Config.Instance.Keys.SteamAPIKey input
             let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
             let vanityObj = JsonPayload.Deserialize<VanityObj>(json, ctx.logger)
             if vanityObj.response.success.Equals(1) then
@@ -65,7 +65,7 @@ module Game =
             match id64 with
             | Some id ->    
                 let endpoint = 
-                    sprintf "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%d" Config.STEAM_API_KEY id
+                    sprintf "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=%s&steamids=%d" Config.Instance.Keys.SteamAPIKey id
                 let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
                 let steamPlyObj = JsonPayload.Deserialize<SteamPlySummaryObj>(json, ctx.logger)
                 match steamPlyObj.response.players |> Seq.tryHead with

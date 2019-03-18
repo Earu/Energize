@@ -54,9 +54,9 @@ module Info =
 
     [<Command("info", "Gets information about the bot", "info <nothing>")>]
     let info (ctx : CommandContext) = async {
-        let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.BOT_ID_MAIN
-        let github = Config.GITHUB
-        let owner = match ctx.client.GetUser(Config.OWNER_ID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
+        let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.Instance.Discord.BotID
+        let github = Config.Instance.GitHub
+        let owner = match ctx.client.GetUser(Config.Instance.Discord.OwnerID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [
             ctx.embedField "Name" ctx.client.CurrentUser true
@@ -84,8 +84,8 @@ module Info =
 
     [<Command("invite", "Gets the bot invite links", "invite <nothing>")>]
     let invite (ctx : CommandContext) = async {
-        let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.BOT_ID_MAIN
-        return [ ctx.sendRaw (invite + "\n" + Config.SERVER_INVITE) ]
+        let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.Instance.Discord.BotID
+        return [ ctx.sendRaw (invite + "\n" + Config.Instance.Discord.ServerInvite) ]
     }
 
     [<Command("user", "Gets information about a specific user", "user <user|userid|nothing>")>]

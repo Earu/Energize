@@ -193,9 +193,9 @@ namespace Energize.Services.Listeners
             {
                 ReconnectInterval = TimeSpan.FromSeconds(15.0),
                 ReconnectAttempts = 3,
-                Host = Config.LVK_HOST,
-                Port = Config.LVK_PORT,
-                Password = Config.LVK_PASSWORD,
+                Host = Config.Instance.Lavalink.Host,
+                Port = Config.Instance.Lavalink.Port,
+                Password = Config.Instance.Lavalink.Password,
                 SelfDeaf = false,
                 BufferSize = 8192,
             };
