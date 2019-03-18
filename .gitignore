@@ -260,5 +260,6 @@ paket-files/
 __pycache__/
 *.pyc
 Energize/External/config.json
-
-Energize/External/
+Energize/External/blacklist.json
+Energize/External/Markov/
+Energize/External/LuaSavedScripts/
