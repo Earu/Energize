@@ -46,16 +46,7 @@ namespace Energize.Toolkit
         public string DBConnectionString;
         public string GitHub;
 
-        private static Config _Instance;
-        public static Config Instance
-        {
-            get
-            {
-                if (_Instance == null)
-                    _Instance = Load();
-                return _Instance;
-            }
-        }
+        public static Config Instance { get; } = Load();
 
         private static Config Load()
         {
