@@ -10,11 +10,15 @@ namespace Energize.Toolkit
         public string Token;
         [JsonProperty("BotIDDev")]
         public ulong BotID;
+        [JsonProperty("PrefixDev")]
+        public string Prefix;
 #else
-        [JsonProperty("TokenMain")]
+        [JsonProperty("TokenProd")]
         public string Token;
-        [JsonProperty("BotIDMain")]
+        [JsonProperty("BotIDProd")]
         public ulong BotID;
+        [JsonProperty("PrefixProd")]
+        public string Prefix;
 #endif
 
         public string ServerInvite;
@@ -50,7 +54,7 @@ namespace Energize.Toolkit
 
         private static Config Load()
         {
-            string json = File.ReadAllText("External/config.json");
+            string json = File.ReadAllText("Settings/config.json");
             Config config = JsonConvert.DeserializeObject<Config>(json);
 
             return config;
