@@ -12,7 +12,7 @@ namespace Energize.Toolkit
 
         private static Blacklist Load()
         {
-            string json = File.ReadAllText("External/blacklist.json");
+            string json = File.ReadAllText("Settings/blacklist.json");
             Blacklist list = JsonConvert.DeserializeObject<Blacklist>(json);
 
             return list;

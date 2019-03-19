@@ -79,13 +79,15 @@ namespace Energize.Services.Listeners
         public async Task PauseTrack(IVoiceChannel vc, ITextChannel chan)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, chan);
-            await ply.PauseAsync();
+            if (ply.CurrentTrack != null)
+                await ply.PauseAsync();
         }
 
         public async Task ResumeTrack(IVoiceChannel vc, ITextChannel chan)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, chan);
-            await ply.ResumeAsync();
+            if (ply.CurrentTrack != null)
+                await ply.ResumeAsync();
         }
 
         public async Task SkipTrack(IVoiceChannel vc, ITextChannel chan)
@@ -166,9 +168,9 @@ namespace Energize.Services.Listeners
                 return;
             }
 
-            if (ply.Queue.Count > 0)
+            if (ply.Queue.TryDequeue(out IQueueObject tr))
             {
-                LavaTrack newtrack = ply.Queue.Dequeue() as LavaTrack;
+                LavaTrack newtrack = tr as LavaTrack;
                 await ply.PlayAsync(newtrack);
             }
 

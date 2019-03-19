@@ -22,7 +22,7 @@ namespace Energize.Toolkit
 
         private static StaticData Load()
         {
-            string json = File.ReadAllText("External/data.json");
+            string json = File.ReadAllText("Settings/data.json");
             StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
             data.AsciiArt = @" ______ _   _ ______ _____   _____ _____ ____________
 |  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|
