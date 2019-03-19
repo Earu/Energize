@@ -7,7 +7,7 @@ namespace Energize.Services.Generation
 {
     public class MarkovChain
     {
-        private static readonly string _Path = "External/Markov/";
+        private static readonly string _Path = "Settings/Markov/";
         private static readonly int _MaxDepth = 2;
         private static readonly string _Extension = ".markov";
         private static readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };

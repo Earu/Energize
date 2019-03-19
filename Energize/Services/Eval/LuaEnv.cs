@@ -17,7 +17,7 @@ namespace Energize.Services.Eval
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender        _MessageSender;
-        private readonly string               _Path = "External/Lua/SavedScripts";
+        private readonly string               _Path = "Settings/Lua/SavedScripts";
         private readonly string               _ScriptSeparator = "\n-- GEN --\n";
 
         private RestApplication _App;

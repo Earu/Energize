@@ -10,7 +10,8 @@ namespace Energize
 
         static async Task MainAsync(string[] args)
         {
-            EnergizeClient client = new EnergizeClient(Config.Instance.Discord.Token, "xx");
+            DiscordConfig discord = Config.Instance.Discord;
+            EnergizeClient client = new EnergizeClient(discord.Token, discord.Prefix);
             await client.InitializeAsync();
             await Task.Delay(-1);
         }
