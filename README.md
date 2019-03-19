@@ -1,6 +1,10 @@
+
+[![Discord Bots](https://discordbots.org/api/widget/360116713829695489.svg)](https://discordbots.org/bot/360116713829695489)
+<img src="https://dl.dropboxusercontent.com/s/8k0lwukl9n1shki/new_attempt_2.png" width="25%">
+
 # Energize, multi-usage Discord bot
 
-Source for Energize⚡ a discord bot using Discord.NET wrapper. Image processing, text generation, text processing, administration and more.
+Source for Energize⚡ a bot using Discord.NET. Image processing, text generation, music player, administration and more. 
 
 ## Everything in Energize is a service.
 
@@ -15,8 +19,3 @@ You can find them [here](https://github.com/Earu/Energize/tree/master/Energize.C
 The notion of modules felt more appropriate regarding commands, usually when you create a command you create a method
 in C# that method would need to be used from an instance of an object, which is not really what it is here. However F# has modules where you
 can have functions that do not have to be part of an instance. That feels more appropriate for a command system, so commands are in F# and not C#!
-
-[![Discord Bots](https://discordbots.org/api/widget/360116713829695489.svg)](https://discordbots.org/bot/360116713829695489)
-
-
-![logo1](https://dl.dropboxusercontent.com/s/iqu7wk0fzqj8onh/256px.png)
