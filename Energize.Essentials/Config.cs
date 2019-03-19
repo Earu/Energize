@@ -61,7 +61,7 @@ namespace Energize.Essentials
 
         private static Config Load()
         {
-            string json = File.ReadAllText("Settings/config.json");
+            string json = File.ReadAllText("Energize/Settings/config.json");
             Config config = JsonConvert.DeserializeObject<Config>(json);
 
             return config;
