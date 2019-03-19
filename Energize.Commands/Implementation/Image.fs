@@ -9,10 +9,8 @@ module Image =
     open Discord
     open Energize.Commands.AsyncHelper
     open Discord.WebSocket
-    open System.Drawing
     open Energize.Commands.ImageUrlProvider
-    open System.Text.RegularExpressions
-    open Energize.Toolkit
+    open Energize.Essentials
 
     [<CommandParameters(1)>]
     [<Command("avatar", "Gets the avatar of a user", "avatar <user|userid>")>]

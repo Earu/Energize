@@ -6,7 +6,7 @@ open Energize.Commands.Command
 module Fun =
     open System
     open Energize.Commands.Context
-    open Energize.Toolkit
+    open Energize.Essentials
     open Energize.Commands
     open AsyncHelper
     open UserHelper

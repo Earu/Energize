@@ -11,7 +11,7 @@ module Administration =
     open System
     open Discord
     open System.Collections.Generic
-    open Energize.Toolkit
+    open Energize.Essentials
     open Energize.Commands
     open Discord.Rest
     open System.Linq

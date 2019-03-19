@@ -18,23 +18,27 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="3.0.0-preview3.19153.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="2.0.0-preview1-final" />
     <PackageReference Include="NLua_Safe" Version="1.3.2.1" />
-    <PackageReference Include="Victoria" Version="4.0.4" />
+    <PackageReference Include="Victoria" Version="4.0.5" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="nuget.config">
+    <Content Include="Lua\Event.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="External/*">
+    </Content>
+    <Content Include="Lua\Linq.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Settings\**" />
-    <Compile Remove="Masks\**" />
-    <EmbeddedResource Remove="Settings\**" />
-    <EmbeddedResource Remove="Masks\**" />
-    <None Remove="Settings\**" />
-    <None Remove="Masks\**" />
+    </Content>
+    <Content Include="Lua\Sandbox.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Lua\Table.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Lua\Utils.lua">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="nuget.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Settings\blacklist.json">
@@ -43,29 +47,9 @@
     <Content Include="Settings\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Settings\data.json">
+    <Content Include="Data\static.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Settings\Lua\Event.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Settings\Lua\Init.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Settings\Lua\Linq.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Settings\Lua\Sandbox.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Settings\Lua\Table.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Settings\Lua\Utils.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Energize.Commands\Energize.Commands.fsproj" />

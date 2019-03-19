@@ -1,11 +1,11 @@
 @echo off
 echo Cleaning solution...
 
-if exist "Energize/.vs" (
-    rmdir "Energize/.vs" /s /q
+if exist ".vs" (
+    rmdir ".vs" /s /q
 )
 
-for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials) do (
+for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials, Energize.Steam) do (
     if exist "%%G/bin" (
         rmdir "%%G/bin" /s /q
     )

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class StaticData
     {
@@ -22,7 +22,7 @@ namespace Energize.Toolkit
 
         private static StaticData Load()
         {
-            string json = File.ReadAllText("Settings/data.json");
+            string json = File.ReadAllText("Data/static.json");
             StaticData data = JsonConvert.DeserializeObject<StaticData>(json);
             data.AsciiArt = @" ______ _   _ ______ _____   _____ _____ ____________
 |  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|

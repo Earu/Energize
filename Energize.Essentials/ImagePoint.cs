@@ -1,4 +1,4 @@
-﻿namespace Energize.Toolkit
+﻿namespace Energize.Essentials
 {
     public class ImagePoint
     {

@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Interfaces.Services.Generation;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System;
 using System.Threading.Tasks;
 

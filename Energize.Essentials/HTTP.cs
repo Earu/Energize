@@ -4,7 +4,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class HttpClient
     {
