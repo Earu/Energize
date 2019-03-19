@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Energize.Services.Generation
@@ -11,7 +12,8 @@ namespace Energize.Services.Generation
         private static readonly string _Path = Config.Instance.URIs.MarkovDirectory;
         private static readonly int _MaxDepth = 2;
         private static readonly string _Extension = ".markov";
-        private static readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
+        private static readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_', '\n' };
+        private static readonly char[] _WinInvalidChars = { '<', '>', '*', '|', ':', '\"', '`' };
 
         private void SaveWord(string path, string text, Logger logger)
         {
@@ -37,6 +39,12 @@ namespace Energize.Services.Generation
                 .Replace("\\", "/")
                 .Replace("/", " ")
                 .Replace("\"", string.Empty);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                foreach (char invalidchar in _WinInvalidChars)
+                    sentence = sentence.Replace($"{invalidchar}", string.Empty);
+            }
 
             string[] words = sentence.Split(_Separators);
 

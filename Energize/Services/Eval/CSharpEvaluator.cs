@@ -32,8 +32,9 @@ namespace Energize.Services.Eval
                 "Discord.Rest",
                 "Discord.WebSocket",
                 "Energize",
-                "Energize.Toolkit",
+                "Energize.Essentials",
                 "Energize.Services",
+                "Energize.Interfaces",
                 "System.Text.RegularExpressions",
                 "System.Diagnostics"
             };

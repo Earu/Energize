@@ -15,6 +15,10 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
+        Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan);
+
+        Task ShuffleTracks(IVoiceChannel vc, ITextChannel chan);
+
         Task ClearTracks(IVoiceChannel vc, ITextChannel chan);
 
         Task PauseTrack(IVoiceChannel vc, ITextChannel chan);
@@ -22,8 +26,6 @@ namespace Energize.Interfaces.Services.Listeners
         Task ResumeTrack(IVoiceChannel vc, ITextChannel chan);
 
         Task SkipTrack(IVoiceChannel vc, ITextChannel chan);
-
-        Task<IUserMessage> SendQueue(IVoiceChannel vc, ITextChannel chan);
 
         Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg);
     }
