@@ -1,8 +1,8 @@
 -- Load libraries first
-require("External.Lua.Table")
-require("External.Lua.Utils")
-require("External.Lua.Event")
-require("External.Lua.Linq")
+require("Settings.Lua.Table")
+require("Settings.Lua.Utils")
+require("Settings.Lua.Event")
+require("Settings.Lua.Linq")
 
 -- Load the sandbox
-require("External.Lua.Sandbox")
+require("Settings.Lua.Sandbox")

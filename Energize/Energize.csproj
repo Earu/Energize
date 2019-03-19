@@ -29,41 +29,41 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="External\**" />
+    <Compile Remove="Settings\**" />
     <Compile Remove="Masks\**" />
-    <EmbeddedResource Remove="External\**" />
+    <EmbeddedResource Remove="Settings\**" />
     <EmbeddedResource Remove="Masks\**" />
-    <None Remove="External\**" />
+    <None Remove="Settings\**" />
     <None Remove="Masks\**" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="External\blacklist.json">
+    <Content Include="Settings\blacklist.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="External\config.json">
+    <Content Include="Settings\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="External\data.json">
+    <Content Include="Settings\data.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="External\Lua\Event.lua">
+    <None Include="Settings\Lua\Event.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="External\Lua\Init.lua">
+    <None Include="Settings\Lua\Init.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="External\Lua\Linq.lua">
+    <None Include="Settings\Lua\Linq.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="External\Lua\Sandbox.lua">
+    <None Include="Settings\Lua\Sandbox.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="External\Lua\Table.lua">
+    <None Include="Settings\Lua\Table.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="External\Lua\Utils.lua">
+    <None Include="Settings\Lua\Utils.lua">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
