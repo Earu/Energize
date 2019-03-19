@@ -6,7 +6,7 @@ open Energize.Commands.Command
 module Social =
     open System
     open Energize.Commands.Context
-    open Energize.Toolkit
+    open Energize.Essentials
     open Energize.Commands.UserHelper
     open Energize.Commands.AsyncHelper
     open System.Net

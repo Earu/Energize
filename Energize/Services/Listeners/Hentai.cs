@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using Energize.Interfaces.Services;
 using Energize.Interfaces.Services.Generation;
 using Energize.Interfaces.Services.Senders;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System;
 using System.Collections.Generic;
 using System.Linq;

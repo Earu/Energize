@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class JsonPayload
     {

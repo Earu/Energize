@@ -14,7 +14,7 @@ module CommandHandler =
     open System.Threading.Tasks
     open System
     open AsyncHelper
-    open Energize.Toolkit
+    open Energize.Essentials
     open System.Reflection
     open Energize.Interfaces.Services
     open System.Diagnostics

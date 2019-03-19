@@ -5,7 +5,7 @@ using Discord.WebSocket;
 using Discord;
 using Discord.Rest;
 using System.IO;
-using Energize.Toolkit;
+using Energize.Essentials;
 using Energize.Services;
 
 namespace Energize
@@ -100,7 +100,7 @@ namespace Energize
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.ServiceManager.InitializeServicesAsync(this);
 
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.TwitchURL);
+                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.URIs.TwitchURL);
                 await this.DiscordClient.SetActivityAsync(game);
 
                 Timer gctimer = new Timer(arg =>

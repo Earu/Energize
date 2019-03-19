@@ -5,7 +5,7 @@ using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Generation;
 using Energize.Interfaces.Services.Senders;
 using Energize.Services.Senders;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System;
 using System.Collections.Generic;
 using System.Linq;

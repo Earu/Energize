@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public struct DiscordConfig
     {
@@ -41,14 +41,21 @@ namespace Energize.Toolkit
         public string SteamAPIKey;
     }
 
+    public struct URIConfig
+    {
+        public string MarkovDirectory;
+        public string LuaDirectory;
+        public string TwitchURL;
+        public string GitHubURL;
+    }
+
     public class Config
     {
         public DiscordConfig Discord;
         public LavalinkConfig Lavalink;
         public KeysConfig Keys;
-        public string TwitchURL;
+        public URIConfig URIs;
         public string DBConnectionString;
-        public string GitHub;
 
         public static Config Instance { get; } = Load();
 

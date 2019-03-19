@@ -2,7 +2,7 @@
 using Discord.Net;
 using Discord.Webhook;
 using Energize.Interfaces.Services.Senders;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

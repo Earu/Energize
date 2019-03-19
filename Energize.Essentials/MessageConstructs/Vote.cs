@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Energize.Toolkit.MessageConstructs
+namespace Energize.Essentials.MessageConstructs
 {
     public class Vote
     {

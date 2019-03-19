@@ -4,7 +4,7 @@ module Context =
     open Discord.WebSocket
     open Discord
     open Discord.Rest
-    open Energize.Toolkit
+    open Energize.Essentials
     open Cache
     open System
     open Energize.Interfaces.Services

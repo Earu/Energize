@@ -1,5 +1,5 @@
 ﻿using Discord;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System.Collections.Generic;
 
 namespace Energize.Interfaces.Services.Eval

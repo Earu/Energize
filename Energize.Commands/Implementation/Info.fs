@@ -10,7 +10,7 @@ module Info =
     open Energize.Commands
     open AsyncHelper
     open System.Text
-    open Energize.Toolkit
+    open Energize.Essentials
     open Energize.Commands.UserHelper
     open System
 
@@ -55,7 +55,7 @@ module Info =
     [<Command("info", "Gets information about the bot", "info <nothing>")>]
     let info (ctx : CommandContext) = async {
         let invite = sprintf "<https://discordapp.com/oauth2/authorize?client_id=%d&scope=bot&permissions=8>" Config.Instance.Discord.BotID
-        let github = Config.Instance.GitHub
+        let github = Config.Instance.URIs.GitHubURL
         let owner = match ctx.client.GetUser(Config.Instance.Discord.OwnerID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [

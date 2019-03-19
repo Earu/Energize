@@ -2,7 +2,7 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Interfaces.Services.Eval;
-using Energize.Toolkit;
+using Energize.Essentials;
 using NLua;
 using NLua.Exceptions;
 using System;
@@ -17,7 +17,7 @@ namespace Energize.Services.Eval
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender        _MessageSender;
-        private readonly string               _Path = "Settings/Lua/SavedScripts";
+        private readonly string               _Path = Config.Instance.URIs.LuaDirectory + "SavedScripts";
         private readonly string               _ScriptSeparator = "\n-- GEN --\n";
 
         private RestApplication _App;
@@ -182,7 +182,17 @@ namespace Energize.Services.Eval
         private Lua CreateState(ulong chanid)
         {
             Lua state = new Lua();
-            string sandbox = File.ReadAllText("./Settings/Lua/Init.lua");
+            state["PATH"] = Config.Instance.URIs.LuaDirectory.Replace('/', '.');
+            string sandbox = @"
+                -- Load libraries first
+                require(PATH .. 'Table')
+                require(PATH .. 'Utils')
+                require(PATH .. 'Event')
+                require(PATH .. 'Linq')
+
+                -- Load the sandbox
+                require(PATH .. 'Sandbox')
+            ";
             state.DoString(sandbox);
 
             return state;

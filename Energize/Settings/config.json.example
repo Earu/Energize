@@ -2,16 +2,16 @@
   "Discord": {
     "TokenDev": "discord dev token",
     "TokenMain": "discord production token",
-    "BotIDMain": "bot id production",
-    "BotIDDev": "bot id dev",
-    "ServerInvite": "discord server invite link",
-    "OwnerID": "your id",
-    "FeedbackChannelID": "channel feedback id"
+    "BotIDMain": "0000000000000000",
+    "BotIDDev": "0000000000000000",
+    "ServerInvite": "https://discord.gg/asdfgh",
+    "OwnerID": "0000000000000000",
+    "FeedbackChannelID": "0000000000000000"
   },
   "Lavalink": {
-    "Host": "lavalink server address",
-    "Port": 0000,
-    "Password": "lavalink password"
+    "Host": "google.com",
+    "Port": "0000",
+    "Password": "coolpassword"
   },
   "Keys": {
     "GoogleAPIKey": "google api token",
@@ -19,7 +19,11 @@
     "WebSearchToken": "websearch api token",
     "SteamAPIKey": "steam api token"
   },
-  "TwitchURL": "twitch profile link",
-  "DBConnectionString": "db connection string",
-  "GitHub": "bot github repo link"
+  "URIs": {
+    "MarkovDirectory": "Data/Markov/",
+    "LuaDirectory": "Lua/",
+    "TwitchURL": "https://www.twitch.tv/earuio",
+    "GitHubURL": "https://github.com/Earu/Energize"
+  },
+  "DBConnectionString": "Data Source=EnergizeDB.db"
 }
