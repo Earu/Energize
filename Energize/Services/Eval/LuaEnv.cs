@@ -182,7 +182,7 @@ namespace Energize.Services.Eval
         private Lua CreateState(ulong chanid)
         {
             Lua state = new Lua();
-            string sandbox = File.ReadAllText("./External/Lua/Init.lua");
+            string sandbox = File.ReadAllText("./Settings/Lua/Init.lua");
             state.DoString(sandbox);
 
             return state;
