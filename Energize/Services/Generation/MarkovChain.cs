@@ -13,7 +13,19 @@ namespace Energize.Services.Generation
         private static readonly string _Extension = ".markov";
         private static readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
 
-        public void Learn(string sentence)
+        private void SaveWord(string path, string text, Logger logger)
+        {
+            try
+            {
+                File.AppendAllText(path, text);
+            }
+            catch
+            {
+                logger.Nice("Markov", ConsoleColor.Red, $"Could not save markov data [ word: {text}; path: {path} ]");
+            }
+        }
+
+        public void Learn(string sentence, Logger logger)
         {
             if(sentence == null) return;
 
@@ -34,7 +46,7 @@ namespace Energize.Services.Generation
                 string next = i + 1 > words.Length ? "END_SEQUENCE" : words[i + 1].ToLower().Trim();
 
                 string path = _Path + word + _Extension;
-                File.AppendAllText(path, $"{next}\n");
+                this.SaveWord(path, $"{next}\n", logger);
 
                 string left = word + _Extension;
                 for(int depth = 1; depth < _MaxDepth; depth++)
@@ -44,7 +56,7 @@ namespace Energize.Services.Generation
                         left = $"{words[i - depth].Trim()}_{left}";
                         path = _Path + left;
 
-                        File.AppendAllText(path, next + "\n");
+                        this.SaveWord(path, next + "\n", logger);
                     }
                 }
             }

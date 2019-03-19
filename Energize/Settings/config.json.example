@@ -20,8 +20,8 @@
     "SteamAPIKey": "steam api token"
   },
   "URIs": {
-    "MarkovDirectory": "Data/Markov/",
-    "LuaDirectory": "Lua/",
+    "MarkovDirectory": "Energize/Data/Markov/",
+    "LuaDirectory": "Energize/Lua/",
     "TwitchURL": "https://www.twitch.tv/earuio",
     "GitHubURL": "https://github.com/Earu/Energize"
   },

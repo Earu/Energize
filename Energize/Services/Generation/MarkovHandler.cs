@@ -21,12 +21,12 @@ namespace Energize.Services.Generation
             this._Logger = client.Logger;
         }
 
-        public void Learn(string content,ulong id, Logger log)
+        public void Learn(string content,ulong id, Logger logger)
         {
             MarkovChain chain = new MarkovChain();
             try
             {   
-                chain.Learn(content);
+                chain.Learn(content, logger);
             }
             catch(Exception e)
             {
