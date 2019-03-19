@@ -261,5 +261,7 @@ __pycache__/
 *.pyc
 Energize/Settings/config.json
 Energize/Settings/blacklist.json
-Energize/Settings/Markov/
-Energize/Settings/LuaSavedScripts/
+Energize/Lua/LuaSavedScripts/
+Energize/Data/Markov/
+EnergizeDB\.db
+logs\.txt
