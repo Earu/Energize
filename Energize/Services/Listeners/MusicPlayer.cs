@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
+using System.Linq;
 
 namespace Energize.Services.Listeners
 {
@@ -18,14 +19,14 @@ namespace Energize.Services.Listeners
         private readonly LavaShardClient _LavaClient;
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
+        private readonly List<ulong> _PlayersLooping;
 
         private bool _Initialized;
-        private bool _LoopMode;
 
         public MusicPlayer(EnergizeClient client)
         {
             this._Initialized = false;
-            this._LoopMode = false;
+            this._PlayersLooping = new List<ulong>();
 
             this._Client = client.DiscordClient;
             this._Logger = client.Logger;
@@ -45,18 +46,21 @@ namespace Energize.Services.Listeners
 
         public async Task<LavaPlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan)
         {
-            LavaPlayer ply = this._LavaClient.GetPlayer(vc.GuildId);
-            if (ply == null)
+            LavaPlayer ply = await this._LavaClient.ConnectAsync(vc, chan);
+            if (vc.Id != ply.VoiceChannel.Id)
+            {
+                await this._LavaClient.DisconnectAsync(ply.VoiceChannel);
                 ply = await this._LavaClient.ConnectAsync(vc, chan);
+            }
 
             return ply;
         }
 
         public async Task DisconnectAsync(IVoiceChannel vc)
         {
-            LavaPlayer ply = this._LavaClient.GetPlayer(vc.GuildId);
-            if (ply != null)
-                await this._LavaClient.DisconnectAsync(vc);
+            await this._LavaClient.DisconnectAsync(vc);
+            if (this._PlayersLooping.Contains(vc.GuildId))
+                this._PlayersLooping.Remove(vc.GuildId);
         }
 
         public async Task AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
@@ -66,6 +70,29 @@ namespace Energize.Services.Listeners
                 ply.Queue.Enqueue(track);
             else
                 await ply.PlayAsync(track, false);
+        }
+
+        public async Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, chan);
+            bool islooping = this._PlayersLooping.Contains(vc.GuildId);
+            if (islooping) 
+                this._PlayersLooping.Remove(vc.GuildId);
+            else
+                this._PlayersLooping.Add(vc.GuildId);
+            return !islooping;
+        }
+
+        private bool ShouldLoop(LavaPlayer ply)
+        {
+            ulong guildid = ply.VoiceChannel.GuildId;
+            return this._PlayersLooping.Contains(guildid);
+        }
+
+        public async Task ShuffleTracks(IVoiceChannel vc, ITextChannel chan)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, chan);
+            ply.Queue.Shuffle();
         }
 
         public async Task ClearTracks(IVoiceChannel vc, ITextChannel chan)
@@ -95,14 +122,6 @@ namespace Energize.Services.Listeners
             LavaPlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying)
                 await ply.StopAsync();
-        }
-
-        public async Task<IUserMessage> SendQueue(IVoiceChannel vc, ITextChannel chan)
-        {
-            LavaPlayer ply = await this.ConnectAsync(vc, chan);
-            Embed embed = this.GetQueueEmbed(ply);
-
-            return await this._MessageSender.Send(ply.TextChannel, embed);
         }
 
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
@@ -162,20 +181,21 @@ namespace Energize.Services.Listeners
 
         private async Task OnTrackFinished(LavaPlayer ply, LavaTrack track, TrackEndReason reason)
         {
-            if (this._LoopMode)
+            if (this.ShouldLoop(ply))
             {
+                track.ResetPosition();
                 await ply.PlayAsync(track, false);
-                return;
             }
-
-            if (ply.Queue.TryDequeue(out IQueueObject tr))
+            else
             {
-                LavaTrack newtrack = tr as LavaTrack;
-                await ply.PlayAsync(newtrack);
+                if (ply.Queue.TryDequeue(out IQueueObject tr))
+                {
+                    LavaTrack newtrack = tr as LavaTrack;
+                    await ply.PlayAsync(newtrack);
+                    string msg = $"🎶 Now playing: **{newtrack.Title}** from **{newtrack.Author}**";
+                    await this._MessageSender.Good(ply.TextChannel, "music player", msg);
+                }
             }
-
-            Embed embed = this.GetQueueEmbed(ply);
-            await this._MessageSender.Send(ply.TextChannel, embed);
         }
 
         private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track)
@@ -185,6 +205,18 @@ namespace Energize.Services.Listeners
             await this._MessageSender.Warning(ply.TextChannel, "music player", msg);
             if (ply.IsPlaying)
                 await ply.StopAsync();
+        }
+
+        [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
+        public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
+        {
+            IVoiceChannel vc = newstate.VoiceChannel;
+            if (vc == null) return;
+
+            SocketVoiceChannel svc = (SocketVoiceChannel)vc;
+            LavaPlayer ply = this._LavaClient.GetPlayer(vc.GuildId);
+            if (svc.Users.Count(x => !x.IsBot) < 1 && ply != null)
+                await this.DisconnectAsync(vc);
         }
 
         [Event("ShardReady")]
@@ -200,6 +232,7 @@ namespace Energize.Services.Listeners
                 Password = Config.Instance.Lavalink.Password,
                 SelfDeaf = false,
                 BufferSize = 8192,
+                ShouldPreservePlayers = false,
             };
 
             this.LavaRestClient = new LavaRestClient(config);
