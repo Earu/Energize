@@ -6,7 +6,7 @@ open Energize.Commands.Command
 module Game =
     open Energize.Commands.Context
     open Energize.Commands.AsyncHelper
-    open Energize.Toolkit
+    open Energize.Essentials
     open System
     open Discord
     open Energize.Interfaces.Services.Generation

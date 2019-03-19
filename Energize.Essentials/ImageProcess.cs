@@ -5,7 +5,7 @@ using System.Net;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class ImageProcess
     {

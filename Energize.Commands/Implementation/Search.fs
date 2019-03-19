@@ -6,7 +6,7 @@ open Energize.Commands.Command
 module Search =
     open System
     open Energize.Commands.AsyncHelper
-    open Energize.Toolkit
+    open Energize.Essentials
     open Energize.Commands.Context
     open Discord
     open Energize.Interfaces.Services.Senders

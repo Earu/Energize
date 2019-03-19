@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services;
 using Energize.Interfaces.Services.Database;
-using Energize.Toolkit;
+using Energize.Essentials;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 

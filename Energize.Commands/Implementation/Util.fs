@@ -8,7 +8,7 @@ module Util =
     open System.Diagnostics
     open Energize.Commands.Context
     open System
-    open Energize.Toolkit
+    open Energize.Essentials
     open Discord
     open System.Threading.Tasks
     open System.Text

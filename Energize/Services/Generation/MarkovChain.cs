@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Energize.Essentials;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -7,7 +8,7 @@ namespace Energize.Services.Generation
 {
     public class MarkovChain
     {
-        private static readonly string _Path = "Settings/Markov/";
+        private static readonly string _Path = Config.Instance.URIs.MarkovDirectory;
         private static readonly int _MaxDepth = 2;
         private static readonly string _Extension = ".markov";
         private static readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };

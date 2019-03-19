@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using System;
 using System.Threading.Tasks;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class MessageSender
     {

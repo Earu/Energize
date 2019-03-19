@@ -6,7 +6,7 @@ open Energize.Commands.Command
 module Nsfw =
     open Energize.Commands.Context
     open Energize.Commands.AsyncHelper
-    open Energize.Toolkit
+    open Energize.Essentials
     open Discord
     open System.Xml
     open System

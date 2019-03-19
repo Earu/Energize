@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Energize.Toolkit
+namespace Energize.Essentials
 {
     public class Logger
     {

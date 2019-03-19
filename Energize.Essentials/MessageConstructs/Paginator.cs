@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Energize.Toolkit.MessageConstructs
+namespace Energize.Essentials.MessageConstructs
 {
     public class Paginator<T> where T : class
     {
