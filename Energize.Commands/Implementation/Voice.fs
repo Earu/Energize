@@ -46,8 +46,7 @@ module Voice =
                 let textChan = ctx.message.Channel :?> ITextChannel
                 awaitIgnore (music.ConnectAsync(vc, textChan))
                 await (music.AddTrack(vc, textChan, tr))
-                let msg = awaitResult (music.SendQueue(vc, ctx.message))
-                [ msg ]
+                [ ctx.sendOK None (sprintf "🎶 Added **%s** from **%s** to the queue" tr.Title tr.Author) ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any track for your input" ]
         )
@@ -81,10 +80,30 @@ module Voice =
     }
 
     [<GuildCommand>]
+    [<Command("loop", "Loops or unloop the current track", "loop <nothing>")>]
+    let loop (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let looping = awaitResult (music.LoopTrack(vc, ctx.message.Channel :?> ITextChannel))
+            if looping then
+                [ ctx.sendOK None "Looping the current track" ]
+            else
+                [ ctx.sendOK None "Stopped looping the current track" ]
+        )
+    }
+
+    [<GuildCommand>]
+    [<Command("shuffle", "Shuffles the track queue", "shuffle <nothing>")>]
+    let shuffle (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            await (music.ShuffleTracks(vc, ctx.message.Channel :?> ITextChannel))
+            [ ctx.sendOK None "Shuffled the track queue" ]
+        )
+    }
+
+    [<GuildCommand>]
     [<Command("queue", "Displays the current track queue", "queue <nothing>")>]
     let queue (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let msg = awaitResult (music.SendQueue(vc, ctx.message))
-            [ msg ]
+            [ awaitResult (music.SendQueue(vc, ctx.message)) ]
         )
     }

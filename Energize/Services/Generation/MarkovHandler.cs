@@ -12,7 +12,7 @@ namespace Energize.Services.Generation
     {
         private readonly string _Prefix;
         private readonly Logger _Logger;
-        private readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_' };
+        private readonly char[] _Separators = { ' ', '.', ',', '!', '?', ';', '_', '\n' };
         private readonly int _MaxDepth = 2;
 
         public MarkovHandler(EnergizeClient client)
