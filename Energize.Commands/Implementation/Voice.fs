@@ -4,6 +4,7 @@ open Energize.Commands.Command
 
 [<CommandModule("Voice")>]
 module Voice =
+    open System
     open Energize.Commands.Context
     open Discord
     open Energize.Interfaces.Services.Listeners
@@ -97,6 +98,32 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             await (music.ShuffleTracks(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Shuffled the track queue" ]
+        )
+    }
+
+    [<GuildCommand>]
+    [<CommandParameters(1)>]
+    [<Command("vol", "Sets the audio volume", "vol <number>")>]
+    let volume (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            try
+                let vol = int ctx.arguments.[0]
+                await (music.SetTrackVolume(vc, ctx.message.Channel :?> ITextChannel, vol))
+                [ ctx.sendOK None (sprintf "Set the volume to %d" vol) ]
+            with _ ->
+                [ ctx.sendWarn None "Incorrect volume, expecting a number" ]
+        )
+    }
+
+    [<GuildCommand>]
+    [<Command("lyrics", "Tries to get the current track lyrics if any", "lyrics <nothing>")>]
+    let lyrics (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let lyrics = awaitResult (music.GetTrackLyrics(vc, ctx.message.Channel :?> ITextChannel))
+            if String.IsNullOrWhiteSpace lyrics then
+                [ ctx.sendWarn None "Could not find the lyrics for the current track" ]
+            else
+                [ ctx.sendOK None lyrics ]
         )
     }
 
