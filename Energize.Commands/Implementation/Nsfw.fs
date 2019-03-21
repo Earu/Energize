@@ -11,6 +11,7 @@ module Nsfw =
     open System.Xml
     open System
     open Energize.Interfaces.Services.Senders
+    open System.Net
 
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
         ctx.messageSender.BuilderWithAuthor(ctx.message,builder)
@@ -26,7 +27,7 @@ module Nsfw =
     [<CommandParameters(1)>]
     [<Command("e621", "Searches e621", "e621 <tag|search>")>]
     let e621 (ctx : CommandContext) = async {
-        let endpoint = "https://e621.net/post/index.json?tags=" + ctx.input
+        let endpoint = "https://e621.net/post/index.json?tags=" + WebUtility.UrlEncode(ctx.input)
         let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let e621Objs = JsonPayload.Deserialize<E621Obj list>(json, ctx.logger)
         return 
@@ -41,7 +42,7 @@ module Nsfw =
 
     let private getDApiResult (ctx : CommandContext) (uri : string) = 
         let endpoint = 
-            sprintf "http://%s/index.php?page=dapi&s=post&q=index&tags=%s" uri ctx.input
+            sprintf "http://%s/index.php?page=dapi&s=post&q=index&tags=%s" uri (WebUtility.UrlEncode(ctx.input))
         let xml = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         if String.IsNullOrWhiteSpace xml then
             None

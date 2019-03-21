@@ -27,6 +27,10 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task SkipTrack(IVoiceChannel vc, ITextChannel chan);
 
+        Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol);
+
+        Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan);
+
         Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg);
     }
 }

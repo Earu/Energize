@@ -124,6 +124,24 @@ namespace Energize.Services.Listeners
                 await ply.StopAsync();
         }
 
+        public async Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, chan);
+            await ply.SetVolumeAsync(vol);
+        }
+
+        public async Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply.IsPlaying)
+            {
+                LavaTrack track = ply.CurrentTrack;
+                return await track.FetchLyricsAsync();
+            }
+
+            return "Nothing is playing";
+        }
+
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
