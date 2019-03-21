@@ -43,30 +43,33 @@ module Nsfw =
         let endpoint = 
             sprintf "http://%s/index.php?page=dapi&s=post&q=index&tags=%s" uri ctx.input
         let xml = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
-        let doc = XmlDocument()
-        doc.LoadXml(xml)
-        let nodes = doc.SelectNodes("//post")
-        if nodes.Count < 1 then
+        if String.IsNullOrWhiteSpace xml then
             None
         else
-            let results =
-                nodes 
-                |> Seq.cast<XmlNode>
-                |> Seq.map (fun node -> 
-                    let url = 
-                        let n = node.SelectSingleNode("@file_url")
-                        if n.Value.StartsWith("//") then
-                            sprintf "http:%s" n.Value
-                        else 
-                            n.Value
-                    let id = node.SelectSingleNode("@id").Value
-                    let page = sprintf "http://%s/index.php?page=post&s=view&id=%s" uri id
-                    (url, page)
-                )
-                |> Seq.distinct
-                |> Seq.toList
+            let doc = XmlDocument()
+            doc.LoadXml(xml)
+            let nodes = doc.SelectNodes("//post")
+            if nodes.Count < 1 then
+                None
+            else
+                let results =
+                    nodes 
+                    |> Seq.cast<XmlNode>
+                    |> Seq.map (fun node -> 
+                        let url = 
+                            let n = node.SelectSingleNode("@file_url")
+                            if n.Value.StartsWith("//") then
+                                sprintf "http:%s" n.Value
+                            else 
+                                n.Value
+                        let id = node.SelectSingleNode("@id").Value
+                        let page = sprintf "http://%s/index.php?page=post&s=view&id=%s" uri id
+                        (url, page)
+                    )
+                    |> Seq.distinct
+                    |> Seq.toList
 
-            Some results
+                Some results
 
     let private callDApiCmd (ctx : CommandContext) (uri : string) = async {
         let result = getDApiResult ctx uri

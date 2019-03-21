@@ -1,10 +1,10 @@
-﻿using Discord.Rest;
+﻿using Discord.Net;
+using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Interfaces.Services;
 using Energize.Essentials;
+using Energize.Interfaces.Services;
 using System;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
@@ -35,7 +35,7 @@ namespace Energize.Services.Listeners
         [Event("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientshard)
         {
-            if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+            if (e is WebSocketClosedException wsex && wsex.CloseCode == 1001)
                 return;
             this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds\n{e}");
         }
