@@ -29,7 +29,7 @@ namespace Energize.Services.Listeners
         }
 
         public void Initialize()
-            => Commands.CommandHandler.initialize(this._Client, this._RestClient, this._Logger, 
+            => Commands.CommandHandler.Initialize(this._Client, this._RestClient, this._Logger, 
                 this._MessageSender, this._Prefix, this._ServiceManager);
 
         public Task InitializeAsync()
