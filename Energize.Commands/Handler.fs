@@ -29,6 +29,7 @@ module CommandHandler =
             logger : Logger
             messageSender : MessageSender
             prefix : string
+            separator: char
             serviceManager : IServiceManager
             commandCache : (uint64 * IUserMessage list) list
         }
@@ -151,7 +152,7 @@ module CommandHandler =
             with ex ->
                 state.logger.Danger(ex.ToString())
 
-    let initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
+    let Initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
         (messageSender : MessageSender) (prefix : string) (serviceManager : IServiceManager) =
         let newState : CommandHandlerState =
             {
@@ -162,6 +163,7 @@ module CommandHandler =
                 logger = logger
                 messageSender = messageSender
                 prefix = prefix
+                separator = ','
                 serviceManager = serviceManager
                 commandCache = List.empty
             }
@@ -196,13 +198,18 @@ module CommandHandler =
         else
             state.prefix.Length
 
+    let private sanitizeInput (input : string) =
+        input
+            .Replace('\n', ' ')
+            .Replace('\t', ' ')
+    
     let private getCmdName (state : CommandHandlerState) (input : string) : string =
         let offset = getPrefixLength state input
-        if offset >= input.Length then String.Empty else input.[offset..].Split(' ').[0]
+        if offset >= input.Length then String.Empty else (sanitizeInput input).[offset..].Split(' ').[0]
 
     let private getCmdArgs (state : CommandHandlerState) (input : string) : string list =
         let offset = (getPrefixLength state input) + (getCmdName state input).Length
-        let args = input.[offset..].TrimStart().Split(',') |> Array.toList
+        let args = input.[offset..].TrimStart().Split(state.separator) |> Array.toList
         if args.[0] |> String.IsNullOrWhiteSpace && args.Length.Equals(1) then
             []
         else
