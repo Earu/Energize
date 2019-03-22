@@ -25,37 +25,34 @@ namespace Energize.Services.Listeners
             this._Logger = client.Logger;
         }
 
+        private bool IsInviteMessage(IMessage msg)
+        {
+            string pattern = @"discord\.gg\/.+\s?";
+            if (msg.Channel is IGuildChannel)
+                return Regex.IsMatch(msg.Content, pattern) && msg.Author.Id == Config.Instance.Discord.BotID;
+            else
+                return false;
+        }
+
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (!(msg.Channel is IGuildChannel)) return;
-
-            SocketGuildChannel chan = msg.Channel as SocketGuildChannel;
-            string pattern = @"discord\.gg\/.+\s?";
-            if (Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.Instance.Discord.BotID)
+            if (!this.IsInviteMessage(msg)) return;
+            IGuildChannel chan = (IGuildChannel)msg.Channel;
+            IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
+            using (IDatabaseContext ctx = await db.GetContext())
             {
-                IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
-                using (IDatabaseContext ctx = await db.GetContext())
+                IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.GuildId);
+                if (!dbguild.ShouldDeleteInvites) return;
+
+                try
                 {
-                    IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
-                    if (!dbguild.ShouldDeleteInvites) return;
-
-                    try
-                    {
-                        EmbedBuilder builder = new EmbedBuilder();
-                        this._MessageSender.BuilderWithAuthor(msg, builder);
-                        builder.WithDescription("Your message was removed, it contained an invitation link");
-                        builder.WithFooter("Invite Checker");
-                        builder.WithColor(_MessageSender.ColorWarning);
-
-                        await msg.DeleteAsync();
-                        await this._MessageSender.Send(msg, builder.Build());
-                    }
-                    catch
-                    {
-                        await this._MessageSender.Danger(msg, "Invite Checker", "I couldn't delete this message"
-                            + " because I don't have the rights necessary for that");
-                    }
+                    await msg.DeleteAsync();
+                    await this._MessageSender.Warning(msg, "invite checker", "Your message was removed.");
+                }
+                catch
+                {
+                    await this._MessageSender.Warning(msg, "invite checker", "Couldn't delete the invite message. Permissions missing.");
                 }
             }
         }

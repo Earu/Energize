@@ -48,10 +48,7 @@ namespace Energize.Services.Listeners
         {
             LavaPlayer ply = await this._LavaClient.ConnectAsync(vc, chan);
             if (vc.Id != ply.VoiceChannel.Id)
-            {
-                await this._LavaClient.DisconnectAsync(ply.VoiceChannel);
-                ply = await this._LavaClient.ConnectAsync(vc, chan);
-            }
+                await this._LavaClient.MoveChannelsAsync(vc);
 
             return ply;
         }
@@ -150,6 +147,56 @@ namespace Energize.Services.Listeners
             return await this._MessageSender.Send(ply.TextChannel, embed);
         }
 
+        public async Task<IUserMessage> SendNewTack(IVoiceChannel vc, IMessage msg, LavaTrack track)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
+            Embed embed = await this.GetNewTrackEmbed(track, false, msg);
+
+            return await this._MessageSender.Send(ply.TextChannel, embed);
+        }
+
+        public async Task<IUserMessage> SendNewTack(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        {
+            LavaPlayer ply = await this.ConnectAsync(vc, chan);
+            Embed embed = await this.GetNewTrackEmbed(track, false);
+
+            return await this._MessageSender.Send(ply.TextChannel, embed);
+        }
+
+        private EmbedFieldBuilder Field(string title, object value)
+        {
+            EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
+            fieldbuilder
+                .WithIsInline(true)
+                .WithName(title)
+                .WithValue(value);
+            return fieldbuilder;
+        }
+
+        private async Task<Embed> GetNewTrackEmbed(LavaTrack track, bool playing, IMessage msg = null)
+        {
+            string url = await track.FetchThumbnailAsync();
+            EmbedBuilder builder = new EmbedBuilder();
+            if (msg != null)
+                this._MessageSender.BuilderWithAuthor(msg, builder);
+            string desc = "🎶 Added the following track to the queue:";
+            if (playing)
+                desc = "🎶 Now playing the following track:";
+            return builder
+                .WithDescription(desc)
+                .WithColor(this._MessageSender.ColorGood)
+                .WithFooter("music player")
+                .WithThumbnailUrl(url)
+                .WithFields(new List<EmbedFieldBuilder>
+                {
+                    this.Field("Title", track.Title),
+                    this.Field("Author", track.Author),
+                    this.Field("Length", track.Length),
+                    this.Field("Stream", track.IsStream),
+                })
+                .Build();
+        }
+
         private Embed GetQueueEmbed(LavaPlayer ply, IMessage msg = null)
         {
             EmbedBuilder builder = new EmbedBuilder();
@@ -210,8 +257,8 @@ namespace Energize.Services.Listeners
                 {
                     LavaTrack newtrack = tr as LavaTrack;
                     await ply.PlayAsync(newtrack);
-                    string msg = $"🎶 Now playing: **{newtrack.Title}** from **{newtrack.Author}**";
-                    await this._MessageSender.Good(ply.TextChannel, "music player", msg);
+                    Embed embed = await this.GetNewTrackEmbed(newtrack, true);
+                    await this._MessageSender.Send(ply.TextChannel, embed);
                 }
             }
         }
@@ -250,7 +297,6 @@ namespace Energize.Services.Listeners
                 Password = Config.Instance.Lavalink.Password,
                 SelfDeaf = false,
                 BufferSize = 8192,
-                ShouldPreservePlayers = false,
             };
 
             this.LavaRestClient = new LavaRestClient(config);

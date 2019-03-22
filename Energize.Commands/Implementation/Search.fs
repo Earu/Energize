@@ -50,7 +50,7 @@ module Search =
         return 
             if len > 0 then
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPaginatorRaw(ctx.message, result.Tracks, fun track ->
+                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, result.Tracks, fun track ->
                     let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
                     sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
                 )) ]
