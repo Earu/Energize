@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Energize.Interfaces.Services.Listeners;
+using Victoria.Entities;
 
 namespace Energize.Services.Senders
 {
@@ -18,10 +20,12 @@ namespace Energize.Services.Senders
         private static readonly IEmote _NextEmote = new Emoji("▶");
         private static readonly IEmote _PreviousEmote = new Emoji("◀");
         private static readonly IEmote _CloseEmote = new Emoji("⏹");
+        private static readonly IEmote _PlayEmote = new Emoji("⏯");
 
         private Dictionary<ulong, Paginator<object>> _Paginators;
 
         private readonly MessageSender _MessageSender;
+        private readonly ServiceManager _ServiceManager;
         private readonly Logger _Logger;
         private readonly Timer _PaginatorCleanup;
         private readonly DiscordShardedClient _Client;
@@ -30,6 +34,7 @@ namespace Energize.Services.Senders
         {
             this._Paginators = new Dictionary<ulong, Paginator<object>>();
             this._MessageSender = client.MessageSender;
+            this._ServiceManager = client.ServiceManager;
             this._Logger = client.Logger;
             this._Client = client.DiscordClient;
 
@@ -54,6 +59,14 @@ namespace Energize.Services.Senders
         {
             await msg.AddReactionAsync(_PreviousEmote);
             await msg.AddReactionAsync(_CloseEmote);
+            await msg.AddReactionAsync(_NextEmote);
+        }
+
+        private async Task AddPlayerReactions(IUserMessage msg)
+        {
+            await msg.AddReactionAsync(_PreviousEmote);
+            await msg.AddReactionAsync(_CloseEmote);
+            await msg.AddReactionAsync(_PlayEmote);
             await msg.AddReactionAsync(_NextEmote);
         }
 
@@ -146,11 +159,40 @@ namespace Energize.Services.Senders
             return null;
         }
 
+        public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
+        {
+            Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
+            string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
+            try
+            {
+                IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
+                await this.AddPlayerReactions(posted);
+                paginator.Message = posted;
+                this._Paginators.Add(posted.Id, paginator.ToObject());
+
+                return posted;
+            }
+            catch (HttpException)
+            {
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+            }
+            catch (Exception ex)
+            {
+                this._Logger.Danger(ex);
+            }
+
+            return null;
+        }
+
         private bool IsValidEmote(SocketReaction reaction)
         {
             if (reaction.UserId == this._Client.CurrentUser.Id) return false;
             IEmote emote = reaction.Emote;
-            return emote.Name == _NextEmote.Name || emote.Name == _PreviousEmote.Name || emote.Name == _CloseEmote.Name;
+            string[] validemotes = new string[] { _PreviousEmote.Name, _NextEmote.Name, _CloseEmote.Name, _PlayEmote.Name };
+            foreach (string emotename in validemotes)
+                if (emotename == emote.Name)
+                    return true;
+            return false;
         }
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
@@ -172,6 +214,21 @@ namespace Energize.Services.Senders
                 {
                     this._Paginators.Remove(cache.Value.Id);
                     await chan.DeleteMessageAsync(paginator.Message);
+                }
+                else if (emote.Name == _PlayEmote.Name && chan is IGuildChannel)
+                {
+                    if (paginator.CurrentValue is LavaTrack track && reaction.User.Value != null)
+                    {
+                        IGuildUser guser = (IGuildUser)reaction.User.Value;
+                        if (guser.VoiceChannel != null)
+                        {
+                            ITextChannel textchan = (ITextChannel)chan;
+                            IMusicPlayerService music = this._ServiceManager.GetService<IMusicPlayerService>("Music");
+                            await music.AddTrack(guser.VoiceChannel, textchan, track);
+                            await music.SendNewTack(guser.VoiceChannel, textchan, track);
+                            await chan.DeleteMessageAsync(paginator.Message);
+                        }
+                    }
                 }
             }
             catch (HttpException)

@@ -38,6 +38,7 @@ namespace Energize.Essentials.MessageConstructs
         public IUserMessage Message { get; set; }
         public bool IsExpired { get => this._TimeToLive > DateTime.Now; }
         public int CurrentIndex { get; private set; }
+        public T CurrentValue { get => this._Data[this.CurrentIndex]; }
         public ulong UserID { get; private set; }
 
         public async Task Next()
