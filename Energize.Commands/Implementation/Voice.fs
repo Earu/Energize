@@ -47,7 +47,7 @@ module Voice =
                 let textChan = ctx.message.Channel :?> ITextChannel
                 awaitIgnore (music.ConnectAsync(vc, textChan))
                 await (music.AddTrack(vc, textChan, tr))
-                [ ctx.sendOK None (sprintf "🎶 Added **%s** from **%s** to the queue" tr.Title tr.Author) ]
+                [ awaitResult (music.SendNewTack(vc, ctx.message, tr)) ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any track for your input" ]
         )
