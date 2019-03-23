@@ -265,3 +265,6 @@ Energize/Lua/LuaSavedScripts/
 Energize/Data/Markov/
 EnergizeDB\.db
 logs\.txt
+Energize.Webhooks/__pycache__
+Energize.Webhooks/.vscode
+Energize.Webhooks/config.json
