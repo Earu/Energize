@@ -20,10 +20,11 @@ namespace Energize.Essentials
         [JsonProperty("PrefixProd")]
         public string Prefix;
 #endif
-
+        public char Separator;
         public string ServerInvite;
         public ulong OwnerID;
         public ulong FeedbackChannelID;
+        public string BotListToken;
     }
 
     public struct LavalinkConfig

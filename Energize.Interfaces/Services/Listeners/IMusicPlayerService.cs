@@ -31,6 +31,8 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan);
 
+        ServerStats GetLavalinkStats();
+
         Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg);
 
         Task<IUserMessage> SendNewTack(IVoiceChannel vc, IMessage msg, LavaTrack track);
