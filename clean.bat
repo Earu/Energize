@@ -13,6 +13,10 @@ if exist "Energize/Data/Markov" (
 if exist "Energize/Lua/LuaSavedScripts" (
     rmdir "Energize/Lua/LuaSavedScripts" /s /q
 )
+
+if exist "logs.txt" (
+    del "logs.txt" /s /q
+)
 echo Cleaned generated files
 
 if exist "EnergizeDB.db" (
