@@ -16,6 +16,7 @@ module Util =
     open System.IO
     open Energize.Interfaces.Services.Eval
     open Energize.Interfaces.Services.Senders
+    open Energize.Interfaces.Services.Listeners
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
@@ -191,4 +192,30 @@ module Util =
         let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
         let msg = awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) 
         return [ msg ]
+    }
+
+    [<Command("lavalink", "Gets the lavalink server stats", "lavalink <nothing>")>]
+    let lavalink (ctx : CommandContext) = async {
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        return
+            match music.GetLavalinkStats() with
+            | null -> [ ctx.sendWarn None "Stats not available yet" ]
+            | stats ->
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                let uptime = sprintf "%dd%dh%dm" stats.Uptime.Days stats.Uptime.Hours stats.Uptime.Minutes
+                let fields = [
+                    ctx.embedField "CPU Load" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad) true
+                    ctx.embedField "Frames" (match stats.Frames with null -> 0 | _ -> stats.Frames.Sent) true
+                    ctx.embedField "Memory(MB)" (match stats.Memory with null -> 0L | _ -> stats.Memory.Used / 1024L / 1024L) true
+                    ctx.embedField "Music Players" stats.PlayerCount true
+                    ctx.embedField "Uptime" uptime true
+                ]
+
+                builder
+                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithFooter(ctx.commandName)
+                    .WithFields(fields)
+                    |> ignore
+                [ ctx.sendEmbed (builder.Build()) ]
     }

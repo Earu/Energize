@@ -153,7 +153,7 @@ module CommandHandler =
                 state.logger.Danger(ex.ToString())
 
     let Initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
-        (messageSender : MessageSender) (prefix : string) (serviceManager : IServiceManager) =
+        (messageSender : MessageSender) (prefix : string) (separator : char) (serviceManager : IServiceManager) =
         let newState : CommandHandlerState =
             {
                 client = client
@@ -163,7 +163,7 @@ module CommandHandler =
                 logger = logger
                 messageSender = messageSender
                 prefix = prefix
-                separator = ','
+                separator = separator
                 serviceManager = serviceManager
                 commandCache = List.empty
             }
@@ -361,7 +361,7 @@ module CommandHandler =
             | None -> ()
         | None -> ()
 
-    let isBlacklisted (id : uint64) =
+    let private isBlacklisted (id : uint64) =
         let ids = Blacklist.Instance.IDs |> Seq.toList
         match ids |> List.tryFind (fun i -> i.Equals(id)) with
         | Some _ -> true

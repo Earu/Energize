@@ -139,6 +139,9 @@ namespace Energize.Services.Listeners
             return "Nothing is playing";
         }
 
+        public ServerStats GetLavalinkStats()
+            => this._LavaClient.ServerStats;
+
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
         {
             LavaPlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
