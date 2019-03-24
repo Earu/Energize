@@ -67,7 +67,12 @@ module CommandHandler =
                     [ ctx.sendWarn None warning ]
             else
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                let commands = handlerState.Value.commands |> Map.toSeq |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName)
+                let commands = 
+                    handlerState.Value.commands 
+                    |> Map.toSeq 
+                    |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName) 
+                    |> Seq.filter (fun (name, _) -> not (name.Equals("Deprecated"))) 
+                    |> Seq.sortBy (fun (name, _) -> name)
                 [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
                     let cmdsDisplay = 
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
@@ -307,11 +312,10 @@ module CommandHandler =
                 String.Empty 
         let cmdLog = sprintf "%s %s <%s>" ctx.message.Author.Username action ctx.commandName
         let args = if ctx.hasArguments then (sprintf " => [ %s ]" (String.Join(", ", ctx.arguments))) else " with no args"
-
         ctx.logger.Nice(head, color, where + cmdLog + args)
 
     let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) (isPrivate : bool) =
-        await (msg.Channel.TriggerTypingAsync())
+        await (state.messageSender.TriggerTyping(msg.Channel))
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args isPrivate
         if args.Length >= cmd.parameters then
