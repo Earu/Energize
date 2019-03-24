@@ -40,6 +40,16 @@ namespace Energize.Services.Listeners
             this._LavaClient.OnTrackFinished += this.OnTrackFinished;
             this._LavaClient.Log += async (logmsg) 
                 => this._Logger.Nice("Lavalink", ConsoleColor.Magenta, logmsg.Message);
+            this._LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
+        }
+
+        private Task OnPlayerUpdated(LavaPlayer ply, LavaTrack track, TimeSpan position)
+        {
+            IGuild guild = ply.VoiceChannel.Guild;
+            string msg = $"{DateTime.Now} - Updated track <{track.Title}> ({position}) for player in guild <{guild.Name}>";
+            this._Logger.LogTo("victoria.log", msg);
+
+            return Task.CompletedTask;
         }
 
         public LavaRestClient LavaRestClient { get; private set; }
