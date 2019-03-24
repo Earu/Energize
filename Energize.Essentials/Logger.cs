@@ -6,27 +6,41 @@ namespace Energize.Essentials
 {
     public class Logger
     {
-        private readonly string _Prefix = "> ";
+        private static readonly string _Prefix = "> ";
+        private static readonly string _Path = "logs";
 
-        private void Prefix()
+        public Logger()
         {
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.Write(this._Prefix);
-            Console.ForegroundColor = ConsoleColor.Gray;
+            if (!Directory.Exists(_Path))
+                Directory.CreateDirectory(_Path);
+        }
+
+        private string FormattedTime()
+        {
             int hour = DateTime.Now.TimeOfDay.Hours;
             int minute = DateTime.Now.TimeOfDay.Minutes;
             string nicehour = hour < 10 ? "0" + hour : hour.ToString();
             string nicemin = minute < 10 ? "0" + minute : minute.ToString();
-            Console.Write($"{nicehour}:{nicemin} - ");
+            return $"{nicehour}:{nicemin} - ";
         }
+
+        private void Prefix()
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.Write(_Prefix);
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(this.FormattedTime());
+        }
+
+        public void LogTo(string filename, string msg)
+            => File.AppendAllText($"{_Path}/{filename}", $"{msg}\n");
 
         public void Normal(string msg)
         {
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(msg);
-
-            File.AppendAllText("logs.txt", $"[NORMAL] >> {msg}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[NORMAL] >> {msg}");
         }
 
         public void Nice(string head, ConsoleColor col, string content)
@@ -39,8 +53,7 @@ namespace Energize.Essentials
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("] >> ");
             Console.WriteLine(content);
-
-            File.AppendAllText("logs.txt", $"[NICE-{head.ToUpper()}] >> {content}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[{head.ToUpper()}] >> {content}");
         }
 
         public void Warning(string msg)
@@ -48,8 +61,7 @@ namespace Energize.Essentials
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(msg);
-
-            File.AppendAllText("logs.txt", $"[WARN >> {msg}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[WARN] >> {msg}");
         }
 
         public void Danger(string msg)
@@ -57,8 +69,7 @@ namespace Energize.Essentials
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(msg);
-
-            File.AppendAllText("logs.txt", $"[DANGER] >> {msg}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[DANGER] >> {msg}");
         }
 
         public void Danger(Exception ex)
@@ -66,8 +77,7 @@ namespace Energize.Essentials
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(ex);
-
-            File.AppendAllText("logs.txt", $"[DANGER] >> {ex}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[DANGER] >> {ex}");
         }
 
         public void Error(string msg)
@@ -77,8 +87,7 @@ namespace Energize.Essentials
             Console.WriteLine("/!\\ ERROR /!\\");
             Console.WriteLine(msg);
             Console.ReadLine();
-
-            File.AppendAllText("logs.txt", $"[ERROR] >> {msg}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[ERROR] >> {msg}");
         }
 
         public void Good(string msg)
@@ -86,8 +95,7 @@ namespace Energize.Essentials
             this.Prefix();
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(msg);
-
-            File.AppendAllText("logs.txt", $"[GOOD] >> {msg}\n\n");
+            this.LogTo("energize.log", $"{this.FormattedTime()}[GOOD] >> {msg}");
         }
 
         public void Notify(string msg)
