@@ -14,8 +14,8 @@ if exist "Energize/Lua/LuaSavedScripts" (
     rmdir "Energize/Lua/LuaSavedScripts" /s /q
 )
 
-if exist "logs.txt" (
-    del "logs.txt" /s /q
+if exist "logs" (
+    rmdir "logs" /s /q
 )
 echo Cleaned generated files
 

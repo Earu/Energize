@@ -1,14 +1,13 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using Discord;
+﻿using Discord;
 using Discord.Rest;
-using System.IO;
-using Energize.Essentials;
-using Energize.Services;
+using Discord.WebSocket;
 using DiscordBotsList.Api;
 using DiscordBotsList.Api.Objects;
+using Energize.Essentials;
+using Energize.Services;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Energize
 {
@@ -41,6 +40,9 @@ namespace Energize
 
             if (this.HasToken)
             {
+                this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
+                this.DiscordRestClient.Log += async log => this.Logger.LogTo("dnet_rest.log", log.Message);
+
                 this._DiscordBotList = new AuthDiscordBotListApi(Config.Instance.Discord.BotID, Config.Instance.Discord.BotListToken);
                 this.DisplayAsciiArt();
 
@@ -112,9 +114,6 @@ namespace Energize
 
             try
             {
-                if(File.Exists("logs.txt"))
-                    File.Delete("logs.txt");
-
                 await this.DiscordClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.DiscordClient.StartAsync();
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
