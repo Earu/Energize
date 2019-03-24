@@ -1,7 +1,9 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Energize.Essentials
@@ -48,22 +50,6 @@ namespace Energize.Essentials
             this.Log.Nice("Message", ConsoleColor.Red, log);
         }
 
-        private void LogFailedMessage(RestChannel chan)
-        {
-            string log = string.Empty;
-            if (!(chan is IDMChannel))
-            {
-                IGuildChannel c = chan as IGuildChannel;
-                log += $"({c.Guild.Name} - #{c.Name}) doesn't have <send message> right";
-            }
-            else
-            {
-                IDMChannel c = chan as IDMChannel;
-                log += $"(DM) {c.Recipient} blocked a message";
-            }
-            this.Log.Nice("Message", ConsoleColor.Red, log);
-        }
-
         public void BuilderWithAuthor(IMessage msg, EmbedBuilder builder)
         {
             if (msg.Channel is IGuildChannel)
@@ -76,6 +62,19 @@ namespace Energize.Essentials
             else
             {
                 builder.WithAuthor(msg.Author);
+            }
+        }
+
+        public async Task TriggerTyping(ISocketMessageChannel chan)
+        {
+            try
+            {
+                await chan.TriggerTypingAsync();
+            }
+            catch(HttpException ex)
+            {
+                if (ex.HttpCode != HttpStatusCode.Forbidden)
+                    this.LogFailedMessage(chan);
             }
         }
 
