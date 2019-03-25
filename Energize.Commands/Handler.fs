@@ -366,7 +366,7 @@ module CommandHandler =
         | None -> ()
 
     let private isBlacklisted (id : uint64) =
-        let ids = Blacklist.Instance.IDs |> Seq.toList
+        let ids = Config.Instance.Discord.Blacklist.IDs |> Seq.toList
         match ids |> List.tryFind (fun i -> i.Equals(id)) with
         | Some _ -> true
         | None -> false
