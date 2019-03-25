@@ -57,17 +57,31 @@ namespace Energize.Services.Senders
 
         private async Task AddReactions(IUserMessage msg)
         {
-            await msg.AddReactionAsync(_PreviousEmote);
-            await msg.AddReactionAsync(_CloseEmote);
-            await msg.AddReactionAsync(_NextEmote);
+            try
+            {
+                await msg.AddReactionAsync(_PreviousEmote);
+                await msg.AddReactionAsync(_CloseEmote);
+                await msg.AddReactionAsync(_NextEmote);
+            }
+            catch
+            {
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted early or missing permissions");
+            }
         }
 
         private async Task AddPlayerReactions(IUserMessage msg)
         {
-            await msg.AddReactionAsync(_PreviousEmote);
-            await msg.AddReactionAsync(_CloseEmote);
-            await msg.AddReactionAsync(_PlayEmote);
-            await msg.AddReactionAsync(_NextEmote);
+            try
+            {
+                await msg.AddReactionAsync(_PreviousEmote);
+                await msg.AddReactionAsync(_CloseEmote);
+                await msg.AddReactionAsync(_PlayEmote);
+                await msg.AddReactionAsync(_NextEmote);
+            }
+            catch
+            {
+                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted early or missing permissions");
+            }
         }
 
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
@@ -81,25 +95,20 @@ namespace Energize.Services.Senders
                 .WithFooter(head);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback, embed);
-            try
+            IUserMessage posted = await this._MessageSender.Send(msg, embed);
+            if (posted != null)
             {
-                IUserMessage posted = await this._MessageSender.Send(msg, embed);
-                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+                await this.AddReactions(posted);
 
                 return posted;
             }
-            catch (HttpException)
+            else
             {
                 this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                return null;
             }
-            catch (Exception ex)
-            {
-                this._Logger.Danger(ex);
-            }
-
-            return null;
         }
 
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
@@ -113,75 +122,60 @@ namespace Energize.Services.Senders
                 displaycallback(data.First(), builder);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback, embed);
-            try
+            IUserMessage posted = await this._MessageSender.Send(msg, embed);
+            if (posted != null)
             {
-                IUserMessage posted = await this._MessageSender.Send(msg, embed);
-                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+                await this.AddReactions(posted);
 
                 return posted;
             }
-            catch (HttpException)
+            else
             {
                 this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                return null;
             }
-            catch (Exception ex)
-            {
-                this._Logger.Danger(ex);
-            }
-
-            return null;
         }
 
         public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
-            try
+            IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
+            if (posted != null)
             {
-                IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
-                await this.AddReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+                await this.AddReactions(posted);
 
                 return posted;
             }
-            catch (HttpException)
+            else
             {
                 this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                return null;
             }
-            catch (Exception ex)
-            {
-                this._Logger.Danger(ex);
-            }
-
-            return null;
         }
 
         public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displaycallback);
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
-            try
+            IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
+            if (posted != null)
             {
-                IUserMessage posted = await this._MessageSender.SendRaw(msg, display);
-                await this.AddPlayerReactions(posted);
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
+                await this.AddPlayerReactions(posted);
 
                 return posted;
             }
-            catch (HttpException)
+            else
             {
                 this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                return null;
             }
-            catch (Exception ex)
-            {
-                this._Logger.Danger(ex);
-            }
-
-            return null;
         }
 
         private bool IsValidEmote(SocketReaction reaction)
@@ -195,6 +189,37 @@ namespace Energize.Services.Senders
             return false;
         }
 
+        private delegate Task ReactionCallback(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction);
+        private static readonly Dictionary<string, ReactionCallback> _ReactionCallbacks = new Dictionary<string, ReactionCallback>
+        {
+            [_PreviousEmote.Name] = async (sender, paginator, cache, chan, reaction) 
+                => await paginator.Previous(),
+            [_NextEmote.Name] = async (sender, paginator, cache, chan, reaction) 
+                => await paginator.Next(),
+            [_CloseEmote.Name] = async (sender, paginator, cache, chan, reaction) =>
+            {
+                sender._Paginators.Remove(cache.Value.Id);
+                await chan.DeleteMessageAsync(paginator.Message);
+            },
+            [_PlayEmote.Name] = async (sender, paginator, cache, chan, reaction) =>
+            {
+                if (!(chan is IGuildChannel)) return;
+
+                if (paginator.CurrentValue is LavaTrack track && reaction.User.Value != null)
+                {
+                    IGuildUser guser = (IGuildUser)reaction.User.Value;
+                    if (guser.VoiceChannel != null)
+                    {
+                        ITextChannel textchan = (ITextChannel)chan;
+                        IMusicPlayerService music = sender._ServiceManager.GetService<IMusicPlayerService>("Music");
+                        await music.AddTrack(guser.VoiceChannel, textchan, track);
+                        await music.SendNewTack(guser.VoiceChannel, textchan, track);
+                        await chan.DeleteMessageAsync(paginator.Message);
+                    }
+                }
+            }
+        };
+
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
@@ -203,42 +228,9 @@ namespace Energize.Services.Senders
             Paginator<object> paginator = this._Paginators[cache.Value.Id];
             if (paginator.UserID != reaction.UserId) return;
 
-            try
-            { 
-                IEmote emote = reaction.Emote;
-                if (emote.Name == _PreviousEmote.Name)
-                    await paginator.Previous();
-                else if (emote.Name == _NextEmote.Name)
-                    await paginator.Next();
-                else if (emote.Name == _CloseEmote.Name)
-                {
-                    this._Paginators.Remove(cache.Value.Id);
-                    await chan.DeleteMessageAsync(paginator.Message);
-                }
-                else if (emote.Name == _PlayEmote.Name && chan is IGuildChannel)
-                {
-                    if (paginator.CurrentValue is LavaTrack track && reaction.User.Value != null)
-                    {
-                        IGuildUser guser = (IGuildUser)reaction.User.Value;
-                        if (guser.VoiceChannel != null)
-                        {
-                            ITextChannel textchan = (ITextChannel)chan;
-                            IMusicPlayerService music = this._ServiceManager.GetService<IMusicPlayerService>("Music");
-                            await music.AddTrack(guser.VoiceChannel, textchan, track);
-                            await music.SendNewTack(guser.VoiceChannel, textchan, track);
-                            await chan.DeleteMessageAsync(paginator.Message);
-                        }
-                    }
-                }
-            }
-            catch (HttpException)
-            {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not mutate paginator, missing permissions");
-            }
-            catch (Exception ex)
-            {
-                this._Logger.Danger(ex);
-            }
+            IEmote emote = reaction.Emote;
+            if (_ReactionCallbacks.ContainsKey(emote.Name))
+                await _ReactionCallbacks[emote.Name](this, paginator, cache, chan, reaction);
         }
 
         [Event("ReactionAdded")]
