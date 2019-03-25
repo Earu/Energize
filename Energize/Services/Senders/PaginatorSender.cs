@@ -55,33 +55,33 @@ namespace Energize.Services.Senders
             this._PaginatorCleanup = timer;
         }
 
-        private async Task AddReactions(IUserMessage msg)
+        private void AddReactions(IUserMessage msg)
         {
-            try
+            Task.Run(async () =>
             {
                 await msg.AddReactionAsync(_PreviousEmote);
                 await msg.AddReactionAsync(_CloseEmote);
                 await msg.AddReactionAsync(_NextEmote);
-            }
-            catch
+            }).ContinueWith(t =>
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted early or missing permissions");
-            }
+                if (t.IsFaulted)
+                    this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+            });
         }
 
-        private async Task AddPlayerReactions(IUserMessage msg)
+        private void AddPlayerReactions(IUserMessage msg)
         {
-            try
+            Task.Run(async () =>
             {
                 await msg.AddReactionAsync(_PreviousEmote);
                 await msg.AddReactionAsync(_CloseEmote);
                 await msg.AddReactionAsync(_PlayEmote);
                 await msg.AddReactionAsync(_NextEmote);
-            }
-            catch
+            }).ContinueWith(t =>
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted early or missing permissions");
-            }
+                if (t.IsFaulted)
+                    this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+            });
         }
 
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displaycallback) where T : class
@@ -100,7 +100,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                await this.AddReactions(posted);
+                this.AddReactions(posted);
 
                 return posted;
             }
@@ -127,7 +127,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                await this.AddReactions(posted);
+                this.AddReactions(posted);
 
                 return posted;
             }
@@ -147,7 +147,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                await this.AddReactions(posted);
+                this.AddReactions(posted);
 
                 return posted;
             }
@@ -167,7 +167,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                await this.AddPlayerReactions(posted);
+                this.AddPlayerReactions(posted);
 
                 return posted;
             }
