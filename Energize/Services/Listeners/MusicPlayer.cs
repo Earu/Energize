@@ -288,12 +288,11 @@ namespace Energize.Services.Listeners
         [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
         {
-            IVoiceChannel vc = newstate.VoiceChannel;
+            SocketVoiceChannel vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
             if (vc == null) return;
 
-            SocketVoiceChannel svc = (SocketVoiceChannel)vc;
-            LavaPlayer ply = this._LavaClient.GetPlayer(vc.GuildId);
-            if (svc.Users.Count(x => !x.IsBot) < 1 && ply != null)
+            LavaPlayer ply = this._LavaClient.GetPlayer(vc.Guild.Id);
+            if (vc.Users.Count(x => !x.IsBot) < 1 && ply != null)
                 await this.DisconnectAsync(vc);
         }
 

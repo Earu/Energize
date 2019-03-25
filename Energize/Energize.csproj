@@ -58,10 +58,10 @@
     <None Update="Data\static.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Settings\blacklist.json">
+    <None Update="Settings\blacklist.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Settings\config.json">
+    <None Update="Settings\config.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

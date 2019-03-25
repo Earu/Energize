@@ -259,8 +259,8 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-Energize/Settings/config.json
-Energize/Settings/blacklist.json
+Energize/Settings/blacklist\.yaml
+Energize/Settings/config\.yaml
 Energize/Lua/LuaSavedScripts/
 Energize/Data/Markov/
 EnergizeDB\.db
