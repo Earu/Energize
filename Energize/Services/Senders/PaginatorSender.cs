@@ -1,15 +1,14 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
-using Energize.Interfaces.Services.Senders;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
+using Energize.Interfaces.Services.Listeners;
+using Energize.Interfaces.Services.Senders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Energize.Interfaces.Services.Listeners;
 using Victoria.Entities;
 
 namespace Energize.Services.Senders
@@ -201,23 +200,7 @@ namespace Energize.Services.Senders
                 sender._Paginators.Remove(cache.Value.Id);
                 await chan.DeleteMessageAsync(paginator.Message);
             },
-            [_PlayEmote.Name] = async (sender, paginator, cache, chan, reaction) =>
-            {
-                if (!(chan is IGuildChannel)) return;
-
-                if (paginator.CurrentValue is LavaTrack track && reaction.User.Value != null)
-                {
-                    IGuildUser guser = (IGuildUser)reaction.User.Value;
-                    if (guser.VoiceChannel != null)
-                    {
-                        ITextChannel textchan = (ITextChannel)chan;
-                        IMusicPlayerService music = sender._ServiceManager.GetService<IMusicPlayerService>("Music");
-                        await music.AddTrack(guser.VoiceChannel, textchan, track);
-                        await music.SendNewTack(guser.VoiceChannel, textchan, track);
-                        await chan.DeleteMessageAsync(paginator.Message);
-                    }
-                }
-            }
+            [_PlayEmote.Name] = OnPlayReaction,
         };
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
@@ -231,6 +214,39 @@ namespace Energize.Services.Senders
             IEmote emote = reaction.Emote;
             if (_ReactionCallbacks.ContainsKey(emote.Name))
                 await _ReactionCallbacks[emote.Name](this, paginator, cache, chan, reaction);
+        }
+
+        private static async Task OnPlayReaction(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        {
+            if (!(chan is IGuildChannel) || reaction.User.Value == null) return;
+            IGuildUser guser = (IGuildUser)reaction.User.Value;
+            if (guser.VoiceChannel == null) return;
+
+            ITextChannel textchan = (ITextChannel)chan;
+            IMusicPlayerService music = sender._ServiceManager.GetService<IMusicPlayerService>("Music");
+
+            if (paginator.CurrentValue is LavaTrack track)
+            {
+                await music.AddTrack(guser.VoiceChannel, textchan, track);
+                await music.SendNewTack(guser.VoiceChannel, textchan, track);
+                await chan.DeleteMessageAsync(paginator.Message);
+            }
+            else if (paginator.CurrentValue is string url)
+            {
+                SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
+                List<LavaTrack> tracks = result.Tracks.ToList();
+                if (tracks.Count > 0)
+                {
+                    LavaTrack tr = tracks[0];
+                    await music.AddTrack(guser.VoiceChannel, textchan, tr);
+                    await music.SendNewTack(guser.VoiceChannel, textchan, tr);
+                    await chan.DeleteMessageAsync(paginator.Message);
+                }
+                else
+                {
+                    await sender._MessageSender.Warning(chan, "music player", $"Could add the following URL to the queue\n{url}");
+                }
+            }
         }
 
         [Event("ReactionAdded")]

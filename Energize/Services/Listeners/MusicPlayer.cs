@@ -188,23 +188,23 @@ namespace Energize.Services.Listeners
 
         private async Task<Embed> GetNewTrackEmbed(LavaTrack track, bool playing, IMessage msg = null)
         {
-            string url = await track.FetchThumbnailAsync();
             EmbedBuilder builder = new EmbedBuilder();
             if (msg != null)
                 this._MessageSender.BuilderWithAuthor(msg, builder);
             string desc = "🎶 Added the following track to the queue:";
             if (playing)
                 desc = "🎶 Now playing the following track:";
+            if (!track.IsStream)
+                builder.WithThumbnailUrl(await track.FetchThumbnailAsync());
             return builder
                 .WithDescription(desc)
                 .WithColor(this._MessageSender.ColorGood)
                 .WithFooter("music player")
-                .WithThumbnailUrl(url)
                 .WithFields(new List<EmbedFieldBuilder>
                 {
                     this.Field("Title", track.Title),
                     this.Field("Author", track.Author),
-                    this.Field("Length", track.Length),
+                    this.Field("Length", track.IsStream ? " - " : track.Length.ToString()),
                     this.Field("Stream", track.IsStream),
                 })
                 .Build();
@@ -231,7 +231,10 @@ namespace Energize.Services.Listeners
                 EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
                 fieldbuilder.WithIsInline(false);
                 fieldbuilder.WithName("🎶 Currently Playing");
-                fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | {newtrack.Position}/{newtrack.Length}");
+                if (newtrack.IsStream)
+                    fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | Stream");
+                else
+                    fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | {newtrack.Position}/{newtrack.Length}");
                 fieldbuilders.Add(fieldbuilder);
             }
 
@@ -246,7 +249,7 @@ namespace Energize.Services.Listeners
                 foreach (IQueueObject obj in ply.Queue.Items)
                 {
                     LavaTrack tr = obj as LavaTrack;
-                    queuedisplay += $"{count} - **{tr.Title}** from **{tr.Author}** | {tr.Length}\n";
+                    queuedisplay += $"{count} - **{tr.Title}** from **{tr.Author}** | {(tr.IsStream ? "Stream" : tr.Length.ToString())}\n";
                     count++;
                 }
                 fieldbuilder.WithValue(queuedisplay);

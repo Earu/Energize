@@ -20,6 +20,7 @@ Keys:
   MashapeKey: mashape api token
   WebSearchToken: websearch api token
   SteamAPIKey: steam api token
+  TwitchKey: twitch api token
 URIs:
   MarkovDirectory: Energize/Data/Markov/
   LuaDirectory: Energize/Lua/
