@@ -76,39 +76,29 @@ module Administration =
         with _ ->
             [ ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions" ]
 
-    [<AdminCommand>]
-    [<GuildCommand>]
-    [<Command("clear", "Clear the bot messages", "clear <amounttoremove|nothing>")>]
-    let clear (ctx : CommandContext) = async {
-        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.Id.Equals(Config.Instance.Discord.BotID))
+    let handleClear (ctx : CommandContext) = async {
+        return
+            match ctx.arguments.[0] with
+            | "bots" -> clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.IsBot)
+            | "raw" -> clearCmdBase ctx ctx.arguments.[1] (fun _ -> true)
+            | "user" -> 
+                if String.IsNullOrWhiteSpace ctx.arguments.[2] then
+                    [ ctx.sendWarn None "Expected a username as third argument" ]
+                else
+                    match findUser ctx ctx.arguments.[2] true with
+                    | Some user ->
+                        clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.Id.Equals(user.Id))
+                    | None ->   
+                        [ ctx.sendWarn None "No user could be found for your input" ]
+                | _ -> [ ctx.sendWarn None "Unknown clear type, available types are: `bots`, `raw`, `user`" ] 
     }
 
     [<AdminCommand>]
     [<GuildCommand>]
-    [<Command("clearbots", "Clear bot messages", "clearbots <amounttoremove|nothing>")>]
-    let clearBots (ctx : CommandContext) = async {
-        return clearCmdBase ctx ctx.input (fun msg -> msg.Author.IsBot)
-    }
-
-    [<AdminCommand>]
-    [<GuildCommand>]
-    [<CommandParameters(1)>]
-    [<Command("clearuser", "Clear a user messages", "clearuser <user|userid>,<amounttoremove|nothing>")>]
-    let clearUser (ctx : CommandContext) = async {
-        return 
-            match findUser ctx ctx.arguments.[0] true with
-            | Some user ->
-                clearCmdBase ctx (if ctx.arguments.Length > 1 then ctx.arguments.[1] else "25") (fun msg -> msg.Author.Id.Equals(user.Id))
-            | None ->   
-                [ ctx.sendWarn None "No user could be found for your input" ]
-    }
-
-    [<AdminCommand>]
-    [<GuildCommand>]
-    [<Command("clearaw", "Clear a specified amount of messages", "clearaw <amounttoremove|nothing>")>]
-    let clearRaw (ctx : CommandContext) = async {
-        return clearCmdBase ctx ctx.input (fun _ -> true)
-    }
+    [<CommandParameters(2)>]
+    [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype>,<amounttoremove>,<extra>")>]
+    let clear (ctx : CommandContext) = 
+        handleClear ctx
 
     [<AdminCommand>]
     [<GuildCommand>]
