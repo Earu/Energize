@@ -52,6 +52,7 @@ namespace Energize.Essentials
         public string MashapeKey;
         public string WebSearchToken;
         public string SteamAPIKey;
+        public string TwitchKey;
     }
 
     public struct URIConfig

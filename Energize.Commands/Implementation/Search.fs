@@ -12,6 +12,7 @@ module Search =
     open Energize.Interfaces.Services.Senders
     open Energize.Interfaces.Services.Listeners
     open Victoria.Entities
+    open System.Web
 
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }
@@ -62,12 +63,37 @@ module Search =
     [<Command("yt", "Searches youtube for a video", "yt <search>")>]
     let youtube (ctx : CommandContext) = 
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.arguments.[0]))
+        let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
         baseSongSearch ctx res
 
     [<CommandParameters(1)>]
     [<Command("sc", "Searches soundcloud for a song", "sc <search>")>]
     let soundcloud (ctx : CommandContext) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.arguments.[0]))
+        let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.input))
         baseSongSearch ctx res
+
+    type TwitchChannelObj = { url : string }
+    type TwitchStreamObj = { channel : TwitchChannelObj }
+    type TwitchObj = { streams : TwitchStreamObj list }
+    [<CommandParameters(1)>]
+    [<Command("twitch", "Searches twitch for a stream", "twitch <search>")>]
+    let twitch (ctx : CommandContext) = async {
+        let search = HttpUtility.HtmlEncode(ctx.input)
+        let json = awaitResult (HttpClient.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
+            req.Accept <- "application/vnd.twitchtv.v5+json"
+            req.Headers.["Client-ID"] <- Config.Instance.Keys.TwitchKey
+        ))
+        let twitchObj = JsonPayload.Deserialize<TwitchObj>(json, ctx.logger)
+        let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
+        let len = streamUrls.Length
+        return
+            if len > 0 then
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
+                    let page = streamUrls |> Seq.tryFindIndex (fun url -> url.Equals(streamUrl))
+                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                )) ]
+            else
+                [ ctx.sendWarn None "Could not find any streams" ]
+    }
