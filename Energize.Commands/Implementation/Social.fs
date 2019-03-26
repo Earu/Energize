@@ -12,6 +12,7 @@ module Social =
     open System.Net
     open Discord
     open Energize.Interfaces.Services.Database
+    open Energize.Interfaces.Services.Senders
 
     let private actions = StaticData.Instance.SocialActions |> Seq.map (|KeyValue|) |> Map.ofSeq
 
@@ -63,7 +64,7 @@ module Social =
                     [ ctx.sendOK None sentence ]
             | None ->
                 let actionNames = actions |> Map.toList |> List.map (fun (name, _) -> name)
-                let help = sprintf "Actions available are:\n`%s`" (String.Join(',', actionNames))
+                let help = sprintf "Actions available are:\n`%s`" (String.Join(", ", actionNames))
                 [ ctx.sendWarn None help ]
     }
 
@@ -154,4 +155,12 @@ module Social =
                 [ ctx.sendEmbed (builder.Build()) ]
             | None ->
                 [ ctx.sendWarn None "Could not find any user for your input" ]
+    }
+
+    [<CommandParameters(3)>]
+    [<Command("vote","Creates a 5 minutes vote with up to 9 choices","vote <description>,<choice>,<choice>,<choice|nothing>,...")>]
+    let vote (ctx : CommandContext) = async {
+        let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
+        let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
+        return [ awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) ]
     }
