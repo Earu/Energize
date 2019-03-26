@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Energize.Essentials
@@ -50,5 +51,8 @@ namespace Energize.Essentials
 
             return string.Empty;
         }
+
+        public static bool IsURL(string input)
+            => Regex.IsMatch(input, @"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$");
     }
 }
