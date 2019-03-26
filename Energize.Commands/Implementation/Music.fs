@@ -9,6 +9,7 @@ module Voice =
     open Discord
     open Energize.Interfaces.Services.Listeners
     open Energize.Commands.AsyncHelper
+    open Energize.Essentials
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
@@ -37,10 +38,10 @@ module Voice =
 
     [<CommandParameters(1)>]
     [<GuildCommand>]
-    [<Command("play", "Plays a track", "play <song name>")>]
+    [<Command("play", "Plays a track/stream from youtube", "play <song name>")>]
     let play (ctx : CommandContext) = async {
-        return musicAction ctx (fun music vc _ ->
-            let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.arguments.[0]))
+        return musicAction ctx (fun music vc _ ->   
+            let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
             match res.Tracks |> Seq.toList with
             | tracks when tracks.Length > 0 ->
                 let tr = tracks.[0]
@@ -53,8 +54,30 @@ module Voice =
         )
     }
 
+    [<CommandParameters(1)>]
     [<GuildCommand>]
-    [<Command("pause", "Pauses the current track", "pause <nothing>")>]
+    [<Command("playurl", "Tries to play a track/stream from an url", "playurl <url>")>]
+    let playurl (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            if HttpClient.IsURL(ctx.input) then
+                let res = awaitResult (music.LavaRestClient.SearchTracksAsync(ctx.input))
+                match res.Tracks |> Seq.toList with
+                | tracks when tracks.Length > 0 ->
+                    let tr = tracks.[0]
+                    let textChan = ctx.message.Channel :?> ITextChannel
+                    awaitIgnore (music.ConnectAsync(vc, textChan))
+                    await (music.AddTrack(vc, textChan, tr))
+                    [ awaitResult (music.SendNewTack(vc, ctx.message, tr)) ]
+                | _ ->
+                    [ ctx.sendWarn None "Could not find any track for the given url" ]
+            else
+                [ ctx.sendWarn None "Expected an url" ]
+
+        )
+    }
+
+    [<GuildCommand>]
+    [<Command("pause", "Pauses the current track/stream", "pause <nothing>")>]
     let pause (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             await (music.PauseTrack(vc, ctx.message.Channel :?> ITextChannel))
@@ -63,7 +86,7 @@ module Voice =
     }
 
     [<GuildCommand>]
-    [<Command("resume", "Resumes the current track", "resume <nothing>")>]
+    [<Command("resume", "Resumes the current track/stream", "resume <nothing>")>]
     let resume (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             await (music.ResumeTrack(vc, ctx.message.Channel :?> ITextChannel))
@@ -72,7 +95,7 @@ module Voice =
     }
 
     [<GuildCommand>]
-    [<Command("skip", "Skips the current track", "skip <nothing>")>]
+    [<Command("skip", "Skips the current track/stream", "skip <nothing>")>]
     let skip (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             await (music.SkipTrack(vc, ctx.message.Channel :?> ITextChannel))
@@ -81,7 +104,7 @@ module Voice =
     }
 
     [<GuildCommand>]
-    [<Command("loop", "Loops or unloop the current track", "loop <nothing>")>]
+    [<Command("loop", "Loops or unloop the current track/stream", "loop <nothing>")>]
     let loop (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             let looping = awaitResult (music.LoopTrack(vc, ctx.message.Channel :?> ITextChannel))
