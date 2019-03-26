@@ -17,6 +17,8 @@ module Util =
     open Energize.Interfaces.Services.Eval
     open Energize.Interfaces.Services.Senders
     open Energize.Interfaces.Services.Listeners
+    open Energize.Commands.UserHelper
+    open Discord.WebSocket
 
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
@@ -38,12 +40,6 @@ module Util =
         let diff = (DateTime.Now - Process.GetCurrentProcess().StartTime).Duration();
         let res = sprintf "%dd%dh%dm" diff.Days diff.Hours diff.Minutes
         return [ ctx.sendOK None ("The current instance has been up for " + res) ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("say", "Makes me say something", "say <sentence>")>]
-    let say (ctx : CommandContext) = async {
-        return [ ctx.sendOK None ctx.input ]
     }
 
     [<CommandParameters(1)>]
@@ -111,22 +107,6 @@ module Util =
         let duration = int ctx.input
         await (Task.Delay(duration * 1000))
         return [ ctx.sendOK (Some "Time Out") (sprintf "Timed out during `%d`s" duration) ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("b64e", "Encodes a sentence to base64", "b64e <sentence>")>]
-    let base64Encode (ctx : CommandContext) = async {
-        let bytes = Encoding.UTF8.GetBytes(ctx.input)
-        let res = Convert.ToBase64String(bytes)
-        return [ ctx.sendOK None res ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("b64d", "Decodes a sentence to base64", "b64d <sentence>")>]
-    let base64Decode (ctx : CommandContext) = async {
-        let bytes = Convert.FromBase64String(ctx.input);
-        let res = Encoding.UTF8.GetString(bytes);
-        return [ ctx.sendOK None res ]
     }
 
     [<OwnerCommand>]
@@ -218,4 +198,58 @@ module Util =
                     .WithFields(fields)
                     |> ignore
                 [ ctx.sendEmbed (builder.Build()) ]
+    }
+
+    [<CommandParameters(1)>]
+    [<Command("avatar", "Gets the avatar of a user", "avatar <user|userid>")>]
+    let avatar (ctx : CommandContext) = async {
+        return 
+            match findUser ctx ctx.arguments.[0] true with
+            | Some user ->
+                let avurl = 
+                    let url = user.GetAvatarUrl(ImageFormat.Auto)
+                    url.Remove(url.Length - 9)
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                builder
+                    .WithFooter(ctx.commandName)
+                    .WithImageUrl(avurl)
+                    .WithColor(ctx.messageSender.ColorGood)
+                    |> ignore
+                [ ctx.sendEmbed (builder.Build()) ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any user for your input" ]
+    }
+
+    [<GuildCommand>]
+    [<Command("icon", "Gets the avatar of the guild", "icon <nothing>")>]
+    let icon (ctx : CommandContext) = async {
+        let guser = ctx.message.Author :?> SocketGuildUser
+        let guild = guser.Guild
+        let builder = EmbedBuilder()
+        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+        builder
+            .WithFooter(ctx.commandName)
+            .WithImageUrl(guild.IconUrl)
+            .WithColor(ctx.messageSender.ColorGood)
+            |> ignore
+        return [ ctx.sendEmbed (builder.Build()) ]
+    }
+
+    [<CommandParameters(1)>]
+    [<Command("e", "Gets the picture of a guild emoji","e <guildemoji>")>]
+    let emoji (ctx : CommandContext) = async {
+        let e = ref null
+        return
+            if Emote.TryParse(ctx.arguments.[0], e) then
+                let builder = EmbedBuilder()
+                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
+                builder
+                    .WithFooter("emote")
+                    .WithImageUrl(e.Value.Url)
+                    .WithColor(ctx.messageSender.ColorGood)
+                    |> ignore
+                [ ctx.sendEmbed (builder.Build()) ]
+            else
+                [ ctx.sendWarn (Some "emote") "A guild emoji is expected as parameter" ]
     }
