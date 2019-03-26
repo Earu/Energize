@@ -2,7 +2,7 @@
 
 open Energize.Commands.Command
 
-[<CommandModule("Voice")>]
+[<CommandModule("Music")>]
 module Voice =
     open System
     open Energize.Commands.Context
