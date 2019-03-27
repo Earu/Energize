@@ -18,7 +18,7 @@ module Voice =
         | null -> [ ctx.sendWarn None "Not in a voice channel" ]
         | vc -> cb music vc guser
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("join", "Joins your voice channel", "join <nothing>")>]
     let join (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc user ->
@@ -27,7 +27,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("leave", "Leaves your voice channel", "leave <nothing>")>]
     let leave (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -37,7 +37,7 @@ module Voice =
     }
 
     [<CommandParameters(1)>]
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("play", "Plays a track/stream from youtube", "play <song name>")>]
     let play (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->   
@@ -55,7 +55,7 @@ module Voice =
     }
 
     [<CommandParameters(1)>]
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("playurl", "Tries to play a track/stream from an url", "playurl <url>")>]
     let playurl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -76,7 +76,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("pause", "Pauses the current track/stream", "pause <nothing>")>]
     let pause (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -85,7 +85,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("resume", "Resumes the current track/stream", "resume <nothing>")>]
     let resume (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -94,7 +94,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("skip", "Skips the current track/stream", "skip <nothing>")>]
     let skip (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -103,7 +103,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("loop", "Loops or unloop the current track/stream", "loop <nothing>")>]
     let loop (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -115,7 +115,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("shuffle", "Shuffles the track queue", "shuffle <nothing>")>]
     let shuffle (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -124,7 +124,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<CommandParameters(1)>]
     [<Command("vol", "Sets the audio volume", "vol <number>")>]
     let volume (ctx : CommandContext) = async {
@@ -138,7 +138,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("lyrics", "Tries to get the current track lyrics if any", "lyrics <nothing>")>]
     let lyrics (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -150,7 +150,7 @@ module Voice =
         )
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("queue", "Displays the current track queue", "queue <nothing>")>]
     let queue (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->

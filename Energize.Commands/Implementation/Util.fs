@@ -100,8 +100,8 @@ module Util =
         return [ ctx.sendOK None "Successfully sent your feedback" ]
     }
 
-    [<OwnerCommand>]
     [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("to", "Timing out test", "to <seconds>")>]
     let timeOut (ctx : CommandContext) = async {
         let duration = int ctx.input
@@ -109,8 +109,8 @@ module Util =
         return [ ctx.sendOK (Some "Time Out") (sprintf "Timed out during `%d`s" duration) ]
     }
 
-    [<OwnerCommand>]
     [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("sql", "Runs an sql statement in the database", "sql <sqlstring>")>]
     let sql (ctx : CommandContext) = async {
         let conn = new SqliteConnection(Config.Instance.DBConnectionString)
@@ -135,7 +135,7 @@ module Util =
                 [ ctx.sendBad None ("```\n" + ex.Message.Replace("`", "") + "```") ]
     }
 
-    [<OwnerCommand>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("err", "Throws an error for testing", "err <nothing|message>")>]
     let err (ctx : CommandContext) : Async<IUserMessage list> = async {
         let msg = if ctx.hasArguments then ctx.input else "test"
@@ -143,8 +143,8 @@ module Util =
         return []
     }
 
-    [<OwnerCommand>]
     [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("ev", "Evals a C# string", "ev <csharpstring>")>]
     let eval (ctx : CommandContext) = async {
         let evaluator = ctx.serviceManager.GetService<ICSharpEvaluatorService>("Evaluator")
@@ -156,7 +156,7 @@ module Util =
             | (_, out) -> [ ctx.sendWarn None out ]
     }
 
-    [<OwnerCommand>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {
         File.WriteAllText("restartlog.txt", ctx.message.Channel.Id.ToString())
@@ -212,7 +212,7 @@ module Util =
                 [ ctx.sendWarn None "Could not find any user for your input" ]
     }
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("icon", "Gets the avatar of the guild", "icon <nothing>")>]
     let icon (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
