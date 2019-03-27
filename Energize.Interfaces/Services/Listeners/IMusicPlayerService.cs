@@ -9,11 +9,11 @@ namespace Energize.Interfaces.Services.Listeners
     {
         LavaRestClient LavaRestClient { get; }
 
-        Task<LavaPlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan);
+        Task<IEnergizePlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan);
 
         Task DisconnectAsync(IVoiceChannel vc);
 
-        Task AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
         Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan);
 
@@ -35,8 +35,10 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTack(IVoiceChannel vc, IMessage msg, LavaTrack track);
+        Task<IUserMessage> SendNewTrack(IVoiceChannel vc, IMessage msg, LavaTrack track);
 
-        Task<IUserMessage> SendNewTack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> SendNewTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+
+        Task<IUserMessage> SendPlayer(IVoiceChannel vc, ITextChannel chan, LavaTrack track = null);
     }
 }

@@ -46,9 +46,7 @@ module Voice =
             | tracks when tracks.Length > 0 ->
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
-                awaitIgnore (music.ConnectAsync(vc, textChan))
-                await (music.AddTrack(vc, textChan, tr))
-                [ awaitResult (music.SendNewTack(vc, ctx.message, tr)) ]
+                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any track for your input" ]
         )
@@ -65,14 +63,25 @@ module Voice =
                 | tracks when tracks.Length > 0 ->
                     let tr = tracks.[0]
                     let textChan = ctx.message.Channel :?> ITextChannel
-                    awaitIgnore (music.ConnectAsync(vc, textChan))
-                    await (music.AddTrack(vc, textChan, tr))
-                    [ awaitResult (music.SendNewTack(vc, ctx.message, tr)) ]
+                    [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
                 | _ ->
                     [ ctx.sendWarn None "Could not find any track for the given url" ]
             else
                 [ ctx.sendWarn None "Expected an url" ]
 
+        )
+    }
+
+    [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("playing", "Shows the song currently playing", "playing <nothing>")>]
+    let playing (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let textChan = ctx.message.Channel :?> ITextChannel
+            let msg = awaitResult (music.SendPlayer(vc, textChan))
+            match msg with
+            | null -> 
+                [ ctx.sendOK None "Nothing is playing" ]
+            | _ -> [ msg ]
         )
     }
 
