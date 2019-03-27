@@ -86,8 +86,8 @@ module CommandHandler =
         | Some cmd -> cmd.isEnabled <- enabled
         | None -> ()
     
-    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<CommandParameters(2)>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
     let enable (ctx : CommandContext) = async {
         let cmdName = ctx.arguments.[0].Trim()

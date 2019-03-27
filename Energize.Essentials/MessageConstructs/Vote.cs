@@ -77,7 +77,7 @@ namespace Energize.Essentials.MessageConstructs
         private void UpdateEmbed()
         {
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(this._IsFinished ? new Color(0, 175, 220) : new Color(30, 30, 30));
+            builder.WithColor(this._IsFinished ? new Color(0, 175, 220) : MessageSender.SColorGood);
             builder.AddField("Vote", this._Description, false);
             int i = 1;
             foreach (KeyValuePair<string, int> kv in this._Choices)

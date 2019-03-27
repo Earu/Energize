@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Net;
-using Discord.Rest;
 using Discord.WebSocket;
 using System;
 using System.Net;
@@ -13,11 +12,16 @@ namespace Energize.Essentials
         public MessageSender(Logger log)
             => this.Log = log;
 
+        public static Color SColorGood { get; } = new Color(30, 30, 30);
+        public static Color SColorNormal { get; } = new Color(200, 200, 200);
+        public static Color SColorWarning { get; } = new Color(226, 123, 68);
+        public static Color SColorDanger { get; } = new Color(226, 68, 68);
+
         public Logger Log { get; private set; }
-        public Color ColorGood { get; } = new Color(30, 30, 30);
-        public Color ColorNormal { get; } = new Color(200, 200, 200);
-        public Color ColorWarning { get; } = new Color(226, 123, 68);
-        public Color ColorDanger { get; } = new Color(226, 68, 68);
+        public Color ColorGood { get => SColorGood; }
+        public Color ColorNormal { get => SColorNormal; }
+        public Color ColorWarning { get => SColorWarning; }
+        public Color ColorDanger { get => SColorDanger; }
 
         private void LogFailedMessage(IMessage msg)
         {
