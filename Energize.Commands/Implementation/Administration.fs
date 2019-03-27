@@ -68,28 +68,34 @@ module Administration =
         await (chan.DeleteMessagesAsync(toDelete))
         [ ctx.sendOK None (sprintf "Cleared %d messages among %d checked messages" toDelete.Length msgs.Length) ]
 
-    let handleClear (ctx : CommandContext) = async {
-        return
-            match ctx.arguments.[0] with
-            | "bots" -> clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.IsBot)
-            | "raw" -> clearCmdBase ctx ctx.arguments.[1] (fun _ -> true)
-            | "user" -> 
-                if String.IsNullOrWhiteSpace ctx.arguments.[2] then
-                    [ ctx.sendWarn None "Expected a username as third argument" ]
-                else
-                    match findUser ctx ctx.arguments.[2] true with
-                    | Some user ->
-                        clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.Id.Equals(user.Id))
-                    | None ->   
-                        [ ctx.sendWarn None "No user could be found for your input" ]
-                | _ -> [ ctx.sendWarn None "Unknown clear type, available types are: `bots`, `raw`, `user`" ] 
-    }
+    let private clearTypes = [
+        "bots", (fun (ctx : CommandContext) -> clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.IsBot));
+        "raw", (fun (ctx : CommandContext) -> clearCmdBase ctx ctx.arguments.[1] (fun _ -> true));
+        "user", (fun (ctx : CommandContext) ->
+            if String.IsNullOrWhiteSpace ctx.arguments.[2] then
+                [ ctx.sendWarn None "Expected a username as third argument" ]
+            else
+                match findUser ctx ctx.arguments.[2] true with
+                | Some user ->
+                    clearCmdBase ctx ctx.arguments.[1] (fun msg -> msg.Author.Id.Equals(user.Id))
+                | None ->   
+                    [ ctx.sendWarn None "No user could be found for your input" ]
+        );
+    ]
 
     [<CommandParameters(2)>]
     [<CommandPermissions(GuildPermission.ManageMessages)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype>,<amounttoremove>,<extra>")>]
-    let clear (ctx : CommandContext) = handleClear ctx
+    let clear (ctx : CommandContext) = async {
+        let cb = clearTypes |> List.tryFind (fun (_type, _) -> _type.Equals(ctx.arguments.[0])) 
+        return
+            match cb with
+            | None ->
+                let typeDisplay = String.Join(", ", clearTypes |> List.map (fun (name, _) -> sprintf "`%s`" name))
+                [ ctx.sendWarn None (sprintf "Unknown clear type, available types are:\n%s" typeDisplay) ] 
+            | Some (_, cb) -> cb ctx
+    }
 
     [<CommandPermissions(GuildPermission.ManageMessages)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
