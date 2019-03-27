@@ -11,39 +11,33 @@ module Administration =
     open System
     open Discord
     open System.Collections.Generic
-    open Energize.Essentials
     open Energize.Commands
     open Discord.Rest
     open System.Linq
     open Energize.Interfaces.Services.Database
 
-    [<AdminCommand>]
-    [<GuildCommand>]
     [<CommandParameters(2)>]
+    [<CommandPermissions(GuildPermission.ManageRoles)>]
+    [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
     let op (ctx : CommandContext) = async {
         return 
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
-                try
-                    let guser = user :?> IGuildUser
-                    let role = getOrCreateRole guser "EnergizeAdmin"
-                    let out = ref 0
-                    if Int32.TryParse(ctx.arguments.[1], out) then
-                        if out.Value.Equals(0) then
-                            await (guser.RemoveRoleAsync(role))
-                            let display = sprintf "User %s was succesfully demoted" (user.ToString())
-                            [ ctx.sendOK None display ]
-                        else
-                            await (guser.AddRoleAsync(role))
-                            let display = sprintf "User %s was succesfully promoted" (user.ToString())
-                            [ ctx.sendOK None display ]
+                let guser = user :?> IGuildUser
+                let role = getOrCreateRole guser "EnergizeAdmin"
+                let out = ref 0
+                if Int32.TryParse(ctx.arguments.[1], out) then
+                    if out.Value.Equals(0) then
+                        await (guser.RemoveRoleAsync(role))
+                        let display = sprintf "User %s was succesfully demoted" (user.ToString())
+                        [ ctx.sendOK None display ]
                     else
-                        [ ctx.sendWarn None "Incorrect value as second argument (Needs to be 0 or 1)" ]
-                with _ ->
-                    let display = 
-                        sprintf "There was an issue when promoting %s, it is most likely due to missing permissions" (user.ToString())
-                    [ ctx.sendWarn None display ]
+                        await (guser.AddRoleAsync(role))
+                        let display = sprintf "User %s was succesfully promoted" (user.ToString())
+                        [ ctx.sendOK None display ]
+                else
+                    [ ctx.sendWarn None "Incorrect value as second argument (Needs to be 0 or 1)" ]
             | None ->
                 [ ctx.sendWarn None "Could not find any user for your input" ]
     }
@@ -69,12 +63,10 @@ module Administration =
         let toDelete = 
             (if msgs.Length > amount then msgs.[..amount] else msgs) 
             |> List.filter (fun msg -> if isMsgOld msg then false else predicate msg)
-        try
-            let chan = ctx.message.Channel :?> ITextChannel
-            await (chan.DeleteMessagesAsync(toDelete))
-            [ ctx.sendOK None (sprintf "Cleared %d messages among %d checked messages" toDelete.Length msgs.Length) ]
-        with _ ->
-            [ ctx.sendWarn None "There was an issue when deleting messages, it is most likely due to missing permissions" ]
+
+        let chan = ctx.message.Channel :?> ITextChannel
+        await (chan.DeleteMessagesAsync(toDelete))
+        [ ctx.sendOK None (sprintf "Cleared %d messages among %d checked messages" toDelete.Length msgs.Length) ]
 
     let handleClear (ctx : CommandContext) = async {
         return
@@ -93,15 +85,14 @@ module Administration =
                 | _ -> [ ctx.sendWarn None "Unknown clear type, available types are: `bots`, `raw`, `user`" ] 
     }
 
-    [<AdminCommand>]
-    [<GuildCommand>]
     [<CommandParameters(2)>]
+    [<CommandPermissions(GuildPermission.ManageMessages)>]
+    [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype>,<amounttoremove>,<extra>")>]
-    let clear (ctx : CommandContext) = 
-        handleClear ctx
+    let clear (ctx : CommandContext) = handleClear ctx
 
-    [<AdminCommand>]
-    [<GuildCommand>]
+    [<CommandPermissions(GuildPermission.ManageMessages)>]
+    [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("delinvs", "Deletes messages containing discord invites (toggleable)", "delinvs <nothing>")>]
     let delInvs (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
@@ -139,13 +130,11 @@ module Administration =
             if dbguild.HasHallOfShames then
                 Some ((awaitResult (guild.GetChannelAsync(dbguild.HallOfShameID))) :?> ITextChannel)
             else
-                try
-                    let c = createHOFChannel ctx
-                    dbguild.HallOfShameID <- c.Id
-                    dbguild.HasHallOfShames <- true
-                    Some c
-                with _ ->
-                    None
+                let c = createHOFChannel ctx
+                dbguild.HallOfShameID <- c.Id
+                dbguild.HasHallOfShames <- true
+                Some c
+
         dbctx.Dispose()
         chan
 
@@ -159,8 +148,7 @@ module Administration =
             .WithColor(ctx.messageSender.ColorNormal)
             |> ignore
         match ImageUrlProvider.getLastImgUrl msg with
-        | Some url ->
-            builder.WithImageUrl(url) |> ignore
+        | Some url -> builder.WithImageUrl(url) |> ignore
         | None -> ()
 
         match chan.Value with
@@ -170,9 +158,9 @@ module Administration =
             Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
         | _ -> None
 
-    [<AdminCommand>]
-    [<GuildCommand>]
     [<CommandParameters(1)>]
+    [<CommandPermissions(GuildPermission.ManageChannels)>]
+    [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
     let fame (ctx : CommandContext) = async {
         let chan = getOrCreateHOFChannel ctx
@@ -187,12 +175,12 @@ module Administration =
                     match trySendFameMsg ctx chan m with
                     | None ->
                         [ ctx.sendWarn None "There was an error when posting the message into hall of fames" ]
-                    | Some p when not (p.Equals(null)) ->
-                        try
-                            await (p.AddReactionAsync(Emoji("🌟")))
-                        with _ -> ()
+                    | Some posted ->
+                        match posted with
+                        | null -> ()
+                        | posted -> await (posted.AddReactionAsync(Emoji("🌟")))
+
                         [ ctx.sendOK None "Message successfully added to hall of fames" ]
-                    | _ -> []
             else
                 [ ctx.sendWarn None "This command is expecting a number (message id)" ]
     }

@@ -86,7 +86,7 @@ module CommandHandler =
         | Some cmd -> cmd.isEnabled <- enabled
         | None -> ()
     
-    [<OwnerCommandAttribute>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<CommandParameters(2)>]
     [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
     let enable (ctx : CommandContext) = async {
@@ -107,15 +107,15 @@ module CommandHandler =
             | None -> []
     }
 
-    let private isCmdX<'atr when 'atr :> Attribute > (methodInfo : MethodInfo) =
-        let atr = methodInfo.GetCustomAttributes<'atr>() |> Seq.tryHead
-        match atr with Some _ -> true | None -> false
-
     let private loadCmd (state : CommandHandlerState) (callback : CommandCallback) (moduleType : Type) =
         let infoAtr = callback.Method.GetCustomAttribute<CommandAttribute>()
         let moduleAtr = moduleType.GetCustomAttribute<CommandModuleAttribute>()
         let paramAtr = callback.Method.GetCustomAttributes<CommandParametersAttribute>() |> Seq.tryHead
+        let permsAtr = callback.Method.GetCustomAttributes<CommandPermissionsAttribute>() |> Seq.tryHead
+        let condsAtr = callback.Method.GetCustomAttributes<CommandConditionsAttribute>() |> Seq.tryHead
         let paramCount = match paramAtr with Some atr -> atr.parameters | None -> 0
+        let permissions = match permsAtr with Some atr -> atr.permissions | None -> []
+        let conditions = match condsAtr with Some atr -> atr.conditions | None -> []
 
         let cmd : Command =
             {
@@ -126,10 +126,8 @@ module CommandHandler =
                 help = infoAtr.help
                 moduleName = moduleAtr.name
                 parameters = paramCount
-                ownerOnly = isCmdX<OwnerCommandAttribute> callback.Method
-                guildOnly = isCmdX<GuildCommandAttribute> callback.Method
-                NsfwOnly = isCmdX<NsfwCommandAttribute> callback.Method
-                adminOnly = isCmdX<AdminCommandAttribute> callback.Method
+                permissions = permissions
+                conditions = conditions
             }
 
         registerCmd state cmd
@@ -327,24 +325,59 @@ module CommandHandler =
             registerCmdCacheEntry msg.Id msgs
             logCmd ctx
     
+    let private hasPermissions (msg : SocketMessage) (cmd : Command) =
+        if cmd.permissions.Length > 0 then
+            if Context.isPrivate msg then
+                (true, [])
+            else
+                let guild = (msg.Channel :?> IGuildChannel).Guild
+                let botUser = awaitResult (guild.GetUserAsync(Config.Instance.Discord.BotID))
+                let botPerms = botUser.GuildPermissions 
+                let hasAllPerms = cmd.permissions |> List.forall (fun perm -> botPerms.Has(perm))
+                let missingPerms = cmd.permissions |> List.filter (fun perm -> not (botPerms.Has(perm)))
+                (hasAllPerms, missingPerms)
+        else
+            (true, [])
+
+    let private hasConditions (msg : SocketMessage) (cmd : Command) =
+        if cmd.conditions.Length > 0 then
+            let conds = 
+                cmd.conditions |> List.map (fun cond ->
+                    let valid = 
+                        match cond with
+                        | CommandCondition.OwnerOnly ->
+                            msg.Author.Id.Equals(Config.Instance.Discord.OwnerID)
+                        | CommandCondition.GuildOnly ->
+                            not (Context.isPrivate msg)
+                        | CommandCondition.NsfwOnly ->
+                            Context.isNSFW msg
+                        | CommandCondition.AdminOnly ->
+                            Context.isAuthorAdmin msg
+                        | _ -> false
+                    (cond, valid)
+                )
+            let hasAllConditions = conds |> List.forall (fun (_, isvalid) -> isvalid)
+            let missingConds = conds |> List.filter (fun (perm, isvalid) -> not isvalid) |> List.map (fun (perm, _) -> perm)
+            (hasAllConditions, missingConds)
+        else
+            (true, [])
+
     let private handleCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) =
         let author = msg.Author.ToString()
+        let hasPermissions, missingPerms = hasPermissions msg cmd
+        let hasConditions, missingConds = hasConditions msg cmd
         match cmd with
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
             awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
-        | cmd when cmd.ownerOnly && not (msg.Author.Id.Equals(Config.Instance.Discord.OwnerID)) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a owner-only command <%s>" author cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "owner-only command", "This is a owner-only feature")) 
-        | cmd when cmd.guildOnly && (Context.isPrivate msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a guild-only command <%s> in private" author cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "server-only command", "This is a server-only feature")) 
-        | cmd when cmd.NsfwOnly && not (Context.isNSFW msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a nsfw command <%s> in a non nsfw channel" author cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "nsfw-only command", "This cannot be used in a non NSFW channel")) 
-        | cmd when cmd.adminOnly && not (Context.isAuthorAdmin msg) ->
-            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use an admin-only command <%s> but they're not an admin" author cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "admin-only command", "This cannot be used by non-adminstrator users")) 
+        | cmd when not hasPermissions ->
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with missing permissions <%s>" author cmd.name)
+            let permDisplay = String.Join(", ", missingPerms |> List.map (fun perm -> sprintf "`%s`" (perm.ToString())))
+            awaitIgnore (state.messageSender.Warning(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
+        | cmd when not hasConditions ->
+            state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with unmet conditions <%s>" author cmd.name)
+            let condDisplay = String.Join(", ", missingConds |> List.map (fun perm -> sprintf "`%s`" (perm.ToString())))
+            awaitIgnore (state.messageSender.Warning(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
         | cmd ->
             runCmd state msg cmd input (Context.isPrivate msg)
 
