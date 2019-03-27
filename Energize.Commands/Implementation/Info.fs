@@ -14,7 +14,7 @@ module Info =
     open Energize.Commands.UserHelper
     open System
 
-    [<GuildCommand>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("server", "Gets information about the server", "server <nothing>")>]
     let server (ctx : CommandContext) = async {
         let guild = (ctx.message.Channel :?> IGuildChannel).Guild :?> SocketGuild
@@ -152,8 +152,8 @@ module Info =
             return [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
-    [<GuildCommand>]
     [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("isadmin", "Shows if a user is an admin", "isadmin <user|userid>")>]
     let isAdmin (ctx : CommandContext) = async {
         return 
@@ -166,8 +166,8 @@ module Info =
                 [ ctx.sendWarn None "No user could be found for your input" ]
     }
 
-    [<GuildCommand>]
     [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("roles", "Gets a user roles and role ids", "roles <user|userid>")>]
     let roles (ctx : CommandContext) = async {
         return 

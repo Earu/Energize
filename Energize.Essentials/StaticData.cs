@@ -6,9 +6,6 @@ namespace Energize.Essentials
 {
     public class StaticData
     {
-        public string[] Adjectives;
-        public string[] Nouns;
-        public string[] Vowels;
         public string[] EightBallAnswers;
         public string[] PickAnswers;
         public string[] AnimeEmotes;

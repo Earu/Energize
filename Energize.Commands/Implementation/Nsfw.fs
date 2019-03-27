@@ -23,7 +23,7 @@ module Nsfw =
             |> ignore
 
     type E621Obj = { sample_url : string; id : string }
-    [<NsfwCommand>]
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
     [<CommandParameters(1)>]
     [<Command("e621", "Searches e621", "e621 <tag|search>")>]
     let e621 (ctx : CommandContext) = async {
@@ -85,19 +85,19 @@ module Nsfw =
                 [ ctx.sendWarn None "Nothing was found" ]
     }
 
-    [<NsfwCommand>]
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
     [<CommandParameters(1)>]
     [<Command("furb", "Searches furrybooru", "furb <tags|search>")>]
     let furb (ctx : CommandContext) = 
         callDApiCmd ctx "furry.booru.org"
 
-    [<NsfwCommand>]
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
     [<CommandParameters(1)>]
     [<Command("r34", "Searches r34", "r34 <tags|search>")>]
     let r34 (ctx : CommandContext) =
         callDApiCmd ctx "rule34.xxx"
 
-    [<NsfwCommand>]
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
     [<CommandParameters(1)>]
     [<Command("gelb", "Searches gelbooru", "gelb <tags|search>")>]
     let gelb (ctx : CommandContext) =

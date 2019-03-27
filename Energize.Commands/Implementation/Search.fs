@@ -16,7 +16,7 @@ module Search =
 
     type WordObj = { example: string; definition : string; permalink : string; thumbs_up : int; thumbs_down: int }
     type UrbanObj = { list : WordObj list }
-    [<NsfwCommand>]
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
     [<CommandParameters(1)>]
     [<Command("urban", "Searches urban for a definition", "urban <term>")>]
     let urban (ctx : CommandContext) = async {
