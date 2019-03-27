@@ -225,30 +225,6 @@ module Info =
                 [ ctx.sendWarn None "There was a problem fetching last changes" ]
     }
 
-    [<CommandParameters(1)>]
-    [<Command("playing", "Gets the amount of player playing a game", "playing <game>")>]
-    let playing (ctx : CommandContext) = async {
-        let sum = 
-            ctx.client.Guilds |> Seq.map
-                (fun guild ->
-                    guild.Users |> Seq.filter 
-                        (fun u -> 
-                            let act = 
-                                match u.Activity with
-                                | null -> String.Empty
-                                | a -> a.Name.ToLower()
-                            act.Equals(ctx.input.ToLower())
-                        )
-                        |> Seq.length
-                ) |> Seq.sum
-        let display = 
-            if sum > 1 then
-                sprintf "There are %d users playing %s" sum ctx.input
-            else
-                sprintf "There is %d user playing %s" sum ctx.input
-        return [ ctx.sendOK None display ]
-    }
-
     type VanityResponseObj = { steamid : string; success : int }
     type VanityObj = { response : VanityResponseObj }
     let private tryGetSteamId64 (ctx : CommandContext) : uint64 option =

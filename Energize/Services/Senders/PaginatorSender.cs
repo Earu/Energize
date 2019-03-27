@@ -16,11 +16,6 @@ namespace Energize.Services.Senders
     [Service("Paginator")]
     public class PaginatorSender : IPaginatorSenderService
     {
-        private static readonly IEmote _NextEmote = new Emoji("▶");
-        private static readonly IEmote _PreviousEmote = new Emoji("◀");
-        private static readonly IEmote _CloseEmote = new Emoji("⏹");
-        private static readonly IEmote _PlayEmote = new Emoji("⏯");
-
         private Dictionary<ulong, Paginator<object>> _Paginators;
 
         private readonly MessageSender _MessageSender;
@@ -54,28 +49,12 @@ namespace Energize.Services.Senders
             this._PaginatorCleanup = timer;
         }
 
-        private void AddReactions(IUserMessage msg)
+        private void AddReactions(IUserMessage msg, params string[] unicodestrings)
         {
             Task.Run(async () =>
             {
-                await msg.AddReactionAsync(_PreviousEmote);
-                await msg.AddReactionAsync(_CloseEmote);
-                await msg.AddReactionAsync(_NextEmote);
-            }).ContinueWith(t =>
-            {
-                if (t.IsFaulted)
-                    this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
-            });
-        }
-
-        private void AddPlayerReactions(IUserMessage msg)
-        {
-            Task.Run(async () =>
-            {
-                await msg.AddReactionAsync(_PreviousEmote);
-                await msg.AddReactionAsync(_CloseEmote);
-                await msg.AddReactionAsync(_PlayEmote);
-                await msg.AddReactionAsync(_NextEmote);
+                foreach (string unicode in unicodestrings)
+                    await msg.AddReactionAsync(new Emoji(unicode));
             }).ContinueWith(t =>
             {
                 if (t.IsFaulted)
@@ -99,7 +78,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted);
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
                 return posted;
             }
@@ -126,7 +105,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted);
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
                 return posted;
             }
@@ -146,7 +125,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted);
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
                 return posted;
             }
@@ -166,7 +145,7 @@ namespace Energize.Services.Senders
             {
                 paginator.Message = posted;
                 this._Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddPlayerReactions(posted);
+                this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
 
                 return posted;
             }
@@ -177,31 +156,24 @@ namespace Energize.Services.Senders
             }
         }
 
-        private bool IsValidEmote(SocketReaction reaction)
-        {
-            if (reaction.UserId == this._Client.CurrentUser.Id) return false;
-            IEmote emote = reaction.Emote;
-            string[] validemotes = new string[] { _PreviousEmote.Name, _NextEmote.Name, _CloseEmote.Name, _PlayEmote.Name };
-            foreach (string emotename in validemotes)
-                if (emotename == emote.Name)
-                    return true;
-            return false;
-        }
-
         private delegate Task ReactionCallback(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction);
         private static readonly Dictionary<string, ReactionCallback> _ReactionCallbacks = new Dictionary<string, ReactionCallback>
         {
-            [_PreviousEmote.Name] = async (sender, paginator, cache, chan, reaction) 
-                => await paginator.Previous(),
-            [_NextEmote.Name] = async (sender, paginator, cache, chan, reaction) 
-                => await paginator.Next(),
-            [_CloseEmote.Name] = async (sender, paginator, cache, chan, reaction) =>
+            ["◀"] = async (sender, paginator, cache, chan, reaction) => await paginator.Previous(),
+            ["▶"] = async (sender, paginator, cache, chan, reaction) => await paginator.Next(),
+            ["⏹"] = async (sender, paginator, cache, chan, reaction) =>
             {
                 sender._Paginators.Remove(cache.Value.Id);
                 await chan.DeleteMessageAsync(paginator.Message);
             },
-            [_PlayEmote.Name] = OnPlayReaction,
+            ["⏯"] = OnPlayReaction,
         };
+
+        private bool IsValidEmote(SocketReaction reaction)
+        {
+            if (reaction.UserId == this._Client.CurrentUser.Id) return false;
+            return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
+        }
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
@@ -211,9 +183,7 @@ namespace Energize.Services.Senders
             Paginator<object> paginator = this._Paginators[cache.Value.Id];
             if (paginator.UserID != reaction.UserId) return;
 
-            IEmote emote = reaction.Emote;
-            if (_ReactionCallbacks.ContainsKey(emote.Name))
-                await _ReactionCallbacks[emote.Name](this, paginator, cache, chan, reaction);
+            await _ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);
         }
 
         private static async Task OnPlayReaction(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
@@ -228,7 +198,7 @@ namespace Energize.Services.Senders
             if (paginator.CurrentValue is LavaTrack track)
             {
                 await music.AddTrack(guser.VoiceChannel, textchan, track);
-                await music.SendNewTack(guser.VoiceChannel, textchan, track);
+                await music.SendPlayer(guser.VoiceChannel, textchan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
             else if (paginator.CurrentValue is string url)
@@ -239,7 +209,7 @@ namespace Energize.Services.Senders
                 {
                     LavaTrack tr = tracks[0];
                     await music.AddTrack(guser.VoiceChannel, textchan, tr);
-                    await music.SendNewTack(guser.VoiceChannel, textchan, tr);
+                    await music.SendPlayer(guser.VoiceChannel, textchan, tr);
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
                 else
