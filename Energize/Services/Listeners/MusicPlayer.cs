@@ -76,7 +76,7 @@ namespace Energize.Services.Listeners
             }
 
             IGuild guild = lply.VoiceChannel.Guild;
-            string msg = $"{DateTime.Now} - Updated track <{track.Title}> ({position}) for player in guild <{guild.Name}>";
+            string msg = $"Updated track <{track.Title}> ({position}) for player in guild <{guild.Name}>";
             this._Logger.LogTo("victoria.log", msg);
         }
 
@@ -374,6 +374,9 @@ namespace Energize.Services.Listeners
             return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
+        public bool IsValidTrackPlayer(TrackPlayer trackplayer, ulong msgid)
+            => trackplayer != null && trackplayer.Message != null && trackplayer.Message.Id == msgid;
+
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!this.IsValidReaction(cache, chan, reaction)) return;
@@ -382,9 +385,10 @@ namespace Energize.Services.Listeners
             if (!this._Players.ContainsKey(guser.GuildId) || guser.VoiceChannel == null) return;
 
             IEnergizePlayer ply = this._Players[guser.GuildId];
+            if (!this.IsValidTrackPlayer(ply.TrackPlayer, cache.Id)) return;
+
             await _ReactionCallbacks[reaction.Emote.Name](this, ply);
-            if (ply.TrackPlayer != null)
-                await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+            await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
         }
 
         [Event("ReactionAdded")]
