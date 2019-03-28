@@ -41,8 +41,8 @@ module Info =
         ]
 
         let builder = EmbedBuilder()
-        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithFields(fields)
             .WithThumbnailUrl(guild.IconUrl)
             .WithColor(ctx.messageSender.ColorGood)
@@ -68,8 +68,8 @@ module Info =
         ]
 
         let builder = EmbedBuilder()
-        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithFields(fields)
             .WithThumbnailUrl(ctx.client.CurrentUser.GetAvatarUrl())
             .WithColor(ctx.messageSender.ColorGood)
@@ -140,8 +140,8 @@ module Info =
                     ctx.embedField "Seen On" userGuilds true
                 ])
                     
-            ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
             builder
+                .WithAuthorNickname(ctx.message)
                 .WithFields(fields)
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(ctx.messageSender.ColorGood)
@@ -191,8 +191,8 @@ module Info =
             | Some msg ->
                 let avurl = msg.Author.GetAvatarUrl(ImageFormat.Auto, 32us)
                 let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 builder
+                    .WithAuthorNickname(ctx.message)
                     .WithColor(ctx.messageSender.ColorGood)
                     .WithFooter("message sniped from " + msg.Author.ToString(), avurl)
                     .WithTimestamp(msg.CreatedAt)
@@ -298,8 +298,8 @@ module Info =
                         ctx.embedField "URL" ply.profileurl true
                     ]
                     let builder = EmbedBuilder()
-                    ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                     builder
+                        .WithAuthorNickname(ctx.message)
                         .WithFields(fields)
                         .WithThumbnailUrl(ply.avatarfull)
                         .WithColor(ctx.messageSender.ColorGood)

@@ -46,8 +46,8 @@ module CommandHandler =
             ctx.embedField "Help" (sprintf "`%s`" cmd.help) false
         ]
         let builder = EmbedBuilder()
-        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithFields(fields)
             .WithColor(if iswarn then ctx.messageSender.ColorWarning else ctx.messageSender.ColorGood)
             .WithFooter(sprintf (if iswarn then "bad usage [ %s ]" else "help [ %s ]") cmd.name)

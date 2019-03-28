@@ -24,16 +24,16 @@ namespace Energize.Essentials.MessageConstructs
             string line;
             if (track.IsStream)
             {
-                line = new string('─', 29) + "⚪";
+                line = new string('─', 24) + "⚪";
             }
             else
             {
                 double perc = (double)track.Position.Ticks / track.Length.Ticks * 100;
                 int circlepos = (int)Math.Ceiling(30.0 / 100.0 * perc);
                 if (circlepos > 0)
-                    line = new string('─', circlepos - 1) + "⚪" + new string('─', 30 - circlepos);
+                    line = new string('─', circlepos - 1) + "⚪" + new string('─', 25 - circlepos);
                 else
-                    line = "⚪" + new string('─', 29);
+                    line = "⚪" + new string('─', 24);
             }
             string res = $"`{len}`\n```http\n▶ {line} {pos}\n```";
 
@@ -63,6 +63,7 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Paused", paused)
                 .WithField("Looping", looping)
                 .WithField("Length", this.FormattedTrack(track), false)
+                .WithFooter("music player")
                 .Build();
             this.Embed = embed;
         }
@@ -73,8 +74,9 @@ namespace Energize.Essentials.MessageConstructs
             try
             {
                 await this.Message.DeleteAsync();
+                this.Message = null;
             }
-            finally
+            catch
             {
                 this.Message = null;
             }

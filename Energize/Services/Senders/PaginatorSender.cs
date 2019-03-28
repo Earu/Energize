@@ -66,8 +66,8 @@ namespace Energize.Services.Senders
         {
             string display = data.Count() == 0 ? string.Empty : displaycallback(data.First());
             EmbedBuilder builder = new EmbedBuilder();
-            this._MessageSender.BuilderWithAuthor(msg, builder);
             builder
+                .WithAuthorNickname(msg)
                 .WithDescription(display)
                 .WithColor(this._MessageSender.ColorGood)
                 .WithFooter(head);
@@ -92,8 +92,8 @@ namespace Energize.Services.Senders
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback) where T : class
         {
             EmbedBuilder builder = new EmbedBuilder();
-            this._MessageSender.BuilderWithAuthor(msg, builder);
             builder
+                .WithAuthorNickname(msg)
                 .WithColor(this._MessageSender.ColorGood)
                 .WithFooter(head);
             if (data.Count() > 0)
@@ -198,7 +198,6 @@ namespace Energize.Services.Senders
             if (paginator.CurrentValue is LavaTrack track)
             {
                 await music.AddTrack(guser.VoiceChannel, textchan, track);
-                await music.SendPlayer(guser.VoiceChannel, textchan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
             else if (paginator.CurrentValue is string url)
@@ -209,7 +208,6 @@ namespace Energize.Services.Senders
                 {
                     LavaTrack tr = tracks[0];
                     await music.AddTrack(guser.VoiceChannel, textchan, tr);
-                    await music.SendPlayer(guser.VoiceChannel, textchan, tr);
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
                 else

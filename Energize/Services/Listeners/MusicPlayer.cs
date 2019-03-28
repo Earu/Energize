@@ -10,6 +10,7 @@ using Victoria.Entities;
 using Victoria.Queue;
 using System.Linq;
 using Energize.Essentials.MessageConstructs;
+using Energize.Interfaces.Services.Senders;
 
 namespace Energize.Services.Listeners
 {
@@ -42,6 +43,7 @@ namespace Energize.Services.Listeners
         private readonly LavaShardClient _LavaClient;
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
+        private readonly ServiceManager _ServiceManager;
         private readonly Dictionary<ulong, EnergizePlayer> _Players;
 
         private bool _Initialized;
@@ -54,6 +56,7 @@ namespace Energize.Services.Listeners
             this._Client = client.DiscordClient;
             this._Logger = client.Logger;
             this._MessageSender = client.MessageSender;
+            this._ServiceManager = client.ServiceManager;
             this._LavaClient = new LavaShardClient();
 
             this._LavaClient.OnTrackException += async (ply, track, _) => await this.OnTrackIssue(ply, track);
@@ -68,7 +71,7 @@ namespace Energize.Services.Listeners
             if (this._Players.ContainsKey(lply.VoiceChannel.GuildId))
             {
                 IEnergizePlayer ply = this._Players[lply.VoiceChannel.GuildId];
-                if (ply.TrackPlayer != null)
+                if (ply.TrackPlayer != null && !ply.IsPaused)
                     await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping);
             }
 
@@ -105,7 +108,8 @@ namespace Energize.Services.Listeners
             {
                 EnergizePlayer ply = this._Players[vc.GuildId];
                 this._Players.Remove(vc.GuildId);
-                await ply.TrackPlayer.DeleteMessage();
+                if (ply.TrackPlayer != null)
+                    await ply.TrackPlayer.DeleteMessage();
             }
         }
 
@@ -149,14 +153,14 @@ namespace Energize.Services.Listeners
         public async Task PauseTrack(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply.CurrentTrack != null)
+            if (ply.IsPlaying && !ply.IsPaused)
                 await ply.Lavalink.PauseAsync();
         }
 
         public async Task ResumeTrack(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply.CurrentTrack != null)
+            if (ply.IsPlaying && ply.IsPaused)
                 await ply.Lavalink.ResumeAsync();
         }
 
@@ -191,9 +195,39 @@ namespace Energize.Services.Listeners
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
-            Embed embed = this.GetQueueEmbed(ply, msg);
+            IPaginatorSenderService paginator = this._ServiceManager.GetService<IPaginatorSenderService>("Paginator");
+            List<IQueueObject> tracks = ply.Queue.Items.ToList();
+            if (tracks.Count > 0)
+            {
+                return await paginator.SendPaginator(msg, "track queue", tracks, async (obj, builder) =>
+                {
+                    LavaTrack track = (LavaTrack)obj;
+                    int i = tracks.IndexOf(obj);
+                    builder
+                        .WithDescription($"🎶 Track `#{i + 1}` out of `{tracks.Count}` in the queue")
+                        .WithField("Title", track.Title)
+                        .WithField("Author", track.Author)
+                        .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
+                        .WithField("Stream", track.IsStream);
 
-            return await this._MessageSender.Send(ply.TextChannel, embed);
+                    string thumbnailurl;
+                    try
+                    {
+                        thumbnailurl = await track.FetchThumbnailAsync();
+                    }
+                    catch
+                    {
+                        thumbnailurl = string.Empty;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(thumbnailurl))
+                        builder.WithThumbnailUrl(thumbnailurl);
+                });
+            }
+            else
+            {
+                return await this._MessageSender.Good(msg, "track queue", "The track queue is empty");
+            }
         }
 
         private async Task<Embed> GetNewTrackEmbed(LavaTrack track, IMessage msg=null)
@@ -208,8 +242,8 @@ namespace Energize.Services.Listeners
                 thumbnailurl = string.Empty;
             }
             EmbedBuilder builder = new EmbedBuilder();
-            if(msg != null)
-                this._MessageSender.BuilderWithAuthor(msg, builder);
+            if (msg != null)
+                builder.WithAuthorNickname(msg);
             string desc = "🎶 Added the following track to the queue:";
             if (!string.IsNullOrWhiteSpace(thumbnailurl))
                 builder.WithThumbnailUrl(thumbnailurl);
@@ -278,56 +312,6 @@ namespace Energize.Services.Listeners
             return ply.TrackPlayer.Message;
         }
 
-        private Embed GetQueueEmbed(IEnergizePlayer ply, IMessage msg = null)
-        {
-            EmbedBuilder builder = new EmbedBuilder();
-            if (msg != null)
-                this._MessageSender.BuilderWithAuthor(msg, builder);
-                
-            builder.WithColor(this._MessageSender.ColorGood);
-            builder.WithFooter("track queue");
-
-            LavaTrack newtrack = ply.CurrentTrack;
-            List<EmbedFieldBuilder> fieldbuilders = new List<EmbedFieldBuilder>();
-            if (newtrack == null)
-            {
-                builder.WithDescription("The track queue is empty");
-                return builder.Build();
-            }
-            else
-            {
-                EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
-                fieldbuilder.WithIsInline(false);
-                fieldbuilder.WithName("🎶 Currently Playing");
-                if (newtrack.IsStream)
-                    fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | Stream");
-                else
-                    fieldbuilder.WithValue($"**{newtrack.Title}** from **{newtrack.Author}** | {newtrack.Position}/{newtrack.Length}");
-                fieldbuilders.Add(fieldbuilder);
-            }
-
-            if (ply.Queue.Count > 0)
-            {
-                EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
-                fieldbuilder.WithIsInline(false);
-                fieldbuilder.WithName("Music Queue");
-
-                string queuedisplay = string.Empty;
-                int count = 1;
-                foreach (IQueueObject obj in ply.Queue.Items)
-                {
-                    LavaTrack tr = obj as LavaTrack;
-                    queuedisplay += $"{count} - **{tr.Title}** from **{tr.Author}** | {(tr.IsStream ? "Stream" : tr.Length.ToString())}\n";
-                    count++;
-                }
-                fieldbuilder.WithValue(queuedisplay);
-                fieldbuilders.Add(fieldbuilder);
-            }
-
-            builder.WithFields(fieldbuilders);
-            return builder.Build();
-        }
-
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
         {
             EnergizePlayer ply = this._Players[lavalink.VoiceChannel.GuildId];
@@ -346,7 +330,8 @@ namespace Energize.Services.Listeners
                 }
                 else
                 {
-                    await ply.TrackPlayer.DeleteMessage();
+                    if (ply.TrackPlayer != null)
+                        await ply.TrackPlayer.DeleteMessage();
                 }
             }
         }
@@ -376,20 +361,25 @@ namespace Energize.Services.Listeners
             ["⏭"] = async (music, ply) => await music.SkipTrack(ply.VoiceChannel, ply.TextChannel),
         };
 
-        private bool IsValidEmote(SocketReaction reaction)
+        private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (reaction.UserId == this._Client.CurrentUser.Id) return false;
+            if (chan is IDMChannel || !cache.HasValue) return false;
+            if (reaction.User.Value == null) return false;
+            if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
             return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (chan is IDMChannel || !cache.HasValue || !this.IsValidEmote(reaction)) return;
-            IGuildChannel gchan = (IGuildChannel)chan;
-            if (!this._Players.ContainsKey(gchan.GuildId)) return;
-            IEnergizePlayer ply = this._Players[gchan.GuildId];
+            if (!this.IsValidReaction(cache, chan, reaction)) return;
+            
+            IGuildUser guser = (IGuildUser)reaction.User.Value;
+            if (!this._Players.ContainsKey(guser.GuildId) || guser.VoiceChannel == null) return;
+
+            IEnergizePlayer ply = this._Players[guser.GuildId];
             await _ReactionCallbacks[reaction.Emote.Name](this, ply);
-            await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+            if (ply.TrackPlayer != null)
+                await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
         }
 
         [Event("ReactionAdded")]
