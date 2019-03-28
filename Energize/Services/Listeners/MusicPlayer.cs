@@ -363,7 +363,11 @@ namespace Energize.Services.Listeners
             ["🔁"] = async (music, ply) => await music.LoopTrack(ply.VoiceChannel, ply.TextChannel),
             ["⬆"] = async (music, ply) => await music.SetTrackVolume(ply.VoiceChannel, ply.TextChannel, ply.Volume + 10),
             ["⬇"] = async (music, ply) => await music.SetTrackVolume(ply.VoiceChannel, ply.TextChannel, ply.Volume - 10),
-            ["⏭"] = async (music, ply) => await music.SkipTrack(ply.VoiceChannel, ply.TextChannel),
+            ["⏭"] = async (music, ply) =>
+            {
+                await ply.TrackPlayer.DeleteMessage();
+                await music.SkipTrack(ply.VoiceChannel, ply.TextChannel);
+            },
         };
 
         private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
