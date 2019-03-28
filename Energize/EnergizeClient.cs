@@ -40,6 +40,12 @@ namespace Energize
 
             if (this.HasToken)
             {
+                AppDomain.CurrentDomain.UnhandledException += (sender,args) =>
+                {
+                    Exception e = (Exception)args.ExceptionObject;
+                    this.Logger.LogTo("crash.log", e.ToString());
+                };
+
                 this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
                 this.DiscordRestClient.Log += async log => this.Logger.LogTo("dnet_rest.log", log.Message);
 
