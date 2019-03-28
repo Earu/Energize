@@ -14,8 +14,8 @@ module Nsfw =
     open System.Net
 
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
-        ctx.messageSender.BuilderWithAuthor(ctx.message,builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithColor(ctx.messageSender.ColorGood)
             .WithImageUrl(pic)
             .WithFooter(ctx.commandName)

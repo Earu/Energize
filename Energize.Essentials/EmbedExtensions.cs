@@ -15,5 +15,22 @@ namespace Energize.Essentials
             builder.WithFields(fieldbuilder);
             return builder;
         }
+
+        public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IMessage msg)
+        {
+            if (msg.Channel is IGuildChannel)
+            {
+                IGuildUser author = msg.Author as IGuildUser;
+                string nick = author.Nickname != null ? $"{author.Nickname} ({author})" : author.ToString();
+                string url = author.GetAvatarUrl(ImageFormat.Auto, 32);
+                builder.WithAuthor(nick, url);
+            }
+            else
+            {
+                builder.WithAuthor(msg.Author);
+            }
+
+            return builder;
+        }
     }
 }

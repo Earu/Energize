@@ -54,21 +54,6 @@ namespace Energize.Essentials
             this.Log.Nice("Message", ConsoleColor.Red, log);
         }
 
-        public void BuilderWithAuthor(IMessage msg, EmbedBuilder builder)
-        {
-            if (msg.Channel is IGuildChannel)
-            {
-                IGuildUser author = msg.Author as IGuildUser;
-                string nick = author.Nickname != null ? author.Nickname + " (" + author.ToString() + ")" : author.ToString();
-                string url = author.GetAvatarUrl(ImageFormat.Auto, 32);
-                builder.WithAuthor(nick, url);
-            }
-            else
-            {
-                builder.WithAuthor(msg.Author);
-            }
-        }
-
         public async Task TriggerTyping(ISocketMessageChannel chan)
         {
             try
@@ -91,7 +76,7 @@ namespace Energize.Essentials
                 builder.WithColor(color);
                 builder.WithDescription(content);
                 builder.WithFooter(header);
-                this.BuilderWithAuthor(msg, builder);
+                builder.WithAuthorNickname(msg);
 
                 if (picurl != null)
                     builder.WithThumbnailUrl(picurl);

@@ -115,8 +115,8 @@ module Fun =
         let endpoint = "http://inspirobot.me/api?generate=true"
         let url = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
         let builder = EmbedBuilder()
-        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithColor(ctx.messageSender.ColorGood)
             .WithImageUrl(url)
             .WithFooter(ctx.commandName)
