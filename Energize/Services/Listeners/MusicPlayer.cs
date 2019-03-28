@@ -44,14 +44,14 @@ namespace Energize.Services.Listeners
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
         private readonly ServiceManager _ServiceManager;
-        private readonly Dictionary<ulong, EnergizePlayer> _Players;
+        private readonly Dictionary<ulong, IEnergizePlayer> _Players;
 
         private bool _Initialized;
 
         public MusicPlayer(EnergizeClient client)
         {
             this._Initialized = false;
-            this._Players = new Dictionary<ulong, EnergizePlayer>();
+            this._Players = new Dictionary<ulong, IEnergizePlayer>();
 
             this._Client = client.DiscordClient;
             this._Logger = client.Logger;
@@ -84,7 +84,7 @@ namespace Energize.Services.Listeners
 
         public async Task<IEnergizePlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan)
         {
-            EnergizePlayer ply;
+            IEnergizePlayer ply;
             if (this._Players.ContainsKey(vc.GuildId))
             {
                 ply = this._Players[vc.GuildId];
@@ -106,11 +106,17 @@ namespace Energize.Services.Listeners
             await this._LavaClient.DisconnectAsync(vc);
             if (this._Players.ContainsKey(vc.GuildId))
             {
-                EnergizePlayer ply = this._Players[vc.GuildId];
+                IEnergizePlayer ply = this._Players[vc.GuildId];
                 this._Players.Remove(vc.GuildId);
                 if (ply.TrackPlayer != null)
                     await ply.TrackPlayer.DeleteMessage();
             }
+        }
+
+        public async Task DisconnectAllPlayersAsync()
+        {
+            foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
+                await this._LavaClient.DisconnectAsync(ply.Value.VoiceChannel);
         }
 
         public async Task<IUserMessage> AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
@@ -313,7 +319,7 @@ namespace Energize.Services.Listeners
 
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
         {
-            EnergizePlayer ply = this._Players[lavalink.VoiceChannel.GuildId];
+            IEnergizePlayer ply = this._Players[lavalink.VoiceChannel.GuildId];
             if (ply.IsLooping)
             {
                 track.ResetPosition();
