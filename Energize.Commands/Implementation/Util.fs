@@ -173,7 +173,6 @@ module Util =
             | null -> [ ctx.sendWarn None "Stats not available yet" ]
             | stats ->
                 let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 let uptime = sprintf "%dd%dh%dm" stats.Uptime.Days stats.Uptime.Hours stats.Uptime.Minutes
                 let fields = [
                     ctx.embedField "CPU Load" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad) true
@@ -184,6 +183,7 @@ module Util =
                 ]
 
                 builder
+                    .WithAuthorNickname(ctx.message)
                     .WithColor(ctx.messageSender.ColorGood)
                     .WithFooter(ctx.commandName)
                     .WithFields(fields)
@@ -201,8 +201,8 @@ module Util =
                     let url = user.GetAvatarUrl(ImageFormat.Auto)
                     url.Remove(url.Length - 9)
                 let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 builder
+                    .WithAuthorNickname(ctx.message)
                     .WithFooter(ctx.commandName)
                     .WithImageUrl(avurl)
                     .WithColor(ctx.messageSender.ColorGood)
@@ -218,8 +218,8 @@ module Util =
         let guser = ctx.message.Author :?> SocketGuildUser
         let guild = guser.Guild
         let builder = EmbedBuilder()
-        ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
         builder
+            .WithAuthorNickname(ctx.message)
             .WithFooter(ctx.commandName)
             .WithImageUrl(guild.IconUrl)
             .WithColor(ctx.messageSender.ColorGood)
@@ -234,8 +234,8 @@ module Util =
         return
             if Emote.TryParse(ctx.arguments.[0], e) then
                 let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 builder
+                    .WithAuthorNickname(ctx.message)
                     .WithFooter("emote")
                     .WithImageUrl(e.Value.Url)
                     .WithColor(ctx.messageSender.ColorGood)

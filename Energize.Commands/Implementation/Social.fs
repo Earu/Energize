@@ -129,7 +129,6 @@ module Social =
                 let dbctx = awaitResult (db.GetContext())
                 let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
                 let builder = EmbedBuilder()
-                ctx.messageSender.BuilderWithAuthor(ctx.message, builder)
                 let fields = [
                    ctx.embedField "Hugs" dbstats.HuggedCount true
                    ctx.embedField "Kisses" dbstats.KissedCount true
@@ -145,6 +144,7 @@ module Social =
                    ctx.embedField "Flexes" dbstats.FlexCount true
                 ]
                 builder
+                    .WithAuthorNickname(ctx.message)
                     .WithFields(fields)
                     .WithThumbnailUrl(user.GetAvatarUrl())
                     .WithColor(ctx.messageSender.ColorGood)

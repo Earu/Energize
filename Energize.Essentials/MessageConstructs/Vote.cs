@@ -108,7 +108,7 @@ namespace Energize.Essentials.MessageConstructs
 
         public async Task AddVote(IUser voter, int choiceindex)
         {
-            if (this._IsFinished) return;
+            if (voter.IsBot || voter.IsWebhook || this._IsFinished) return;
             if (this._VoterIds.ContainsKey(voter.Id)) return;
             if (this.IsValidIndex(choiceindex))
             {
@@ -122,7 +122,7 @@ namespace Energize.Essentials.MessageConstructs
 
         public async Task RemoveVote(IUser voter, int choiceindex)
         {
-            if(this._IsFinished) return;
+            if (voter.IsBot || voter.IsWebhook || this._IsFinished) return;
             if (!this._VoterIds.ContainsKey(voter.Id)) return;
             if (this.IsValidIndex(choiceindex) && this._VoterIds[voter.Id] == choiceindex)
             {
