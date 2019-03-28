@@ -39,6 +39,6 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendNewTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
-        Task<IUserMessage> SendPlayer(IVoiceChannel vc, ITextChannel chan, LavaTrack track = null);
+        Task<IUserMessage> SendPlayer(IEnergizePlayer ply, LavaTrack track = null);
     }
 }
