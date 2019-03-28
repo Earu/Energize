@@ -124,7 +124,7 @@ namespace Energize.Services.Listeners
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                return await this.SendPlayer(vc, chan, track);
+                return await this.SendPlayer(ply, track);
             }
         }
 
@@ -174,7 +174,8 @@ namespace Energize.Services.Listeners
         public async Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            await ply.Lavalink.SetVolumeAsync(vol);
+            if (ply.IsPlaying)
+                await ply.Lavalink.SetVolumeAsync(vol);
         }
 
         public async Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan)
@@ -288,15 +289,13 @@ namespace Energize.Services.Listeners
             });
         }
 
-        public async Task<IUserMessage> SendPlayer(IVoiceChannel vc, ITextChannel chan, LavaTrack track=null)
+        public async Task<IUserMessage> SendPlayer(IEnergizePlayer ply, LavaTrack track=null)
         {
-            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             track = track ?? ply.CurrentTrack;
-
 
             if (ply.TrackPlayer == null)
             {
-                ply.TrackPlayer = new TrackPlayer(vc.GuildId);
+                ply.TrackPlayer = new TrackPlayer(ply.VoiceChannel.GuildId);
                 await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, false);
             }
             else
@@ -326,7 +325,7 @@ namespace Energize.Services.Listeners
                 {
                     LavaTrack newtrack = tr as LavaTrack;
                     await ply.Lavalink.PlayAsync(newtrack);
-                    await this.SendPlayer(ply.VoiceChannel, ply.TextChannel, newtrack);
+                    await this.SendPlayer(ply, newtrack);
                 }
                 else
                 {
