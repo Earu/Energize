@@ -29,7 +29,7 @@ namespace Energize.Essentials.MessageConstructs
             else
             {
                 double perc = (double)track.Position.Ticks / track.Length.Ticks * 100;
-                int circlepos = (int)Math.Ceiling(30.0 / 100.0 * perc);
+                int circlepos = (int)Math.Ceiling(25.0 / 100.0 * perc);
                 if (circlepos > 0)
                     line = new string('─', circlepos - 1) + "⚪" + new string('─', 25 - circlepos);
                 else
