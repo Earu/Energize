@@ -14,26 +14,29 @@ using Energize.Interfaces.Services.Senders;
 
 namespace Energize.Services.Listeners
 {
+    // Wrapper class to gain more control over Victoria, and try to prevent weird behaviors
     internal class EnergizePlayer : IEnergizePlayer
     {
         internal EnergizePlayer(LavaPlayer ply)
         {
             this.Lavalink = ply;
             this.IsLooping = false;
+            this.Queue = new LavaQueue<LavaTrack>();
         }
 
-        public LavaPlayer Lavalink { get; private set; }
+        public LavaPlayer Lavalink { get; set; }
 
         public bool IsLooping { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
+        public LavaQueue<LavaTrack> Queue { get; private set; }
 
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
         public bool IsPaused { get => this.Lavalink.IsPaused; }
-        public LavaQueue<IQueueObject> Queue { get => this.Lavalink.Queue; }
-        public LavaTrack CurrentTrack { get => this.Lavalink.CurrentTrack; }
-        public IVoiceChannel VoiceChannel { get => this.Lavalink.VoiceChannel; }
-        public ITextChannel TextChannel { get => this.Lavalink.TextChannel; }
-        public int Volume { get => this.Lavalink.CurrentVolume; }
+
+        public LavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
+        public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
+        public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
+        public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
     }
 
     [Service("Music")]
@@ -88,6 +91,8 @@ namespace Energize.Services.Listeners
             if (this._Players.ContainsKey(vc.GuildId))
             {
                 ply = this._Players[vc.GuildId];
+                if (ply.Lavalink == null) // in case we lose the player object
+                    ply.Lavalink = await this._LavaClient.ConnectAsync(vc, chan);
             }
             else
             {
@@ -203,13 +208,12 @@ namespace Energize.Services.Listeners
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             IPaginatorSenderService paginator = this._ServiceManager.GetService<IPaginatorSenderService>("Paginator");
-            List<IQueueObject> tracks = ply.Queue.Items.ToList();
+            List<LavaTrack> tracks = ply.Queue.Items.ToList();
             if (tracks.Count > 0)
             {
-                return await paginator.SendPaginator(msg, "track queue", tracks, async (obj, builder) =>
+                return await paginator.SendPaginator(msg, "track queue", tracks, async (track, builder) =>
                 {
-                    LavaTrack track = (LavaTrack)obj;
-                    int i = tracks.IndexOf(obj);
+                    int i = tracks.IndexOf(track);
                     builder
                         .WithDescription($"🎶 Track `#{i + 1}` out of `{tracks.Count}` in the queue")
                         .WithField("Title", track.Title)
@@ -327,9 +331,8 @@ namespace Energize.Services.Listeners
             }
             else
             {
-                if (ply.Queue.TryDequeue(out IQueueObject tr))
+                if (ply.Queue.TryDequeue(out LavaTrack newtrack))
                 {
-                    LavaTrack newtrack = tr as LavaTrack;
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayer(ply, newtrack);
                 }
@@ -406,7 +409,11 @@ namespace Energize.Services.Listeners
         [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
         {
-            SocketVoiceChannel vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+            SocketVoiceChannel vc = null;
+            if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) //moved of channel
+                vc = newstate.VoiceChannel;
+            else
+                vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
             if (vc == null) return;
 
             LavaPlayer ply = this._LavaClient.GetPlayer(vc.Guild.Id);
