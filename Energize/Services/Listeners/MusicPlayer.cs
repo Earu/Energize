@@ -410,10 +410,22 @@ namespace Energize.Services.Listeners
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
         {
             SocketVoiceChannel vc = null;
-            if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) //moved of channel
-                vc = newstate.VoiceChannel;
-            else
+            SocketGuildUser guser = (SocketGuildUser)user;
+            SocketGuildUser botuser = guser.Guild.GetUser(Config.Instance.Discord.BotID);
+            if (botuser == null)
+            {
                 vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+            }
+            else
+            {
+                if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) //bot moved of channel
+                    vc = newstate.VoiceChannel;
+                else if (oldstate.VoiceChannel != null && newstate.VoiceChannel != null && newstate.VoiceChannel == botuser.VoiceChannel) //user moved to our channel
+                    vc = newstate.VoiceChannel;
+                else
+                    vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+            }
+
             if (vc == null) return;
 
             LavaPlayer ply = this._LavaClient.GetPlayer(vc.Guild.Id);
