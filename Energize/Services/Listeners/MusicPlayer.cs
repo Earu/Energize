@@ -427,9 +427,7 @@ namespace Energize.Services.Listeners
             }
 
             if (vc == null) return;
-
-            LavaPlayer ply = this._LavaClient.GetPlayer(vc.Guild.Id);
-            if (vc.Users.Count(x => !x.IsBot) < 1 && ply != null)
+            if (vc.Users.Count(x => !x.IsBot) < 1)
                 await this.DisconnectAsync(vc);
         }
 

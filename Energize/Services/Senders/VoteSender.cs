@@ -20,14 +20,12 @@ namespace Energize.Services.Senders
             ["6⃣"] = 5, ["7⃣"] = 6, ["8⃣"] = 7, ["9⃣"] = 8,
         };
 
-        private readonly DiscordShardedClient _Client;
         private readonly Logger _Logger;
         private readonly MessageSender _MessageSender;
         private readonly Dictionary<ulong, Vote> _Votes;
 
         public VoteSender(EnergizeClient client)
         {
-            this._Client = client.DiscordClient;
             this._Logger = client.Logger;
             this._MessageSender = client.MessageSender;
             this._Votes = new Dictionary<ulong, Vote>();
@@ -71,7 +69,7 @@ namespace Energize.Services.Senders
 
         private bool IsValidEmote(SocketReaction reaction)
         {
-            if (reaction.UserId == this._Client.CurrentUser.Id) return false;
+            if (reaction.UserId == Config.Instance.Discord.BotID) return false;
             return _Lookup.ContainsKey(reaction.Emote.Name);
         }
 
