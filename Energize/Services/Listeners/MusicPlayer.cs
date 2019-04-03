@@ -62,7 +62,7 @@ namespace Energize.Services.Listeners
             this._ServiceManager = client.ServiceManager;
             this._LavaClient = new LavaShardClient();
 
-            this._LavaClient.OnTrackException += async (ply, track, _) => await this.OnTrackIssue(ply, track);
+            this._LavaClient.OnTrackException += async (ply, track, error) => await this.OnTrackIssue(ply, track, error);
             this._LavaClient.OnTrackStuck += async (ply, track, _) => await this.OnTrackIssue(ply, track);
             this._LavaClient.OnTrackFinished += this.OnTrackFinished;
             this._LavaClient.Log += async (logmsg) => this._Logger.Nice("Lavalink", ConsoleColor.Magenta, logmsg.Message);
@@ -75,7 +75,7 @@ namespace Energize.Services.Listeners
             {
                 IEnergizePlayer ply = this._Players[lply.VoiceChannel.GuildId];
                 if (ply.TrackPlayer != null && !ply.IsPaused)
-                    await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping);
+                    await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
             }
 
             IGuild guild = lply.VoiceChannel.Guild;
@@ -184,6 +184,7 @@ namespace Energize.Services.Listeners
 
         public async Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol)
         {
+            vol = Math.Clamp(vol, 0, 200);
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying)
                 await ply.Lavalink.SetVolumeAsync(vol);
@@ -264,7 +265,7 @@ namespace Energize.Services.Listeners
                 .WithFooter("music player")
                 .WithField("Title", track.Title)
                 .WithField("Author", track.Author)
-                .WithField("Length", track.IsStream ? " - " : track.Length.ToString())
+                .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
                 .WithField("Stream", track.IsStream)
                 .Build();
         }
@@ -344,10 +345,13 @@ namespace Energize.Services.Listeners
             }
         }
 
-        private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track)
+        private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error=null)
         {
-            string msg = $"There was a problem with a track, skipped \'{track.Title}\'";
-            this._Logger.Nice("MusicPlayer", ConsoleColor.Red, msg);
+            string msg = $"There was a problem with the track `{track.Title}`, skipping.";
+            if (error != null)
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
+            else
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{track.Title}> got stuck");
             await this._MessageSender.Warning(ply.TextChannel, "music player", msg);
             await this.SkipTrack(ply.VoiceChannel, ply.TextChannel);
         }
