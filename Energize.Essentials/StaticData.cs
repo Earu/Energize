@@ -10,7 +10,6 @@ namespace Energize.Essentials
         public string[] PickAnswers;
         public string[] AnimeEmotes;
         public string[][] AnimeDecorations;
-        public string[] HentaiQuotes;
         public char[] Zalgo;
         public Dictionary<string, string[]> SocialActions;
         
