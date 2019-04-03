@@ -70,6 +70,8 @@ namespace Energize.Services.Senders
         private bool IsValidEmote(SocketReaction reaction)
         {
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
+            if (reaction.Emote?.Name == null) return false;
+
             return _Lookup.ContainsKey(reaction.Emote.Name);
         }
 

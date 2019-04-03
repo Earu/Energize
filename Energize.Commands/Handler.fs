@@ -156,7 +156,7 @@ module CommandHandler =
                 state.logger.Danger(ex.ToString())
 
     let Initialize (client : DiscordShardedClient) (restClient : DiscordRestClient) (logger : Logger) 
-        (messageSender : MessageSender) (prefix : string) (separator : char) (serviceManager : IServiceManager) =
+        (messageSender : MessageSender) (serviceManager : IServiceManager) =
         let newState : CommandHandlerState =
             {
                 client = client
@@ -165,13 +165,13 @@ module CommandHandler =
                 commands = Map.empty
                 logger = logger
                 messageSender = messageSender
-                prefix = prefix
-                separator = separator
+                prefix = Config.Instance.Discord.Prefix
+                separator = Config.Instance.Discord.Separator
                 serviceManager = serviceManager
                 commandCache = List.empty
             }
         
-        logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Registering commands with prefix \'%s\'" prefix)
+        logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Registering commands with prefix \'%s\'" newState.prefix)
         loadCmds newState
         logger.Notify("Commands Initialized")
 
@@ -331,7 +331,7 @@ module CommandHandler =
                 (true, [])
             else
                 let guild = (msg.Channel :?> IGuildChannel).Guild
-                let botUser = awaitResult (guild.GetUserAsync(Config.Instance.Discord.BotID))
+                let botUser = awaitResult (guild.GetCurrentUserAsync())
                 let botPerms = botUser.GuildPermissions 
                 let hasAllPerms = cmd.permissions |> List.forall (fun perm -> botPerms.Has(perm))
                 let missingPerms = cmd.permissions |> List.filter (fun perm -> not (botPerms.Has(perm)))

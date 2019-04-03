@@ -1,8 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Energize.Interfaces.Services.Generation;
 using Energize.Essentials;
-using System;
+using Energize.Interfaces.Services.Generation;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Generation
@@ -24,14 +23,7 @@ namespace Energize.Services.Generation
         public void Learn(string content,ulong id, Logger logger)
         {
             MarkovChain chain = new MarkovChain();
-            try
-            {   
-                chain.Learn(content, logger);
-            }
-            catch(Exception e)
-            {
-                this._Logger.Danger(e);
-            }
+            chain.Learn(content, logger);
         }
 
         public string Generate(string data)
@@ -53,28 +45,32 @@ namespace Energize.Services.Generation
             }
         }
 
-        [Event("MessageReceived")]
-        public async Task OnMessageReceived(SocketMessage msg)
+        private bool IsChannelNSFW(IChannel chan)
         {
             bool isnsfw = false;
-            if (msg.Channel is IDMChannel)
+            if (chan is IDMChannel)
                 isnsfw = true;
             else
             {
-                ITextChannel chan = msg.Channel as ITextChannel;
-                isnsfw = chan.IsNsfw;
+                ITextChannel textchan = chan as ITextChannel;
+                isnsfw = textchan.IsNsfw;
             }
 
-            if (!msg.Author.IsBot && !isnsfw && !msg.Content.StartsWith(this._Prefix))
+            return isnsfw;
+        }
+
+        [Event("MessageReceived")]
+        public async Task OnMessageReceived(SocketMessage msg)
+        {
+            if (this.IsChannelNSFW(msg.Channel) || msg.Author.IsBot || msg.Content.StartsWith(this._Prefix)) return;
+
+            ulong id = 0;
+            if (msg.Channel is IGuildChannel)
             {
-                ulong id = 0;
-                if (msg.Channel is IGuildChannel)
-                {
-                    IGuildChannel guildchan = msg.Channel as IGuildChannel;
-                    id = guildchan.Guild.Id;
-                }
-                this.Learn(msg.Content, id, this._Logger);
+                IGuildChannel guildchan = msg.Channel as IGuildChannel;
+                id = guildchan.Guild.Id;
             }
+            this.Learn(msg.Content, id, this._Logger);
         }
 
         public void Initialize() { }

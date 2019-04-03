@@ -86,15 +86,19 @@ namespace Energize.Services.Database
     public class DBContextPool : IDatabaseService
     {
         private readonly string _ConnectionString;
-        private List<DBContext> _Pool = new List<DBContext>();
+        private readonly Logger _Logger;
+
+        private List<DBContext> _Pool;
 
         public DBContextPool(EnergizeClient client)
         {
             this._ConnectionString = Config.Instance.DBConnectionString;
+            this._Logger = client.Logger;
 
+            this._Pool = new List<DBContext>();
             for (uint i = 0; i < 10; i++)
             {
-                _Pool.Add(new DBContext(this.Create(),client.Logger));
+                _Pool.Add(new DBContext(this.Create(), this._Logger));
             }
         }
 
@@ -114,6 +118,9 @@ namespace Energize.Services.Database
             await Task.Delay(100);
             return await this.GetContext();
         }
+
+        public IDatabaseContext CreateContext()
+            => new DBContext(this.Create(), this._Logger);
 
         public void Initialize() { }
 

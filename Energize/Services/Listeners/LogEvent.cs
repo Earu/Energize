@@ -13,12 +13,12 @@ namespace Energize.Services.Listeners
     [Service("EventLogs")]
     public class LogEvent : IServiceImplementation
     {
-        public LogEvent(EnergizeClient eclient)
+        public LogEvent(EnergizeClient client)
         {
-            this.Client     = eclient.DiscordClient;
-            this.RestClient = eclient.DiscordRestClient;
-            this.Prefix     = eclient.Prefix;
-            this.Log        = eclient.Logger;
+            this.Client     = client.DiscordClient;
+            this.RestClient = client.DiscordRestClient;
+            this.Prefix     = client.Prefix;
+            this.Log        = client.Logger;
         }
 
         public DiscordRestClient    RestClient { get; }
@@ -26,8 +26,8 @@ namespace Energize.Services.Listeners
         public string               Prefix     { get; }
         public Logger               Log        { get; }
 
-        public bool AreLogsEnabled(SocketGuild guild)
-            => guild.Roles.Any(x => x.Name == "EnergizeLogs");
+        /*public bool AreLogsEnabled(SocketGuild guild)
+            => guild.Roles.Any(x => x.Name == "EnergizeLogs");*/
 
         [Event("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient clientshard)
@@ -36,11 +36,9 @@ namespace Energize.Services.Listeners
         [Event("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientshard)
         {
-            if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-                return;
-            if (e is WebSocketClosedException wscex && wscex.CloseCode == 1001)
-                return;
-            this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds\n{e}");
+            if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) return;
+            if (e is WebSocketClosedException wscex && wscex.CloseCode == 1001) return;
+            this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds");
         }
 
         [Event("JoinedGuild")]
