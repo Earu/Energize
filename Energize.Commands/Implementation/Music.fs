@@ -10,6 +10,9 @@ module Voice =
     open Energize.Interfaces.Services.Listeners
     open Energize.Commands.AsyncHelper
     open Energize.Essentials
+    open Victoria.Entities
+    open Energize.Interfaces.Services.Senders
+    open System.Web
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
@@ -166,4 +169,56 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             [ awaitResult (music.SendQueue(vc, ctx.message)) ]
         )
+    }
+
+    let private baseSongSearch (ctx : CommandContext) (result : SearchResult) = async {
+        let len = result.Tracks |> Seq.length
+        return 
+            if len > 0 then
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, result.Tracks, fun track ->
+                    let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
+                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
+                )) ]
+            else
+                [ ctx.sendWarn None "Could not find any songs" ]
+    }
+
+    [<CommandParameters(1)>]
+    [<Command("yt", "Searches youtube for a video", "yt <search>")>]
+    let youtube (ctx : CommandContext) = 
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
+        baseSongSearch ctx res
+
+    [<CommandParameters(1)>]
+    [<Command("sc", "Searches soundcloud for a song", "sc <search>")>]
+    let soundcloud (ctx : CommandContext) =
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.input))
+        baseSongSearch ctx res
+
+    type TwitchChannelObj = { url : string }
+    type TwitchStreamObj = { channel : TwitchChannelObj }
+    type TwitchObj = { streams : TwitchStreamObj list }
+    [<CommandParameters(1)>]
+    [<Command("twitch", "Searches twitch for a stream", "twitch <search>")>]
+    let twitch (ctx : CommandContext) = async {
+        let search = HttpUtility.HtmlEncode(ctx.input)
+        let json = awaitResult (HttpClient.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
+            req.Accept <- "application/vnd.twitchtv.v5+json"
+            req.Headers.["Client-ID"] <- Config.Instance.Keys.TwitchKey
+        ))
+        let twitchObj = JsonPayload.Deserialize<TwitchObj>(json, ctx.logger)
+        let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
+        let len = streamUrls.Length
+        return
+            if len > 0 then
+                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
+                    let page = streamUrls |> Seq.tryFindIndex (fun url -> url.Equals(streamUrl))
+                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                )) ]
+            else
+                [ ctx.sendWarn None "Could not find any streams" ]
     }

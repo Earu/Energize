@@ -83,10 +83,12 @@ module Context =
             let chan = msg.Channel :?> ITextChannel
             chan.IsNsfw || chan.Name.ToLower().Contains("nsfw")
 
+    let isAdmin (user : SocketUser) =
+        match user with
+        | :? SocketGuildUser as guser ->
+            let roles = guser.Roles |> Seq.filter (fun role -> role.Name.Equals("EnergizeAdmin"))
+            (roles |> Seq.length > 0) || guser.GuildPermissions.Administrator
+        | _ -> true
+
     let isAuthorAdmin (msg : SocketMessage) =
-        if isPrivate msg then
-            true
-        else
-            let author = msg.Author :?> SocketGuildUser
-            let roles = author.Roles |> Seq.filter (fun role -> role.Name.Equals("EnergizeAdmin") || role.Name.Equals("EBotAdmin"))
-            (roles |> Seq.length > 0) || author.GuildPermissions.Administrator
+        if isPrivate msg then true else isAdmin msg.Author
