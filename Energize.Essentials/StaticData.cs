@@ -6,11 +6,6 @@ namespace Energize.Essentials
 {
     public class StaticData
     {
-        public string[] EightBallAnswers;
-        public string[] PickAnswers;
-        public string[] AnimeEmotes;
-        public string[][] AnimeDecorations;
-        public char[] Zalgo;
         public Dictionary<string, string[]> SocialActions;
         
         public string AsciiArt { get; private set; }
