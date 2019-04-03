@@ -28,10 +28,7 @@
     <Compile Include="Implementation\Administration.fs" />
     <Compile Include="Implementation\Nsfw.fs" />
     <Compile Include="Implementation\Social.fs" />
-    <Compile Include="Implementation\Search.fs" />
-    <Compile Include="Implementation\Info.fs" />
-    <Compile Include="Implementation\Generation.fs" />
-    <Compile Include="Implementation\Util.fs" />
+    <Compile Include="Implementation\Utilities.fs" />
     <Compile Include="Handler.fs" />
   </ItemGroup>
 
