@@ -24,7 +24,7 @@ if exist "EnergizeDB.db" (
 )
 echo Cleaned local database
 
-for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials, Energize.Steam) do (
+for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials, Energize.Markov) do (
     if exist "%%G/bin" (
         rmdir "%%G/bin" /s /q
     )
