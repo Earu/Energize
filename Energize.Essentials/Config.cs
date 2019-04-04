@@ -48,10 +48,7 @@ namespace Energize.Essentials
 
     public struct KeysConfig
     {
-        public string GoogleAPIKey;
         public string MashapeKey;
-        public string WebSearchToken;
-        public string SteamAPIKey;
         public string TwitchKey;
     }
 
