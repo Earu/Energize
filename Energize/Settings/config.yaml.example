@@ -16,10 +16,7 @@ Lavalink:
   Port: '0000'
   Password: coolpassword
 Keys:
-  GoogleAPIKey: google api token
   MashapeKey: mashape api token
-  WebSearchToken: websearch api token
-  SteamAPIKey: steam api token
   TwitchKey: twitch api token
 URIs:
   MarkovDirectory: Energize/Data/Markov/
