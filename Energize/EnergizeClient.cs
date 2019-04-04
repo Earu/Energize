@@ -102,16 +102,25 @@ namespace Energize
         public string Environment { get => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; }
         public bool HasToken { get => !string.IsNullOrWhiteSpace(this._Token); }
 
-        private async Task<int> UpdateDBLServerCount()
+        private async Task<(bool, int)> UpdateDBLServerCount()
         {
             int servercount = this.DiscordClient.Guilds.Count;
+            bool success = true;
             if (!this.IsDevEnv)
             {
-                IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
-                await me.UpdateStatsAsync(servercount);
+                try
+                {
+                    IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
+                    await me.UpdateStatsAsync(servercount);
+                }
+                catch
+                {
+                    success = false;
+                }
+
             }
 
-            return servercount;
+            return (success, servercount);
         }
 
         public async Task InitializeAsync()
@@ -133,8 +142,11 @@ namespace Energize
                     long mb = GC.GetTotalMemory(true) / 1024 / 1024; //b to mb
                     GC.Collect();
 
-                    int servercount = await this.UpdateDBLServerCount();
-                    this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage and updated server count ({servercount})");
+                    (bool success, int servercount) = await this.UpdateDBLServerCount();
+                    if (success)
+                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, updated server count ({servercount})");
+                    else
+                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count API might be down");
                 });
 
                 int hour = 1000 * 60 * 60;
