@@ -41,22 +41,6 @@ module Voice =
 
     [<CommandParameters(1)>]
     [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("play", "Plays a track/stream from youtube", "play <song name>")>]
-    let play (ctx : CommandContext) = async {
-        return musicAction ctx (fun music vc _ ->   
-            let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
-            match res.Tracks |> Seq.toList with
-            | tracks when tracks.Length > 0 ->
-                let tr = tracks.[0]
-                let textChan = ctx.message.Channel :?> ITextChannel
-                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
-            | _ ->
-                [ ctx.sendWarn None "Could not find any track for your input" ]
-        )
-    }
-
-    [<CommandParameters(1)>]
-    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("playurl", "Tries to play a track/stream from an url", "playurl <url>")>]
     let playurl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
@@ -74,6 +58,30 @@ module Voice =
 
         )
     }
+
+    // Use playurl whenever passed a link, users tend to do that
+    let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) = 
+        if HttpClient.IsURL(ctx.input) then
+            playurl ctx
+        else
+            cb ctx
+            
+    [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("play", "Plays a track/stream from youtube", "play <song name>")>]
+    let play (ctx : CommandContext) = 
+        tryPlay ctx (fun ctx -> async {
+            return musicAction ctx (fun music vc _ ->   
+                let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
+                match res.Tracks |> Seq.toList with
+                | tracks when tracks.Length > 0 ->
+                    let tr = tracks.[0]
+                    let textChan = ctx.message.Channel :?> ITextChannel
+                    [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
+                | _ ->
+                    [ ctx.sendWarn None "Could not find any track for your input" ]
+            )
+        })
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("playing", "Shows the song currently playing", "playing <nothing>")>]
@@ -187,38 +195,44 @@ module Voice =
     [<CommandParameters(1)>]
     [<Command("yt", "Searches youtube for a video", "yt <search>")>]
     let youtube (ctx : CommandContext) = 
-        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
-        baseSongSearch ctx res
+        tryPlay ctx (fun ctx -> 
+            let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+            let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
+            baseSongSearch ctx res
+        )
+
 
     [<CommandParameters(1)>]
     [<Command("sc", "Searches soundcloud for a song", "sc <search>")>]
     let soundcloud (ctx : CommandContext) =
-        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.input))
-        baseSongSearch ctx res
+        tryPlay ctx (fun ctx ->
+            let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+            let res = awaitResult (music.LavaRestClient.SearchSoundcloudAsync(ctx.input))
+            baseSongSearch ctx res
+        )
 
     type TwitchChannelObj = { url : string }
     type TwitchStreamObj = { channel : TwitchChannelObj }
     type TwitchObj = { streams : TwitchStreamObj list }
     [<CommandParameters(1)>]
     [<Command("twitch", "Searches twitch for a stream", "twitch <search>")>]
-    let twitch (ctx : CommandContext) = async {
-        let search = HttpUtility.HtmlEncode(ctx.input)
-        let json = awaitResult (HttpClient.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
-            req.Accept <- "application/vnd.twitchtv.v5+json"
-            req.Headers.["Client-ID"] <- Config.Instance.Keys.TwitchKey
-        ))
-        let twitchObj = JsonPayload.Deserialize<TwitchObj>(json, ctx.logger)
-        let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
-        let len = streamUrls.Length
-        return
-            if len > 0 then
-                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
-                    let page = streamUrls |> Seq.tryFindIndex (fun url -> url.Equals(streamUrl))
-                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
-                )) ]
-            else
-                [ ctx.sendWarn None "Could not find any streams" ]
-    }
+    let twitch (ctx : CommandContext) = 
+        tryPlay ctx (fun ctx -> async {
+            let search = HttpUtility.HtmlEncode(ctx.input)
+            let json = awaitResult (HttpClient.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
+                req.Accept <- "application/vnd.twitchtv.v5+json"
+                req.Headers.["Client-ID"] <- Config.Instance.Keys.TwitchKey
+            ))
+            let twitchObj = JsonPayload.Deserialize<TwitchObj>(json, ctx.logger)
+            let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
+            let len = streamUrls.Length
+            return
+                if len > 0 then
+                    let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                    [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
+                        let page = streamUrls |> Seq.tryFindIndex (fun url -> url.Equals(streamUrl))
+                        sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                    )) ]
+                else
+                    [ ctx.sendWarn None "Could not find any streams" ]
+        })
