@@ -261,7 +261,6 @@ __pycache__/
 *.pyc
 Energize/Settings/blacklist\.yaml
 Energize/Settings/config\.yaml
-Energize/Lua/LuaSavedScripts/
 Energize/Data/Markov/
 EnergizeDB\.db
 logs\.txt
@@ -269,3 +268,4 @@ Energize.Webhooks/__pycache__
 Energize.Webhooks/.vscode
 Energize.Webhooks/config.json
 Energize/Properties/launchSettings\.json
+Energize/Lua/SavedScripts/
