@@ -102,22 +102,28 @@ namespace Energize
         public string Environment { get => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; }
         public bool HasToken { get => !string.IsNullOrWhiteSpace(this._Token); }
 
-        private async Task<(bool, int)> UpdateDBLServerCount()
+        private async Task<(bool, int)> UpdateBotWebsites()
         {
             int servercount = this.DiscordClient.Guilds.Count;
             bool success = true;
-            if (!this.IsDevEnv)
+            if (this.IsDevEnv) return (success, servercount);
+         
+            try
             {
-                try
-                {
-                    IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
-                    await me.UpdateStatsAsync(servercount);
-                }
-                catch
-                {
-                    success = false;
-                }
+                var obj = new { guildCount = servercount, shardCount = this.DiscordClient.Shards.Count, };
+                string json = JsonPayload.Serialize(obj, this.Logger);
+                string endpoint = $"https://discord.bots.gg/api/v1/bots/{Config.Instance.Discord.BotID}/stats";
+                await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
+                    req.Headers[System.Net.HttpRequestHeader.Authorization] = Config.Instance.Discord.BotsToken;
+                    req.Accept = "application/json";
+                });
 
+                IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
+                await me.UpdateStatsAsync(servercount);
+            }
+            catch
+            {
+                success = false;
             }
 
             return (success, servercount);
@@ -142,7 +148,7 @@ namespace Energize
                     long mb = GC.GetTotalMemory(true) / 1024 / 1024; //b to mb
                     GC.Collect();
 
-                    (bool success, int servercount) = await this.UpdateDBLServerCount();
+                    (bool success, int servercount) = await this.UpdateBotWebsites();
                     if (success)
                         this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, updated server count ({servercount})");
                     else

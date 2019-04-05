@@ -32,6 +32,7 @@ namespace Energize.Essentials
         public ulong OwnerID;
         public ulong FeedbackChannelID;
         public string BotListToken;
+        public string BotsToken;
 
         [YamlIgnore]
         public Blacklist Blacklist { get; set; }
