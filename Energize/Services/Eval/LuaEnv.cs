@@ -13,14 +13,12 @@ using System.Threading.Tasks;
 namespace Energize.Services.Eval
 {
     [Service("Lua")]
-    public class LuaEnv : ILuaService
+    public class LuaEnv : ServiceImplementationBase, ILuaService
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender        _MessageSender;
         private readonly string               _Path = Config.Instance.URIs.LuaDirectory + "SavedScripts";
         private readonly string               _ScriptSeparator = "\n-- GEN --\n";
-
-        private RestApplication _App;
 
         private readonly Dictionary<ulong, Lua> _States = new Dictionary<ulong, Lua>();
 
@@ -30,10 +28,8 @@ namespace Energize.Services.Eval
             this._MessageSender = client.MessageSender;
         }
 
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
-            _App = await this._Client.GetApplicationInfoAsync();
-
             if (!Directory.Exists(_Path))
                 Directory.CreateDirectory(_Path);
 
@@ -46,8 +42,8 @@ namespace Energize.Services.Eval
                 ulong chanid = ulong.Parse(id);
 
                 Lua state = this.CreateState(chanid);
-                string script = File.ReadAllText(path);
-                string[] parts = script.Split(_ScriptSeparator,StringSplitOptions.RemoveEmptyEntries);
+                string script = await File.ReadAllTextAsync(path);
+                string[] parts = script.Split(_ScriptSeparator, StringSplitOptions.RemoveEmptyEntries);
                 foreach(string part in parts)
                 {
                     state["PART"] = part.Trim();
@@ -95,7 +91,7 @@ namespace Energize.Services.Eval
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (this._States.ContainsKey(msg.Channel.Id) && msg.Author.Id != _App.Id)
+            if (this._States.ContainsKey(msg.Channel.Id) && msg.Author.Id != Config.Instance.Discord.BotID)
             {
                 Lua state = this._States[msg.Channel.Id];
                 state["USER"] = msg.Author;
@@ -110,7 +106,7 @@ namespace Energize.Services.Eval
         [Event("MessageDeleted")]
         public async Task OnMessageDeleted(Cacheable<IMessage,ulong> msg, ISocketMessageChannel c)
         {
-            if (msg.HasValue && this._States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != _App.Id)
+            if (msg.HasValue && this._States.ContainsKey(msg.Value.Channel.Id) && msg.Value.Author.Id != Config.Instance.Discord.BotID)
             {
                 Lua state = this._States[c.Id];
                 state["MESSAGE"] = msg.Value as SocketMessage;
@@ -125,7 +121,7 @@ namespace Energize.Services.Eval
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel c)
         {
-            if (this._States.ContainsKey(c.Id) && msg.Author.Id != _App.Id)
+            if (this._States.ContainsKey(c.Id) && msg.Author.Id != Config.Instance.Discord.BotID)
             {
                 Lua state = this._States[c.Id];
                 state["USER"] = msg.Author as SocketUser;
@@ -140,7 +136,7 @@ namespace Energize.Services.Eval
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel c, SocketReaction react)
         {
-            if(this._States.ContainsKey(c.Id) && react.UserId != _App.Id)
+            if(this._States.ContainsKey(c.Id) && react.UserId != Config.Instance.Discord.BotID)
             {
                 Lua state = this._States[c.Id];
                 state["REACTION"] = react;
@@ -153,7 +149,7 @@ namespace Energize.Services.Eval
         [Event("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> msg, ISocketMessageChannel c, SocketReaction react)
         {
-            if (this._States.ContainsKey(c.Id) && react.UserId != _App.Id)
+            if (this._States.ContainsKey(c.Id) && react.UserId != Config.Instance.Discord.BotID)
             {
                 Lua state = this._States[c.Id];
                 state["REACTION"] = react;
@@ -258,8 +254,6 @@ namespace Energize.Services.Eval
             {
                 log.Nice("LuaEnv", ConsoleColor.Red, $"Could not end a lua state properly: {e.Message}");
             }
-    }
-
-        public void Initialize() { }
+        }
     }
 }

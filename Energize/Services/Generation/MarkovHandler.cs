@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Generation
 {
     [Service("Markov")]
-    public class MarkovHandler : IMarkovService
+    public class MarkovHandler : ServiceImplementationBase, IMarkovService
     {
         public MarkovHandler(EnergizeClient client)
             => Markov.MarkovChain.Initialize(client.Logger);
@@ -16,10 +16,5 @@ namespace Energize.Services.Generation
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
             => Markov.MarkovChain.HandleMessageReceived(msg);
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }

@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 
 namespace Energize
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
             => MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
 
-        static async Task MainAsync(string[] args)
+        private static async Task MainAsync(string[] args)
         {
             DiscordConfig discord = Config.Instance.Discord;
             EnergizeClient client = new EnergizeClient(discord.Token, discord.Prefix, discord.Separator);

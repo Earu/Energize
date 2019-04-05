@@ -14,7 +14,7 @@ using Victoria.Entities;
 namespace Energize.Services.Senders
 {
     [Service("Paginator")]
-    public class PaginatorSender : IPaginatorSenderService
+    public class PaginatorSender : ServiceImplementationBase, IPaginatorSenderService
     {
         private Dictionary<ulong, Paginator<object>> _Paginators;
 
@@ -224,10 +224,5 @@ namespace Energize.Services.Senders
         [Event("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }

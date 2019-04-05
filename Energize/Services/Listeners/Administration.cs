@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Administration")]
-    class Administration : IServiceImplementation
+    class Administration : ServiceImplementationBase
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
@@ -56,10 +56,5 @@ namespace Energize.Services.Listeners
                 }
             }
         }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
-
-        public void Initialize() { }
     }
 }

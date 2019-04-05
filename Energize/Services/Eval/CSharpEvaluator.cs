@@ -11,7 +11,7 @@ namespace Energize.Services.Eval
     //1 -> ok
     //2 -> warning
     [Service("Evaluator")]
-    public class CSharpEvaluator : ICSharpEvaluatorService
+    public class CSharpEvaluator : ServiceImplementationBase, ICSharpEvaluatorService
     {
         public async Task<(int, string)> Eval(string code, object ctx)
         {
@@ -73,10 +73,5 @@ namespace Energize.Services.Eval
                 return (0, $"```\n{e.Message.Replace("`", "")}```");
             }
         }
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }
