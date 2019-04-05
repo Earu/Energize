@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("EventLogs")]
-    public class LogEvent : IServiceImplementation
+    public class LogEvent : ServiceImplementationBase
     {
         public LogEvent(EnergizeClient client)
         {
@@ -48,10 +48,5 @@ namespace Energize.Services.Listeners
         [Event("LeftGuild")]
         public async Task OnLeftGuild(SocketGuild guild)
             => this.Log.Nice("Guild", ConsoleColor.Red, $"Left {guild.Name} || ID => [ {guild.Id} ]");
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }

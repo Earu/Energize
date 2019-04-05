@@ -40,7 +40,7 @@ namespace Energize.Services.Listeners
     }
 
     [Service("Music")]
-    public class MusicPlayer : IMusicPlayerService
+    public class MusicPlayer : ServiceImplementationBase, IMusicPlayerService
     {
         private readonly DiscordShardedClient _Client;
         private readonly LavaShardClient _LavaClient;
@@ -454,10 +454,5 @@ namespace Energize.Services.Listeners
             await this._LavaClient.StartAsync(this._Client, config);
             this._Initialized = true;
         }
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }

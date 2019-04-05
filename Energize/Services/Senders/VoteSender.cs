@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Senders
 {
     [Service("Votes")]
-    public class VoteSender : IVoteSenderService
+    public class VoteSender : ServiceImplementationBase, IVoteSenderService
     {
         private static readonly Dictionary<string, int> _Lookup = new Dictionary<string, int>
         {
@@ -95,10 +95,5 @@ namespace Energize.Services.Senders
             int index = _Lookup[reaction.Emote.Name];
             await this._Votes[cache.Id].RemoveVote(reaction.User.Value, index);
         }
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
     }
 }
