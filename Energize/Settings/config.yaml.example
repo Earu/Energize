@@ -7,7 +7,6 @@ Discord:
   PrefixDev: xx
   PrefixProd: x
   Separator: ","
-  ServerInvite: https://discord.gg/asdfgh
   OwnerID: '0000000000000000'
   FeedbackChannelID: '0000000000000000'
   BotListToken: '0000000000000000'
@@ -23,4 +22,5 @@ URIs:
   LuaDirectory: Energize/Lua/
   TwitchURL: https://www.twitch.tv/earuio
   GitHubURL: https://github.com/Earu/Energize
+  InviteURL: https://discordapp.com/oauth2/authorize?client_id=0000000000000000&scope=bot&permissions=8
 DBConnectionString: Data Source=EnergizeDB.db

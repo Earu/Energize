@@ -28,9 +28,7 @@ namespace Energize.Essentials
         public ulong BotID { get => this.BotIDProd; }
         public string Prefix { get => this.PrefixProd; }
 #endif
-
         public char Separator;
-        public string ServerInvite;
         public ulong OwnerID;
         public ulong FeedbackChannelID;
         public string BotListToken;
@@ -58,6 +56,7 @@ namespace Energize.Essentials
         public string LuaDirectory;
         public string TwitchURL;
         public string GitHubURL;
+        public string InviteURL;
     }
 
     public struct Blacklist
