@@ -10,8 +10,8 @@ if exist "Energize/Data/Markov" (
     rmdir "Energize/Data/Markov" /s /q
 )
 
-if exist "Energize/Lua/LuaSavedScripts" (
-    rmdir "Energize/Lua/LuaSavedScripts" /s /q
+if exist "Energize/Lua/SavedScripts" (
+    rmdir "Energize/Lua/SavedScripts" /s /q
 )
 
 if exist "logs" (

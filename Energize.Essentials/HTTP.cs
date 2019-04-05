@@ -11,14 +11,21 @@ namespace Energize.Essentials
     {
         private static readonly string _Useragent = "Energize Discord(Earu's Bot)";
 
-        public static async Task<string> GetAsync(string url, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
+        private static async Task<string> InternalRequest(string method, string url, string body, Logger logger, string useragent, Action<HttpWebRequest> callback = null)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = "GET";
+                request.Method = method;
                 request.Timeout = 60000;
                 request.Headers[HttpRequestHeader.UserAgent] = useragent ?? _Useragent;
+                if (!string.IsNullOrWhiteSpace(body))
+                {
+                    byte[] data = Encoding.ASCII.GetBytes(body);
+                    using (var stream = request.GetRequestStream())
+                        await stream.WriteAsync(data, 0, data.Length);
+                }
+
                 callback?.Invoke(request);
 
                 using (WebResponse answer = await request.GetResponseAsync())
@@ -36,7 +43,7 @@ namespace Energize.Essentials
                         logger.Nice("HTTP", ConsoleColor.Red, $"(404) Couln't reach [ {url} ]");
                         break;
                     case WebExceptionStatus.ProtocolError:
-                        logger.Nice("HTTP", ConsoleColor.Red, $"Protocol error (most likely 403) [ {url} ]");
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Protocol error [ {url} ]");
                         logger.Danger(e.Message);
                         break;
                     default:
@@ -51,6 +58,12 @@ namespace Energize.Essentials
 
             return string.Empty;
         }
+
+        public static async Task<string> PostAsync(string url, string body, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
+            => await InternalRequest("POST", url, body, logger, useragent, callback);
+
+        public static async Task<string> GetAsync(string url, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
+            => await InternalRequest("GET", url, null, logger, useragent, callback);
 
         public static bool IsURL(string input)
             => Regex.IsMatch(input, @"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$");
