@@ -83,7 +83,7 @@ namespace Energize.Services.Database
     }
 
     [Service("Database")]
-    public class DBContextPool : IDatabaseService
+    public class DBContextPool : ServiceImplementationBase, IDatabaseService
     {
         private readonly string _ConnectionString;
         private readonly Logger _Logger;
@@ -121,11 +121,6 @@ namespace Energize.Services.Database
 
         public IDatabaseContext CreateContext()
             => new DBContext(this.Create(), this._Logger);
-
-        public void Initialize() { }
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
 
         private Database Create()
         {

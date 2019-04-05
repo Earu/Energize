@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Commands")]
-    public class CommandHandler : IServiceImplementation
+    public class CommandHandler : ServiceImplementationBase
     {
         private readonly DiscordShardedClient _Client;
         private readonly DiscordRestClient _RestClient;
@@ -26,12 +26,9 @@ namespace Energize.Services.Listeners
             this._ServiceManager = client.ServiceManager;
         }
 
-        public void Initialize()
+        public override void Initialize()
             => Commands.CommandHandler.Initialize(this._Client, this._RestClient, this._Logger, 
                 this._MessageSender, this._ServiceManager);
-
-        public Task InitializeAsync()
-            => Task.CompletedTask;
 
         [Event("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
