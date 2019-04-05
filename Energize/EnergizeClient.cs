@@ -110,12 +110,12 @@ namespace Energize
          
             try
             {
-                var obj = new { guildCount = servercount, shardCount = this.DiscordClient.Shards.Count, };
+                var obj = new { guildCount = servercount };
                 string json = JsonPayload.Serialize(obj, this.Logger);
                 string endpoint = $"https://discord.bots.gg/api/v1/bots/{Config.Instance.Discord.BotID}/stats";
-                await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
+                string resp = await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
                     req.Headers[System.Net.HttpRequestHeader.Authorization] = Config.Instance.Discord.BotsToken;
-                    req.Accept = "application/json";
+                    req.ContentType = "application/json";
                 });
 
                 IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
