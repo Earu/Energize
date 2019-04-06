@@ -45,6 +45,7 @@ namespace Energize.Essentials.MessageConstructs
             EmbedBuilder builder = new EmbedBuilder();
             Embed embed = builder
                 .WithColor(MessageSender.SColorGood)
+                .WithDescription("🎶 Now playing the following track")
                 .WithField("Title", track.Title)
                 .WithField("Author", track.Author)
                 .WithField("Stream", track.IsStream)
