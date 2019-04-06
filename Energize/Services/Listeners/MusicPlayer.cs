@@ -205,6 +205,18 @@ namespace Energize.Services.Listeners
         public ServerStats GetLavalinkStats()
             => this._LavaClient.ServerStats;
 
+        private async Task<string> GetThumbnailAsync(LavaTrack track)
+        {
+            try
+            {
+                return await track.FetchThumbnailAsync();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
         public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
@@ -222,16 +234,7 @@ namespace Energize.Services.Listeners
                         .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
                         .WithField("Stream", track.IsStream);
 
-                    string thumbnailurl;
-                    try
-                    {
-                        thumbnailurl = await track.FetchThumbnailAsync();
-                    }
-                    catch
-                    {
-                        thumbnailurl = string.Empty;
-                    }
-
+                    string thumbnailurl = await this.GetThumbnailAsync(track);
                     if (!string.IsNullOrWhiteSpace(thumbnailurl))
                         builder.WithThumbnailUrl(thumbnailurl);
                 });
@@ -244,15 +247,7 @@ namespace Energize.Services.Listeners
 
         private async Task<Embed> GetNewTrackEmbed(LavaTrack track, IMessage msg=null)
         {
-            string thumbnailurl;
-            try
-            {
-                thumbnailurl = await track.FetchThumbnailAsync();
-            }
-            catch
-            {
-                thumbnailurl = string.Empty;
-            }
+            string thumbnailurl = await this.GetThumbnailAsync(track);
             EmbedBuilder builder = new EmbedBuilder();
             if (msg != null)
                 builder.WithAuthorNickname(msg);
@@ -347,12 +342,27 @@ namespace Energize.Services.Listeners
 
         private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error=null)
         {
-            string msg = $"There was a problem with the track `{track.Title}`, skipping.";
             if (error != null)
                 this._Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
             else
                 this._Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{track.Title}> got stuck");
-            await this._MessageSender.Warning(ply.TextChannel, "music player", msg);
+
+            EmbedBuilder builder = new EmbedBuilder();
+            builder
+                .WithColor(this._MessageSender.ColorWarning)
+                .WithFooter("music player")
+                .WithDescription("🎶 There was a problem playing the following track")
+                .WithField("Title", track.Title)
+                .WithField("Author", track.Author)
+                .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
+                .WithField("Stream", track.IsStream)
+                .WithField("Error", $"`{error ?? "The track got stuck"}`", false);
+
+            string thumbnailurl = await this.GetThumbnailAsync(track);
+            if (!string.IsNullOrWhiteSpace(thumbnailurl))
+                builder.WithThumbnailUrl(thumbnailurl);
+
+            await this._MessageSender.Send(ply.TextChannel, builder.Build());
             await this.SkipTrack(ply.VoiceChannel, ply.TextChannel);
         }
 
