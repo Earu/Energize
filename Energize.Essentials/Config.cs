@@ -53,8 +53,6 @@ namespace Energize.Essentials
 
     public struct URIConfig
     {
-        public string MarkovDirectory;
-        public string LuaDirectory;
         public string TwitchURL;
         public string GitHubURL;
         public string InviteURL;
