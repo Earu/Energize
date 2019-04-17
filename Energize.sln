@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2037
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize", "Energize\Energize.csproj", "{9CBCAC34-5712-479C-9283-1A3A6B7EB4AF}"
 EndProject
@@ -10,8 +10,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize.Essentials", "Energize.Essentials\Energize.Essentials.csproj", "{9DB69804-7FFF-4CDD-BBFA-E0D62D5FE201}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize.Interfaces", "Energize.Interfaces\Energize.Interfaces.csproj", "{8DFFFA3B-43FB-4EDA-BEA4-462A435F7051}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Energize.Markov", "Energize.Markov\Energize.Markov.fsproj", "{8B598124-189E-4C85-8F3F-403853D6886A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +33,6 @@ Global
 		{8DFFFA3B-43FB-4EDA-BEA4-462A435F7051}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DFFFA3B-43FB-4EDA-BEA4-462A435F7051}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DFFFA3B-43FB-4EDA-BEA4-462A435F7051}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8B598124-189E-4C85-8F3F-403853D6886A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8B598124-189E-4C85-8F3F-403853D6886A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8B598124-189E-4C85-8F3F-403853D6886A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8B598124-189E-4C85-8F3F-403853D6886A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
