@@ -44,33 +44,6 @@ module Util =
     }
 
     [<CommandParameters(1)>]
-    [<Command("l", "Runs your lua code in a sandbox", "l <luastring>")>]
-    let lua (ctx : CommandContext) = async {
-        let env = ctx.serviceManager.GetService<ILuaService>("Lua")
-        let returns : Collections.Generic.List<obj> ref = ref (Collections.Generic.List<obj>())
-        let error = ref String.Empty
-        return 
-            if env.Run(ctx.message, ctx.input, returns, error, ctx.logger) then
-                let display = String.Join('\t', returns.contents)
-                if String.IsNullOrWhiteSpace display then
-                    [ ctx.sendOK (Some "lua") "👌 (nil or no value was returned)" ]
-                else
-                    if display |> String.length > 2000 then
-                        [ ctx.sendWarn (Some "lua") "Output was too long to be sent" ]
-                    else
-                        [ ctx.sendOK (Some "lua") display ]
-            else
-                [ ctx.sendBad (Some "lua") (sprintf "```\n%s```" (error.contents.Replace("`",""))) ]
-    }
-
-    [<Command("lr", "Reset the channel's lua environment", "lr <nothing>")>]
-    let luaReset (ctx : CommandContext) = async {
-        let env = ctx.serviceManager.GetService<ILuaService>("Lua")
-        env.Reset(ctx.message.Channel.Id, ctx.logger)
-        return [ ctx.sendOK (Some "lua") "Lua environment reset in this channel" ]
-    }
-
-    [<CommandParameters(1)>]
     [<Command("feedback", "Send feedback to the owner (suggestion, bug, etc...)", "feedback <sentence>")>]
     let feedback (ctx : CommandContext) = async {
         let sender = ctx.serviceManager.GetService<IWebhookSenderService>("Webhook")

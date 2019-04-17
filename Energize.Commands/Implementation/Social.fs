@@ -13,8 +13,6 @@ module Social =
     open Discord
     open Energize.Interfaces.Services.Database
     open Energize.Interfaces.Services.Senders
-    open Energize.Interfaces.Services.Generation
-    open System.Text.RegularExpressions
     open Discord.WebSocket
     open Energize.Commands
     open Discord.Rest
@@ -168,19 +166,6 @@ module Social =
         let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
         let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
         return [ awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("m", "Generates a human-like sentence based on input", "m <input>")>]
-    let markov (ctx : CommandContext) = async {
-        let markov = ctx.serviceManager.GetService<IMarkovService>("Markov")
-        let result = markov.Generate(ctx.input)
-        return 
-            if String.IsNullOrWhiteSpace result then
-                [ ctx.sendWarn (Some "markov") "Nothing was generated ... ?!" ]
-            else
-                let display = Regex.Replace(result, "\\s\\s", " ")
-                [ ctx.sendOK (Some "markov") display ]
     }
 
     let private createHOFChannel (ctx : CommandContext) = 
