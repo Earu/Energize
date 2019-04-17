@@ -18,8 +18,6 @@ Keys:
   MashapeKey: mashape api token
   TwitchKey: twitch api token
 URIs:
-  MarkovDirectory: Energize/Data/Markov/
-  LuaDirectory: Energize/Lua/
   TwitchURL: https://www.twitch.tv/earuio
   GitHubURL: https://github.com/Earu/Energize
   InviteURL: https://discordapp.com/oauth2/authorize?client_id=0000000000000000&scope=bot&permissions=8
