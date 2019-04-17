@@ -6,25 +6,17 @@ if exist ".vs" (
 )
 echo Cleaned Visual Studio metadata
 
-if exist "Energize/Data/Markov" (
-    rmdir "Energize/Data/Markov" /s /q
-)
-
-if exist "Energize/Lua/SavedScripts" (
-    rmdir "Energize/Lua/SavedScripts" /s /q
-)
-
 if exist "logs" (
     rmdir "logs" /s /q
 )
-echo Cleaned generated files
+echo Cleaned logs
 
 if exist "EnergizeDB.db" (
     del "EnergizeDB.db" /s /q
 )
 echo Cleaned local database
 
-for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials, Energize.Markov) do (
+for %%G in (Energize, Energize.Commands, Energize.Interfaces, Energize.Essentials) do (
     if exist "%%G/bin" (
         rmdir "%%G/bin" /s /q
     )
