@@ -12,8 +12,13 @@ Discord:
   BotListToken: '0000000000000000'
 Lavalink:
   Host: google.com
-  Port: '0000'
+  Port: 0000
   Password: coolpassword
+Octovisor:
+  Address: google.com
+  Port: 0000
+  Token: coolpassword
+  ProcessName: Energize
 Keys:
   MashapeKey: mashape api token
   TwitchKey: twitch api token

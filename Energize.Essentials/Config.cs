@@ -45,6 +45,14 @@ namespace Energize.Essentials
         public string Password;
     }
 
+    public struct OctovisorConfig
+    {
+        public string Address;
+        public int Port;
+        public string Token;
+        public string ProcessName;
+    }
+
     public struct KeysConfig
     {
         public string MashapeKey;
@@ -67,6 +75,7 @@ namespace Energize.Essentials
     {
         public DiscordConfig Discord;
         public LavalinkConfig Lavalink;
+        public OctovisorConfig Octovisor;
         public KeysConfig Keys;
         public URIConfig URIs;
         public string DBConnectionString;

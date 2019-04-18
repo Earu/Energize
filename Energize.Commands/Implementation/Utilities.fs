@@ -121,7 +121,7 @@ module Util =
     [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("ev", "Evals a C# string", "ev <csharpstring>")>]
     let eval (ctx : CommandContext) = async {
-        let evaluator = ctx.serviceManager.GetService<ICSharpEvaluatorService>("Evaluator")
+        let evaluator = ctx.serviceManager.GetService<ICSharpEvaluationService>("Evaluator")
         let res = awaitResult (evaluator.Eval(ctx.input, ctx))
         return
             match res.ToTuple() with

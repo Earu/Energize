@@ -14,7 +14,7 @@ using Victoria.Entities;
 namespace Energize.Services.Senders
 {
     [Service("Paginator")]
-    public class PaginatorSender : ServiceImplementationBase, IPaginatorSenderService
+    public class PaginatorSenderService : ServiceImplementationBase, IPaginatorSenderService
     {
         private Dictionary<ulong, Paginator<object>> _Paginators;
 
@@ -24,7 +24,7 @@ namespace Energize.Services.Senders
         private readonly Timer _PaginatorCleanup;
         private readonly DiscordShardedClient _Client;
 
-        public PaginatorSender(EnergizeClient client)
+        public PaginatorSenderService(EnergizeClient client)
         {
             this._Paginators = new Dictionary<ulong, Paginator<object>>();
             this._MessageSender = client.MessageSender;
@@ -156,7 +156,7 @@ namespace Energize.Services.Senders
             }
         }
 
-        private delegate Task ReactionCallback(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction);
+        private delegate Task ReactionCallback(PaginatorSenderService sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction);
         private static readonly Dictionary<string, ReactionCallback> _ReactionCallbacks = new Dictionary<string, ReactionCallback>
         {
             ["◀"] = async (sender, paginator, cache, chan, reaction) => await paginator.Previous(),
@@ -186,7 +186,7 @@ namespace Energize.Services.Senders
             await _ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);
         }
 
-        private static async Task OnPlayReaction(PaginatorSender sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        private static async Task OnPlayReaction(PaginatorSenderService sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!(chan is IGuildChannel) || reaction.User.Value == null) return;
             IGuildUser guser = (IGuildUser)reaction.User.Value;

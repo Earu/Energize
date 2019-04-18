@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners
 {
     [Service("Commands")]
-    public class CommandHandler : ServiceImplementationBase
+    public class CommandHandlingService : ServiceImplementationBase
     {
         private readonly DiscordShardedClient _Client;
         private readonly DiscordRestClient _RestClient;
@@ -17,7 +17,7 @@ namespace Energize.Services.Listeners
         private readonly MessageSender _MessageSender;
         private readonly IServiceManager _ServiceManager;
 
-        public CommandHandler(EnergizeClient client)
+        public CommandHandlingService(EnergizeClient client)
         {
             this._Client = client.DiscordClient;
             this._RestClient = client.DiscordRestClient;
