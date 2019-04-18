@@ -2,18 +2,16 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Essentials;
-using Energize.Interfaces.Services;
 using System;
-using System.Linq;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
-    [Service("EventLogs")]
-    public class LogEvent : ServiceImplementationBase
+    [Service("EventLogging")]
+    public class EventLoggingService : ServiceImplementationBase
     {
-        public LogEvent(EnergizeClient client)
+        public EventLoggingService(EnergizeClient client)
         {
             this.Client     = client.DiscordClient;
             this.RestClient = client.DiscordRestClient;

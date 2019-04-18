@@ -12,14 +12,6 @@
     <NoWarn>NU1701;1702;0436;1998;NU1603;</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Data\Markov\**" />
-    <Compile Remove="Lua\LuaSavedScripts\**" />
-    <EmbeddedResource Remove="Data\Markov\**" />
-    <EmbeddedResource Remove="Lua\LuaSavedScripts\**" />
-    <None Remove="Data\Markov\**" />
-    <None Remove="Lua\LuaSavedScripts\**" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Discord.Net" Version="2.0.1" />
     <PackageReference Include="DiscordBotsList.Api" Version="1.3.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0-beta4-final" />
@@ -30,21 +22,6 @@
     <PackageReference Include="Victoria" Version="4.0.6" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Lua\Event.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Lua\Linq.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Lua\Sandbox.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Lua\Table.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Lua\Utils.lua">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="nuget.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -53,6 +30,11 @@
     <ProjectReference Include="..\Energize.Commands\Energize.Commands.fsproj" />
     <ProjectReference Include="..\Energize.Interfaces\Energize.Interfaces.csproj" />
     <ProjectReference Include="..\Energize.Essentials\Energize.Essentials.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Octovisor.Client">
+      <HintPath>..\Octovisor.Client.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Update="Data\static.json">

@@ -40,7 +40,7 @@ namespace Energize.Services.Listeners
     }
 
     [Service("Music")]
-    public class MusicPlayer : ServiceImplementationBase, IMusicPlayerService
+    public class MusicPlayerService : ServiceImplementationBase, IMusicPlayerService
     {
         private readonly DiscordShardedClient _Client;
         private readonly LavaShardClient _LavaClient;
@@ -51,7 +51,7 @@ namespace Energize.Services.Listeners
 
         private bool _Initialized;
 
-        public MusicPlayer(EnergizeClient client)
+        public MusicPlayerService(EnergizeClient client)
         {
             this._Initialized = false;
             this._Players = new Dictionary<ulong, IEnergizePlayer>();
@@ -366,7 +366,7 @@ namespace Energize.Services.Listeners
             await this.SkipTrack(ply.VoiceChannel, ply.TextChannel);
         }
 
-        private delegate Task ReactionCallback(MusicPlayer music, IEnergizePlayer ply);
+        private delegate Task ReactionCallback(MusicPlayerService music, IEnergizePlayer ply);
         private readonly static Dictionary<string, ReactionCallback> _ReactionCallbacks = new Dictionary<string, ReactionCallback>
         {
             ["⏯"] = async (music, ply) =>

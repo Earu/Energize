@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Senders
 {
     [Service("Votes")]
-    public class VoteSender : ServiceImplementationBase, IVoteSenderService
+    public class VoteSenderService : ServiceImplementationBase, IVoteSenderService
     {
         private static readonly Dictionary<string, int> _Lookup = new Dictionary<string, int>
         {
@@ -24,7 +24,7 @@ namespace Energize.Services.Senders
         private readonly MessageSender _MessageSender;
         private readonly Dictionary<ulong, Vote> _Votes;
 
-        public VoteSender(EnergizeClient client)
+        public VoteSenderService(EnergizeClient client)
         {
             this._Logger = client.Logger;
             this._MessageSender = client.MessageSender;
