@@ -1,23 +1,22 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Energize.Interfaces.DatabaseModels;
-using Energize.Interfaces.Services;
-using Energize.Interfaces.Services.Database;
 using Energize.Essentials;
+using Energize.Interfaces.DatabaseModels;
+using Energize.Interfaces.Services.Database;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
 {
     [Service("Administration")]
-    class Administration : ServiceImplementationBase
+    class AdministrationService : ServiceImplementationBase
     {
         private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
         private readonly ServiceManager _ServiceManager;
         private readonly Logger _Logger;
 
-        public Administration(EnergizeClient client)
+        public AdministrationService(EnergizeClient client)
         {
             this._Client = client.DiscordClient;
             this._MessageSender = client.MessageSender;

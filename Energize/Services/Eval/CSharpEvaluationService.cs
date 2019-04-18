@@ -11,7 +11,7 @@ namespace Energize.Services.Eval
     //1 -> ok
     //2 -> warning
     [Service("Evaluator")]
-    public class CSharpEvaluator : ServiceImplementationBase, ICSharpEvaluatorService
+    public class CSharpEvaluationService : ServiceImplementationBase, ICSharpEvaluationService
     {
         public async Task<(int, string)> Eval(string code, object ctx)
         {

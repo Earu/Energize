@@ -2,7 +2,7 @@
 
 namespace Energize.Interfaces.Services.Eval
 {
-    public interface ICSharpEvaluatorService : IServiceImplementation
+    public interface ICSharpEvaluationService : IServiceImplementation
     {
         Task<(int, string)> Eval(string code, object ctx);
     }

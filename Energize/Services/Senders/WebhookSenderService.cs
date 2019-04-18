@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 namespace Energize.Services.Senders
 {
     [Service("Webhook")]
-    public class WebhookSender : ServiceImplementationBase, IWebhookSenderService
+    public class WebhookSenderService : ServiceImplementationBase, IWebhookSenderService
     {
         private readonly EnergizeClient _Client;
         private readonly Logger _Logger;
 
-        public WebhookSender(EnergizeClient client)
+        public WebhookSenderService(EnergizeClient client)
         {
             this._Client = client;
             this._Logger = client.Logger;

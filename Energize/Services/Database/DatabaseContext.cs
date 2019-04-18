@@ -4,11 +4,11 @@ using System;
 
 namespace Energize.Services.Database
 {
-    public class DBContext : IDatabaseContext
+    public class DatabaseContext : IDatabaseContext
     {
         private readonly Logger _Log;
 
-        public DBContext(Database context, Logger log)
+        public DatabaseContext(Database context, Logger log)
         {
             this.Instance = context;
             this.IsUsed = false;

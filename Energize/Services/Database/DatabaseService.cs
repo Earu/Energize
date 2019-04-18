@@ -83,22 +83,22 @@ namespace Energize.Services.Database
     }
 
     [Service("Database")]
-    public class DBContextPool : ServiceImplementationBase, IDatabaseService
+    public class DatabaseService : ServiceImplementationBase, IDatabaseService
     {
         private readonly string _ConnectionString;
         private readonly Logger _Logger;
 
-        private List<DBContext> _Pool;
+        private List<DatabaseContext> _Pool;
 
-        public DBContextPool(EnergizeClient client)
+        public DatabaseService(EnergizeClient client)
         {
             this._ConnectionString = Config.Instance.DBConnectionString;
             this._Logger = client.Logger;
 
-            this._Pool = new List<DBContext>();
+            this._Pool = new List<DatabaseContext>();
             for (uint i = 0; i < 10; i++)
             {
-                _Pool.Add(new DBContext(this.Create(), this._Logger));
+                _Pool.Add(new DatabaseContext(this.Create(), this._Logger));
             }
         }
 
@@ -106,7 +106,7 @@ namespace Energize.Services.Database
         {
             for(int i = 0; i < this._Pool.Count; i++)
             {
-                DBContext ctx = this._Pool[i];
+                DatabaseContext ctx = this._Pool[i];
                 if(!ctx.IsUsed)
                 {
                     ctx.IsUsed = true;
@@ -120,7 +120,7 @@ namespace Energize.Services.Database
         }
 
         public IDatabaseContext CreateContext()
-            => new DBContext(this.Create(), this._Logger);
+            => new DatabaseContext(this.Create(), this._Logger);
 
         private Database Create()
         {
