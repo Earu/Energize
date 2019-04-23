@@ -6,6 +6,7 @@ using DiscordBotsList.Api.Objects;
 using Energize.Essentials;
 using Energize.Services;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -145,14 +146,14 @@ namespace Energize
 
                 Timer updatetimer = new Timer(async arg =>
                 {
-                    long mb = GC.GetTotalMemory(true) / 1024 / 1024; //b to mb
+                    long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
                     GC.Collect();
 
                     (bool success, int servercount) = await this.UpdateBotWebsites();
                     if (success)
                         this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, updated server count ({servercount})");
                     else
-                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count API might be down");
+                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count, API might be down");
                 });
 
                 int hour = 1000 * 60 * 60;
