@@ -45,7 +45,12 @@ namespace Energize.Services.Listeners
         }
 
         private bool IsValidURL(string url)
-            => this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url);
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return false;
+
+            return this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url);
+        }
 
         private bool IsValidMessage(IMessage msg)
         {
