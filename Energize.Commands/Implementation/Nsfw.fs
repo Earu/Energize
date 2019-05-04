@@ -1,18 +1,17 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open Energize.Commands.Context
+open Energize.Commands.AsyncHelper
+open Energize.Essentials
+open Discord
+open System.Xml
+open System
+open Energize.Interfaces.Services.Senders
+open System.Net
 
 [<CommandModule("NSFW")>]
 module Nsfw =
-    open Energize.Commands.Context
-    open Energize.Commands.AsyncHelper
-    open Energize.Essentials
-    open Discord
-    open System.Xml
-    open System
-    open Energize.Interfaces.Services.Senders
-    open System.Net
-
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
         builder
             .WithAuthorNickname(ctx.message)

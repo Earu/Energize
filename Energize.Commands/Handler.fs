@@ -1,25 +1,24 @@
 ﻿namespace Energize.Commands
 
 open Command
+open Discord.WebSocket
+open ImageUrlProvider
+open System.Text.RegularExpressions
+open Discord
+open Cache
+open Discord.Rest
+open Context
+open System.Threading.Tasks
+open System
+open AsyncHelper
+open Energize.Essentials
+open System.Reflection
+open Energize.Interfaces.Services
+open System.Diagnostics
+open Energize.Interfaces.Services.Senders
 
 [<CommandModule("Core")>]
 module CommandHandler =
-    open Discord.WebSocket
-    open ImageUrlProvider
-    open System.Text.RegularExpressions
-    open Discord
-    open Cache
-    open Discord.Rest
-    open Context
-    open System.Threading.Tasks
-    open System
-    open AsyncHelper
-    open Energize.Essentials
-    open System.Reflection
-    open Energize.Interfaces.Services
-    open System.Diagnostics
-    open Energize.Interfaces.Services.Senders
-
     type private CommandHandlerState =
         {
             client : DiscordShardedClient

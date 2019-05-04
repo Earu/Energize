@@ -1,26 +1,25 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open Energize.Commands.AsyncHelper
+open System.Diagnostics
+open Energize.Commands.Context
+open System
+open Energize.Essentials
+open Discord
+open System.Threading.Tasks
+open System.Text
+open Microsoft.Data.Sqlite
+open System.IO
+open Energize.Interfaces.Services.Eval
+open Energize.Interfaces.Services.Senders
+open Energize.Interfaces.Services.Listeners
+open Energize.Commands.UserHelper
+open Discord.WebSocket
+open Energize.Commands.ImageUrlProvider
 
 [<CommandModule("Utilities")>]
 module Util =
-    open Energize.Commands.AsyncHelper
-    open System.Diagnostics
-    open Energize.Commands.Context
-    open System
-    open Energize.Essentials
-    open Discord
-    open System.Threading.Tasks
-    open System.Text
-    open Microsoft.Data.Sqlite
-    open System.IO
-    open Energize.Interfaces.Services.Eval
-    open Energize.Interfaces.Services.Senders
-    open Energize.Interfaces.Services.Listeners
-    open Energize.Commands.UserHelper
-    open Discord.WebSocket
-    open Energize.Commands.ImageUrlProvider
-
     [<Command("ping", "ping <nothing>", "Pings the bot")>]
     let ping (ctx : CommandContext) = async {
         let timestamp = ctx.message.Timestamp

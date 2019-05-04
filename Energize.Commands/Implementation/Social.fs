@@ -1,22 +1,21 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open System
+open Energize.Commands.Context
+open Energize.Essentials
+open Energize.Commands.UserHelper
+open Energize.Commands.AsyncHelper
+open System.Net
+open Discord
+open Energize.Interfaces.Services.Database
+open Energize.Interfaces.Services.Senders
+open Discord.WebSocket
+open Energize.Commands
+open Discord.Rest
 
 [<CommandModule("Social")>]
 module Social =
-    open System
-    open Energize.Commands.Context
-    open Energize.Essentials
-    open Energize.Commands.UserHelper
-    open Energize.Commands.AsyncHelper
-    open System.Net
-    open Discord
-    open Energize.Interfaces.Services.Database
-    open Energize.Interfaces.Services.Senders
-    open Discord.WebSocket
-    open Energize.Commands
-    open Discord.Rest
-
     let private actions = StaticData.Instance.SocialActions |> Seq.map (|KeyValue|) |> Map.ofSeq
 
     let registerAction (ctx : CommandContext) (users : IUser list) (action : string) =

@@ -1,12 +1,12 @@
 ﻿namespace Energize.Commands
 
-module UserHelper =
-    open Discord.WebSocket
-    open Context
-    open System
-    open Discord
-    open Energize.Commands.AsyncHelper
+open Discord.WebSocket
+open Context
+open System
+open Discord
+open Energize.Commands.AsyncHelper
 
+module UserHelper =
     let private rand = Random()
 
     let private tryFindGuildUser (ctx : CommandContext) (predicate : IGuildUser -> bool) =
