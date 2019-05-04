@@ -257,8 +257,9 @@ namespace Energize.Services.Listeners
             return "Nothing is playing";
         }
 
-        public ServerStats GetLavalinkStatsAsync()
-            => this._LavaClient.ServerStats;
+        public ServerStats LavalinkStats { get => this._LavaClient.ServerStats; }
+
+        public int PlayerCount { get => this._Players.Count; }
 
         private async Task<string> GetThumbnailAsync(LavaTrack track)
         {
