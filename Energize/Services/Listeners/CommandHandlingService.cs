@@ -61,15 +61,9 @@ namespace Energize.Services.Listeners
             File.Delete("restartlog.txt");
         }
 
-        private DateTime _LastDateTime = DateTime.MinValue;
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
-        {
-            if (msg.Timestamp.DateTime <= this._LastDateTime) return;
-
-            this._LastDateTime = msg.Timestamp.DateTime;
-            Commands.CommandHandler.HandleMessageReceived(msg);
-        }
+            => Commands.CommandHandler.HandleMessageReceived(msg);
 
         [Event("MessageDeleted")]
         public async Task OnMessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
@@ -77,6 +71,10 @@ namespace Energize.Services.Listeners
 
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
-            => Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
+        {
+            IMessage oldmsg = await cache.GetOrDownloadAsync();
+            if (oldmsg != null && !oldmsg.Content.Equals(msg.Content))
+                Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
+        }
     }
 }
