@@ -24,7 +24,7 @@ namespace Energize.Services.Listeners
         {
             string pattern = @"discord\.gg\/.+\s?";
             if (msg.Channel is IGuildChannel)
-                return Regex.IsMatch(msg.Content, pattern) && msg.Author.Id == Config.Instance.Discord.BotID;
+                return Regex.IsMatch(msg.Content, pattern) && msg.Author.Id != Config.Instance.Discord.BotID;
             else
                 return false;
         }
