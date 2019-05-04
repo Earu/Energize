@@ -3,6 +3,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -60,9 +61,15 @@ namespace Energize.Services.Listeners
             File.Delete("restartlog.txt");
         }
 
+        private DateTime _LastDateTime = DateTime.MinValue;
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
-            => Commands.CommandHandler.HandleMessageReceived(msg);
+        {
+            if (msg.Timestamp.DateTime <= this._LastDateTime) return;
+
+            this._LastDateTime = msg.Timestamp.DateTime;
+            Commands.CommandHandler.HandleMessageReceived(msg);
+        }
 
         [Event("MessageDeleted")]
         public async Task OnMessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
