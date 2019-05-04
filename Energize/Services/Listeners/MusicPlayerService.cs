@@ -85,8 +85,13 @@ namespace Energize.Services.Listeners
 
         public LavaRestClient LavaRestClient { get; private set; }
 
+        private bool SanitizeCheck(IVoiceChannel vc, ITextChannel chan)
+            => vc != null && chan != null;
+
         public async Task<IEnergizePlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan)
         {
+            if (!this.SanitizeCheck(vc, chan)) return null;
+
             IEnergizePlayer ply;
             if (this._Players.ContainsKey(vc.GuildId))
             {
@@ -108,6 +113,8 @@ namespace Energize.Services.Listeners
 
         public async Task DisconnectAsync(IVoiceChannel vc)
         {
+            if (vc == null) return;
+
             await this._LavaClient.DisconnectAsync(vc);
             if (this._Players.ContainsKey(vc.GuildId))
             {
@@ -127,6 +134,8 @@ namespace Energize.Services.Listeners
         public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return null;
+
             if (ply.IsPlaying)
             {
                 ply.Queue.Enqueue(track);
@@ -142,6 +151,8 @@ namespace Energize.Services.Listeners
         public async Task<IUserMessage> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return null;
+
             List<LavaTrack> tracks = trs.ToList();
             if (ply.IsPlaying)
             {
@@ -170,6 +181,8 @@ namespace Energize.Services.Listeners
         public async Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return false;
+
             bool islooping = ply.IsLooping;
             ply.IsLooping = !islooping;
             return !islooping;
@@ -178,12 +191,16 @@ namespace Energize.Services.Listeners
         public async Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             ply.Queue.Shuffle();
         }
 
         public async Task ClearTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             ply.Queue.Clear();
             if (ply.IsPlaying)
                 await ply.Lavalink.StopAsync();
@@ -192,6 +209,8 @@ namespace Energize.Services.Listeners
         public async Task PauseTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             if (ply.IsPlaying && !ply.IsPaused)
                 await ply.Lavalink.PauseAsync();
         }
@@ -199,6 +218,8 @@ namespace Energize.Services.Listeners
         public async Task ResumeTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             if (ply.IsPlaying && ply.IsPaused)
                 await ply.Lavalink.ResumeAsync();
         }
@@ -206,6 +227,8 @@ namespace Energize.Services.Listeners
         public async Task SkipTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             if (ply.IsPlaying)
                 await ply.Lavalink.StopAsync();
         }
@@ -214,6 +237,8 @@ namespace Energize.Services.Listeners
         {
             vol = Math.Clamp(vol, 0, 200);
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
             if (ply.IsPlaying)
                 await ply.Lavalink.SetVolumeAsync(vol);
         }
@@ -221,6 +246,8 @@ namespace Energize.Services.Listeners
         public async Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return string.Empty;
+
             if (ply.IsPlaying)
             {
                 LavaTrack track = ply.CurrentTrack;
