@@ -36,7 +36,9 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan);
 
-        ServerStats GetLavalinkStatsAsync();
+        ServerStats LavalinkStats { get; }
+
+        int PlayerCount { get; }
 
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
