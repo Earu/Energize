@@ -16,6 +16,9 @@ namespace Energize.Services.Listeners
     public class MusicPlayerUsabilityService : ServiceImplementationBase, IServiceImplementation
     {
         private static readonly Emoji Emote = new Emoji("⏯");
+        private static readonly string YTPattern = @"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W";
+        private static readonly string SCPattern = @"https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)";
+        private static readonly string TwitchPattern = @"https?://www.twitch.tv/.+";
 
         private readonly Logger _Logger;
         private readonly ServiceManager _ServiceManager;
@@ -27,22 +30,13 @@ namespace Energize.Services.Listeners
         }
 
         private bool IsYoutubeURL(string url)
-        {
-            string pattern = @"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+";
-            return Regex.IsMatch(url, pattern);
-        }
+            => Regex.IsMatch(url, YTPattern);
 
         private bool IsSoundcloudURL(string url)
-        {
-            string pattern = @"^https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)";
-            return Regex.IsMatch(url, pattern);
-        }
+            => Regex.IsMatch(url, SCPattern);
 
         private bool IsTwitchURL(string url)
-        {
-            string pattern = @"^https?://www.twitch.tv/.+";
-            return Regex.IsMatch(url, pattern);
-        }
+            => Regex.IsMatch(url, TwitchPattern);
 
         private bool IsValidURL(string url)
         {
@@ -64,10 +58,9 @@ namespace Energize.Services.Listeners
 
         private string SanitizeYoutubeUrl(string url)
         {
-            string pattern = @"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W";
-            if (Regex.IsMatch(url, pattern))
+            if (Regex.IsMatch(url, YTPattern))
             {
-                string identifier = Regex.Match(url, pattern).Groups[1].Value;
+                string identifier = Regex.Match(url, YTPattern).Groups[1].Value;
                 return $"https://www.youtube.com/watch?v={identifier}";
             }
             else
