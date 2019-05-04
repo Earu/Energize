@@ -145,7 +145,6 @@ namespace Energize
                 await this.DiscordClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.DiscordClient.StartAsync();
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
-                await this.ServiceManager.InitializeServicesAsync();
                 await this.UpdateActivity();
 
                 Timer updatetimer = new Timer(async arg =>
@@ -164,6 +163,8 @@ namespace Energize
 
                 int hour = 1000 * 60 * 60;
                 updatetimer.Change(10000, hour);
+
+                await this.ServiceManager.InitializeServicesAsync();
             }
             catch (Exception e)
             {
