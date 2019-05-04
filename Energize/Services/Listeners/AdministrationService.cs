@@ -11,17 +11,13 @@ namespace Energize.Services.Listeners
     [Service("Administration")]
     class AdministrationService : ServiceImplementationBase
     {
-        private readonly DiscordShardedClient _Client;
         private readonly MessageSender _MessageSender;
         private readonly ServiceManager _ServiceManager;
-        private readonly Logger _Logger;
 
         public AdministrationService(EnergizeClient client)
         {
-            this._Client = client.DiscordClient;
             this._MessageSender = client.MessageSender;
             this._ServiceManager = client.ServiceManager;
-            this._Logger = client.Logger;
         }
 
         private bool IsInviteMessage(IMessage msg)

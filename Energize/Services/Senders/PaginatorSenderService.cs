@@ -197,7 +197,7 @@ namespace Energize.Services.Senders
 
             if (paginator.CurrentValue is LavaTrack track)
             {
-                await music.AddTrack(guser.VoiceChannel, textchan, track);
+                await music.AddTrackAsync(guser.VoiceChannel, textchan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
             else if (paginator.CurrentValue is string url)
@@ -207,7 +207,7 @@ namespace Energize.Services.Senders
                 if (tracks.Count > 0)
                 {
                     LavaTrack tr = tracks[0];
-                    await music.AddTrack(guser.VoiceChannel, textchan, tr);
+                    await music.AddTrackAsync(guser.VoiceChannel, textchan, tr);
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
                 else
