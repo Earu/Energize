@@ -19,4 +19,4 @@ module AsyncHelper =
         task |> Async.AwaitTask |> Async.RunSynchronously
     
     let awaitOp<'t> (asyncOp : Async<'t>) : 't =
-       awaitResult (toTaskResult asyncOp)
+        awaitResult (toTaskResult asyncOp)

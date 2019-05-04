@@ -1,15 +1,15 @@
 ﻿namespace Energize.Commands
 
-module Context =
-    open Discord.WebSocket
-    open Discord
-    open Discord.Rest
-    open Energize.Essentials
-    open Cache
-    open System
-    open Energize.Interfaces.Services
-    open AsyncHelper
+open Discord.WebSocket
+open Discord
+open Discord.Rest
+open Energize.Essentials
+open Cache
+open System
+open Energize.Interfaces.Services
+open AsyncHelper
 
+module Context =
     let private properOutput (input : string) =
         if input.Length < 2048 then
             input

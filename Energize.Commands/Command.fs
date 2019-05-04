@@ -1,11 +1,10 @@
 ﻿namespace Energize.Commands
 
 open System
+open Context
+open Discord
 
 module Command =
-    open Context
-    open Discord
-
     type CommandModuleAttribute(name : string) =
         inherit Attribute()
         member val name : string = name

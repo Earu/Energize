@@ -1,4 +1,5 @@
 ﻿using Discord;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
@@ -16,6 +17,8 @@ namespace Energize.Interfaces.Services.Listeners
         Task DisconnectAllPlayersAsync();
 
         Task<IUserMessage> AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+
+        Task<IUserMessage> AddPlaylist(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
 
         Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan);
 

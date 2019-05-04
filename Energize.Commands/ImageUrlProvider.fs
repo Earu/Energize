@@ -1,9 +1,9 @@
 ﻿namespace Energize.Commands
 
-module ImageUrlProvider =
-    open Discord
-    open System.Text.RegularExpressions
+open Discord
+open System.Text.RegularExpressions
 
+module ImageUrlProvider =
     let private getLastAttachmentUrl (msg : IMessage) = 
         let imgAttachs = msg.Attachments |> Seq.filter (fun attach -> attach.Width.HasValue) 
         match imgAttachs |> Seq.tryLast with

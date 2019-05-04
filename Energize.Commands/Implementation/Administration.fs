@@ -1,21 +1,19 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open Energize.Commands.Context
+open Energize.Commands.UserHelper
+open Discord.WebSocket
+open Energize.Commands.AsyncHelper
+open System
+open Discord
+open System.Collections.Generic
+open Energize.Commands
+open System.Linq
+open Energize.Interfaces.Services.Database
 
 [<CommandModule("Administration")>]
 module Administration =
-    open Energize.Commands.Context
-    open Energize.Commands.UserHelper
-    open Discord.WebSocket
-    open Energize.Commands.AsyncHelper
-    open System
-    open Discord
-    open System.Collections.Generic
-    open Energize.Commands
-    open Discord.Rest
-    open System.Linq
-    open Energize.Interfaces.Services.Database
-
     [<CommandParameters(2)>]
     [<CommandPermissions(GuildPermission.ManageRoles)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]

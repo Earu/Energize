@@ -139,6 +139,34 @@ namespace Energize.Services.Listeners
             }
         }
 
+        public async Task<IUserMessage> AddPlaylist(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
+        {
+            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            List<LavaTrack> tracks = trs.ToList();
+            if (ply.IsPlaying)
+            {
+                foreach (LavaTrack track in tracks)
+                    ply.Queue.Enqueue(track);
+
+                return await this._MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}");
+            }
+            else
+            {
+                if (tracks.Count > 0)
+                    return await this._MessageSender.Warning(chan, "music player", "The loaded playlist does not contain any tracks");
+
+                LavaTrack track = tracks[0];
+                tracks.RemoveAt(0);
+
+                if (tracks.Count > 0)
+                    foreach (LavaTrack tr in tracks)
+                        ply.Queue.Enqueue(tr);
+
+                await ply.Lavalink.PlayAsync(track, false);
+                return await this.SendPlayer(ply, track);
+            }
+        }
+
         public async Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
@@ -425,18 +453,20 @@ namespace Energize.Services.Listeners
         {
             SocketVoiceChannel vc = null;
             SocketGuildUser guser = (SocketGuildUser)user;
-            SocketGuildUser botuser = guser.Guild.GetUser(Config.Instance.Discord.BotID);
+            SocketGuildUser botuser = guser.Guild.CurrentUser;
             if (botuser == null)
             {
                 vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
             }
             else
             {
-                if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) //bot moved of channel
+                if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) // bot moved of channel
                     vc = newstate.VoiceChannel;
-                else if (oldstate.VoiceChannel != null && newstate.VoiceChannel != null && newstate.VoiceChannel == botuser.VoiceChannel) //user moved to our channel
+                else if (oldstate.VoiceChannel != null && newstate.VoiceChannel != null && newstate.VoiceChannel == botuser.VoiceChannel) // user moved to our channel
                     vc = newstate.VoiceChannel;
-                else
+                else if (botuser.VoiceChannel != null && oldstate.VoiceChannel != botuser.VoiceChannel && newstate.VoiceChannel != botuser.VoiceChannel) // other channels activies
+                    vc = null;
+                else // dc and other behaviors
                     vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
             }
 
@@ -446,7 +476,7 @@ namespace Energize.Services.Listeners
         }
 
         [Event("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient clientshard)
+        public async Task OnShardReady(DiscordSocketClient _)
         {
             if (this._Initialized) return;
             Configuration config = new Configuration
