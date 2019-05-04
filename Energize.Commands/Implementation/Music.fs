@@ -32,7 +32,7 @@ module Voice =
             match res.Tracks |> Seq.toList |> List.tryItem index with
             | Some tr ->
                 let textChan = ctx.message.Channel :?> ITextChannel
-                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
+                [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
             | None ->
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
         | _ ->
@@ -40,7 +40,7 @@ module Voice =
             if tracks.Length > 0 then
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
-                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
+                [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
             else
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 
@@ -108,7 +108,7 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             let textChan = ctx.message.Channel :?> ITextChannel
             let ply = awaitResult (music.ConnectAsync(vc, textChan))
-            let msg = awaitResult (music.SendPlayer(ply))
+            let msg = awaitResult (music.SendPlayerAsync(ply))
             match msg with
             | null -> 
                 [ ctx.sendOK None "Nothing is playing" ]
@@ -120,7 +120,7 @@ module Voice =
     [<Command("pause", "Pauses the current track/stream", "pause <nothing>")>]
     let pause (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            await (music.PauseTrack(vc, ctx.message.Channel :?> ITextChannel))
+            await (music.PauseTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Paused the current track" ]
         )
     }
@@ -129,7 +129,7 @@ module Voice =
     [<Command("resume", "Resumes the current track/stream", "resume <nothing>")>]
     let resume (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            await (music.ResumeTrack(vc, ctx.message.Channel :?> ITextChannel))
+            await (music.ResumeTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Resumed the current track" ]
         )
     }
@@ -138,7 +138,7 @@ module Voice =
     [<Command("skip", "Skips the current track/stream", "skip <nothing>")>]
     let skip (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            await (music.SkipTrack(vc, ctx.message.Channel :?> ITextChannel))
+            await (music.SkipTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Skipped the current track" ]
         )
     }
@@ -147,7 +147,7 @@ module Voice =
     [<Command("loop", "Loops or unloop the current track/stream", "loop <nothing>")>]
     let loop (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let looping = awaitResult (music.LoopTrack(vc, ctx.message.Channel :?> ITextChannel))
+            let looping = awaitResult (music.LoopTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
             if looping then
                 [ ctx.sendOK None "Looping the current track" ]
             else
@@ -159,7 +159,7 @@ module Voice =
     [<Command("shuffle", "Shuffles the track queue", "shuffle <nothing>")>]
     let shuffle (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            await (music.ShuffleTracks(vc, ctx.message.Channel :?> ITextChannel))
+            await (music.ShuffleTracksAsync(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Shuffled the track queue" ]
         )
     }
@@ -171,7 +171,7 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             try
                 let vol = int ctx.arguments.[0]
-                await (music.SetTrackVolume(vc, ctx.message.Channel :?> ITextChannel, vol))
+                await (music.SetTrackVolumeAsync(vc, ctx.message.Channel :?> ITextChannel, vol))
                 [ ctx.sendOK None (sprintf "Set the volume to %d" vol) ]
             with _ ->
                 [ ctx.sendWarn None "Incorrect volume, expecting a number" ]
@@ -182,7 +182,7 @@ module Voice =
     [<Command("lyrics", "Tries to get the current track lyrics if any", "lyrics <nothing>")>]
     let lyrics (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let lyrics = awaitResult (music.GetTrackLyrics(vc, ctx.message.Channel :?> ITextChannel))
+            let lyrics = awaitResult (music.GetTrackLyricsAsync(vc, ctx.message.Channel :?> ITextChannel))
             if String.IsNullOrWhiteSpace lyrics then
                 [ ctx.sendWarn None "Could not find the lyrics for the current track" ]
             else
@@ -194,7 +194,7 @@ module Voice =
     [<Command("queue", "Displays the current track queue", "queue <nothing>")>]
     let queue (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            [ awaitResult (music.SendQueue(vc, ctx.message)) ]
+            [ awaitResult (music.SendQueueAsync(vc, ctx.message)) ]
         )
     }
 

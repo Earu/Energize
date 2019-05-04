@@ -16,34 +16,34 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAllPlayersAsync();
 
-        Task<IUserMessage> AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
-        Task<IUserMessage> AddPlaylist(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
+        Task<IUserMessage> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
 
-        Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan);
+        Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task ShuffleTracks(IVoiceChannel vc, ITextChannel chan);
+        Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task ClearTracks(IVoiceChannel vc, ITextChannel chan);
+        Task ClearTracksAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task PauseTrack(IVoiceChannel vc, ITextChannel chan);
+        Task PauseTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task ResumeTrack(IVoiceChannel vc, ITextChannel chan);
+        Task ResumeTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task SkipTrack(IVoiceChannel vc, ITextChannel chan);
+        Task SkipTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
-        Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol);
+        Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol);
 
-        Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan);
+        Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan);
 
-        ServerStats GetLavalinkStats();
+        ServerStats GetLavalinkStatsAsync();
 
-        Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg);
+        Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTrack(IVoiceChannel vc, IMessage msg, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, IMessage msg, LavaTrack track);
 
-        Task<IUserMessage> SendNewTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
-        Task<IUserMessage> SendPlayer(IEnergizePlayer ply, LavaTrack track = null);
+        Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null);
     }
 }

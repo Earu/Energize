@@ -124,22 +124,22 @@ namespace Energize.Services.Listeners
                 await this._LavaClient.DisconnectAsync(ply.Value.VoiceChannel);
         }
 
-        public async Task<IUserMessage> AddTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying)
             {
                 ply.Queue.Enqueue(track);
-                return await this.SendNewTrack(vc, chan, track);
+                return await this.SendNewTrackAsync(vc, chan, track);
             }
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                return await this.SendPlayer(ply, track);
+                return await this.SendPlayerAsync(ply, track);
             }
         }
 
-        public async Task<IUserMessage> AddPlaylist(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
+        public async Task<IUserMessage> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             List<LavaTrack> tracks = trs.ToList();
@@ -163,11 +163,11 @@ namespace Energize.Services.Listeners
                         ply.Queue.Enqueue(tr);
 
                 await ply.Lavalink.PlayAsync(track, false);
-                return await this.SendPlayer(ply, track);
+                return await this.SendPlayerAsync(ply, track);
             }
         }
 
-        public async Task<bool> LoopTrack(IVoiceChannel vc, ITextChannel chan)
+        public async Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             bool islooping = ply.IsLooping;
@@ -175,13 +175,13 @@ namespace Energize.Services.Listeners
             return !islooping;
         }
 
-        public async Task ShuffleTracks(IVoiceChannel vc, ITextChannel chan)
+        public async Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             ply.Queue.Shuffle();
         }
 
-        public async Task ClearTracks(IVoiceChannel vc, ITextChannel chan)
+        public async Task ClearTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             ply.Queue.Clear();
@@ -189,28 +189,28 @@ namespace Energize.Services.Listeners
                 await ply.Lavalink.StopAsync();
         }
 
-        public async Task PauseTrack(IVoiceChannel vc, ITextChannel chan)
+        public async Task PauseTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying && !ply.IsPaused)
                 await ply.Lavalink.PauseAsync();
         }
 
-        public async Task ResumeTrack(IVoiceChannel vc, ITextChannel chan)
+        public async Task ResumeTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying && ply.IsPaused)
                 await ply.Lavalink.ResumeAsync();
         }
 
-        public async Task SkipTrack(IVoiceChannel vc, ITextChannel chan)
+        public async Task SkipTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying)
                 await ply.Lavalink.StopAsync();
         }
 
-        public async Task SetTrackVolume(IVoiceChannel vc, ITextChannel chan, int vol)
+        public async Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol)
         {
             vol = Math.Clamp(vol, 0, 200);
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
@@ -218,7 +218,7 @@ namespace Energize.Services.Listeners
                 await ply.Lavalink.SetVolumeAsync(vol);
         }
 
-        public async Task<string> GetTrackLyrics(IVoiceChannel vc, ITextChannel chan)
+        public async Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply.IsPlaying)
@@ -230,7 +230,7 @@ namespace Energize.Services.Listeners
             return "Nothing is playing";
         }
 
-        public ServerStats GetLavalinkStats()
+        public ServerStats GetLavalinkStatsAsync()
             => this._LavaClient.ServerStats;
 
         private async Task<string> GetThumbnailAsync(LavaTrack track)
@@ -245,7 +245,7 @@ namespace Energize.Services.Listeners
             }
         }
 
-        public async Task<IUserMessage> SendQueue(IVoiceChannel vc, IMessage msg)
+        public async Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             IPaginatorSenderService paginator = this._ServiceManager.GetService<IPaginatorSenderService>("Paginator");
@@ -293,7 +293,7 @@ namespace Energize.Services.Listeners
                 .Build();
         }
 
-        public async Task<IUserMessage> SendNewTrack(IVoiceChannel vc, IMessage msg, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, IMessage msg, LavaTrack track)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             Embed embed = await this.GetNewTrackEmbed(track, msg);
@@ -301,7 +301,7 @@ namespace Energize.Services.Listeners
             return await this._MessageSender.Send(ply.TextChannel, embed);
         }
 
-        public async Task<IUserMessage> SendNewTrack(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             Embed embed = await this.GetNewTrackEmbed(track);
@@ -323,7 +323,7 @@ namespace Energize.Services.Listeners
             });
         }
 
-        public async Task<IUserMessage> SendPlayer(IEnergizePlayer ply, LavaTrack track=null)
+        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track=null)
         {
             track = track ?? ply.CurrentTrack;
 
@@ -358,7 +358,7 @@ namespace Energize.Services.Listeners
                 if (ply.Queue.TryDequeue(out LavaTrack newtrack))
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
-                    await this.SendPlayer(ply, newtrack);
+                    await this.SendPlayerAsync(ply, newtrack);
                 }
                 else
                 {
@@ -391,7 +391,7 @@ namespace Energize.Services.Listeners
                 builder.WithThumbnailUrl(thumbnailurl);
 
             await this._MessageSender.Send(ply.TextChannel, builder.Build());
-            await this.SkipTrack(ply.VoiceChannel, ply.TextChannel);
+            await this.SkipTrackAsync(ply.VoiceChannel, ply.TextChannel);
         }
 
         private delegate Task ReactionCallback(MusicPlayerService music, IEnergizePlayer ply);
@@ -401,17 +401,17 @@ namespace Energize.Services.Listeners
             {
                 if (!ply.IsPlaying) return;
                 if (ply.IsPaused)
-                    await music.ResumeTrack(ply.VoiceChannel, ply.TextChannel);
+                    await music.ResumeTrackAsync(ply.VoiceChannel, ply.TextChannel);
                 else
-                    await music.PauseTrack(ply.VoiceChannel, ply.TextChannel);
+                    await music.PauseTrackAsync(ply.VoiceChannel, ply.TextChannel);
             },
-            ["🔁"] = async (music, ply) => await music.LoopTrack(ply.VoiceChannel, ply.TextChannel),
-            ["⬆"] = async (music, ply) => await music.SetTrackVolume(ply.VoiceChannel, ply.TextChannel, ply.Volume + 10),
-            ["⬇"] = async (music, ply) => await music.SetTrackVolume(ply.VoiceChannel, ply.TextChannel, ply.Volume - 10),
+            ["🔁"] = async (music, ply) => await music.LoopTrackAsync(ply.VoiceChannel, ply.TextChannel),
+            ["⬆"] = async (music, ply) => await music.SetTrackVolumeAsync(ply.VoiceChannel, ply.TextChannel, ply.Volume + 10),
+            ["⬇"] = async (music, ply) => await music.SetTrackVolumeAsync(ply.VoiceChannel, ply.TextChannel, ply.Volume - 10),
             ["⏭"] = async (music, ply) =>
             {
                 await ply.TrackPlayer.DeleteMessage();
-                await music.SkipTrack(ply.VoiceChannel, ply.TextChannel);
+                await music.SkipTrackAsync(ply.VoiceChannel, ply.TextChannel);
             },
         };
 
@@ -423,7 +423,7 @@ namespace Energize.Services.Listeners
             return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
-        public bool IsValidTrackPlayer(TrackPlayer trackplayer, ulong msgid)
+        private bool IsValidTrackPlayer(TrackPlayer trackplayer, ulong msgid)
             => trackplayer != null && trackplayer.Message != null && trackplayer.Message.Id == msgid;
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
