@@ -56,6 +56,8 @@ namespace Energize.Services.Listeners
         {
             if (msg.Author.Id == Config.Instance.Discord.BotID) return false;
             if (msg.Embeds.Count < 1) return false;
+            CommandHandlingService commands = this._ServiceManager.GetService<CommandHandlingService>("Commands");
+            if (commands.IsCommandMessage(msg)) return false;
 
             return true;
         }
@@ -124,11 +126,11 @@ namespace Energize.Services.Listeners
                     case LoadType.SearchResult:
                     case LoadType.TrackLoaded:
                         if (tracks.Count > 0)
-                            await music.AddTrack(guser.VoiceChannel, textchan, tracks[0]);
+                            await music.AddTrackAsync(guser.VoiceChannel, textchan, tracks[0]);
                         break;
                     case LoadType.PlaylistLoaded:
                         if (tracks.Count > 0)
-                            await music.AddPlaylist(guser.VoiceChannel, textchan, result.PlaylistInfo.Name, tracks);
+                            await music.AddPlaylistAsync(guser.VoiceChannel, textchan, result.PlaylistInfo.Name, tracks);
                         break;
                 }
             }

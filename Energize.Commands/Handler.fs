@@ -16,6 +16,7 @@ open System.Reflection
 open Energize.Interfaces.Services
 open System.Diagnostics
 open Energize.Interfaces.Services.Senders
+open System.Collections.Generic
 
 [<CommandModule("Core")>]
 module CommandHandler =
@@ -375,7 +376,7 @@ module CommandHandler =
             awaitIgnore (state.messageSender.Warning(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
         | cmd when not hasConditions ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with unmet conditions <%s>" author cmd.name)
-            let condDisplay = String.Join(", ", missingConds |> List.map (fun perm -> sprintf "`%s`" (perm.ToString())))
+            let condDisplay = String.Join(", ", missingConds |> List.map (fun cond -> sprintf "`%s`" (cond.ToString())))
             awaitIgnore (state.messageSender.Warning(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
         | cmd ->
             runCmd state msg cmd input (Context.isPrivate msg)
@@ -461,3 +462,20 @@ module CommandHandler =
                 HandleMessageReceived msg
         | Some _ -> ()
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
+
+    let private toDictionary (map : Map<_, _>) : Dictionary<_, _> =
+        let dict = new Dictionary<_, _>()
+        map |> Map.iter (fun k v -> dict.Add(k, v))
+        dict
+
+    // Useless param because otherwise not considered a method C# wise
+    let GetRegisteredCommands (name : string) =
+        match handlerState with
+        | Some state -> 
+            match name with
+            | null -> state.commands |> toDictionary
+            | _ -> 
+                match state.commands |> Map.tryFind name with
+                | Some cmd -> (Map.add name cmd Map.empty) |> toDictionary
+                | None -> Map.empty |> toDictionary
+        | None -> Map.empty |> toDictionary

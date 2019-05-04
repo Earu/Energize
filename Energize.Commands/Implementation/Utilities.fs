@@ -144,7 +144,7 @@ module Util =
     let lavalink (ctx : CommandContext) = async {
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         return
-            match music.GetLavalinkStats() with
+            match music.GetLavalinkStatsAsync() with
             | null -> [ ctx.sendWarn None "Stats not available yet" ]
             | stats ->
                 let builder = EmbedBuilder()

@@ -1,8 +1,9 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Energize.Interfaces.Services;
 using Energize.Essentials;
+using Energize.Interfaces.Services;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -26,9 +27,22 @@ namespace Energize.Services.Listeners
             this._ServiceManager = client.ServiceManager;
         }
 
+        public Dictionary<string, Commands.Command.Command> RegisteredCommands { get => Commands.CommandHandler.GetRegisteredCommands(null); }
+
         public override void Initialize()
-            => Commands.CommandHandler.Initialize(this._Client, this._RestClient, this._Logger, 
-                this._MessageSender, this._ServiceManager);
+            => Commands.CommandHandler.Initialize(this._Client, this._RestClient, this._Logger, this._MessageSender, this._ServiceManager);
+
+        public bool IsCommandMessage(IMessage msg)
+        {
+            var cmds = this.RegisteredCommands;
+            foreach(KeyValuePair<string, Commands.Command.Command> kv in cmds)
+            {
+                if (msg.Content.StartsWith($"{Config.Instance.Discord.Prefix}{kv.Key}"))
+                    return true;
+            }
+
+            return false;
+        }
 
         [Event("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
