@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using Energize.Essentials;
 using Energize.Interfaces.Services;
 using System;
 using System.Collections.Generic;
@@ -20,12 +21,14 @@ namespace Energize.Services
         private readonly Dictionary<string, IService> _Services;
         private readonly IEnumerable<Type> _ServiceTypes;
         private readonly EnergizeClient _Client;
+        private readonly Logger _Logger;
 
         public ServiceManager(EnergizeClient client)
         {
             this._Services = new Dictionary<string, IService>();
             this._ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
             this._Client = client;
+            this._Logger = client.Logger;
         }
 
         private bool IsService(Type type)
@@ -59,7 +62,7 @@ namespace Energize.Services
         private void ContinueWithHandler(Task t)
         {
             if (t.IsFaulted)
-                this._Client.Logger.Danger(t.Exception.InnerException);
+                this._Logger.Danger(t.Exception.InnerException);
         }
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventinfo, Type type, IServiceImplementation instance)
@@ -98,16 +101,30 @@ namespace Energize.Services
                     this.RegisterDiscordHandler(this._Client.DiscordClient, eventinfo, type, instance);
             }
 
-            foreach (KeyValuePair<string, IService> service in this._Services)
-                if (service.Value.Instance != null)
-                    service.Value.Instance.Initialize();
+            try
+            {
+                foreach (KeyValuePair<string, IService> service in this._Services)
+                    if (service.Value.Instance != null)
+                        service.Value.Instance.Initialize();
+            }
+            catch(Exception ex)
+            {
+                this._Logger.Danger(ex);
+            }
         }
 
         internal async Task InitializeServicesAsync()
         {
-            foreach(KeyValuePair<string, IService> service in this._Services)
-                if(service.Value.Instance != null)
-                    await service.Value.Instance.InitializeAsync();
+            try
+            {
+                foreach (KeyValuePair<string, IService> service in this._Services)
+                    if (service.Value.Instance != null)
+                        await service.Value.Instance.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                this._Logger.Danger(ex);
+            }
         }
 
         public T GetService<T>(string name) where T : IServiceImplementation

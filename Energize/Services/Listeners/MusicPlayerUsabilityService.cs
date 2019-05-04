@@ -17,7 +17,7 @@ namespace Energize.Services.Listeners
     {
         private static readonly Emoji Emote = new Emoji("⏯");
         private static readonly Regex YTPlaylistPattern = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W");
-        private static readonly Regex YTPattern = CompiledRegex(@"^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
+        private static readonly Regex YTPattern = CompiledRegex(@"(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
         private static readonly Regex SCPattern = CompiledRegex(@"https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)");
         private static readonly Regex TwitchPattern = CompiledRegex(@"https?://www.twitch.tv/.+");
 
@@ -90,6 +90,30 @@ namespace Energize.Services.Listeners
                 {
                     this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
                 }
+            }
+        }
+
+        [Event("MessageUpdated")]
+        public async Task OnMessageUpdated(Cacheable<IMessage, ulong> _, SocketMessage msg, ISocketMessageChannel __)
+        {
+            if (!this.IsValidMessage(msg)) return;
+            try
+            {
+                IUserMessage usermsg = (IUserMessage)msg;
+                if (usermsg.Reactions.ContainsKey(Emote))
+                {
+                    ReactionMetadata metadata = usermsg.Reactions[Emote];
+                    if (!metadata.IsMe)
+                        await usermsg.AddReactionAsync(Emote);
+                }
+                else
+                {
+                    await usermsg.AddReactionAsync(Emote);
+                }
+            }
+            catch
+            {
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
             }
         }
 
