@@ -78,8 +78,8 @@ namespace Energize
                 ConsoleColor.Blue, ConsoleColor.Cyan, ConsoleColor.Green,
                 ConsoleColor.Yellow, ConsoleColor.Red, ConsoleColor.Magenta,
             };
+
             string[] lines = StaticData.Instance.AsciiArt.Split('\n');
-            Random rand = new Random();
             for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i];
@@ -130,6 +130,12 @@ namespace Energize
             return (success, servercount);
         }
 
+        private async Task UpdateActivity()
+        {
+            StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.URIs.TwitchURL);
+            await this.DiscordClient.SetActivityAsync(game);
+        }
+
         public async Task InitializeAsync()
         {
             if (!this.HasToken) return;
@@ -140,9 +146,7 @@ namespace Energize
                 await this.DiscordClient.StartAsync();
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.ServiceManager.InitializeServicesAsync();
-
-                StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.URIs.TwitchURL);
-                await this.DiscordClient.SetActivityAsync(game);
+                await this.UpdateActivity();
 
                 Timer updatetimer = new Timer(async arg =>
                 {
@@ -154,6 +158,8 @@ namespace Energize
                         this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, updated server count ({servercount})");
                     else
                         this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count, API might be down");
+
+                    await this.UpdateActivity();
                 });
 
                 int hour = 1000 * 60 * 60;

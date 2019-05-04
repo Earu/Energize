@@ -144,7 +144,7 @@ module Util =
     let lavalink (ctx : CommandContext) = async {
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         return
-            match music.GetLavalinkStatsAsync() with
+            match music.LavalinkStats with
             | null -> [ ctx.sendWarn None "Stats not available yet" ]
             | stats ->
                 let builder = EmbedBuilder()
@@ -153,7 +153,8 @@ module Util =
                     ctx.embedField "CPU Load" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad) true
                     ctx.embedField "Frames" (match stats.Frames with null -> 0 | _ -> stats.Frames.Sent) true
                     ctx.embedField "Memory(MB)" (match stats.Memory with null -> 0L | _ -> stats.Memory.Used / 1024L / 1024L) true
-                    ctx.embedField "Music Players" stats.PlayerCount true
+                    ctx.embedField "Music Players" music.PlayerCount true
+                    ctx.embedField "Playing Players" stats.PlayingPlayers true
                     ctx.embedField "Uptime" uptime true
                 ]
 
