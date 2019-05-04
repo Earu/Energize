@@ -1,25 +1,48 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open System.Text.RegularExpressions
+open System
+open Energize.Commands.Context
+open Discord
+open Energize.Interfaces.Services.Listeners
+open Energize.Commands.AsyncHelper
+open Energize.Essentials
+open Victoria.Entities
+open Energize.Interfaces.Services.Senders
+open System.Web
 
 [<CommandModule("Music")>]
 module Voice =
-    open System
-    open Energize.Commands.Context
-    open Discord
-    open Energize.Interfaces.Services.Listeners
-    open Energize.Commands.AsyncHelper
-    open Energize.Essentials
-    open Victoria.Entities
-    open Energize.Interfaces.Services.Senders
-    open System.Web
-
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         let guser = ctx.message.Author :?> IGuildUser
         match guser.VoiceChannel with
         | null -> [ ctx.sendWarn None "Not in a voice channel" ]
         | vc -> cb music vc guser
+
+    let private handleSearchResult (music : IMusicPlayerService) (ctx : CommandContext) (res : SearchResult) (vc : IVoiceChannel) =
+        match res.LoadType with
+        | LoadType.LoadFailed ->
+            [ ctx.sendWarn None "Could not load the specified track" ]
+        | LoadType.NoMatches ->
+            [ ctx.sendWarn None "Could not find any matches for the specified track" ]
+        | LoadType.PlaylistLoaded ->
+            let index = res.PlaylistInfo.SelectedTrack 
+            match res.Tracks |> Seq.toList |> List.tryItem index with
+            | Some tr ->
+                let textChan = ctx.message.Channel :?> ITextChannel
+                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
+            | None ->
+                [ ctx.sendWarn None "Could not find any matches for the specified track" ]
+        | _ ->
+            let tracks = res.Tracks |> Seq.toList 
+            if tracks.Length > 0 then
+                let tr = tracks.[0]
+                let textChan = ctx.message.Channel :?> ITextChannel
+                [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
+            else
+                [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("join", "Joins your voice channel", "join <nothing>")>]
@@ -39,30 +62,32 @@ module Voice =
         )
     }
 
+    let private sanitizeYtUrl (url : string) =
+        let pattern = @"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W"
+        if Regex.IsMatch(url, pattern) then
+            let ytIdentifier = Regex.Match(url, pattern).Groups.[1].Value
+            sprintf "https://www.youtube.com/watch?v=%s" ytIdentifier
+        else
+            url
+
     [<CommandParameters(1)>]
     [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("playurl", "Tries to play a track/stream from an url", "playurl <url>")>]
-    let playurl (ctx : CommandContext) = async {
+    let playUrl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             if HttpClient.IsURL(ctx.input) then
-                let res = awaitResult (music.LavaRestClient.SearchTracksAsync(ctx.input))
-                match res.Tracks |> Seq.toList with
-                | tracks when tracks.Length > 0 ->
-                    let tr = tracks.[0]
-                    let textChan = ctx.message.Channel :?> ITextChannel
-                    [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
-                | _ ->
-                    [ ctx.sendWarn None "Could not find any track for the given url" ]
+                let input = sanitizeYtUrl ctx.input
+                let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
+                handleSearchResult music ctx res vc
             else
                 [ ctx.sendWarn None "Expected an url" ]
-
         )
     }
 
     // Use playurl whenever passed a link, users tend to do that
     let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) = 
         if HttpClient.IsURL(ctx.input) then
-            playurl ctx
+            playUrl ctx
         else
             cb ctx
             
@@ -73,13 +98,7 @@ module Voice =
         tryPlay ctx (fun ctx -> async {
             return musicAction ctx (fun music vc _ ->   
                 let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
-                match res.Tracks |> Seq.toList with
-                | tracks when tracks.Length > 0 ->
-                    let tr = tracks.[0]
-                    let textChan = ctx.message.Channel :?> ITextChannel
-                    [ awaitResult (music.AddTrack(vc, textChan, tr)) ]
-                | _ ->
-                    [ ctx.sendWarn None "Could not find any track for your input" ]
+                handleSearchResult music ctx res vc
             )
         })
 
