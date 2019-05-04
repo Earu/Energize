@@ -139,7 +139,7 @@ namespace Energize
                 await this.DiscordClient.LoginAsync(TokenType.Bot, this._Token, true);
                 await this.DiscordClient.StartAsync();
                 await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
-                await this.ServiceManager.InitializeServicesAsync(this);
+                await this.ServiceManager.InitializeServicesAsync();
 
                 StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info", Config.Instance.URIs.TwitchURL);
                 await this.DiscordClient.SetActivityAsync(game);

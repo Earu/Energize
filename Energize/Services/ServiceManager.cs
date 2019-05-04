@@ -11,15 +11,15 @@ namespace Energize.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private static readonly string      _Namespace                  = typeof(ServiceManager).Namespace;
-        private static readonly Type        _DiscordShardedClientType   = typeof(DiscordShardedClient);
-        private static readonly Type        _ServiceAttributeType       = typeof(ServiceAttribute);
-        private static readonly Type        _EventAttributeType         = typeof(EventAttribute);
-        private static readonly EventInfo[] _DiscordClientEvents        = _DiscordShardedClientType.GetEvents();
+        private static readonly string _Namespace = typeof(ServiceManager).Namespace;
+        private static readonly Type _DiscordShardedClientType = typeof(DiscordShardedClient);
+        private static readonly Type _ServiceAttributeType = typeof(ServiceAttribute);
+        private static readonly Type _EventAttributeType = typeof(EventAttribute);
+        private static readonly EventInfo[] _DiscordClientEvents = _DiscordShardedClientType.GetEvents();
 
         private readonly Dictionary<string, IService> _Services;
-        private readonly IEnumerable<Type>            _ServiceTypes;
-        private readonly EnergizeClient               _Client;
+        private readonly IEnumerable<Type> _ServiceTypes;
+        private readonly EnergizeClient _Client;
 
         public ServiceManager(EnergizeClient client)
         {
@@ -103,7 +103,7 @@ namespace Energize.Services
                     service.Value.Instance.Initialize();
         }
 
-        internal async Task InitializeServicesAsync(EnergizeClient eclient)
+        internal async Task InitializeServicesAsync()
         {
             foreach(KeyValuePair<string, IService> service in this._Services)
                 if(service.Value.Instance != null)
