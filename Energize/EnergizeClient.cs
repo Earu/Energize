@@ -34,7 +34,7 @@ namespace Energize
             this.MessageSender = new MessageSender(this.Logger);
             this.DiscordClient = new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 1000,
+                MessageCacheSize = 100,
             });
             this.DiscordRestClient = new DiscordRestClient();
             this.ServiceManager = new ServiceManager(this);
