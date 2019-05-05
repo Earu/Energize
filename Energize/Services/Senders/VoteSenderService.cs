@@ -79,9 +79,8 @@ namespace Energize.Services.Senders
             => this.IsValidEmote(reaction) && this._Votes.ContainsKey(cache.Id);
 
         [Event("ReactionAdded")]
-        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
         {
-            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!this.IsValidReaction(cache, reaction)) return;
 
             int index = _Lookup[reaction.Emote.Name];
@@ -89,9 +88,8 @@ namespace Energize.Services.Senders
         }
 
         [Event("ReactionRemoved")]
-        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
         {
-            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!this.IsValidReaction(cache, reaction)) return;
 
             int index = _Lookup[reaction.Emote.Name];

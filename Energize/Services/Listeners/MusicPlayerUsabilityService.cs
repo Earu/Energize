@@ -131,8 +131,7 @@ namespace Energize.Services.Listeners
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
-
+            if (reaction.Emote?.Name == null) return;
             if (!reaction.Emote.Name.Equals(Emote.Name)) return;
             if (reaction.UserId == Config.Instance.Discord.BotID) return;
             if (!(chan is IGuildChannel) || reaction.User.Value == null) return;
