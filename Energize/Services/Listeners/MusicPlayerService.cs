@@ -11,6 +11,8 @@ using Victoria.Queue;
 using System.Linq;
 using Energize.Essentials.MessageConstructs;
 using Energize.Interfaces.Services.Senders;
+using System.Net.WebSockets;
+using Discord.Net;
 
 namespace Energize.Services.Listeners
 {
@@ -127,7 +129,7 @@ namespace Energize.Services.Listeners
 
         public async Task DisconnectAllPlayersAsync()
         {
-            foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
+            foreach (KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
                 await this._LavaClient.DisconnectAsync(ply.Value.VoiceChannel);
         }
 
@@ -301,7 +303,7 @@ namespace Energize.Services.Listeners
             }
         }
 
-        private async Task<Embed> GetNewTrackEmbed(LavaTrack track, IMessage msg=null)
+        private async Task<Embed> GetNewTrackEmbed(LavaTrack track, IMessage msg = null)
         {
             string thumbnailurl = await this.GetThumbnailAsync(track);
             EmbedBuilder builder = new EmbedBuilder();
@@ -351,7 +353,7 @@ namespace Energize.Services.Listeners
             });
         }
 
-        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track=null)
+        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null)
         {
             track = track ?? ply.CurrentTrack;
 
@@ -396,7 +398,7 @@ namespace Energize.Services.Listeners
             }
         }
 
-        private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error=null)
+        private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error = null)
         {
             if (error != null)
                 this._Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
@@ -457,7 +459,7 @@ namespace Energize.Services.Listeners
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!this.IsValidReaction(cache, chan, reaction)) return;
-            
+
             IGuildUser guser = (IGuildUser)reaction.User.Value;
             if (!this._Players.ContainsKey(guser.GuildId) || guser.VoiceChannel == null) return;
 
@@ -522,6 +524,38 @@ namespace Energize.Services.Listeners
             this.LavaRestClient = new LavaRestClient(config);
             await this._LavaClient.StartAsync(this._Client, config);
             this._Initialized = true;
+        }
+
+        private bool IsDiscordClose(Exception ex)
+        {
+            if (ex is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) return true;
+            if (ex is WebSocketClosedException wscex && wscex.CloseCode == 1001) return true;
+
+            return false;
+        }
+
+        [Event("ShardDisconnected")] //nasty hack to resume players where they left off
+        public async Task OnShardDisconnected(Exception ex, DiscordSocketClient clientshard)
+        {
+            if (!this.IsDiscordClose(ex)) return;
+
+            foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
+            {
+                SocketGuild guild = clientshard.GetGuild(ply.Key);
+                if (guild != null && ply.Value.TextChannel != null)
+                {
+                    if (!ply.Value.IsPlaying) continue;
+
+                    LavaTrack lasttrack = ply.Value.CurrentTrack;
+                    LavaQueue<LavaTrack> lastqueue = ply.Value.Queue;
+                    await this.DisconnectAsync(ply.Value.VoiceChannel);
+                    IEnergizePlayer newply = await this.ConnectAsync(ply.Value.VoiceChannel, ply.Value.TextChannel);
+                    await newply.Lavalink.PlayAsync(lasttrack, false);
+                    foreach (LavaTrack track in lastqueue.Items)
+                        newply.Queue.Enqueue(track);
+                    await this.SendPlayerAsync(newply, lasttrack);
+                }
+            }
         }
     }
 }
