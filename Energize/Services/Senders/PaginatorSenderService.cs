@@ -171,13 +171,13 @@ namespace Energize.Services.Senders
 
         private bool IsValidEmote(SocketReaction reaction)
         {
+            if (reaction.Emote?.Name == null) return false;
             if (reaction.UserId == this._Client.CurrentUser.Id) return false;
             return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
             if (!this._Paginators.ContainsKey(cache.Value.Id)) return;
 
