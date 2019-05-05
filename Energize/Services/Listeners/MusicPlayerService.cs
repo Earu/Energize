@@ -516,6 +516,7 @@ namespace Energize.Services.Listeners
                 Password = Config.Instance.Lavalink.Password,
                 SelfDeaf = false,
                 BufferSize = 8192,
+                PreservePlayers = true,
             };
 
             this.LavaRestClient = new LavaRestClient(config);
