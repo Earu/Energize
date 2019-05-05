@@ -42,13 +42,13 @@ module Social =
     [<CommandParameters(2)>]
     [<Command("act", "Social interaction with up to 3 users", "act <action>,<user|userid>,<user|userid|nothing>,<user|userid|nothing>")>]
     let act (ctx : CommandContext) = async {
-        return 
+        return
             match actions |> Map.tryFind ctx.arguments.[0] with
             | Some sentences ->
-                let users = 
-                    let allUsers = 
-                        ctx.arguments.[1..] 
-                        |> List.map (fun arg -> findUser ctx arg true) 
+                let users =
+                    let allUsers =
+                        ctx.arguments.[1..]
+                        |> List.map (fun arg -> findUser ctx arg true)
                         |> List.filter (fun opt -> opt.IsSome)
                         |> List.map (fun user -> user.Value)
                         |> List.distinctBy (fun user -> user.Id)
@@ -59,7 +59,7 @@ module Social =
                 if userMentions |> List.isEmpty then
                     [ ctx.sendWarn None "Could not find any user(s) to interact with for your input" ]
                 else
-                    let sentence = 
+                    let sentence =
                         sentences.[ctx.random.Next(0, sentences.Length)]
                             .Replace("<origin>", ctx.authorMention)
                             .Replace("<user>", userDisplays)
@@ -76,24 +76,21 @@ module Social =
     let love (ctx : CommandContext) = async {
         let user1 = findUser ctx ctx.arguments.[0] true
         let user2 = findUser ctx ctx.arguments.[1] true
-        return 
+        return
             match (user1, user2) with
             | (Some u1, Some u2) ->
-                let endpoint = 
+                let endpoint =
                     let u1arg = sprintf "fname=%s&" u1.Username
                     let u2arg = sprintf "sname=%s" u2.Username
                     sprintf "https://love-calculator.p.mashape.com/getPercentage?%s%s" u1arg u2arg
-                let json = 
+                let json =
                     let cb (req : HttpWebRequest) =
                         req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
                         req.Headers.["X-Mashape-Key"] <- Config.Instance.Keys.MashapeKey
                     awaitResult (HttpClient.GetAsync(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
                 let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
-                match love with
-                | null -> [ ctx.sendWarn None "There was a problem related to an associated service, please try again later"]
-                | _ ->
-                    let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
-                    [ ctx.sendOK None display ]
+                let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
+                [ ctx.sendOK None display ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any user(s) for your input" ]
     }
@@ -112,7 +109,7 @@ module Social =
     [<CommandParameters(1)>]
     [<Command("desc", "Gets a user description", "desc <user|userid>")>]
     let desc (ctx : CommandContext) = async {
-        return 
+        return
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
                 let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
@@ -127,7 +124,7 @@ module Social =
     [<CommandParameters(1)>]
     [<Command("stats", "Gets a user social interaction stats", "stats <user|userid>")>]
     let stats (ctx : CommandContext) = async {
-        return 
+        return
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
                 let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
@@ -170,7 +167,7 @@ module Social =
         return [ awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) ]
     }
 
-    let private createHOFChannel (ctx : CommandContext) = 
+    let private createHOFChannel (ctx : CommandContext) =
         let name = "⭐hall-of-fames"
         let desc = sprintf "Where %s will post unique messages" (ctx.client.CurrentUser.ToString())
         let guser = ctx.message.Author :?> SocketGuildUser
@@ -182,12 +179,12 @@ module Social =
         await (created.ModifyAsync(Action<TextChannelProperties>(fun prop -> prop.Topic <- Optional(desc))))
         created :> ITextChannel
 
-    let private getOrCreateHOFChannel (ctx : CommandContext) = 
+    let private getOrCreateHOFChannel (ctx : CommandContext) =
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
         let dbctx = awaitResult (db.GetContext())
         let guild = (ctx.message.Author :?> SocketGuildUser).Guild :> IGuild
         let dbguild = awaitResult (dbctx.Instance.GetOrCreateGuild(guild.Id))
-        let chan = 
+        let chan =
             if dbguild.HasHallOfShames then
                 Some ((awaitResult (guild.GetChannelAsync(dbguild.HallOfShameID))) :?> ITextChannel)
             else
@@ -199,7 +196,7 @@ module Social =
         dbctx.Dispose()
         chan
 
-    let private trySendFameMsg (ctx : CommandContext) (chan : ITextChannel option) (msg : IMessage) = 
+    let private trySendFameMsg (ctx : CommandContext) (chan : ITextChannel option) (msg : IMessage) =
         let builder = EmbedBuilder()
         builder
             .WithAuthor(msg.Author)
@@ -226,7 +223,7 @@ module Social =
     let fame (ctx : CommandContext) = async {
         let chan = getOrCreateHOFChannel ctx
         let msgId = ref 0UL
-        return 
+        return
             if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
                 let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
                 match msg with
