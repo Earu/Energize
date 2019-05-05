@@ -177,6 +177,7 @@ namespace Energize.Services.Senders
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
+            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
             if (!this._Paginators.ContainsKey(cache.Value.Id)) return;
 

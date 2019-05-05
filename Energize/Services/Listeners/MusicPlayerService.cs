@@ -458,6 +458,7 @@ namespace Energize.Services.Listeners
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
+            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!this.IsValidReaction(cache, chan, reaction)) return;
 
             IGuildUser guser = (IGuildUser)reaction.User.Value;
