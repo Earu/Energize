@@ -52,8 +52,9 @@ namespace Energize.Services.Listeners
 
         private bool IsValidMessage(IMessage msg)
         {
-            if (msg.Author.Id == Config.Instance.Discord.BotID) return false;
+            if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
             if (msg.Embeds.Count < 1) return false;
+            if (msg.Embeds.Last().Type == EmbedType.Rich) return false;
             CommandHandlingService commands = this._ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
 
@@ -79,17 +80,16 @@ namespace Energize.Services.Listeners
             if (!this.IsValidMessage(msg)) return;
 
             Embed embed = msg.Embeds.Last();
-            if (this.IsValidURL(embed.Url))
+            if (!this.IsValidURL(embed.Url)) return;
+
+            try
             {
-                try
-                {
-                    IUserMessage usermsg = (IUserMessage)msg;
-                    await usermsg.AddReactionAsync(Emote);
-                }
-                catch
-                {
-                    this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
-                }
+                IUserMessage usermsg = (IUserMessage)msg;
+                await usermsg.AddReactionAsync(Emote);
+            }
+            catch
+            {
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
             }
         }
 
@@ -97,6 +97,10 @@ namespace Energize.Services.Listeners
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> _, SocketMessage msg, ISocketMessageChannel __)
         {
             if (!this.IsValidMessage(msg)) return;
+
+            Embed embed = msg.Embeds.Last();
+            if (!this.IsValidURL(embed.Url)) return;
+
             try
             {
                 IUserMessage usermsg = (IUserMessage)msg;
