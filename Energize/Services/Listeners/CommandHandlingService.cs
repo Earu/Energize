@@ -35,6 +35,9 @@ namespace Energize.Services.Listeners
 
         public bool IsCommandMessage(IMessage msg)
         {
+            if (string.IsNullOrWhiteSpace(msg.Content))
+                return false;
+
             var cmds = this.RegisteredCommands;
             foreach(KeyValuePair<string, Commands.Command.Command> kv in cmds)
             {

@@ -89,8 +89,11 @@ module Social =
                         req.Headers.["X-Mashape-Key"] <- Config.Instance.Keys.MashapeKey
                     awaitResult (HttpClient.GetAsync(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
                 let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
-                let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
-                [ ctx.sendOK None display ]
+                match love with
+                | null -> [ ctx.sendWarn None "There was a problem related to an associated service, please try again later"]
+                | _ ->
+                    let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
+                    [ ctx.sendOK None display ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any user(s) for your input" ]
     }
