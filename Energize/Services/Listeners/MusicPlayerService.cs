@@ -448,6 +448,7 @@ namespace Energize.Services.Listeners
         private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (chan is IDMChannel || !cache.HasValue) return false;
+            if (reaction.Emote?.Name == null) return false;
             if (reaction.User.Value == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
             return _ReactionCallbacks.ContainsKey(reaction.Emote.Name);
@@ -458,7 +459,6 @@ namespace Energize.Services.Listeners
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (reaction != null && reaction.Emote != null && reaction.Emote.Name != null) return; //idiot check thanks discord?
             if (!this.IsValidReaction(cache, chan, reaction)) return;
 
             IGuildUser guser = (IGuildUser)reaction.User.Value;
