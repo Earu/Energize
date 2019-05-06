@@ -29,9 +29,9 @@ module Command =
         inherit Attribute()
         member val parameters : int = count
 
-    type CommandPermissionsAttribute([<ParamArray>] perms : GuildPermission array) =
+    type CommandPermissionsAttribute([<ParamArray>] perms : ChannelPermission array) =
         inherit Attribute()
-        member val permissions : GuildPermission list = perms |> Array.toList
+        member val permissions : ChannelPermission list = perms |> Array.toList
 
     type CommandCallback = 
         delegate of CommandContext -> Async<IUserMessage list>
@@ -45,7 +45,7 @@ module Command =
             help : string
             moduleName : string
             parameters : int
-            permissions : GuildPermission list
+            permissions : ChannelPermission list
             conditions : CommandCondition list
         }
 
