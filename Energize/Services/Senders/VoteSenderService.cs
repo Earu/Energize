@@ -33,6 +33,10 @@ namespace Energize.Services.Senders
 
         private async Task AddReactions(IUserMessage msg, int choicecount)
         {
+            if (msg.Channel is SocketGuildChannel chan)
+                if (!chan.Guild.CurrentUser.GetPermissions(chan).AddReactions)
+                    return;
+
             for(int i = 0; i < choicecount; i++)
                 await msg.AddReactionAsync(new Emoji($"{i + 1}\u20e3"));
         }
@@ -57,7 +61,7 @@ namespace Energize.Services.Senders
             }
             catch (HttpException)
             {
-                this._Logger.Nice("Vote", ConsoleColor.Red, "Could not create vote, missing permissions");
+                this._Logger.Nice("Vote", ConsoleColor.Yellow, "Could not create vote, missing permissions");
             }
             catch (Exception ex)
             {

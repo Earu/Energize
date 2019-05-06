@@ -53,12 +53,15 @@ namespace Energize.Services.Senders
         {
             Task.Run(async () =>
             {
+                if (msg.Channel is SocketGuildChannel chan)
+                    if (!chan.Guild.CurrentUser.GetPermissions(chan).AddReactions)
+                        return;
                 foreach (string unicode in unicodestrings)
                     await msg.AddReactionAsync(new Emoji(unicode));
             }).ContinueWith(t =>
             {
                 if (t.IsFaulted)
-                    this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+                    this._Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create reactions, message was deleted or missing permissions");
             });
         }
 
@@ -84,7 +87,7 @@ namespace Energize.Services.Senders
             }
             else
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
                 return null;
             }
         }
@@ -111,7 +114,7 @@ namespace Energize.Services.Senders
             }
             else
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
                 return null;
             }
         }
@@ -131,7 +134,7 @@ namespace Energize.Services.Senders
             }
             else
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
                 return null;
             }
         }
@@ -151,7 +154,7 @@ namespace Energize.Services.Senders
             }
             else
             {
-                this._Logger.Nice("Paginator", ConsoleColor.Red, "Could not create paginator, missing permissions");
+                this._Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
                 return null;
             }
         }
