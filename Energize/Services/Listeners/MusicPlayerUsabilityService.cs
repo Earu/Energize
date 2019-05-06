@@ -52,6 +52,7 @@ namespace Energize.Services.Listeners
 
         private bool IsValidMessage(IMessage msg)
         {
+            if (msg.Channel is IDMChannel) return false;
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
             if (msg.Embeds.Count < 1) return false;
             if (msg.Embeds.Last().Type == EmbedType.Rich) return false;
@@ -84,12 +85,17 @@ namespace Energize.Services.Listeners
 
             try
             {
-                IUserMessage usermsg = (IUserMessage)msg;
-                await usermsg.AddReactionAsync(Emote);
+                SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
+                SocketGuild guild = chan.Guild;
+                if (guild.CurrentUser.GetPermissions(chan).AddReactions)
+                {
+                    IUserMessage usermsg = (IUserMessage)msg;
+                    await usermsg.AddReactionAsync(Emote);
+                }
             }
-            catch
+            catch(Exception ex)
             {
-                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable link usable: {ex.Message}");
             }
         }
 
@@ -103,21 +109,26 @@ namespace Energize.Services.Listeners
 
             try
             {
-                IUserMessage usermsg = (IUserMessage)msg;
-                if (usermsg.Reactions.ContainsKey(Emote))
+                SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
+                SocketGuild guild = chan.Guild;
+                if (guild.CurrentUser.GetPermissions(chan).AddReactions)
                 {
-                    ReactionMetadata metadata = usermsg.Reactions[Emote];
-                    if (!metadata.IsMe)
+                    IUserMessage usermsg = (IUserMessage)msg;
+                    if (usermsg.Reactions.ContainsKey(Emote))
+                    {
+                        ReactionMetadata metadata = usermsg.Reactions[Emote];
+                        if (!metadata.IsMe)
+                            await usermsg.AddReactionAsync(Emote);
+                    }
+                    else
+                    {
                         await usermsg.AddReactionAsync(Emote);
-                }
-                else
-                {
-                    await usermsg.AddReactionAsync(Emote);
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable link usable: {ex.Message}");
             }
         }
 
