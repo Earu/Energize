@@ -217,7 +217,7 @@ module Social =
         | _ -> None
 
     [<CommandParameters(1)>]
-    [<CommandPermissions(GuildPermission.ManageChannels)>]
+    [<CommandPermissions(ChannelPermission.ManageChannels)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
     let fame (ctx : CommandContext) = async {
