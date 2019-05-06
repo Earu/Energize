@@ -15,7 +15,7 @@ open Energize.Interfaces.Services.Database
 [<CommandModule("Administration")>]
 module Administration =
     [<CommandParameters(2)>]
-    [<CommandPermissions(GuildPermission.ManageRoles)>]
+    [<CommandPermissions(ChannelPermission.ManageRoles)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
     let op (ctx : CommandContext) = async {
@@ -96,7 +96,7 @@ module Administration =
     ]
 
     [<CommandParameters(2)>]
-    [<CommandPermissions(GuildPermission.ManageMessages)>]
+    [<CommandPermissions(ChannelPermission.ManageMessages)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype>,<amounttoremove>,<extra>")>]
     let clear (ctx : CommandContext) = async {
@@ -109,7 +109,7 @@ module Administration =
             | Some (_, cb) -> cb ctx
     }
 
-    [<CommandPermissions(GuildPermission.ManageMessages)>]
+    [<CommandPermissions(ChannelPermission.ManageMessages)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
     [<Command("delinvs", "Deletes messages containing discord invites (toggleable)", "delinvs <nothing>")>]
     let delInvs (ctx : CommandContext) = async {

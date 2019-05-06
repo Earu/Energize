@@ -330,9 +330,15 @@ module CommandHandler =
             if Context.isPrivate msg then
                 (true, [])
             else
-                let guild = (msg.Channel :?> IGuildChannel).Guild
-                let botUser = awaitResult (guild.GetCurrentUserAsync())
-                let botPerms = botUser.GuildPermissions 
+                let botPerms =  
+                    match msg.Channel with
+                    | :? SocketGuildChannel as chan -> 
+                        let botUser = chan.Guild.CurrentUser
+                        botUser.GetPermissions(chan)
+                    | _ ->
+                        let chan = msg.Channel :?> IGuildChannel
+                        let botUser = awaitResult (chan.Guild.GetCurrentUserAsync())
+                        botUser.GetPermissions(chan)
                 let hasAllPerms = cmd.permissions |> List.forall (fun perm -> botPerms.Has(perm))
                 let missingPerms = cmd.permissions |> List.filter (fun perm -> not (botPerms.Has(perm)))
                 (hasAllPerms, missingPerms)
