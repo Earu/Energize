@@ -343,13 +343,18 @@ namespace Energize.Services.Listeners
         {
             Task.Run(async () =>
             {
-                string[] unicodestrings = new string[] { "⏯", "🔁", "⬆", "⬇", "⏭" };
-                foreach (string unicode in unicodestrings)
-                    await msg.AddReactionAsync(new Emoji(unicode));
+                SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
+                SocketGuild guild = chan.Guild;
+                if (guild.CurrentUser.GetPermissions(chan).AddReactions)
+                {
+                    string[] unicodestrings = new string[] { "⏯", "🔁", "⬆", "⬇", "⏭" };
+                    foreach (string unicode in unicodestrings)
+                        await msg.AddReactionAsync(new Emoji(unicode));
+                }
             }).ContinueWith(t =>
             {
                 if (t.IsFaulted)
-                    this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not create reactions, message was deleted or missing permissions");
+                    this._Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not create player reactions: {t.Exception.Message}");
             });
         }
 
