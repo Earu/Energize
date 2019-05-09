@@ -245,18 +245,16 @@ namespace Energize.Services.Listeners
                 await ply.Lavalink.SetVolumeAsync(vol);
         }
 
-        public async Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan)
+        public async Task SeekTrackAsync(IVoiceChannel vc, ITextChannel chan, int amount)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply == null) return string.Empty;
+            if (ply == null) return;
+            if (!ply.IsPlaying) return;
 
-            if (ply.IsPlaying)
-            {
-                LavaTrack track = ply.CurrentTrack;
-                return await track.FetchLyricsAsync();
-            }
-
-            return "Nothing is playing";
+            LavaTrack track = ply.CurrentTrack;
+            TimeSpan total = track.Position.Add(TimeSpan.FromSeconds(amount));
+            if (total < track.Length && total >= TimeSpan.Zero)
+                await ply.Lavalink.SeekAsync(total);
         }
 
         public ServerStats LavalinkStats { get => this._LavaClient.ServerStats; }
