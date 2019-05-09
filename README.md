@@ -5,7 +5,7 @@ Energize⚡ is a robust **music** / **administration** / **social** bot featurin
 <img src="https://dl.dropboxusercontent.com/s/8k0lwukl9n1shki/new_attempt_2.png" width="25%">
 
 ### Structure
-Almost everything in Energize is a service, services are implemented under the **Energize** project under [Services](https://github.com/Earu/Energize/tree/master/Energize/Services). Because the command service and the markov service are in F# they have their own projects (**Energize.Commands** & **Energize.Markov**), and because they needed to interface with other projects **Energize.Interfaces** was born, it contains interfaces for services. Finally **Energize.Essentials** contains essential classes used in the other projects; see it as a toolbox.
+Almost everything in Energize is a service, services are implemented under the **Energize** project under [Services](https://github.com/Earu/Energize/tree/master/Energize/Services). Because the command service is in F# it has its own project (**Energize.Commands**), and because it needed to interface with other projects **Energize.Interfaces** was born, it contains interfaces for services. Finally **Energize.Essentials** contains essential classes used in the other projects; see it as a toolbox.
 
 ### Where are the commands ?
 You can find them [here](https://github.com/Earu/Energize/tree/master/Energize.Commands/Implementation).
