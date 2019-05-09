@@ -133,7 +133,7 @@ module Util =
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        await (music.DisconnectAllPlayersAsync())
+        music.DisconnectAllPlayersAsync().Wait()
         File.WriteAllText("restartlog.txt", ctx.message.Channel.Id.ToString())
         ctx.sendWarn None "Restarting..." |> ignore
         Process.GetCurrentProcess().Kill()
