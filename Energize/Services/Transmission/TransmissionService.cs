@@ -1,5 +1,7 @@
-﻿using Energize.Interfaces.Services;
+﻿using Energize.Essentials;
+using Energize.Interfaces.Services;
 using Octovisor.Client;
+using System;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Transmission
@@ -8,12 +10,13 @@ namespace Energize.Services.Transmission
     public class TransmissionService : ServiceImplementationBase, IServiceImplementation
     {
         private readonly OctoClient _OctoClient;
+        private readonly Logger _Logger;
 
-        public TransmissionService()
+        public TransmissionService(EnergizeClient client)
         {
-            Essentials.OctovisorConfig config = Essentials.Config.Instance.Octovisor;
+            OctovisorConfig config = Essentials.Config.Instance.Octovisor;
 
-            Config octoconfig = new Config
+            Octovisor.Client.Config octoconfig = new Octovisor.Client.Config
             {
                 Address = config.Address,
                 Port = config.Port,
@@ -21,10 +24,21 @@ namespace Energize.Services.Transmission
                 Token = config.Token,
             };
 
+            this._Logger = client.Logger;
             this._OctoClient = new OctoClient(octoconfig);
+            this._OctoClient.Log += log => this._Logger.Nice("Octovisor", ConsoleColor.Magenta, log);
         }
 
         public override async Task InitializeAsync()
-            => await this._OctoClient.ConnectAsync();
+        {
+            try
+            {
+                await this._OctoClient.ConnectAsync();
+            }
+            catch(Exception ex)
+            {
+                this._Logger.Nice("Octovisor", ConsoleColor.Red, ex.Message);
+            }
+        }
     }
 }

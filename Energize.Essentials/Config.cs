@@ -55,7 +55,6 @@ namespace Energize.Essentials
 
     public struct KeysConfig
     {
-        public string MashapeKey;
         public string TwitchKey;
     }
 

@@ -34,7 +34,7 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol);
 
-        Task<string> GetTrackLyricsAsync(IVoiceChannel vc, ITextChannel chan);
+        Task SeekTrackAsync(IVoiceChannel vc, ITextChannel chan, int amount);
 
         ServerStats LavalinkStats { get; }
 

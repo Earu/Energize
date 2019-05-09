@@ -2,7 +2,6 @@
 
 open Energize.Commands.Command
 open System.Text.RegularExpressions
-open System
 open Energize.Commands.Context
 open Discord
 open Energize.Interfaces.Services.Listeners
@@ -172,21 +171,23 @@ module Voice =
             try
                 let vol = int ctx.arguments.[0]
                 await (music.SetTrackVolumeAsync(vc, ctx.message.Channel :?> ITextChannel, vol))
-                [ ctx.sendOK None (sprintf "Set the volume to %d" vol) ]
+                [ ctx.sendOK None (sprintf "Setting the volume to %d" vol) ]
             with _ ->
                 [ ctx.sendWarn None "Incorrect volume, expecting a number" ]
         )
     }
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("lyrics", "Tries to get the current track lyrics if any", "lyrics <nothing>")>]
-    let lyrics (ctx : CommandContext) = async {
+    [<CommandParameters(1)>]
+    [<Command("seek", "Forwards the currently playing track by the amount of seconds specified", "seek <seconds>")>]
+    let seek (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let lyrics = awaitResult (music.GetTrackLyricsAsync(vc, ctx.message.Channel :?> ITextChannel))
-            if String.IsNullOrWhiteSpace lyrics then
-                [ ctx.sendWarn None "Could not find the lyrics for the current track" ]
-            else
-                [ ctx.sendOK None lyrics ]
+            try
+                let secs = int ctx.arguments.[0]
+                await (music.SeekTrackAsync(vc, ctx.message.Channel :?> ITextChannel, secs))
+                [ ctx.sendOK None (sprintf "Forwarding the current track by %ds" secs) ]
+            with _ ->
+                [ ctx.sendWarn None "Incorrect amount of seconds, expecting a number" ]
         )
     }
 

@@ -70,7 +70,6 @@ module Social =
                 [ ctx.sendWarn None help ]
     }
 
-    type LoveObj = { percentage : int; result : string }
     [<CommandParameters(2)>]
     [<Command("love", "Gets how compatible two users are", "love <user|userid>,<user|userid>")>]
     let love (ctx : CommandContext) = async {
@@ -79,17 +78,17 @@ module Social =
         return
             match (user1, user2) with
             | (Some u1, Some u2) ->
-                let endpoint =
-                    let u1arg = sprintf "fname=%s&" u1.Username
-                    let u2arg = sprintf "sname=%s" u2.Username
-                    sprintf "https://love-calculator.p.mashape.com/getPercentage?%s%s" u1arg u2arg
-                let json =
-                    let cb (req : HttpWebRequest) =
-                        req.Headers.[System.Net.HttpRequestHeader.Accept] <- "text/plain"
-                        req.Headers.["X-Mashape-Key"] <- Config.Instance.Keys.MashapeKey
-                    awaitResult (HttpClient.GetAsync(endpoint, ctx.logger, null, Action<HttpWebRequest>(cb)))
-                let love = JsonPayload.Deserialize<LoveObj>(json, ctx.logger)
-                let display = sprintf "%s & %s\n💓: \t%dpts\n%s" u1.Mention u2.Mention love.percentage love.result
+                let percentage = ctx.random.Next(0, 101)
+                let result = 
+                    match percentage with
+                    | p when p < 10 -> "Ouch! Not gonna work it seems!"
+                    | p when p >= 10 && p < 30 -> "Good friends!"
+                    | p when p >= 30 && p < 50 -> "Friends ... with benefits?"
+                    | p when p >= 50 && p < 70 -> "A good couple!"
+                    | p when p >= 70 && p < 100 -> "Deeply matching souls."
+                    | p when p >= 100 -> "The ultimate couple."
+                    | _ -> "?"
+                let display = sprintf "%s & %s\n💓: \t%d%c\n%s" u1.Mention u2.Mention percentage '%' result
                 [ ctx.sendOK None display ]
             | _ ->
                 [ ctx.sendWarn None "Could not find any user(s) for your input" ]

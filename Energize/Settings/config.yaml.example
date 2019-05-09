@@ -20,7 +20,6 @@ Octovisor:
   Token: coolpassword
   ProcessName: Energize
 Keys:
-  MashapeKey: mashape api token
   TwitchKey: twitch api token
 URIs:
   TwitchURL: https://www.twitch.tv/earuio
