@@ -107,7 +107,7 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             let textChan = ctx.message.Channel :?> ITextChannel
             let ply = awaitResult (music.ConnectAsync(vc, textChan))
-            let msg = awaitResult (music.SendPlayerAsync(ply))
+            let msg = awaitResult (music.SendPlayerAsync(ply, null, ctx.message.Channel))
             match msg with
             | null -> 
                 [ ctx.sendOK None "Nothing is playing" ]
