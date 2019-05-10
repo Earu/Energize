@@ -482,28 +482,37 @@ namespace Energize.Services.Listeners
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
-        [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
-        public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
+        private SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
         {
-            SocketVoiceChannel vc = null;
-            SocketGuildUser guser = (SocketGuildUser)user;
-            SocketGuildUser botuser = guser.Guild.CurrentUser;
-            if (botuser == null)
+            SocketVoiceChannel vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+            SocketGuildUser botuser = vc.Guild.CurrentUser;
+            if (oldstate.VoiceChannel != botuser.VoiceChannel
+                && newstate.VoiceChannel != botuser.VoiceChannel) // unrelated channel activities
             {
-                vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+                return null;
+            }
+
+            if (newstate.VoiceChannel != null)
+            {
+                if (user.Id == botuser.Id) // we moved of channel
+                    return newstate.VoiceChannel;
+
+                if (botuser.VoiceChannel == newstate.VoiceChannel) // a user joined our channel
+                    return newstate.VoiceChannel;
             }
             else
             {
-                if (user.Id == Config.Instance.Discord.BotID && oldstate.VoiceChannel != null && newstate.VoiceChannel != null) // bot moved of channel
-                    vc = newstate.VoiceChannel;
-                else if (oldstate.VoiceChannel != null && newstate.VoiceChannel != null && newstate.VoiceChannel == botuser.VoiceChannel) // user moved to our channel
-                    vc = newstate.VoiceChannel;
-                else if (botuser.VoiceChannel != null && oldstate.VoiceChannel != botuser.VoiceChannel && newstate.VoiceChannel != botuser.VoiceChannel) // other channels activies
-                    vc = null;
-                else // dc and other behaviors
-                    vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
+                if (oldstate.VoiceChannel != null && user.Id != botuser.Id) // user disconnected
+                    return oldstate.VoiceChannel;
             }
 
+            return vc;
+        }
+
+        [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
+        public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
+        {
+            SocketVoiceChannel vc = this.GetVoiceChannel(user, oldstate, newstate);
             if (vc == null) return;
             if (vc.Users.Count(x => !x.IsBot) < 1)
                 await this.DisconnectAsync(vc);
