@@ -326,7 +326,7 @@ namespace Energize.Services.Listeners
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             Embed embed = await this.GetNewTrackEmbed(track, msg);
 
-            return await this._MessageSender.Send(ply.TextChannel, embed);
+            return await this._MessageSender.Send(msg, embed);
         }
 
         public async Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
@@ -334,7 +334,7 @@ namespace Energize.Services.Listeners
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             Embed embed = await this.GetNewTrackEmbed(track);
 
-            return await this._MessageSender.Send(ply.TextChannel, embed);
+            return await this._MessageSender.Send(chan, embed);
         }
 
         private void AddPlayerReactions(IUserMessage msg)
@@ -356,7 +356,7 @@ namespace Energize.Services.Listeners
             });
         }
 
-        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null)
+        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null, IChannel chan = null)
         {
             track = track ?? ply.CurrentTrack;
 
@@ -373,7 +373,7 @@ namespace Energize.Services.Listeners
 
             if (track == null) return null;
 
-            ply.TrackPlayer.Message = await this._MessageSender.Send(ply.TextChannel, ply.TrackPlayer.Embed);
+            ply.TrackPlayer.Message = await this._MessageSender.Send(chan ?? ply.TextChannel, ply.TrackPlayer.Embed);
             this.AddPlayerReactions(ply.TrackPlayer.Message);
             return ply.TrackPlayer.Message;
         }
@@ -524,7 +524,7 @@ namespace Energize.Services.Listeners
             if (this._Initialized) return;
             Configuration config = new Configuration
             {
-                ReconnectInterval = TimeSpan.FromSeconds(15.0),
+                ReconnectInterval = TimeSpan.FromSeconds(15),
                 ReconnectAttempts = 3,
                 Host = Config.Instance.Lavalink.Host,
                 Port = Config.Instance.Lavalink.Port,
@@ -532,6 +532,8 @@ namespace Energize.Services.Listeners
                 SelfDeaf = false,
                 BufferSize = 8192,
                 PreservePlayers = true,
+                AutoDisconnect = false,
+                InactivityTimeout = TimeSpan.FromMinutes(3),
             };
 
             this.LavaRestClient = new LavaRestClient(config);
@@ -555,7 +557,7 @@ namespace Energize.Services.Listeners
             foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
             {
                 SocketGuild guild = clientshard.GetGuild(ply.Key);
-                if (guild != null && ply.Value.TextChannel != null)
+                if (guild != null)
                 {
                     if (!ply.Value.IsPlaying) continue;
 
