@@ -13,17 +13,26 @@ using Energize.Essentials.MessageConstructs;
 using Energize.Interfaces.Services.Senders;
 using System.Net.WebSockets;
 using Discord.Net;
+using System.Timers;
 
 namespace Energize.Services.Listeners
 {
     // Wrapper class to gain more control over Victoria, and try to prevent weird behaviors
     internal class EnergizePlayer : IEnergizePlayer
     {
+        public event Action BecameInactive;
+
+        private readonly double _TimeToLive;
+
+        private Timer _Timer;
+
         internal EnergizePlayer(LavaPlayer ply)
         {
             this.Lavalink = ply;
             this.IsLooping = false;
             this.Queue = new LavaQueue<LavaTrack>();
+            this._TimeToLive = 3 * 60 * 1000;
+            this.RefreshTimer(this._TimeToLive);
         }
 
         public LavaPlayer Lavalink { get; set; }
@@ -39,6 +48,26 @@ namespace Energize.Services.Listeners
         public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
         public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
+
+        private void RefreshTimer(double interval)
+        {
+            if (this._Timer != null)
+            {
+                this._Timer.Stop();
+                this._Timer.Close();
+                this._Timer = null;
+            }
+
+            this._Timer = new Timer(interval)
+            {
+                AutoReset = false,
+            };
+            this._Timer.Elapsed += (_, __) => this.BecameInactive?.Invoke();
+            this._Timer.Start();
+        }
+
+        public void Refresh(double additionaltime = 0)
+            => this.RefreshTimer(additionaltime + this._TimeToLive);
     }
 
     [Service("Music")]
@@ -105,6 +134,7 @@ namespace Energize.Services.Listeners
             {
                 ply = new EnergizePlayer(await this._LavaClient.ConnectAsync(vc, chan));
                 this._Players.Add(vc.GuildId, ply);
+                ply.BecameInactive += async () => await this.DisconnectAsync(vc);
             }
 
             if (vc.Id != ply.Lavalink.VoiceChannel.Id)
@@ -146,6 +176,7 @@ namespace Energize.Services.Listeners
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
+                ply.Refresh(track.Length.TotalMilliseconds);
                 return await this.SendPlayerAsync(ply, track);
             }
         }
@@ -176,6 +207,7 @@ namespace Energize.Services.Listeners
                         ply.Queue.Enqueue(tr);
 
                 await ply.Lavalink.PlayAsync(track, false);
+                ply.Refresh(track.Length.TotalMilliseconds);
                 return await this.SendPlayerAsync(ply, track);
             }
         }
@@ -214,7 +246,10 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying && !ply.IsPaused)
+            {
                 await ply.Lavalink.PauseAsync();
+                ply.Refresh();
+            }
         }
 
         public async Task ResumeTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -223,7 +258,10 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying && ply.IsPaused)
+            {
                 await ply.Lavalink.ResumeAsync();
+                ply.Refresh((ply.CurrentTrack.Length - ply.CurrentTrack.Position).TotalMilliseconds);
+            }
         }
 
         public async Task SkipTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -232,7 +270,10 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying)
+            {
                 await ply.Lavalink.StopAsync();
+                ply.Refresh();
+            }
         }
 
         public async Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol)
@@ -385,6 +426,7 @@ namespace Energize.Services.Listeners
             {
                 track.ResetPosition();
                 await ply.Lavalink.PlayAsync(track, false);
+                ply.Refresh(track.Length.TotalMilliseconds);
             }
             else
             {
@@ -392,6 +434,7 @@ namespace Energize.Services.Listeners
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
+                    ply.Refresh(newtrack.Length.TotalMilliseconds);
                 }
                 else
                 {
@@ -482,6 +525,28 @@ namespace Energize.Services.Listeners
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
+        [Event("ShardReady")]
+        public async Task OnShardReady(DiscordSocketClient _)
+        {
+            if (this._Initialized) return;
+            Configuration config = new Configuration
+            {
+                ReconnectInterval = TimeSpan.FromSeconds(15),
+                ReconnectAttempts = 3,
+                Host = Config.Instance.Lavalink.Host,
+                Port = Config.Instance.Lavalink.Port,
+                Password = Config.Instance.Lavalink.Password,
+                SelfDeaf = false,
+                BufferSize = 8192,
+                PreservePlayers = true,
+                AutoDisconnect = false,
+            };
+
+            this.LavaRestClient = new LavaRestClient(config);
+            await this._LavaClient.StartAsync(this._Client, config);
+            this._Initialized = true;
+        }
+
         private SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldstate, SocketVoiceState newstate)
         {
             SocketVoiceChannel vc = oldstate.VoiceChannel ?? newstate.VoiceChannel;
@@ -516,29 +581,6 @@ namespace Energize.Services.Listeners
             if (vc == null) return;
             if (vc.Users.Count(x => !x.IsBot) < 1)
                 await this.DisconnectAsync(vc);
-        }
-
-        [Event("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient _)
-        {
-            if (this._Initialized) return;
-            Configuration config = new Configuration
-            {
-                ReconnectInterval = TimeSpan.FromSeconds(15),
-                ReconnectAttempts = 3,
-                Host = Config.Instance.Lavalink.Host,
-                Port = Config.Instance.Lavalink.Port,
-                Password = Config.Instance.Lavalink.Password,
-                SelfDeaf = false,
-                BufferSize = 8192,
-                PreservePlayers = true,
-                AutoDisconnect = false,
-                InactivityTimeout = TimeSpan.FromMinutes(3),
-            };
-
-            this.LavaRestClient = new LavaRestClient(config);
-            await this._LavaClient.StartAsync(this._Client, config);
-            this._Initialized = true;
         }
 
         private bool IsDiscordClose(Exception ex)
