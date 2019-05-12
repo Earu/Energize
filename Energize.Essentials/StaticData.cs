@@ -7,6 +7,7 @@ namespace Energize.Essentials
     public class StaticData
     {
         public Dictionary<string, string[]> SocialActions;
+        public List<string> Tips;
         
         public string AsciiArt { get; private set; }
         public static StaticData Instance { get; } = Load();
