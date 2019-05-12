@@ -22,6 +22,6 @@ namespace Energize.Interfaces.Services.Listeners
         ITextChannel TextChannel { get; }
         int Volume { get; }
 
-        void Refresh(double additionaltime = 0);
+        void Refresh(LavaTrack track = null);
     }
 }
