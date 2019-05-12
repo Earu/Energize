@@ -62,12 +62,31 @@ namespace Energize.Services.Listeners
             {
                 AutoReset = false,
             };
-            this._Timer.Elapsed += (_, __) => this.BecameInactive?.Invoke();
+            this._Timer.Elapsed += (_, __) =>
+            {
+                if (this.IsPlaying && this.CurrentTrack.IsStream) return;
+                this.BecameInactive?.Invoke();
+            };
             this._Timer.Start();
         }
 
-        public void Refresh(double additionaltime = 0)
-            => this.RefreshTimer(additionaltime + this._TimeToLive);
+        public void Refresh(LavaTrack track = null)
+        {
+            if (track == null)
+            {
+                this.RefreshTimer(this._TimeToLive);
+                return;
+            }
+
+            if (track.IsStream)
+                this.RefreshTimer(double.MaxValue);
+            else
+            {
+                double len = track.Length.TotalMilliseconds;
+                double pos = track.Position.TotalMilliseconds;
+                this.RefreshTimer((len - pos) + this._TimeToLive);
+            }
+        }
     }
 
     [Service("Music")]
@@ -176,7 +195,7 @@ namespace Energize.Services.Listeners
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track.Length.TotalMilliseconds);
+                ply.Refresh(track);
                 return await this.SendPlayerAsync(ply, track);
             }
         }
@@ -207,7 +226,7 @@ namespace Energize.Services.Listeners
                         ply.Queue.Enqueue(tr);
 
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track.Length.TotalMilliseconds);
+                ply.Refresh(track);
                 return await this.SendPlayerAsync(ply, track);
             }
         }
@@ -260,7 +279,7 @@ namespace Energize.Services.Listeners
             if (ply.IsPlaying && ply.IsPaused)
             {
                 await ply.Lavalink.ResumeAsync();
-                ply.Refresh((ply.CurrentTrack.Length - ply.CurrentTrack.Position).TotalMilliseconds);
+                ply.Refresh(ply.CurrentTrack);
             }
         }
 
@@ -426,7 +445,7 @@ namespace Energize.Services.Listeners
             {
                 track.ResetPosition();
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track.Length.TotalMilliseconds);
+                ply.Refresh(track);
             }
             else
             {
@@ -434,7 +453,7 @@ namespace Energize.Services.Listeners
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
-                    ply.Refresh(newtrack.Length.TotalMilliseconds);
+                    ply.Refresh(newtrack);
                 }
                 else
                 {
