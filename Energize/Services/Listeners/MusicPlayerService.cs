@@ -32,7 +32,7 @@ namespace Energize.Services.Listeners
             this.IsLooping = false;
             this.Queue = new LavaQueue<LavaTrack>();
             this._TimeToLive = 3 * 60 * 1000;
-            this.RefreshTimer(this._TimeToLive);
+            this.RefreshTimer(this._TimeToLive, false);
         }
 
         public LavaPlayer Lavalink { get; set; }
@@ -49,7 +49,7 @@ namespace Energize.Services.Listeners
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
         public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
 
-        private void RefreshTimer(double interval)
+        private void RefreshTimer(double interval, bool isstream)
         {
             if (this._Timer != null)
             {
@@ -57,6 +57,8 @@ namespace Energize.Services.Listeners
                 this._Timer.Close();
                 this._Timer = null;
             }
+
+            if (isstream) return;
 
             this._Timer = new Timer(interval)
             {
@@ -74,17 +76,17 @@ namespace Energize.Services.Listeners
         {
             if (track == null)
             {
-                this.RefreshTimer(this._TimeToLive);
+                this.RefreshTimer(this._TimeToLive, false);
                 return;
             }
 
             if (track.IsStream)
-                this.RefreshTimer(double.MaxValue);
+                this.RefreshTimer(0, true);
             else
             {
                 double len = track.Length.TotalMilliseconds;
                 double pos = track.Position.TotalMilliseconds;
-                this.RefreshTimer((len - pos) + this._TimeToLive);
+                this.RefreshTimer((len - pos) + this._TimeToLive, false);
             }
         }
     }
