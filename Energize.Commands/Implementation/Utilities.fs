@@ -74,6 +74,29 @@ module Util =
     }
 
     [<CommandParameters(1)>]
+    [<Command("bug", "Report a bug to the developer","bug <sentence>")>]
+    let bug = feedback
+
+    [<CommandParameters(2)>]
+    [<CommandConditions(CommandCondition.OwnerOnly)>]
+    [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid>,<sentence>")>]
+    let sendMsg (ctx : CommandContext) = async {
+        return
+            try
+                let chan = ctx.client.GetChannel(uint64 ctx.arguments.[0])
+                match chan with
+                | null -> 
+                    [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
+                | _ ->
+                    let header = "dev message (answer with the bug or feedback commands)"
+                    awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(',', ctx.arguments.[1..])))
+                    [ ctx.sendOK None "Message sent successfully" ]
+            with ex ->
+                printfn "%s" (ex.ToString())
+                [ ctx.sendWarn None "Expected a channel ID" ]
+    }
+
+    [<CommandParameters(1)>]
     [<CommandConditions(CommandCondition.OwnerOnly)>]
     [<Command("to", "Timing out test", "to <seconds>")>]
     let timeOut (ctx : CommandContext) = async {

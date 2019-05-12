@@ -1,4 +1,4 @@
-{
+﻿{
   "SocialActions": {
     "hug": [
       "<origin> comes up close to <user> and hugs them",
@@ -65,5 +65,17 @@
       "<origin> pulls out a weird flex on <user>",
       "<origin> starts flexing really oddly on <user>"
     ]
-  }
+  },
+  "Tips": [
+    "You can use the '**$me**', '**$random**', '**$admin**', '**$last**' tags to use commands that require mentioning users faster.",
+    "Deleting your own message will make the bot delete the related command message as well!",
+    "When you see a ⏭ emote added under a video, join a voice channel and click it, the bot will then play the video!",
+    "The bot can play variety of different audios, try playing something from Twitch or Youtube!",
+    "You can report bugs or make feature request with the '**bug**' and '**feedback**' commands.",
+    "Commands that are owner only can only be used by the developer of the bot.",
+    "You can execute commands by mentioning the bot instead of using its prefix.",
+    "Don't want anyone to see what commands you are trying out? Test them in DM!",
+    "Made a typo in the command? Just edit your message, the bot will correct its result!",
+    "Check the last changes made to the bot using the '**lastchanges**' command."
+  ]
 }

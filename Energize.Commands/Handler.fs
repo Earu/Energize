@@ -76,7 +76,11 @@ module CommandHandler =
                 [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
                     let cmdsDisplay = 
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
-                    builder.WithFields(ctx.embedField moduleName (String.Join(',', cmdsDisplay)) true)
+                    let tip = StaticData.Instance.Tips.[ctx.random.Next(0, StaticData.Instance.Tips.Count)]
+                    builder.WithFields([
+                        ctx.embedField moduleName (String.Join(',', cmdsDisplay)) false
+                        ctx.embedField "Tip" tip false
+                    ])
                     |> ignore
                 ))) ]
     }
@@ -254,12 +258,14 @@ module CommandHandler =
         | None -> ()
     
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
-        let webhook = state.serviceManager.GetService<IWebhookSenderService>("Webhook")
         let realEx = match ex.InnerException with null -> ex | exIn -> exIn
         state.logger.Warning(realEx.ToString())
         
-        let err = sprintf "Something went wrong when using \'%s\' a report has been sent" cmd.name
-        let msgs = [ awaitResult (state.messageSender.Warning(msg, "internal Error", err)) ]
+        let caseId = Guid.NewGuid()
+        let err = 
+            (sprintf "Something went wrong when using \'**%s**\' a report has been sent.\n" cmd.name)
+            + "If you wish to contact the developer use the \'**bug**\' or \'**feedback**\' commands, don't forget to mention your case id!" 
+        let msgs = [ awaitResult (state.messageSender.Warning(msg, sprintf "internal error | case id: %s" (caseId.ToString()), err)) ]
         registerCmdCacheEntry msg.Id msgs
         
         let args = input.Trim()
@@ -268,7 +274,13 @@ module CommandHandler =
         let source = sprintf "@File: %s | Method: %s | Line: %d" (frame.GetFileName()) (frame.GetMethod().Name) (frame.GetFileLineNumber())
         let builder = EmbedBuilder()
         builder
-            .WithDescription(sprintf "**USER:** %s\n**COMMAND:** %s\n**ARGS:** %s\n**ERROR:** %s" (msg.Author.ToString()) cmd.name argDisplay realEx.Message)
+            .WithTitle("Bug Report")
+            .WithField("User", msg.Author)
+            .WithField("Channel ID", msg.Channel.Id)
+            .WithField("Command", cmd.name)
+            .WithField("Arguments", argDisplay)
+            .WithField("Error", realEx.Message)
+            .WithField("Case ID", caseId)
             .WithTimestamp(msg.CreatedAt)
             .WithFooter(source)
             .WithColor(state.messageSender.ColorDanger)
@@ -277,7 +289,7 @@ module CommandHandler =
         | null -> ()
         | c ->
             let chan = c :> IChannel :?> ITextChannel
-            awaitIgnore (webhook.SendEmbed(chan, builder.Build(), msg.Author.Username, msg.Author.GetAvatarUrl(ImageFormat.Auto))) 
+            awaitIgnore (state.messageSender.Send(chan, builder.Build())) 
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (ctx : CommandContext) : Task<Task> =
         async {
