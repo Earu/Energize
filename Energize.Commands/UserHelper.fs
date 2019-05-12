@@ -142,6 +142,9 @@ module UserHelper =
                 | Some user -> Some user
                 | None -> findUserById ctx input withId
 
+    let getHandleNames =
+        handles |> List.map (fun (name, _) -> name)
+
     let getOrCreateRole (user : IGuildUser) (name : string) : IRole = 
         match user.Guild.Roles |> Seq.tryFind (fun role -> role.Name.Equals(name)) with
         | Some role -> role
