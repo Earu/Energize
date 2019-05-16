@@ -98,9 +98,9 @@ namespace Energize.Essentials
         }
 
         private static Config LoadConfig()
-            => DeserializeYAML<Config>("Energize/Settings/config.yaml");
+            => DeserializeYAML<Config>("Settings/config.yaml");
 
         private static Blacklist LoadBlacklist()
-            => DeserializeYAML<Blacklist>("Energize/Settings/blacklist.yaml");
+            => DeserializeYAML<Blacklist>("Settings/blacklist.yaml");
     }
 }
