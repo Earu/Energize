@@ -3,11 +3,22 @@ import React from 'react';
 export default class Menu extends React.Component {
     displayName = Menu.name;
 
+    fetchCommands()
+    {
+        fetch("./api/commands", {
+            headers: {
+                'content-type': 'application/json; charset=UTF-8'
+            },
+            method: 'GET'
+        }).then(data => console.log(data));
+    }
+
     render() {
+        this.fetchCommands();
         return (
             <div>
                 <h2>Documentation</h2>
-                <h4>Here you will documentation for Energize various commands and features.</h4> 
+                <h4>Here you will find documentation for Energize various commands and features.</h4> 
                 <br />
                 <p>
                     Energize primary feature is <strong>music</strong>, streaming music <strong>through a discord audio channel</strong> more specifically.
