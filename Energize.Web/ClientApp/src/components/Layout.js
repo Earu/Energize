@@ -1,4 +1,7 @@
 ﻿import React from 'react';
+import Row from 'react-bootstrap/lib/Row';
+import Col from 'react-bootstrap/lib/Col';
+
 import Header from './Header';
 import Menu from './Menu';
 
@@ -8,15 +11,13 @@ export default class Layout extends React.Component {
     render() {
         return (
             <div>
-                <Header />
+                <Header/>
                 <div className="container-fluid">
-                    <div className="row">
-                        <div className="col-md-12 spacer"/>
-                        <div className="col-md-1 menu"><Menu /></div>
-                        <div className="col-md-11">
-                            {this.props.children}
-                        </div>
-                    </div>
+                    <Row>
+                        <Col md={12} className="spacer"/>
+                        <Col md={1}  className="menu"><Menu /></Col>
+                        <Col md={11}>{this.props.children}</Col>
+                    </Row>
                 </div>
             </div>
         );
