@@ -2,15 +2,16 @@ import React from 'react';
 
 export default class Menu extends React.Component {
     displayName = Menu.name;
+    commandElements = <div></div>;
 
-    fetchCommands()
+    async fetchCommands()
     {
-        fetch("./api/commands", {
-            headers: {
-                'content-type': 'application/json; charset=UTF-8'
-            },
-            method: 'GET'
-        }).then(data => console.log(data));
+        let response = await fetch("./api/commands", {
+                method: 'GET'
+            });
+
+        let cmds = await response.json();
+        this.commandElements = cmds.map(cmd => <strong>{cmd.name}</strong>);
     }
 
     render() {
@@ -26,6 +27,7 @@ export default class Menu extends React.Component {
                     Along with music features, there are some <strong>moderation, NSFW and social</strong> features.<br />
                 </p>
                 <h3>Commands</h3>
+                {this.commandElements}
             </div>
             );
     }
