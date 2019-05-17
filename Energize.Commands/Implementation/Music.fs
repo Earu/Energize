@@ -102,7 +102,7 @@ module Voice =
         })
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("playing", "Shows the song currently playing", "playing <nothing>")>]
+    [<Command("playing", "Shows the track currently playing", "playing <nothing>")>]
     let playing (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             let textChan = ctx.message.Channel :?> ITextChannel
@@ -112,6 +112,16 @@ module Voice =
             | null -> 
                 [ ctx.sendOK None "Nothing is playing" ]
             | _ -> [ msg ]
+        )
+    }
+
+    [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("empty", "Empties the track queue", "empty <nothing>")>]
+    let empty (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let textChan = ctx.message.Channel :?> ITextChannel
+            await (music.ClearTracksAsync(vc, textChan))
+            [ ctx.sendOK None "Emptied the track queue" ]
         )
     }
 
