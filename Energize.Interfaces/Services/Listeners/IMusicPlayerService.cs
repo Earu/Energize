@@ -42,9 +42,9 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, IMessage msg, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack track);
 
-        Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null, IChannel chan = null);
     }

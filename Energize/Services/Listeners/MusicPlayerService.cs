@@ -144,44 +144,65 @@ namespace Energize.Services.Listeners
         {
             if (!this.SanitizeCheck(vc, chan)) return null;
 
-            IEnergizePlayer ply;
-            if (this._Players.ContainsKey(vc.GuildId))
+            try
             {
-                ply = this._Players[vc.GuildId];
-                if (ply.Lavalink == null) // in case we lose the player object
-                    ply.Lavalink = await this._LavaClient.ConnectAsync(vc, chan);
+                IEnergizePlayer ply;
+                if (this._Players.ContainsKey(vc.GuildId))
+                {
+                    ply = this._Players[vc.GuildId];
+                    if (ply.Lavalink == null) // in case we lose the player object
+                    {
+                        ply.Lavalink = await this._LavaClient.ConnectAsync(vc, chan);
+                    }
+                }
+                else
+                {
+                    ply = new EnergizePlayer(await this._LavaClient.ConnectAsync(vc, chan));
+                    this._Players.Add(vc.GuildId, ply);
+                    ply.BecameInactive += async () => await this.DisconnectAsync(vc);
+                }
+
+                if (vc.Id != ply.Lavalink.VoiceChannel.Id)
+                    await this._LavaClient.MoveChannelsAsync(vc);
+
+                return ply;
             }
-            else
+            catch(ObjectDisposedException)
             {
-                ply = new EnergizePlayer(await this._LavaClient.ConnectAsync(vc, chan));
-                this._Players.Add(vc.GuildId, ply);
-                ply.BecameInactive += async () => await this.DisconnectAsync(vc);
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not connect, threading issue from Discord.NET");
+                await this.DisconnectAsync(vc);
+
+                return null;
             }
-
-            if (vc.Id != ply.Lavalink.VoiceChannel.Id)
-                await this._LavaClient.MoveChannelsAsync(vc);
-
-            return ply;
         }
 
         public async Task DisconnectAsync(IVoiceChannel vc)
         {
             if (vc == null) return;
 
-            await this._LavaClient.DisconnectAsync(vc);
-            if (this._Players.ContainsKey(vc.GuildId))
+            try
             {
-                IEnergizePlayer ply = this._Players[vc.GuildId];
-                this._Players.Remove(vc.GuildId);
-                if (ply.TrackPlayer != null)
-                    await ply.TrackPlayer.DeleteMessage();
+                await this._LavaClient.DisconnectAsync(vc);
+                if (this._Players.ContainsKey(vc.GuildId))
+                {
+                    IEnergizePlayer ply = this._Players[vc.GuildId];
+                    this._Players.Remove(vc.GuildId);
+                    if (ply.TrackPlayer != null)
+                        await ply.TrackPlayer.DeleteMessage();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                if (this._Players.ContainsKey(vc.GuildId))
+                    this._Players.Remove(vc.GuildId);
+                this._Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not disconnect, threading issue from Discord.NET");
             }
         }
 
         public async Task DisconnectAllPlayersAsync()
         {
             foreach (KeyValuePair<ulong, IEnergizePlayer> ply in this._Players)
-                await this._LavaClient.DisconnectAsync(ply.Value.VoiceChannel);
+                await this.DisconnectAsync(ply.Value.VoiceChannel);
         }
 
         public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
@@ -192,7 +213,7 @@ namespace Energize.Services.Listeners
             if (ply.IsPlaying)
             {
                 ply.Queue.Enqueue(track);
-                return await this.SendNewTrackAsync(vc, chan, track);
+                return await this.SendNewTrackAsync(chan, track);
             }
             else
             {
@@ -383,17 +404,15 @@ namespace Energize.Services.Listeners
                 .Build();
         }
 
-        public async Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, IMessage msg, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack track)
         {
-            IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             Embed embed = await this.GetNewTrackEmbed(track, msg);
 
             return await this._MessageSender.Send(msg, embed);
         }
 
-        public async Task<IUserMessage> SendNewTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track)
         {
-            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             Embed embed = await this.GetNewTrackEmbed(track);
 
             return await this._MessageSender.Send(chan, embed);
