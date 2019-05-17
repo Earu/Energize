@@ -50,13 +50,26 @@ header > img {
 }
 
 .links {
-    padding: 5px 20px;
+    padding: 0 20px;
 }
 
 .links > li {
+    margin: 0 auto;
     margin-bottom: 10px;
 }
 
 .links > li:hover {
     color: #A51C15;
+}
+
+.command {
+    background-color: #EDEDED;
+    border-left: 2px solid #A51C15;
+    padding: 1%;
+    margin-bottom: 1%;
+}
+
+.content {
+    overflow-y: scroll;
+    height: 90vh;
 }

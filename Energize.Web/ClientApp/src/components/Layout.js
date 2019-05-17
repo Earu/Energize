@@ -16,7 +16,7 @@ export default class Layout extends React.Component {
                     <Row>
                         <Col md={12} className="spacer"/>
                         <Col md={1}  className="menu"><Menu /></Col>
-                        <Col md={11}>{this.props.children}</Col>
+                        <Col md={11}><div className="content">{this.props.children}</div></Col>
                     </Row>
                 </div>
             </div>
