@@ -3,6 +3,7 @@ using Energize.Interfaces.Services;
 using Energize.Services.Listeners;
 using Energize.Services.Transmission.TransmissionModels;
 using Octovisor.Client;
+using Octovisor.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +32,11 @@ namespace Energize.Services.Transmission
 
             this.Logger = client.Logger;
             this.OctoClient = new OctoClient(octoConfig);
-            this.OctoClient.Log += log => this.Logger.Nice("Octovisor", ConsoleColor.Magenta, log);
+            this.OctoClient.Log += log =>
+            {
+                if (log.Severity == LogSeverity.Info)
+                    this.Logger.Nice("Octovisor", ConsoleColor.Magenta, log.Content);
+            };
             this.OctoClient.OnTransmission<object, IEnumerable<Command>>("commands", (proc, _) =>
             {
                 var commandService = this.ServiceManager.GetService<CommandHandlingService>("Commands");
