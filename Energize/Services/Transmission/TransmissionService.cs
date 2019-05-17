@@ -47,6 +47,7 @@ namespace Energize.Services.Transmission
                     Commands = commandService.RegisteredCommands.ToList().Select(kv => Command.ToModel(kv.Value)).ToList()
                 };
 
+                this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Sent command information to process \'{proc}\'");
                 return cmdInfo;
             });
         }

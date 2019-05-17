@@ -74,6 +74,11 @@ export default class Menu extends React.Component {
             if (search !== null) {
                 search = search.toLowerCase();
                 elements = elements.filter(cmd => cmd.name.includes(search) || cmd.moduleName.toLowerCase().includes(search));
+                let result = <span><strong>{elements.length}</strong> commands found.</span>;
+                ReactDOM.render(result, document.getElementById('searchResult'));
+            }
+            else {
+                ReactDOM.render(<span/>, document.getElementById('searchResult'));
             }
 
             elements = elements.map(cmd => (
@@ -93,6 +98,9 @@ export default class Menu extends React.Component {
 
     onSearch = (e) => {
         let search = e.target.value;
+        if (search === '')
+            search = null;
+
         if (this.commands.length > 0)
             this.fetchCommands(search);
     }
@@ -112,7 +120,7 @@ export default class Menu extends React.Component {
                     a <strong>good amount of features</strong> to satisfy even the Discord's veterans.
                 </p>
                 <h3>Commands</h3>
-                <input type="text" onChange={this.onSearch} placeholder="search commands..." />
+                <input type="text" onChange={this.onSearch} placeholder="search commands..." /> <span id="searchResult" />
                 <div id="commandRoot">Generating commands documentation...</div>
             </div>
             );
