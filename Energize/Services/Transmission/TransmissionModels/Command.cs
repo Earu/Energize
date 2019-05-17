@@ -1,17 +1,9 @@
-﻿using Discord;
+﻿using System.Collections.Generic;
+using Discord;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
-namespace Energize.Web.Models
+namespace Energize.Services.Transmission.TransmissionModels
 {
-    public enum CommandCondition
-    {
-        AdminOnly = 0,
-        NsfwOnly = 1,
-        GuildOnly = 2,
-        OwnerOnly = 3,
-    }
-
     public class Command
     {
         [JsonProperty(PropertyName = "name")]
@@ -33,6 +25,20 @@ namespace Energize.Web.Models
         public IEnumerable<ChannelPermission> Permissions { get; set; }
 
         [JsonProperty(PropertyName = "conditions")]
-        public List<CommandCondition> Conditions { get; set; }
+        public IEnumerable<Commands.Command.CommandCondition> Conditions { get; set; }
+
+        public static Command ToModel(Commands.Command.Command cmd)
+        {
+            return new Command
+            {
+                Name = cmd.name,
+                Usage = cmd.usage,
+                Help = cmd.help,
+                ModuleName = cmd.moduleName,
+                Parameters = cmd.parameters,
+                Permissions = cmd.permissions,
+                Conditions = cmd.conditions,
+            };
+        }
     }
 }
