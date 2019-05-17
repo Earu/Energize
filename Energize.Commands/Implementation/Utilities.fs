@@ -12,7 +12,6 @@ open System.Text
 open Microsoft.Data.Sqlite
 open System.IO
 open Energize.Interfaces.Services.Eval
-open Energize.Interfaces.Services.Senders
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.UserHelper
 open Discord.WebSocket
@@ -20,7 +19,7 @@ open Energize.Commands.ImageUrlProvider
 
 [<CommandModule("Utilities")>]
 module Util =
-    [<Command("ping", "ping <nothing>", "Pings the bot")>]
+    [<Command("ping", "Pings the bot", "ping <nothing>")>]
     let ping (ctx : CommandContext) = async {
         let timestamp = ctx.message.Timestamp
         let diff = timestamp.Millisecond / 10
@@ -28,72 +27,18 @@ module Util =
         return [ ctx.sendOK None res ]
     }
 
-    [<Command("mem", "mem <nothing>", "Gets the current memory usage")>]
+    [<Command("mem", "Gets the current memory usage", "mem <nothing>")>]
     let mem (ctx : CommandContext) = async {
         let proc = Process.GetCurrentProcess()
         let mbused = proc.WorkingSet64 / 1024L / 1024L
         return [ ctx.sendOK None (sprintf "Currently using %dMB of memory" mbused) ]
     }    
 
-    [<Command("uptime", "uptime <nothing>", "Gets the current uptime")>]
+    [<Command("uptime", "Gets the current uptime", "uptime <nothing>")>]
     let uptime (ctx : CommandContext) = async {
         let diff = (DateTime.Now - Process.GetCurrentProcess().StartTime).Duration();
         let res = sprintf "%dd%dh%dm" diff.Days diff.Hours diff.Minutes
         return [ ctx.sendOK None ("The current instance has been up for " + res) ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("feedback", "Send feedback to the owner (suggestion, bug, etc...)", "feedback <sentence>")>]
-    let feedback (ctx : CommandContext) = async {
-        let sender = ctx.serviceManager.GetService<IWebhookSenderService>("Webhook")
-        let feedback = ctx.input
-        let name = ctx.message.Author.Username
-        let avatar = ctx.message.Author.GetAvatarUrl(ImageFormat.Auto)
-        let chan = ctx.client.GetChannel(Config.Instance.Discord.FeedbackChannelID)
-        let log = 
-            if not ctx.isPrivate then
-                let c = ctx.message.Channel :?> IGuildChannel
-                sprintf "%s#%s" c.Guild.Name c.Name
-            else
-                ctx.message.Author.ToString()
-
-        let builder = EmbedBuilder()
-        builder
-            .WithDescription(feedback)
-            .WithTimestamp(ctx.message
-            .CreatedAt).WithFooter(log)
-            |> ignore
-
-        match chan :> IChannel with
-        | :? ITextChannel as textChan ->
-            awaitIgnore (sender.SendEmbed(textChan, builder.Build(), name, avatar))
-        | _ ->
-            ctx.logger.Warning("Feedback channel wasnt a text channel?!")
-
-        return [ ctx.sendOK None "Successfully sent your feedback" ]
-    }
-
-    [<CommandParameters(1)>]
-    [<Command("bug", "Report a bug to the developer","bug <sentence>")>]
-    let bug = feedback
-
-    [<CommandParameters(2)>]
-    [<CommandConditions(CommandCondition.OwnerOnly)>]
-    [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid>,<sentence>")>]
-    let sendMsg (ctx : CommandContext) = async {
-        return
-            try
-                let chan = ctx.client.GetChannel(uint64 ctx.arguments.[0])
-                match chan with
-                | null -> 
-                    [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
-                | _ ->
-                    let header = "dev message (answer with the bug or feedback commands)"
-                    awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(',', ctx.arguments.[1..])))
-                    [ ctx.sendOK None "Message sent successfully" ]
-            with ex ->
-                printfn "%s" (ex.ToString())
-                [ ctx.sendWarn None "Expected a channel ID" ]
     }
 
     [<CommandParameters(1)>]

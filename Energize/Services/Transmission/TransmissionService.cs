@@ -5,7 +5,6 @@ using Energize.Services.Transmission.TransmissionModels;
 using Octovisor.Client;
 using Octovisor.Messages;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,11 +36,18 @@ namespace Energize.Services.Transmission
                 if (log.Severity == LogSeverity.Info)
                     this.Logger.Nice("Octovisor", ConsoleColor.Magenta, log.Content);
             };
-            this.OctoClient.OnTransmission<object, IEnumerable<Command>>("commands", (proc, _) =>
+
+            this.OctoClient.OnTransmission<object, CommandInformation>("commands", (proc, _) =>
             {
                 var commandService = this.ServiceManager.GetService<CommandHandlingService>("Commands");
-                var cmds = commandService.RegisteredCommands.ToList().Select(kv => Command.ToModel(kv.Value));
-                return cmds;
+                var cmdInfo = new CommandInformation
+                {
+                    BotMention = client.DiscordClient.CurrentUser.ToString(),
+                    Prefix = client.Prefix,
+                    Commands = commandService.RegisteredCommands.ToList().Select(kv => Command.ToModel(kv.Value)).ToList()
+                };
+
+                return cmdInfo;
             });
         }
 

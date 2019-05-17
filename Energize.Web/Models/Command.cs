@@ -30,7 +30,7 @@ namespace Energize.Web.Models
         public int Parameters { get; set; }
 
         [JsonProperty(PropertyName = "permissions")]
-        public IEnumerable<ChannelPermission> Permissions { get; set; }
+        public IEnumerable<string> Permissions { get; set; }
 
         [JsonProperty(PropertyName = "conditions")]
         public List<CommandCondition> Conditions { get; set; }

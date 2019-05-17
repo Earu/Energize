@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -37,9 +37,8 @@
       <HintPath>..\Octovisor.Client.dll</HintPath>
     </Reference>
     <Reference Include="Octovisor.Messages">
-      <HintPath>..\Octovisor.Messages.ddl</HintPath>
+      <HintPath>..\Octovisor.Messages.dll</HintPath>
     </Reference>
-    <Reference Include="Octovisor.Messages, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Data\static.json">
@@ -51,8 +50,5 @@
     <None Update="Settings\config.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Services\Transmission\TransmissionModels\" />
   </ItemGroup>
 </Project>
