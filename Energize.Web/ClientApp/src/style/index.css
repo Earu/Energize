@@ -69,7 +69,18 @@ header > img {
     margin-bottom: 1%;
 }
 
+.command > u {
+    font-size: large;
+}
+
 .content {
     overflow-y: scroll;
     height: 90vh;
+    margin: 0;
+    padding: 0;
+    padding-right: 1%;
+}
+
+.content::-webkit-scrollbar {
+    display: none;
 }

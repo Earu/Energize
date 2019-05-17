@@ -14,9 +14,9 @@ export default class Layout extends React.Component {
                 <Header/>
                 <div className="container-fluid">
                     <Row>
-                        <Col md={12} className="spacer"/>
-                        <Col md={1}  className="menu"><Menu /></Col>
-                        <Col md={11}><div className="content">{this.props.children}</div></Col>
+                        <Col xs={12} className="spacer" />
+                        <Col xs={1} className="menu"><Menu /></Col>
+                        <Col xs={11}><div className="content">{this.props.children}</div></Col>
                     </Row>
                 </div>
             </div>
