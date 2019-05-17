@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Octovisor.Client;
 using Octovisor.Client.Exceptions;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Energize.Web.Controllers
@@ -21,22 +20,22 @@ namespace Energize.Web.Controllers
 
         // GET: api/commands
         [HttpGet]
-        public async Task<IEnumerable<Command>> Get()
+        public async Task<CommandInformation> Get()
         {
-            List<Command> cmds = null;
+            CommandInformation cmdInfo = null;
             try
             {
                 if (!this.Client.IsConnected)
                     await this.Client.ConnectAsync();
 
                 if (this.Client.TryGetProcess("Energize", out RemoteProcess proc))
-                    cmds = await proc.TransmitAsync<List<Command>>("commands");
+                    cmdInfo = await proc.TransmitAsync<CommandInformation>("commands");
 
-                return cmds ?? new List<Command>();
+                return cmdInfo ?? new CommandInformation();
             }
             catch(TimeOutException)
             {
-                return new List<Command>(); 
+                return new CommandInformation();
             }
         }
     }

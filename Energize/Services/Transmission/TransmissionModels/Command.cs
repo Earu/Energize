@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Discord;
 using Newtonsoft.Json;
 
@@ -22,7 +23,7 @@ namespace Energize.Services.Transmission.TransmissionModels
         public int Parameters { get; set; }
 
         [JsonProperty(PropertyName = "permissions")]
-        public IEnumerable<ChannelPermission> Permissions { get; set; }
+        public IEnumerable<string> Permissions { get; set; }
 
         [JsonProperty(PropertyName = "conditions")]
         public IEnumerable<Commands.Command.CommandCondition> Conditions { get; set; }
@@ -36,7 +37,7 @@ namespace Energize.Services.Transmission.TransmissionModels
                 Help = cmd.help,
                 ModuleName = cmd.moduleName,
                 Parameters = cmd.parameters,
-                Permissions = cmd.permissions,
+                Permissions = cmd.permissions.Select(perm => perm.ToString()),
                 Conditions = cmd.conditions,
             };
         }
