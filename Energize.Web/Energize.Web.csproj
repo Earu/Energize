@@ -29,6 +29,9 @@
     <Reference Include="Octovisor.Client">
       <HintPath>..\Octovisor.Client.dll</HintPath>
     </Reference>
+    <Reference Include="Octovisor.Messages">
+      <HintPath>..\Octovisor.Messages.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -55,7 +58,7 @@
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
       <DistFiles Include="$(SpaRoot)build\**" />
-      <ResolvedFileToPublish Include="@(DistFiles-&gt;'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>%(DistFiles.Identity)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </ResolvedFileToPublish>
