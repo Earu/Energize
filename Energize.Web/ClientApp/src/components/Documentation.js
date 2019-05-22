@@ -145,7 +145,7 @@ export default class Menu extends React.Component {
                     <li>
                         <h4><a href="#commands">Commands</a></h4>
                         <ul>
-                            <li><h5><a href="#cmd-user-input">Using commands targetting user(s)</a></h5></li>
+                            <li><h5><a href="#cmd-user-input">Ways to target users in commands</a></h5></li>
                             <li><h5><a href="#target-user-tags">Targetting users with tags</a></h5></li>
                         </ul>
                     </li>
@@ -160,7 +160,7 @@ export default class Menu extends React.Component {
                 <h3 id="commands">Commands</h3>
                 <input type="text" onChange={this.onSearch} placeholder="search commands..." /> <span id="searchResult" />
                 <div id="commandRoot">Generating commands documentation...</div>
-                <h4 id="cmd-user-input">Using commands targetting user(s)</h4>
+                <h4 id="cmd-user-input">Ways to target users in commands</h4>
                 Some commands require you to pass a user as argument, there are a few ways to feed the bot a user.
                 Here are the several ways this can be achieved:<br/><br/>
                 <ol>
