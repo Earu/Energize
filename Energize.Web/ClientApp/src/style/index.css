@@ -3,8 +3,12 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow-y: hidden;
     font-family: 'Abel', sans-serif;
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
 }
 
 a {
@@ -43,10 +47,11 @@ header > img {
 
 .menu {
     background-color: #EDEDED;
-    height: 92vh;
     padding-top: 1%;
     margin: 0;
     color: #5C5C5C;
+    display: flex;
+    flex-direction: column;
 }
 
 .links {
@@ -74,13 +79,6 @@ header > img {
 }
 
 .content {
-    overflow-y: scroll;
-    height: 90vh;
     margin: 0;
     padding: 0;
-    padding-right: 1%;
-}
-
-.content::-webkit-scrollbar {
-    display: none;
 }

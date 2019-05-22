@@ -8,7 +8,7 @@ export default class Header extends React.Component
     {
         return (
             <header>
-                <img src="./img/logo.png" alt="logo"/>
+                <img  src='./img/logo.png' alt='logo' />
                 <h1>Energize</h1>
             </header>
         );
