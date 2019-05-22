@@ -75,7 +75,7 @@ export default class Menu extends React.Component {
         ]
 
         return tags.map(tag => (
-            <div className="command">
+            <div className='command'>
                 <u><strong>{tag.name}</strong></u><br />
                 {tag.description}
             </div>
@@ -110,7 +110,7 @@ export default class Menu extends React.Component {
             }
 
             elements = elements.map(cmd => (
-                <div className="command">
+                <div className='command'>
                     <u><strong>{cmd.name}</strong>  [<i>{cmd.moduleName}</i>]</u>
                     <br /><br />
                     {this.formatDescription(cmd)}<br/>
@@ -138,29 +138,29 @@ export default class Menu extends React.Component {
         return (
             <div>
                 <h2>Documentation</h2>
-                <h4><i>Here you will find documentation for Energize various commands and features.</i></h4> 
+                <h4><i>Here you will find documentation for Energize various commands and features.</i></h4>
                 <h3>Summary</h3>
                 <ul>
-                    <li><h4><a href="#purpose">Purpose</a></h4></li>
+                    <li><h4><a href='./docs#purpose'>Purpose</a></h4></li>
                     <li>
-                        <h4><a href="#commands">Commands</a></h4>
+                        <h4><a href='./docs#commands'>Commands</a></h4>
                         <ul>
-                            <li><h5><a href="#cmd-user-input">Ways to target users in commands</a></h5></li>
-                            <li><h5><a href="#target-user-tags">Targetting users with tags</a></h5></li>
+                            <li><h5><a href='./docs#cmd-user-input'>Ways to target users in commands</a></h5></li>
+                            <li><h5><a href='./docs#target-user-tags'>Targetting users with tags</a></h5></li>
                         </ul>
                     </li>
                 </ul>
-                <h3 id="purpose">Purpose</h3>
+                <h3 id='purpose'>Purpose</h3>
                 <p>
                     Energize primary feature is <strong>music</strong>, streaming music <strong>through a discord audio channel</strong> more specifically.
                     It can stream a large variety of sources including <strong>Youtube, Twitch, SoundCloud, Vimeo and more</strong>.<br />
                     Along with music features, there are some <strong>moderation, NSFW and social</strong> features. Energize aims to be <strong>simple of use</strong> for the average user but also to provide
                     a <strong>good amount of features</strong> to satisfy even the Discord's veterans.
                 </p>
-                <h3 id="commands">Commands</h3>
-                <input type="text" onChange={this.onSearch} placeholder="search commands..." /> <span id="searchResult" />
-                <div id="commandRoot">Generating commands documentation...</div>
-                <h4 id="cmd-user-input">Ways to target users in commands</h4>
+                <h3 id='commands'>Commands</h3>
+                <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
+                <div id='commandRoot'>Generating commands documentation...</div>
+                <h4 id='cmd-user-input'>Ways to target users in commands</h4>
                 Some commands require you to pass a user as argument, there are a few ways to feed the bot a user.
                 Here are the several ways this can be achieved:<br/><br/>
                 <ol>
@@ -168,7 +168,7 @@ export default class Menu extends React.Component {
                     <li>Mentioning the user.</li>
                     <li>Using built-in tagging system.</li>
                 </ol><br/>
-                <h4 id="target-user-tags">Targetting users with tags</h4>
+                <h4 id='target-user-tags'>Targetting users with tags</h4>
                 As mentioned before, the bot features a <strong>built-in tagging system</strong>, it means that there is an existing
                 syntax to tag a wanted user. There are currently <strong>4</strong> usable built-in tags. You can use the tags by prefixing
                 one of the existing tags with the <strong>$</strong> character like so as an argument in commands that require user arguments.<br/><br/>
