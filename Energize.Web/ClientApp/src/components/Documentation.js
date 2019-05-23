@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Summary from './Summary';
+import Twemoji from 'react-twemoji';
 
 export default class Menu extends React.Component {
     displayName = Menu.name;
@@ -24,9 +25,9 @@ export default class Menu extends React.Component {
     }
 
     formatConditions(conditions) {
-        let title = <div><strong>Conditions:</strong><br /></div>;
+        let title = <div><b>Conditions:</b><br /></div>;
         if (conditions.length > 0) {
-            let list = conditions.map(cond => <div>- {this.toCommandCondition(cond)}</div>);
+            let list = conditions.map((cond, i) => <div key={'cond_' + i}>- {this.toCommandCondition(cond)}</div>);
             return <div>{title}{list}</div>;
         }
 
@@ -34,9 +35,9 @@ export default class Menu extends React.Component {
     }
 
     formatPermissions(permissions) {
-        let title = <div><strong>Required permissions:</strong><br /></div>;
+        let title = <div><b>Required permissions:</b><br /></div>;
         if (permissions.length > 0) {
-            let list = permissions.map(perm => <div>- {perm}</div>);
+            let list = permissions.map((perm, i) => <div key={'perm_' + i}>- {perm}</div>);
             list[list.length] = <div>- SendMessages</div>;
             return <div>{title}{list}</div>;
         }
@@ -47,9 +48,9 @@ export default class Menu extends React.Component {
     formatDescription(cmd) {
         return (
             <div>
-                <div><strong>Description:</strong><br /></div>
+                <div><b>Description:</b><br /></div>
                 <div> {cmd.help}</div>
-                <div><strong> {cmd.parameters}</strong> required arguments</div>
+                <div><b> {cmd.parameters}</b> required arguments</div>
                 <code> {cmd.usage}</code>
             </div>
         );
@@ -75,9 +76,9 @@ export default class Menu extends React.Component {
             }
         ]
 
-        return tags.map(tag => (
-            <div className='command'>
-                <u><strong>{tag.name}</strong></u><br />
+        return tags.map((tag, i) => (
+            <div key={'tag_' + i} className='command'>
+                <u><b>{tag.name}</b></u><br />
                 {tag.description}
             </div>
         ));
@@ -91,29 +92,33 @@ export default class Menu extends React.Component {
             });
 
             if (response.ok) {
-                let cmdInfo = await response.json();
-                this.commands = cmdInfo.commands;
-                this.prefix = cmdInfo.prefix;
-                this.botMention = cmdInfo.botMention;
+                try {
+                    let cmdInfo = await response.json();
+                    this.commands = cmdInfo.commands;
+                    this.prefix = cmdInfo.prefix;
+                    this.botMention = cmdInfo.botMention;
+                } catch (err) {
+                    console.debug(err);
+                }
             }
         }
 
         if (this.commands.length > 0) {
-            let info = <div>To use the below commands you can either use the prefix (<strong>{this.prefix}</strong>), either mention the bot (<strong>@{this.botMention}</strong>).</div>;
+            let info = <div>To use the below commands you can either use the prefix (<b>{this.prefix}</b>), either mention the bot (<b>@{this.botMention}</b>).</div>;
             let elements = this.commands;
             if (search !== null) {
                 search = search.toLowerCase();
                 elements = elements.filter(cmd => cmd.name.includes(search) || cmd.moduleName.toLowerCase().includes(search));
-                let result = <span><strong>{elements.length}</strong> commands found.</span>;
+                let result = <span><b>{elements.length}</b> commands found.</span>;
                 ReactDOM.render(result, document.getElementById('searchResult'));
             }
             else {
                 ReactDOM.render(<span/>, document.getElementById('searchResult'));
             }
 
-            elements = elements.map(cmd => (
-                <div className='command'>
-                    <u><strong>{cmd.name}</strong>  [<i>{cmd.moduleName}</i>]</u>
+            elements = elements.map((cmd,i) => (
+                <div key={'cmd_' + i} className='command'>
+                    <u><b>{cmd.name}</b>  [<i>{cmd.moduleName}</i>]</u>
                     <br /><br />
                     {this.formatDescription(cmd)}<br/>
                     {this.formatConditions(cmd.conditions)}<br />
@@ -156,31 +161,78 @@ export default class Menu extends React.Component {
 
     render() {
         this.fetchCommands(null);
+
         return (
             <div>
                 <Summary>
-                    <span><a id='sum-purpose' href='' onClick={this.onSummaryClick}>Purpose</a></span>
+                    <span><a id='sum-description' href='docs#description' onClick={this.onSummaryClick}>Description</a></span>
                     <span>
-                        <a id='sum-commands' href='' onClick={this.onSummaryClick}>Commands</a>
-                        <span><a id='sum-cmd-user-input' href='' onClick={this.onSummaryClick}>Ways to target users in commands</a></span>
-                        <span><a id='sum-target-user-tags' href='' onClick={this.onSummaryClick}>Targetting users with tags</a></span>
+                        <a id='sum-commands' href='docs#commands' onClick={this.onSummaryClick}>Commands</a>
+                        <span>
+                            <a id='sum-updating-cmd-msg' href='docs#updating-cmd-msg' onClick={this.onSummaryClick}>
+                                Updating a command message
+                            </a>
+                        </span>
+                        <span>
+                            <a id='sum-deleting-cmd-msg' href='docs#deleting-cmd-msg' onClick={this.onSummaryClick}>
+                                Deleting a command message
+                            </a>
+                        </span>
+                        <span>
+                            <a id='sum-paginated-cmd-results' href='docs#paginated-cmd-results' onClick={this.onSummaryClick}>
+                                Paginated command results
+                            </a>
+                        </span>
+                        <span>
+                            <a id='sum-cmd-user-input' href='docs#cmd-user-input' onClick={this.onSummaryClick}>
+                                Ways to target users in commands
+                            </a>
+                        </span>
+                        <span>
+                            <a id='sum-target-user-tags' href='docs#target-user-tags' onClick={this.onSummaryClick}>
+                                Targetting users with tags
+                            </a>
+                        </span>
+                    </span>
+                    <span>
+                        <a id='sum-playable-messages' href='docs#playable-messages' onClick={this.onSummaryClick}>
+                            Playable messages
+                        </a>
                     </span>
                 </Summary>
 
-                <button className='fabTop' onClick={this.onFabTopclick}>^</button>
+                <button className='fabTop' onClick={this.onFabTopclick}>⇪</button>
 
                 <h2>Documentation</h2>
                 <h4><i>Here you will find documentation for Energize various commands and features.</i></h4>
-                <h3 id='purpose'>Purpose</h3>
+                <h3 id='description'>Description</h3>
                 <p>
-                    Energize primary feature is <strong>music</strong>, streaming music <strong>through a discord audio channel</strong> more specifically.
-                    It can stream a large variety of sources including <strong>Youtube, Twitch, SoundCloud, Vimeo and more</strong>.<br />
-                    Along with music features, there are some <strong>moderation, NSFW and social</strong> features. Energize aims to be <strong>simple of use</strong> for the average user but also to provide
-                    a <strong>good amount of features</strong> to satisfy even the Discord's veterans.
+                    Energize primary feature is <b>music</b>, streaming music <b>through a discord audio channel</b> more specifically.
+                    It can stream a large variety of sources including <b>Youtube, Twitch, SoundCloud, Vimeo and more</b>.<br />
+                    Along with music features, there are some <b>moderation, NSFW and social</b> features. Energize aims to be <b>simple of use</b> for the average user but also to provide
+                    a <b>good amount of features</b> to satisfy even the Discord's veterans.
                 </p>
+
                 <h3 id='commands'>Commands</h3>
                 <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
                 <div id='commandRoot'>Generating commands documentation...</div>
+
+                <h4 id='paginated-cmd-results'>Paginated command results</h4>
+                Sometimes when using a command with the bot, you will get results that have reactions on them. There are usually <b>3 or 4</b> added
+                reactions to these.<br/><br/>Here is an example: <br/>
+                <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
+                Each reaction added by the bot corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
+                <Twemoji options={{className: 'twemoji'}}>
+                    - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/> 
+                    - The ⏹ reaction will <b>delete</b> the result.<br/>
+                    - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br/>
+                    - The ▶ reaction will load the content of the <b>next page</b> of the result.<br/>
+                </Twemoji><br/>
+
+                <u><b>Paginated results behaviors:</b></u><br/>
+                - If you stopped using the paginated message during 5 minutes the bot will <b>not</b> react to any of your reactions anymore.<br/>
+                - Only the command author can use the paginated result reactions.<br/><br/>
+
                 <h4 id='cmd-user-input'>Ways to target users in commands</h4>
                 Some commands require you to pass a user as argument, there are a few ways to feed the bot a user.
                 Here are the several ways this can be achieved:<br/><br/>
@@ -189,13 +241,24 @@ export default class Menu extends React.Component {
                     <li>Mentioning the user.</li>
                     <li>Using built-in tagging system.</li>
                 </ol><br/>
+
                 <h4 id='target-user-tags'>Targetting users with tags</h4>
-                As mentioned before, the bot features a <strong>built-in tagging system</strong>, it means that there is an existing
-                syntax to tag a wanted user. There are currently <strong>4</strong> usable built-in tags. You can use the tags by prefixing
-                one of the existing tags with the <strong>$</strong> character like so as an argument in commands that require user arguments.<br/><br/>
+                As mentioned before, the bot features a <b>built-in tagging system</b>, it means that there is an existing
+                syntax to tag a wanted user. There are currently <b>4</b> usable built-in tags. You can use the tags by prefixing
+                one of the existing tags with the <b>$</b> character like so as an argument in commands that require user arguments.<br/><br/>
                 Here is an example:<br/>
                 <code>cmd $random,$last</code><br/><br/>
                 {this.formatBuiltInTags()}
+
+                <h3 id='playable-messages'>Playable messages</h3>
+                <Twemoji options={{className: 'twemoji'}}>
+                    If the bot has the permissions necessary you maybe have noticed that some messages get a ⏯ reaction. This means that
+                    those messages have content that can be added to the track queue. Although this will only work if you are in a voice channel.
+                    Usually messages that can be "played" are messages containing Youtube, SoundCloud and Twitch content.
+                </Twemoji><br/>
+
+                Example:<br/>
+                <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img'/><br/>
             </div>
             );
     }
