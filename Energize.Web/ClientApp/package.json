@@ -11,6 +11,7 @@
     "react-router-bootstrap": "^0.24.4",
     "react-router-dom": "^4.3.1",
     "react-scripts": "^3.0.1",
+    "react-twemoji": "^0.1.0",
     "rimraf": "^2.6.3"
   },
   "scripts": {

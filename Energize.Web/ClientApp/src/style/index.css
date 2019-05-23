@@ -79,6 +79,7 @@ header > img {
 .content {
     margin: 0;
     padding: 0;
+    padding-bottom: 1%;
 }
 
 .summary {
@@ -89,6 +90,7 @@ header > img {
     background-color: #EDEDED;
     padding: 1%;
     box-shadow: 0 0 5px #333333;
+    border-radius: 3px;
 }
 
 .summary > div {
@@ -122,9 +124,27 @@ header > img {
     width: 56px;
     height: 56px;
     color: white;
-    font-size: 50px;
+    font-size: 25px;
     background-color: #A51C15;
     border-radius: 9999px;
     box-shadow: 0 0 5px #333333;
     margin: 10px;
-    border: 2px solid #A51C15;}
+    border: 2px solid #A51C15;
+}
+
+.content-img {
+    width: 100%;
+    max-width: 500px;
+    display: block;
+    box-shadow: 0 0 5px #333333;
+    margin-top: 1%;
+    margin-bottom: 1%;
+    border: 1px solid #333333;
+    border-left: 5px solid #A51C15;
+    border-radius: 3px;
+}
+
+.twemoji {
+    height: 1.2em;
+    width: 1.2em;
+}
