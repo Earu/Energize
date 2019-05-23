@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import Summary from './Summary';
 
 export default class Menu extends React.Component {
     displayName = Menu.name;
@@ -83,6 +84,7 @@ export default class Menu extends React.Component {
     }
 
     async fetchCommands(search) {
+
         if (this.commands.length === 0) {
             let response = await fetch('./api/commands', {
                 method: 'GET'
@@ -133,23 +135,42 @@ export default class Menu extends React.Component {
             this.fetchCommands(search);
     }
 
+    onSummaryClick = (e) => {
+        e.preventDefault();
+        let element = e.target;
+        let id = element.id.substring(4);
+        console.debug(id);
+        let targetElement = document.getElementById(id);
+        window.scroll({
+            top: targetElement.offsetTop,
+            behavior: 'smooth'
+        })
+    }
+
+    onFabTopclick = (e) => {
+        window.scroll({
+            top: 0,
+            behavior: 'smooth'
+        })
+    }
+
     render() {
         this.fetchCommands(null);
         return (
             <div>
+                <Summary>
+                    <span><a id='sum-purpose' href='' onClick={this.onSummaryClick}>Purpose</a></span>
+                    <span>
+                        <a id='sum-commands' href='' onClick={this.onSummaryClick}>Commands</a>
+                        <span><a id='sum-cmd-user-input' href='' onClick={this.onSummaryClick}>Ways to target users in commands</a></span>
+                        <span><a id='sum-target-user-tags' href='' onClick={this.onSummaryClick}>Targetting users with tags</a></span>
+                    </span>
+                </Summary>
+
+                <button className='fabTop' onClick={this.onFabTopclick}>^</button>
+
                 <h2>Documentation</h2>
                 <h4><i>Here you will find documentation for Energize various commands and features.</i></h4>
-                <h3>Summary</h3>
-                <ul>
-                    <li><h4><a href='./docs#purpose'>Purpose</a></h4></li>
-                    <li>
-                        <h4><a href='./docs#commands'>Commands</a></h4>
-                        <ul>
-                            <li><h5><a href='./docs#cmd-user-input'>Ways to target users in commands</a></h5></li>
-                            <li><h5><a href='./docs#target-user-tags'>Targetting users with tags</a></h5></li>
-                        </ul>
-                    </li>
-                </ul>
                 <h3 id='purpose'>Purpose</h3>
                 <p>
                     Energize primary feature is <strong>music</strong>, streaming music <strong>through a discord audio channel</strong> more specifically.
