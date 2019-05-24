@@ -111,8 +111,7 @@ export default class Menu extends React.Component {
                 elements = elements.filter(cmd => cmd.name.includes(search) || cmd.moduleName.toLowerCase().includes(search));
                 let result = <span><b>{elements.length}</b> commands found.</span>;
                 ReactDOM.render(result, document.getElementById('searchResult'));
-            }
-            else {
+            } else {
                 ReactDOM.render(<span/>, document.getElementById('searchResult'));
             }
 
@@ -144,7 +143,6 @@ export default class Menu extends React.Component {
         e.preventDefault();
         let element = e.target;
         let id = element.id.substring(4);
-        console.debug(id);
         let targetElement = document.getElementById(id);
         window.scroll({
             top: targetElement.offsetTop,
@@ -223,7 +221,7 @@ export default class Menu extends React.Component {
                 <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
                 Each reaction added by the bot corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
                 <Twemoji options={{className: 'twemoji'}}>
-                    - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/> 
+                    - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/>
                     - The ⏹ reaction will <b>delete</b> the result.<br/>
                     - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br/>
                     - The ▶ reaction will load the content of the <b>next page</b> of the result.<br/>
