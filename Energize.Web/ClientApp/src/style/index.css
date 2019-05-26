@@ -5,6 +5,7 @@ html, body {
     padding: 0;
     font-family: 'Abel', sans-serif;
     scrollbar-width: none;
+    background: #333333;
 }
 
 ::-webkit-scrollbar {
@@ -27,7 +28,7 @@ header {
     top: 0;
     background-color: #ededed;
     border-bottom: 2px solid #A51C15;
-    box-shadow: 0px 2px 10px #333333;
+    box-shadow: 0 2px 10px #333333;
     padding: 5px;
     width: 100%;
     z-index: 10;
@@ -40,6 +41,20 @@ header > h1 {
 header > img {
     width: 60px;
     margin: -22px 10px 5px 10px;
+}
+
+footer {
+    background: #262828;
+    padding: 10px;
+    color: white;
+    box-shadow: 0 -2px 5px #333333;
+    z-index: 10;
+    position: absolute;
+    width: 100%;
+}
+
+#root {
+    background: white;
 }
 
 .menu {
@@ -112,6 +127,18 @@ header > img {
     font-size: 12px;
 }
 
+.summary > button {
+    width: 56px;
+    height: 56px;
+    color: white;
+    font-size: 30px;
+    background-color: #A51C15;
+    border-radius: 9999px;
+    box-shadow: 0 0 5px #333333;
+    border: 2px solid #A51C15;
+    outline-width: 0;
+}
+
 .summary > span:before, .summary > span > span:before {
     content: '/ ';
 }
@@ -131,6 +158,8 @@ header > img {
     border: 2px solid #A51C15;
     font-weight: 500;
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    z-index: 999;
+    outline-width: 0;
 }
 
 .content-img {
