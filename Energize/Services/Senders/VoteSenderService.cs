@@ -14,30 +14,30 @@ namespace Energize.Services.Senders
     [Service("Votes")]
     public class VoteSenderService : ServiceImplementationBase, IVoteSenderService
     {
-        private static readonly Dictionary<string, int> _Lookup = new Dictionary<string, int>
+        private static readonly Dictionary<string, int> Lookup = new Dictionary<string, int>
         {
             ["1⃣"] = 0, ["2⃣"] = 1, ["3⃣"] = 2, ["4⃣"] = 3, ["5⃣"] = 4,
             ["6⃣"] = 5, ["7⃣"] = 6, ["8⃣"] = 7, ["9⃣"] = 8,
         };
 
-        private readonly Logger _Logger;
-        private readonly MessageSender _MessageSender;
-        private readonly Dictionary<ulong, Vote> _Votes;
+        private readonly Logger Logger;
+        private readonly MessageSender MessageSender;
+        private readonly Dictionary<ulong, Vote> Votes;
 
         public VoteSenderService(EnergizeClient client)
         {
-            this._Logger = client.Logger;
-            this._MessageSender = client.MessageSender;
-            this._Votes = new Dictionary<ulong, Vote>();
+            this.Logger = client.Logger;
+            this.MessageSender = client.MessageSender;
+            this.Votes = new Dictionary<ulong, Vote>();
         }
 
-        private async Task AddReactions(IUserMessage msg, int choicecount)
+        private async Task AddReactions(IUserMessage msg, int choiceCount)
         {
             if (msg.Channel is SocketGuildChannel chan)
                 if (!chan.Guild.CurrentUser.GetPermissions(chan).AddReactions)
                     return;
 
-            for(int i = 0; i < choicecount; i++)
+            for(int i = 0; i < choiceCount; i++)
                 await msg.AddReactionAsync(new Emoji($"{i + 1}\u20e3"));
         }
 
@@ -46,26 +46,26 @@ namespace Energize.Services.Senders
             try
             {
                 Vote vote = new Vote(msg.Author, description, choices.ToList());
-                vote.Message = await this._MessageSender.Send(msg, vote.VoteEmbed);
+                vote.Message = await this.MessageSender.Send(msg, vote.VoteEmbed);
                 vote.VoteFinished += async result =>
                 {
                     await vote.Message.DeleteAsync();
-                    await this._MessageSender.Send(msg, vote.VoteEmbed);
+                    await this.MessageSender.Send(msg, vote.VoteEmbed);
                     
-                    this._Votes.Remove(vote.Message.Id);
+                    this.Votes.Remove(vote.Message.Id);
                 };
-                this._Votes.Add(vote.Message.Id, vote);
+                this.Votes.Add(vote.Message.Id, vote);
                 await this.AddReactions(vote.Message, vote.ChoiceCount);
 
                 return vote.Message;
             }
             catch (HttpException)
             {
-                this._Logger.Nice("Vote", ConsoleColor.Yellow, "Could not create vote, missing permissions");
+                this.Logger.Nice("Vote", ConsoleColor.Yellow, "Could not create vote, missing permissions");
             }
             catch (Exception ex)
             {
-                this._Logger.Danger(ex);
+                this.Logger.Danger(ex);
             }
 
             return null;
@@ -76,19 +76,19 @@ namespace Energize.Services.Senders
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
             if (reaction.Emote?.Name == null) return false;
 
-            return _Lookup.ContainsKey(reaction.Emote.Name);
+            return Lookup.ContainsKey(reaction.Emote.Name);
         }
 
         private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, SocketReaction reaction)
-            => this.IsValidEmote(reaction) && this._Votes.ContainsKey(cache.Id);
+            => this.IsValidEmote(reaction) && this.Votes.ContainsKey(cache.Id);
 
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
         {
             if (!this.IsValidReaction(cache, reaction)) return;
 
-            int index = _Lookup[reaction.Emote.Name];
-            await this._Votes[cache.Id].AddVote(reaction.User.Value, index);
+            int index = Lookup[reaction.Emote.Name];
+            await this.Votes[cache.Id].AddVote(reaction.User.Value, index);
         }
 
         [Event("ReactionRemoved")]
@@ -96,8 +96,8 @@ namespace Energize.Services.Senders
         {
             if (!this.IsValidReaction(cache, reaction)) return;
 
-            int index = _Lookup[reaction.Emote.Name];
-            await this._Votes[cache.Id].RemoveVote(reaction.User.Value, index);
+            int index = Lookup[reaction.Emote.Name];
+            await this.Votes[cache.Id].RemoveVote(reaction.User.Value, index);
         }
     }
 }

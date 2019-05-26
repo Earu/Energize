@@ -6,13 +6,13 @@ namespace Energize.Services.Database
 {
     public class DatabaseContext : IDatabaseContext
     {
-        private readonly Logger _Log;
+        private readonly Logger Logger;
 
-        public DatabaseContext(Database context, Logger log)
+        public DatabaseContext(Database context, Logger logger)
         {
             this.Instance = context;
             this.IsUsed = false;
-            this._Log = log;
+            this.Logger = logger;
         }
 
         public IDatabase Instance { get; }
@@ -26,9 +26,9 @@ namespace Energize.Services.Database
                 this.Instance.Save();
                 this.IsUsed = false;
             }
-            catch(Exception e)
+            catch(Exception ex)
             {
-                this._Log.Nice("Database", ConsoleColor.Red, $"Failed to save changes: {e.Message}");
+                this.Logger.Nice("Database", ConsoleColor.Red, $"Failed to save changes: {ex.Message}");
             }
         }
     }

@@ -19,15 +19,15 @@ namespace Energize
 #else
         private readonly bool IsDevEnv = false;
 #endif
-        private readonly string _Token;
-        private readonly AuthDiscordBotListApi _DiscordBotList;
+        private readonly string Token;
+        private readonly AuthDiscordBotListApi DiscordBotList;
 
         public EnergizeClient(string token, string prefix, char separator)
         {
             Console.Clear();
             Console.Title = "Energize's Logs";
 
-            this._Token        = token;
+            this.Token        = token;
             this.Prefix        = prefix;
             this.Separator     = separator;
             this.Logger        = new Logger();
@@ -41,7 +41,7 @@ namespace Energize
 
             if (this.HasToken)
             {
-                AppDomain.CurrentDomain.UnhandledException += (sender,args) =>
+                AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
                 {
                     Exception e = (Exception)args.ExceptionObject;
                     this.Logger.LogTo("crash.log", e.ToString());
@@ -50,7 +50,7 @@ namespace Energize
                 this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
                 this.DiscordRestClient.Log += async log => this.Logger.LogTo("dnet_rest.log", log.Message);
 
-                this._DiscordBotList = new AuthDiscordBotListApi(Config.Instance.Discord.BotID, Config.Instance.Discord.BotListToken);
+                this.DiscordBotList = new AuthDiscordBotListApi(Config.Instance.Discord.BotID, Config.Instance.Discord.BotListToken);
                 this.DisplayAsciiArt();
 
                 this.Logger.Nice("Config", ConsoleColor.Yellow, $"Environment => [ {this.Environment} ]");
@@ -92,26 +92,26 @@ namespace Energize
             Console.WriteLine("\n" + new string('-', 70));
         }
 
-        public string                Prefix            { get; }
-        public char                  Separator         { get; }
-        public DiscordShardedClient  DiscordClient     { get; }
-        public DiscordRestClient     DiscordRestClient { get; }
-        public Logger                Logger            { get; }
-        public MessageSender         MessageSender     { get; }
-        public ServiceManager        ServiceManager    { get; }
+        public string Prefix { get; }
+        public char Separator { get; }
+        public DiscordShardedClient DiscordClient { get; }
+        public DiscordRestClient DiscordRestClient { get; }
+        public Logger Logger { get; }
+        public MessageSender MessageSender { get; }
+        public ServiceManager ServiceManager { get; }
 
         public string Environment { get => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; }
-        public bool HasToken { get => !string.IsNullOrWhiteSpace(this._Token); }
+        public bool HasToken { get => !string.IsNullOrWhiteSpace(this.Token); }
 
         private async Task<(bool, int)> UpdateBotWebsites()
         {
-            int servercount = this.DiscordClient.Guilds.Count;
+            int serverCount = this.DiscordClient.Guilds.Count;
             bool success = true;
-            if (this.IsDevEnv) return (success, servercount);
+            if (this.IsDevEnv) return (success, serverCount);
          
             try
             {
-                var obj = new { guildCount = servercount };
+                var obj = new { guildCount = serverCount };
                 string json = JsonPayload.Serialize(obj, this.Logger);
                 string endpoint = $"https://discord.bots.gg/api/v1/bots/{Config.Instance.Discord.BotID}/stats";
                 string resp = await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
@@ -119,15 +119,15 @@ namespace Energize
                     req.ContentType = "application/json";
                 });
 
-                IDblSelfBot me = await this._DiscordBotList.GetMeAsync();
-                await me.UpdateStatsAsync(servercount);
+                IDblSelfBot me = await this.DiscordBotList.GetMeAsync();
+                await me.UpdateStatsAsync(serverCount);
             }
             catch
             {
                 success = false;
             }
 
-            return (success, servercount);
+            return (success, serverCount);
         }
 
         private async Task UpdateActivity()
@@ -142,12 +142,12 @@ namespace Energize
 
             try
             {
-                await this.DiscordClient.LoginAsync(TokenType.Bot, this._Token, true);
+                await this.DiscordClient.LoginAsync(TokenType.Bot, this.Token, true);
                 await this.DiscordClient.StartAsync();
-                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this._Token, true);
+                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this.Token, true);
                 await this.UpdateActivity();
 
-                Timer updatetimer = new Timer(async arg =>
+                Timer updateTimer = new Timer(async arg =>
                 {
                     long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
                     GC.Collect();
@@ -162,13 +162,13 @@ namespace Energize
                 });
 
                 int hour = 1000 * 60 * 60;
-                updatetimer.Change(10000, hour);
+                updateTimer.Change(10000, hour);
 
                 await this.ServiceManager.InitializeServicesAsync();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {e}");
+                this.Logger.Nice("Init", ConsoleColor.Red, $"Something went wrong: {ex}");
             }
         }
     }

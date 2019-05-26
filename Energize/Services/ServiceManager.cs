@@ -12,34 +12,34 @@ namespace Energize.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private static readonly string _Namespace = typeof(ServiceManager).Namespace;
-        private static readonly Type _DiscordShardedClientType = typeof(DiscordShardedClient);
-        private static readonly Type _ServiceAttributeType = typeof(ServiceAttribute);
-        private static readonly Type _EventAttributeType = typeof(EventAttribute);
-        private static readonly EventInfo[] _DiscordClientEvents = _DiscordShardedClientType.GetEvents();
+        private static readonly string Namespace = typeof(ServiceManager).Namespace;
+        private static readonly Type DiscordShardedClientType = typeof(DiscordShardedClient);
+        private static readonly Type ServiceAttributeType = typeof(ServiceAttribute);
+        private static readonly Type EventAttributeType = typeof(EventAttribute);
+        private static readonly EventInfo[] DiscordClientEvents = DiscordShardedClientType.GetEvents();
 
-        private readonly Dictionary<string, IService> _Services;
-        private readonly IEnumerable<Type> _ServiceTypes;
-        private readonly EnergizeClient _Client;
-        private readonly Logger _Logger;
+        private readonly Dictionary<string, IService> Services;
+        private readonly IEnumerable<Type> ServiceTypes;
+        private readonly EnergizeClient Client;
+        private readonly Logger Logger;
 
         public ServiceManager(EnergizeClient client)
         {
-            this._Services = new Dictionary<string, IService>();
-            this._ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
-            this._Client = client;
-            this._Logger = client.Logger;
+            this.Services = new Dictionary<string, IService>();
+            this.ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
+            this.Client = client;
+            this.Logger = client.Logger;
         }
 
         private bool IsService(Type type)
-            => type.FullName.StartsWith(_Namespace) && Attribute.IsDefined(type, _ServiceAttributeType);
+            => type.FullName.StartsWith(Namespace) && Attribute.IsDefined(type, ServiceAttributeType);
 
-        private bool IsEventHandler(MethodInfo methodinfo, EventInfo eventinfo)
+        private bool IsEventHandler(MethodInfo methodInfo, EventInfo eventInfo)
         {
-            if (Attribute.IsDefined(methodinfo, _EventAttributeType))
+            if (Attribute.IsDefined(methodInfo, EventAttributeType))
             {
-                EventAttribute atr = methodinfo.GetCustomAttribute<EventAttribute>();
-                return atr.Name.Equals(eventinfo.Name);
+                EventAttribute atr = methodInfo.GetCustomAttribute<EventAttribute>();
+                return atr.Name.Equals(eventInfo.Name);
             }
 
             return false;
@@ -55,29 +55,29 @@ namespace Energize.Services
 
         private void RegisterService(Type type, IServiceImplementation instance)
         {
-            ServiceAttribute servatr = type.GetCustomAttribute<ServiceAttribute>();
-            this._Services[servatr.Name] = new Service(servatr.Name, instance);
+            ServiceAttribute serverAtr = type.GetCustomAttribute<ServiceAttribute>();
+            this.Services[serverAtr.Name] = new Service(serverAtr.Name, instance);
         }
 
         private void ContinueWithHandler(Task t)
         {
             if (t.IsFaulted)
-                this._Logger.Danger(t.Exception.InnerException);
+                this.Logger.Danger(t.Exception.InnerException);
         }
 
-        private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventinfo, Type type, IServiceImplementation instance)
+        private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)
         {
-            MethodInfo eventhandler = type.GetMethods().FirstOrDefault(methodinfo => this.IsEventHandler(methodinfo, eventinfo));
-            if (eventhandler != null)
+            MethodInfo eventHandler = type.GetMethods().FirstOrDefault(methodInfo => this.IsEventHandler(methodInfo, eventInfo));
+            if (eventHandler != null)
             {
-                ParameterExpression[] parameters = Array.ConvertAll(eventhandler.GetParameters(),
+                ParameterExpression[] parameters = Array.ConvertAll(eventHandler.GetParameters(),
                     param => Expression.Parameter(param.ParameterType));
                 Delegate dlg = Expression.Lambda(
-                    eventinfo.EventHandlerType,
+                    eventInfo.EventHandlerType,
                     Expression.Call(
                         Expression.Call(
                             Expression.Constant(instance),
-                            eventhandler,
+                            eventHandler,
                             parameters
                         ),
                         typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
@@ -86,30 +86,30 @@ namespace Energize.Services
                     parameters
                 ).Compile();
 
-                eventinfo.AddEventHandler(client, dlg);
+                eventInfo.AddEventHandler(client, dlg);
             }
         }
 
         internal void InitializeServices()
         {
-            foreach (Type type in this._ServiceTypes)
+            foreach (Type type in this.ServiceTypes)
             {
-                IServiceImplementation instance = this.Instanciate(this._Client, type);
+                IServiceImplementation instance = this.Instanciate(this.Client, type);
                 this.RegisterService(type, instance);
 
-                foreach (EventInfo eventinfo in _DiscordClientEvents)
-                    this.RegisterDiscordHandler(this._Client.DiscordClient, eventinfo, type, instance);
+                foreach (EventInfo eventInfo in DiscordClientEvents)
+                    this.RegisterDiscordHandler(this.Client.DiscordClient, eventInfo, type, instance);
             }
 
             try
             {
-                foreach (KeyValuePair<string, IService> service in this._Services)
+                foreach (KeyValuePair<string, IService> service in this.Services)
                     if (service.Value.Instance != null)
                         service.Value.Instance.Initialize();
             }
             catch(Exception ex)
             {
-                this._Logger.Danger(ex);
+                this.Logger.Danger(ex);
             }
         }
 
@@ -117,20 +117,20 @@ namespace Energize.Services
         {
             try
             {
-                foreach (KeyValuePair<string, IService> service in this._Services)
+                foreach (KeyValuePair<string, IService> service in this.Services)
                     if (service.Value.Instance != null)
                         await service.Value.Instance.InitializeAsync();
             }
             catch (Exception ex)
             {
-                this._Logger.Danger(ex);
+                this.Logger.Danger(ex);
             }
         }
 
         public T GetService<T>(string name) where T : IServiceImplementation
         {
-            if(this._Services.ContainsKey(name))
-                return (T)this._Services[name].Instance;
+            if(this.Services.ContainsKey(name))
+                return (T)this.Services[name].Instance;
             else
                 return default;
         }

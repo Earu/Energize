@@ -28,15 +28,15 @@ namespace Energize.Services.Listeners
             => guild.Roles.Any(x => x.Name == "EnergizeLogs");*/
 
         [Event("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient clientshard)
-            => this.Log.Nice("Shard", ConsoleColor.Magenta, $"Shard {clientshard.ShardId} ready || Online on {clientshard.Guilds.Count} guilds");
+        public async Task OnShardReady(DiscordSocketClient clientShard)
+            => this.Log.Nice("Shard", ConsoleColor.Magenta, $"Shard {clientShard.ShardId} ready || Online on {clientShard.Guilds.Count} guilds");
 
         [Event("ShardDisconnected")]
-        public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientshard)
+        public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientShard)
         {
             if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) return;
             if (e is WebSocketClosedException wscex && wscex.CloseCode == 1001) return;
-            this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientshard.ShardId} disconnected || Offline for {clientshard.Guilds.Count} guilds");
+            this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientShard.ShardId} disconnected || Offline for {clientShard.Guilds.Count} guilds");
         }
 
         [Event("JoinedGuild")]
