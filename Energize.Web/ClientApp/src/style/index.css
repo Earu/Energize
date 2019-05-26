@@ -124,13 +124,14 @@ header > img {
     width: 56px;
     height: 56px;
     color: white;
-    font-size: 35px;
+    font-size: 30px;
     background-color: #A51C15;
     border-radius: 9999px;
     box-shadow: 0 0 5px #333333;
     margin: 10px;
     border: 2px solid #A51C15;
-    font-weight: bolder;
+    font-weight: 500;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
 .content-img {
