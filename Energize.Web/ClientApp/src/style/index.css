@@ -38,9 +38,8 @@ header > h1 {
 }
 
 header > img {
-    width: 100px;
-    margin-top: -20px;
-    margin-bottom: 5px;
+    width: 60px;
+    margin: -22px 10px 5px 10px;
 }
 
 .menu {

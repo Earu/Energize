@@ -39,8 +39,8 @@ namespace Energize.Services.Transmission
 
             this.OctoClient.OnTransmission<object, CommandInformation>("commands", (proc, _) =>
             {
-                var commandService = this.ServiceManager.GetService<CommandHandlingService>("Commands");
-                var cmdInfo = new CommandInformation
+                CommandHandlingService commandService = this.ServiceManager.GetService<CommandHandlingService>("Commands");
+                CommandInformation cmdInfo = new CommandInformation
                 {
                     BotMention = client.DiscordClient.CurrentUser.ToString(),
                     Prefix = client.Prefix,
