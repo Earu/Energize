@@ -97,8 +97,8 @@ export default class Menu extends React.Component {
                     this.commands = cmdInfo.commands;
                     this.prefix = cmdInfo.prefix;
                     this.botMention = cmdInfo.botMention;
-                } catch (err) {
-                    console.debug(err);
+                } catch {
+                    console.debug('Could not generate command documentation');
                 }
             }
         }
@@ -143,11 +143,17 @@ export default class Menu extends React.Component {
         e.preventDefault();
         let element = e.target;
         let id = element.id.substring(4);
-        let targetElement = document.getElementById(id);
-        window.scroll({
-            top: targetElement.offsetTop,
-            behavior: 'smooth'
-        })
+
+        try {
+            let targetElement = document.getElementById(id);
+            window.scroll({
+                top: targetElement.offsetTop,
+                behavior: 'smooth'
+            })
+        } catch {
+            console.debug('Could not find specified id: ' + id);
+        }
+
     }
 
     onFabTopclick = (e) => {
