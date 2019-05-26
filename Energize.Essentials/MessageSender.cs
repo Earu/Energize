@@ -9,15 +9,15 @@ namespace Energize.Essentials
 {
     public class MessageSender
     {
-        public MessageSender(Logger log)
-            => this.Log = log;
+        public MessageSender(Logger logger)
+            => this.Logger = logger;
 
         public static Color SColorGood { get; } = new Color(30, 30, 30);
         public static Color SColorNormal { get; } = new Color(200, 200, 200);
         public static Color SColorWarning { get; } = new Color(226, 123, 68);
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
 
-        public Logger Log { get; private set; }
+        public Logger Logger { get; private set; }
         public Color ColorGood { get => SColorGood; }
         public Color ColorNormal { get => SColorNormal; }
         public Color ColorWarning { get => SColorWarning; }
@@ -35,7 +35,7 @@ namespace Energize.Essentials
             {
                 log += $"(DM) {msg.Author.Username} blocked a message";
             }
-            this.Log.Nice("Message", ConsoleColor.Red, log);
+            this.Logger.Nice("Message", ConsoleColor.Red, log);
         }
 
         private void LogFailedMessage(IChannel chan)
@@ -51,7 +51,7 @@ namespace Energize.Essentials
                 IDMChannel c = chan as IDMChannel;
                 log += $"(DM) {c.Recipient} blocked a message";
             }
-            this.Log.Nice("Message", ConsoleColor.Red, log);
+            this.Logger.Nice("Message", ConsoleColor.Red, log);
         }
 
         public async Task TriggerTyping(ISocketMessageChannel chan)
@@ -67,19 +67,19 @@ namespace Energize.Essentials
             }
         }
 
-        public async Task<IUserMessage> Send(IMessage msg, string header = "", string content = "", Color color = new Color(), string picurl = null)
+        public async Task<IUserMessage> Send(IMessage msg, string header = "", string content = "", Color color = new Color(), string picUrl = null)
         {
             try
             {
-                string username = msg.Author.Username;
+                string userName = msg.Author.Username;
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithColor(color);
                 builder.WithDescription(content);
                 builder.WithFooter(header);
                 builder.WithAuthorNickname(msg);
 
-                if (picurl != null)
-                    builder.WithThumbnailUrl(picurl);
+                if (picUrl != null)
+                    builder.WithThumbnailUrl(picUrl);
 
                 if (!string.IsNullOrWhiteSpace(content))
                     return await msg.Channel.SendMessageAsync(string.Empty, false, builder.Build());

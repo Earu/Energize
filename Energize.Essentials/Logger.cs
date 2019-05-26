@@ -6,13 +6,13 @@ namespace Energize.Essentials
 {
     public class Logger
     {
-        private static readonly string _Prefix = "> ";
-        private static readonly string _Path = "logs";
+        private static readonly string Prefix = "> ";
+        private static readonly string Path = "logs";
 
         public Logger()
         {
-            if (!Directory.Exists(_Path))
-                Directory.CreateDirectory(_Path);
+            if (!Directory.Exists(Path))
+                Directory.CreateDirectory(Path);
         }
 
         private string FormattedTime()
@@ -24,20 +24,20 @@ namespace Energize.Essentials
             return $"{nicehour}:{nicemin} - ";
         }
 
-        private void Prefix()
+        private void AppendPrefix()
         {
             Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.Write(_Prefix);
+            Console.Write(Prefix);
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.Write(this.FormattedTime());
         }
 
         public void LogTo(string filename, string msg)
-            => File.AppendAllText($"{_Path}/{filename}", $"{DateTime.Now} - {msg}\n");
+            => File.AppendAllText($"{Path}/{filename}", $"{DateTime.Now} - {msg}\n");
 
         public void Normal(string msg)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(msg);
             this.LogTo("energize.log", $"[NORMAL] >> {msg}");
@@ -45,7 +45,7 @@ namespace Energize.Essentials
 
         public void Nice(string head, ConsoleColor col, string content)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("[");
             Console.ForegroundColor = col;
@@ -58,7 +58,7 @@ namespace Energize.Essentials
 
         public void Warning(string msg)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(msg);
             this.LogTo("energize.log", $"[WARN] >> {msg}");
@@ -66,7 +66,7 @@ namespace Energize.Essentials
 
         public void Danger(string msg)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(msg);
             this.LogTo("energize.log", $"[DANGER] >> {msg}");
@@ -74,7 +74,7 @@ namespace Energize.Essentials
 
         public void Danger(Exception ex)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(ex);
             this.LogTo("energize.log", $"[DANGER] >> {ex}");
@@ -82,7 +82,7 @@ namespace Energize.Essentials
 
         public void Error(string msg)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("/!\\ ERROR /!\\");
             Console.WriteLine(msg);
@@ -92,7 +92,7 @@ namespace Energize.Essentials
 
         public void Good(string msg)
         {
-            this.Prefix();
+            this.AppendPrefix();
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(msg);
             this.LogTo("energize.log", $"[GOOD] >> {msg}");

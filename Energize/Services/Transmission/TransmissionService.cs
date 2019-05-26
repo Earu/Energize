@@ -35,8 +35,6 @@ namespace Energize.Services.Transmission
             {
                 if (log.Severity == LogSeverity.Info)
                     this.Logger.Nice("Octovisor", ConsoleColor.Magenta, log.Content);
-                else
-                    this.Logger.Warning(log.Content);
             };
 
             this.OctoClient.OnTransmission<object, CommandInformation>("commands", (proc, _) =>

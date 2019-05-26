@@ -11,13 +11,13 @@ namespace Energize.Services.Listeners
     [Service("Administration")]
     class AdministrationService : ServiceImplementationBase
     {
-        private readonly MessageSender _MessageSender;
-        private readonly ServiceManager _ServiceManager;
+        private readonly MessageSender MessageSender;
+        private readonly ServiceManager ServiceManager;
 
         public AdministrationService(EnergizeClient client)
         {
-            this._MessageSender = client.MessageSender;
-            this._ServiceManager = client.ServiceManager;
+            this.MessageSender = client.MessageSender;
+            this.ServiceManager = client.ServiceManager;
         }
 
         private bool IsInviteMessage(IMessage msg)
@@ -34,7 +34,7 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsInviteMessage(msg)) return;
             IGuildChannel chan = (IGuildChannel)msg.Channel;
-            IDatabaseService db = this._ServiceManager.GetService<IDatabaseService>("Database");
+            IDatabaseService db = this.ServiceManager.GetService<IDatabaseService>("Database");
             using (IDatabaseContext ctx = await db.GetContext())
             {
                 IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.GuildId);
@@ -43,11 +43,11 @@ namespace Energize.Services.Listeners
                 try
                 {
                     await msg.DeleteAsync();
-                    await this._MessageSender.Warning(msg, "invite checker", "Your message was removed.");
+                    await this.MessageSender.Warning(msg, "invite checker", "Your message was removed.");
                 }
                 catch
                 {
-                    await this._MessageSender.Warning(msg, "invite checker", "Couldn't delete the invite message. Permissions missing.");
+                    await this.MessageSender.Warning(msg, "invite checker", "Couldn't delete the invite message. Permissions missing.");
                 }
             }
         }
