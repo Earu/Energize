@@ -4,6 +4,7 @@ import Col from 'react-bootstrap/lib/Col';
 
 import Header from './Header';
 import Menu from './Menu';
+import Footer from './Footer';
 
 export default class Layout extends React.Component {
     displayName = Layout.name;
@@ -22,6 +23,7 @@ export default class Layout extends React.Component {
                         </Col>
                     </Row>
                 </div>
+                <Footer/>
             </div>
         );
     }
