@@ -7,12 +7,12 @@ namespace Energize.Essentials
         public static EmbedBuilder WithField(this EmbedBuilder builder, string title, object value, bool inline = true)
         {
             string val = value.ToString();
-            EmbedFieldBuilder fieldbuilder = new EmbedFieldBuilder();
-            fieldbuilder
+            EmbedFieldBuilder fieldBuilder = new EmbedFieldBuilder();
+            fieldBuilder
                 .WithIsInline(inline)
                 .WithName(title)
                 .WithValue(val.Length > 1024 ? $"{val.Substring(0, 1021)}..." : val);
-            builder.WithFields(fieldbuilder);
+            builder.WithFields(fieldBuilder);
             return builder;
         }
 

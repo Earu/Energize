@@ -1,11 +1,9 @@
 ﻿using Energize.Web.Models;
+using Energize.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Octovisor.Client;
-using Octovisor.Messages;
 using Octovisor.Client.Exceptions;
 using System.Threading.Tasks;
-using System;
-using Energize.Web.Services;
 
 namespace Energize.Web.Controllers
 {

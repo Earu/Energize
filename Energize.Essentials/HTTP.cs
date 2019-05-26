@@ -9,20 +9,20 @@ namespace Energize.Essentials
 {
     public class HttpClient
     {
-        private static readonly string _Useragent = "Energize Discord(Earu's Bot)";
+        private static readonly string UserAgent = "Energize Discord(Earu's Bot)";
 
-        private static async Task<string> InternalRequest(string method, string url, string body, Logger logger, string useragent, Action<HttpWebRequest> callback = null)
+        private static async Task<string> InternalRequest(string method, string url, string body, Logger logger, string userAgent, Action<HttpWebRequest> callback = null)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = method;
                 request.Timeout = 60000;
-                request.Headers[HttpRequestHeader.UserAgent] = useragent ?? _Useragent;
+                request.Headers[HttpRequestHeader.UserAgent] = userAgent ?? UserAgent;
                 if (!string.IsNullOrWhiteSpace(body))
                 {
                     byte[] data = Encoding.ASCII.GetBytes(body);
-                    using (var stream = request.GetRequestStream())
+                    using (Stream stream = request.GetRequestStream())
                         await stream.WriteAsync(data, 0, data.Length);
                 }
 
@@ -32,9 +32,9 @@ namespace Energize.Essentials
                 using (StreamReader reader = new StreamReader(answer.GetResponseStream(), Encoding.UTF8))
                     return reader.ReadToEnd();
             }
-            catch (WebException e)
+            catch (WebException ex)
             {
-                switch (e.Status)
+                switch (ex.Status)
                 {
                     case WebExceptionStatus.Timeout:
                         logger.Nice("HTTP", ConsoleColor.Red, $"Request timed out for [ {url} ]");
@@ -44,26 +44,26 @@ namespace Energize.Essentials
                         break;
                     case WebExceptionStatus.ProtocolError:
                         logger.Nice("HTTP", ConsoleColor.Red, $"Protocol error [ {url} ]");
-                        logger.Danger(e.Message);
+                        logger.Danger(ex.Message);
                         break;
                     default:
-                        logger.Nice("HTTP", ConsoleColor.Red, $"Unknown error [ {url} ]\n{e.ToString()}");
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Unknown error [ {url} ]\n{ex.ToString()}");
                         break;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Nice("HTTP", ConsoleColor.Red, e.Message);
+                logger.Nice("HTTP", ConsoleColor.Red, ex.Message);
             }
 
             return string.Empty;
         }
 
-        public static async Task<string> PostAsync(string url, string body, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
-            => await InternalRequest("POST", url, body, logger, useragent, callback);
+        public static async Task<string> PostAsync(string url, string body, Logger logger, string userAgent = null, Action<HttpWebRequest> callback = null)
+            => await InternalRequest("POST", url, body, logger, userAgent, callback);
 
-        public static async Task<string> GetAsync(string url, Logger logger, string useragent = null, Action<HttpWebRequest> callback = null)
-            => await InternalRequest("GET", url, null, logger, useragent, callback);
+        public static async Task<string> GetAsync(string url, Logger logger, string userAgent = null, Action<HttpWebRequest> callback = null)
+            => await InternalRequest("GET", url, null, logger, userAgent, callback);
 
         public static bool IsURL(string input)
             => Regex.IsMatch(input, @"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$");

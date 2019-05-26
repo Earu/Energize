@@ -68,9 +68,9 @@ namespace Energize.Services.Eval
                     return (1, "👌 (nothing or null was returned)");
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return (0, $"```\n{e.Message.Replace("`", "")}```");
+                return (0, $"```\n{ex.Message.Replace("`", "")}```");
             }
         }
     }

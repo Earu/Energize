@@ -10,7 +10,7 @@ namespace Energize.Services.Database
 {
     public class Database : DbContext, IDatabase
     {
-        private readonly string _ConnectionString;
+        private readonly string ConnectionString;
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
@@ -19,12 +19,12 @@ namespace Energize.Services.Database
 
         public Database(string connectionstring)
         {
-            this._ConnectionString = connectionstring;
+            this.ConnectionString = connectionstring;
         }
     
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(this._ConnectionString);
+            optionsBuilder.UseSqlite(this.ConnectionString);
         }
 
         public void Save()
@@ -85,28 +85,23 @@ namespace Energize.Services.Database
     [Service("Database")]
     public class DatabaseService : ServiceImplementationBase, IDatabaseService
     {
-        private readonly string _ConnectionString;
-        private readonly Logger _Logger;
-
-        private List<DatabaseContext> _Pool;
+        private readonly Logger Logger;
+        private readonly List<DatabaseContext> Pool;
 
         public DatabaseService(EnergizeClient client)
         {
-            this._ConnectionString = Config.Instance.DBConnectionString;
-            this._Logger = client.Logger;
+            this.Logger = client.Logger;
 
-            this._Pool = new List<DatabaseContext>();
+            this.Pool = new List<DatabaseContext>();
             for (uint i = 0; i < 10; i++)
-            {
-                _Pool.Add(new DatabaseContext(this.Create(), this._Logger));
-            }
+                Pool.Add(new DatabaseContext(this.Create(), this.Logger));
         }
 
         public async Task<IDatabaseContext> GetContext()
         {
-            for(int i = 0; i < this._Pool.Count; i++)
+            for(int i = 0; i < this.Pool.Count; i++)
             {
-                DatabaseContext ctx = this._Pool[i];
+                DatabaseContext ctx = this.Pool[i];
                 if(!ctx.IsUsed)
                 {
                     ctx.IsUsed = true;
@@ -120,7 +115,7 @@ namespace Energize.Services.Database
         }
 
         public IDatabaseContext CreateContext()
-            => new DatabaseContext(this.Create(), this._Logger);
+            => new DatabaseContext(this.Create(), this.Logger);
 
         private Database Create()
         {

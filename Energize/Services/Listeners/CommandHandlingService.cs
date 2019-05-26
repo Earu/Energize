@@ -13,32 +13,32 @@ namespace Energize.Services.Listeners
     [Service("Commands")]
     public class CommandHandlingService : ServiceImplementationBase
     {
-        private readonly DiscordShardedClient _Client;
-        private readonly DiscordRestClient _RestClient;
-        private readonly Logger _Logger;
-        private readonly MessageSender _MessageSender;
-        private readonly IServiceManager _ServiceManager;
+        private readonly DiscordShardedClient Client;
+        private readonly DiscordRestClient RestClient;
+        private readonly Logger Logger;
+        private readonly MessageSender MessageSender;
+        private readonly IServiceManager ServiceManager;
 
         public CommandHandlingService(EnergizeClient client)
         {
-            this._Client = client.DiscordClient;
-            this._RestClient = client.DiscordRestClient;
-            this._Logger = client.Logger;
-            this._MessageSender = client.MessageSender;
-            this._ServiceManager = client.ServiceManager;
+            this.Client = client.DiscordClient;
+            this.RestClient = client.DiscordRestClient;
+            this.Logger = client.Logger;
+            this.MessageSender = client.MessageSender;
+            this.ServiceManager = client.ServiceManager;
         }
 
         public Dictionary<string, Commands.Command.Command> RegisteredCommands { get => Commands.CommandHandler.GetRegisteredCommands(null); }
 
         public override void Initialize()
-            => Commands.CommandHandler.Initialize(this._Client, this._RestClient, this._Logger, this._MessageSender, this._ServiceManager);
+            => Commands.CommandHandler.Initialize(this.Client, this.RestClient, this.Logger, this.MessageSender, this.ServiceManager);
 
         public bool IsCommandMessage(IMessage msg)
         {
             if (string.IsNullOrWhiteSpace(msg.Content))
                 return false;
 
-            var cmds = this.RegisteredCommands;
+            Dictionary<string, Commands.Command.Command> cmds = this.RegisteredCommands;
             foreach(KeyValuePair<string, Commands.Command.Command> kv in cmds)
             {
                 if (msg.Content.StartsWith($"{Config.Instance.Discord.Prefix}{kv.Key}"))
@@ -56,9 +56,9 @@ namespace Energize.Services.Listeners
             string content = File.ReadAllText("restartlog.txt");
             if (ulong.TryParse(content, out ulong id))
             {
-                SocketChannel chan = this._Client.GetChannel(id);
+                SocketChannel chan = this.Client.GetChannel(id);
                 if (chan != null)
-                    await this._MessageSender.Good(chan, "Restart", "Done restarting.");
+                    await this.MessageSender.Good(chan, "Restart", "Done restarting.");
             }
 
             File.Delete("restartlog.txt");
@@ -75,8 +75,8 @@ namespace Energize.Services.Listeners
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
         {
-            IMessage oldmsg = await cache.GetOrDownloadAsync();
-            if (oldmsg != null && !oldmsg.Content.Equals(msg.Content))
+            IMessage oldMsg = await cache.GetOrDownloadAsync();
+            if (oldMsg != null && !oldMsg.Content.Equals(msg.Content))
                 Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
         }
     }
