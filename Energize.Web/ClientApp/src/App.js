@@ -14,11 +14,11 @@ export default class App extends React.Component
             <BrowserRouter>
                 <Layout>
                     <Switch>
-                        <Route path="/" exact />
+                        <Route path="/" exact component={Home} />
                         <Route path="/docs" component={Documentation} />
-                        <Route path="/music" />
-                        <Route path="/admin" />
-                        <Route path="/stats" />
+                        <Route path="/music" component={Home} />
+                        <Route path="/admin" component={Home} />
+                        <Route path="/stats" component={Home} />
                     </Switch>
                 </Layout>
             </BrowserRouter>

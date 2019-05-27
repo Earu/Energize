@@ -272,6 +272,7 @@ module Util =
     let info (ctx : CommandContext) = async {
         let invite = Config.Instance.URIs.InviteURL
         let github = Config.Instance.URIs.GitHubURL
+        let docs = Config.Instance.URIs.WebsiteURL
         let owner = match ctx.client.GetUser(Config.Instance.Discord.OwnerID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [
@@ -280,7 +281,7 @@ module Util =
             ctx.embedField "Server Count" ctx.client.Guilds.Count true
             ctx.embedField "User count" usercount true
             ctx.embedField "Owner" owner true
-            ctx.embedField "GitHub" github true
+            ctx.embedField "Links" (String.Join('\n', [ github; invite; docs ])) false
         ]
 
         let builder = EmbedBuilder()
@@ -292,10 +293,7 @@ module Util =
             .WithFooter("info")
             |> ignore
 
-        return [
-            ctx.sendEmbed (builder.Build())
-            ctx.sendRaw invite
-        ]
+        return [ ctx.sendEmbed (builder.Build()) ]
     }
 
     [<Command("invite", "Gets the bot invite links", "invite <nothing>")>]
