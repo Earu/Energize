@@ -6,14 +6,14 @@ export default class Menu extends React.Component {
 
     render() {
         return (
-            <ul className="links">
-                <li><NavLink to="/docs" activeStyle={{ color: '#A51C15' }}>Docs</NavLink></li>
-                <li><NavLink to="/music" activeStyle={{ color: '#A51C15' }}>Music</NavLink></li>
-                <li><NavLink to="/admin" activeStyle={{ color: '#A51C15' }}>Admin</NavLink></li>
-                <li><NavLink to="/stats" activeStyle={{ color: '#A51C15' }}>Stats</NavLink></li>
-                <li>Other</li>
-                <li>Credits</li>
-            </ul>
+            <div className='links'>
+                <div><NavLink to="/" exact>Back to Home</NavLink></div>
+                <hr />
+                <div><NavLink to="/docs">Docs</NavLink></div>
+                <div><NavLink to="/music">Music</NavLink></div>
+                <div><NavLink to="/admin">Admin</NavLink></div>
+                <div><NavLink to="/stats">Stats</NavLink></div>
+            </div>
         );
     }
 }
