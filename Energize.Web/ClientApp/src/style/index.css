@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css?family=Abel');
+@import url('https://fonts.googleapis.com/css?family=Roboto:300&display=swap');
 
 html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Abel', sans-serif;
+    font-family: 'Roboto', sans-serif;
     scrollbar-width: none;
     background: #333333;
 }
@@ -22,14 +22,18 @@ a:hover {
     transition: 0.25s;
 }
 
+.active:focus {
+    color: white;
+    background: #262828;
+}
+
 header {
-    position: -webkit-sticky;
     position: sticky;
     top: 0;
-    background-color: #ededed;
-    border-bottom: 2px solid #A51C15;
-    box-shadow: 0 2px 10px #333333;
-    padding: 5px;
+    background: #A51C15;
+    color: white;
+    box-shadow: 0 2px 5px black;
+    padding: 0px;
     width: 100%;
     z-index: 10;
 }
@@ -39,18 +43,50 @@ header > h1 {
 }
 
 header > img {
-    width: 60px;
-    margin: -22px 10px 5px 10px;
+    width: 55px;
+    margin: -28px 10px 0px 10px;
+}
+
+header > button {
+    background: transparent;
+    color: white;
+    border: 1px solid white;
+    outline-width: 0;
+    float: right;
+    font-size: 40px;
+    margin: 6px;
+    border-radius: 5px;
+    width: 56px;
+    height: 56px;
 }
 
 footer {
     background: #262828;
     padding: 10px;
     color: white;
-    box-shadow: 0 -2px 5px #333333;
+    box-shadow: 0 -2px 5px black;
     z-index: 10;
     position: absolute;
     width: 100%;
+}
+
+hr {
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 45px;
+    font-weight: 400;
+}
+
+h3 {
+    font-size: 40px;
+}
+
+h4 {
+    font-size: 20px;
+    font-weight: 400;
 }
 
 #root {
@@ -58,25 +94,48 @@ footer {
 }
 
 .menu {
-    background-color: #EDEDED;
+    background-color: #2c2f34;
     padding-top: 1%;
     margin: 0;
-    color: #5C5C5C;
+    color: white;
     display: flex;
     flex-direction: column;
+    box-shadow: 2px 0 5px #333333;
+}
+
+.active {
+    border-left: 5px solid #A51C15 !important;
+    color: white;
 }
 
 .links {
-    padding: 0 20px;
+    margin: 0;
+    padding: 0;
+    padding-top: 10px;
 }
 
-.links > li {
-    margin: 0 auto;
-    margin-bottom: 10px;
+.links > hr {
+    margin: 10px;
 }
 
-.links > li:hover {
-    color: #A51C15;
+.links > div > a {
+    padding: 5%;
+    padding-left: 15%;
+    text-align: left;
+    transition: 0s;
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    border-left: 5px solid #2c2f34;
+}
+
+.links > div:hover {
+    background: #262828;
+}
+
+.links > div > a:hover {
+    color: white;
+    border-left: 5px solid #262828;
 }
 
 .command {
@@ -94,6 +153,12 @@ footer {
     margin: 0;
     padding: 0;
     padding-bottom: 1%;
+    color: #333333;
+}
+
+.content-container {
+    padding-right: 20%;
+    padding-left: 10%;
 }
 
 .summary {
@@ -155,9 +220,7 @@ footer {
     border-radius: 9999px;
     box-shadow: 0 0 5px #333333;
     margin: 10px;
-    border: 2px solid #A51C15;
-    font-weight: 500;
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    border: 2px solid #A51C15;;
     z-index: 999;
     outline-width: 0;
 }

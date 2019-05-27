@@ -18,7 +18,7 @@ export default class Menu extends React.Component {
             case 2:
                 return 'Can only be used in a server';
             case 3:
-                return 'Can only be used by the owner of the bot';
+                return 'Can only be used by the owner of Energize';
             default:
                 return 'Unknown condition ?';
         }
@@ -104,7 +104,7 @@ export default class Menu extends React.Component {
         }
 
         if (this.commands.length > 0) {
-            let info = <div>To use the below commands you can either use the prefix (<b>{this.prefix}</b>), either mention the bot (<b>@{this.botMention}</b>).</div>;
+            let info = <div>To use the below commands you can either use the prefix (<b>{this.prefix}</b>), either mention Energize (<b>@{this.botMention}</b>).</div>;
             let elements = this.commands;
             if (search !== null) {
                 search = search.toLowerCase();
@@ -173,13 +173,8 @@ export default class Menu extends React.Component {
                     <span>
                         <a id='sum-commands' href='docs#commands' onClick={this.onSummaryClick}>Commands</a>
                         <span>
-                            <a id='sum-updating-cmd-msg' href='docs#updating-cmd-msg' onClick={this.onSummaryClick}>
-                                Updating a command message
-                            </a>
-                        </span>
-                        <span>
-                            <a id='sum-deleting-cmd-msg' href='docs#deleting-cmd-msg' onClick={this.onSummaryClick}>
-                                Deleting a command message
+                            <a id='sum-modifying-cmd-msg' href='docs#modifying-cmd-msg' onClick={this.onSummaryClick}>
+                                Editing or deleting a command message
                             </a>
                         </span>
                         <span>
@@ -205,64 +200,73 @@ export default class Menu extends React.Component {
                     </span>
                 </Summary>
 
-                <button className='fabTop' onClick={this.onFabTopclick}>⇪</button>
+                <button className='fabTop' onClick={this.onFabTopclick}><i className='fas fa-chevron-up'/></button>
 
-                <h2>Documentation</h2>
-                <h4><i>Here you will find documentation for Energize various commands and features.</i></h4>
-                <h3 id='description'>Description</h3>
-                <p>
-                    Energize primary feature is <b>music</b>, streaming music <b>through a discord audio channel</b> more specifically.
-                    It can stream a large variety of sources including <b>Youtube, Twitch, SoundCloud, Vimeo and more</b>.<br />
-                    Along with music features, there are some <b>moderation, NSFW and social</b> features. Energize aims to be <b>simple of use</b> for the average user but also to provide
-                    a <b>good amount of features</b> to satisfy even the Discord's veterans.
-                </p>
+                <div className='content-container'>
+                    <h2>Documentation</h2>
+                    <h4><i>Here you will find documentation for Energize various commands and features.</i></h4><br />
+                    <h3 id='description'>Description</h3><hr />
+                    <p>
+                        Energize primary feature is <b>music</b>, streaming music <b>through a discord audio channel</b> more specifically.
+                        It can stream a large variety of sources including <b>Youtube, Twitch, SoundCloud, Vimeo and more</b>.<br />
+                        Along with music features, there are some <b>moderation, NSFW and social</b> features. Energize aims to be <b>simple of use</b> for the average user but also to provide
+                        a <b>good amount of features</b> to satisfy even the Discord's veterans.
+                    </p><br />
 
-                <h3 id='commands'>Commands</h3>
-                <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
-                <div id='commandRoot'>Generating commands documentation...</div>
+                    <h3 id='commands'>Commands</h3><hr />
+                    <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
+                    <div id='commandRoot'>Generating commands documentation...</div><br/>
 
-                <h4 id='paginated-cmd-results'>Paginated command results</h4>
-                Sometimes when using a command with the bot, you will get results that have reactions on them. There are usually <b>3 or 4</b> added
-                reactions to these.<br/><br/>Here is an example: <br/>
-                <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
-                Each reaction added by the bot corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
-                <Twemoji options={{className: 'twemoji'}}>
-                    - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/>
-                    - The ⏹ reaction will <b>delete</b> the result.<br/>
-                    - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br/>
-                    - The ▶ reaction will load the content of the <b>next page</b> of the result.<br/>
-                </Twemoji><br/>
+                    <h4 id='modifying-cmd-msg'>Editing or deleting a command message</h4>
+                    Ever tried to edit one of your messages that contained a bot command before, and realized it did not do <b>anything</b>? With Energize we thought about you! In fact if you edit one
+                    of your command messages, Energize will pick it up and give you a new command result! There is more to that, if you are in a server and cannot delete the bot message, simply delete your own
+                    message, the associated command result should also get deleted by Energize.
+                    <br/><br/><br/>
 
-                <u><b>Paginated results behaviors:</b></u><br/>
-                - If you stopped using the paginated message during 5 minutes the bot will <b>not</b> react to any of your reactions anymore.<br/>
-                - Only the command author can use the paginated result reactions.<br/><br/>
+                    <h4 id='paginated-cmd-results'>Paginated command results</h4>
+                    Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4</b> reactions.<br/><br/
+                    >Here is an example: <br/>
+                    <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
+                    Each reaction added by Energize corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
+                    <Twemoji options={{className: 'twemoji'}}>
+                        - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/>
+                        - The ⏹ reaction will <b>delete</b> the result.<br/>
+                        - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br/>
+                        - The ▶ reaction will load the content of the <b>next page</b> of the result.<br/>
+                    </Twemoji><br/>
 
-                <h4 id='cmd-user-input'>Ways to target users in commands</h4>
-                Some commands require you to pass a user as argument, there are a few ways to feed the bot a user.
-                Here are the several ways this can be achieved:<br/><br/>
-                <ol>
-                    <li>Typing the name (nickname in a guild) of the user.</li>
-                    <li>Mentioning the user.</li>
-                    <li>Using built-in tagging system.</li>
-                </ol><br/>
+                    <u><b>Paginated results behaviors:</b></u><br/>
+                    - If you stopped using the paginated message during 5 minutes Energize will <b>not</b> react to any of your reactions anymore.<br/>
+                    - Only the command author can use the paginated result reactions.<br/><br/>
 
-                <h4 id='target-user-tags'>Targetting users with tags</h4>
-                As mentioned before, the bot features a <b>built-in tagging system</b>, it means that there is an existing
-                syntax to tag a wanted user. There are currently <b>4</b> usable built-in tags. You can use the tags by prefixing
-                one of the existing tags with the <b>$</b> character like so as an argument in commands that require user arguments.<br/><br/>
-                Here is an example:<br/>
-                <code>cmd $random,$last</code><br/><br/>
-                {this.formatBuiltInTags()}
+                    <h4 id='cmd-user-input'>Ways to target users in commands</h4>
+                    Some commands require you to pass a user as argument, there are a few ways to feed Energize a user.
+                    Here are the several ways this can be achieved:<br/><br/>
+                    <ol>
+                        <li>Typing the name (nickname in a guild) of the user.</li>
+                        <li>Mentioning the user.</li>
+                        <li>Using built-in tagging system.</li>
+                    </ol><br/>
 
-                <h3 id='playable-messages'>Playable messages</h3>
-                <Twemoji options={{className: 'twemoji'}}>
-                    If the bot has the permissions necessary you maybe have noticed that some messages get a ⏯ reaction. This means that
-                    those messages have content that can be added to the track queue. Although this will only work if you are in a voice channel.
-                    Usually messages that can be "played" are messages containing Youtube, SoundCloud and Twitch content.
-                </Twemoji><br/>
+                    <h4 id='target-user-tags'>Targetting users with tags</h4>
+                    As mentioned before, Energize features a <b>built-in tagging system</b>, it means that there is an existing
+                    syntax to tag a wanted user. There are currently <b>4</b> usable built-in tags. You can use the tags by prefixing
+                    one of the existing tags with the <b>$</b> character like so as an argument in commands that require user arguments.<br/><br/>
+                    Here is an example:<br/>
+                    <code>cmd $random,$last</code><br/><br/>
+                    {this.formatBuiltInTags()}<br/>
 
-                Example:<br/>
-                <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img'/><br/>
+                    <h3 id='playable-messages'>Playable messages</h3><hr />
+                    <Twemoji options={{className: 'twemoji'}}>
+                        If Energize has the permissions necessary you maybe have noticed that some messages get a ⏯ reaction. This means that
+                        those messages have content that can be added to the track queue. Although this will only work if you are in a voice channel.
+                        Usually messages that can be "played" are messages containing Youtube, SoundCloud and Twitch content.
+                    </Twemoji><br/>
+
+                    Example:<br/>
+                    <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img'/><br/>
+                </div>
+
             </div>
             );
     }
