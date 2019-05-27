@@ -106,6 +106,7 @@ h4 {
 .active {
     border-left: 5px solid #A51C15 !important;
     color: white;
+    background: #262828;
 }
 
 .links {

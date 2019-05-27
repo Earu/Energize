@@ -42,8 +42,8 @@ module CommandHandler =
 
     let private postCmdHelp (cmd : Command) (ctx : CommandContext) (iswarn : bool) =
         let fields = [
-            ctx.embedField "Usage" (sprintf "`%s`" cmd.usage) false
-            ctx.embedField "Help" (sprintf "`%s`" cmd.help) false
+            ctx.embedField "Usage" (sprintf "`%s`" cmd.usage) true
+            ctx.embedField "Help" (sprintf "`%s`" cmd.help) true
         ]
         let builder = EmbedBuilder()
         builder
@@ -63,7 +63,7 @@ module CommandHandler =
                 | Some cmd ->
                     [ postCmdHelp cmd ctx false ]
                 | None ->
-                    let warning = sprintf "Could not find any command named \'%s\'" cmdName
+                    let warning = sprintf "Could not find any command named `%s`, find out more at %s" cmdName Config.Instance.URIs.WebsiteURL
                     [ ctx.sendWarn None warning ]
             else
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
@@ -78,6 +78,7 @@ module CommandHandler =
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
                     let tip = StaticData.Instance.Tips.[ctx.random.Next(0, StaticData.Instance.Tips.Count)]
                     builder.WithFields([
+                        ctx.embedField "Documentation" Config.Instance.URIs.WebsiteURL false
                         ctx.embedField moduleName (String.Join(',', cmdsDisplay)) false
                         ctx.embedField "Tip" tip false
                     ])
@@ -102,12 +103,12 @@ module CommandHandler =
                 if state.commands |> Map.containsKey cmdName then
                     if value.Equals(0) then
                         enableCmd state cmdName false
-                        [ ctx.sendOK None (sprintf "Successfully disabled command \'%s\'" cmdName) ]
+                        [ ctx.sendOK None (sprintf "Successfully disabled command `%s`" cmdName) ]
                     else
                         enableCmd state cmdName true
-                        [ ctx.sendOK None (sprintf "Successfully enabled command \'%s\'" cmdName) ]
+                        [ ctx.sendOK None (sprintf "Successfully enabled command `%s`" cmdName) ]
                 else
-                    [ ctx.sendWarn None (sprintf "Could not find any command named \'%s\'" cmdName) ]
+                    [ ctx.sendWarn None (sprintf "Could not find any command named `%s`" cmdName) ]
             | None -> []
     }
 
@@ -317,8 +318,8 @@ module CommandHandler =
         
         let caseId = Guid.NewGuid()
         let err = 
-            (sprintf "Something went wrong when using \'**%s**\' a report has been sent.\n" cmd.name)
-            + "If you wish to contact the developer use the \'**bug**\' or \'**feedback**\' commands, don't forget to mention your case id!" 
+            (sprintf "Something went wrong when using `%s` a report has been sent.\n" cmd.name)
+            + "If you wish to contact the developer use the `bug` or `feedback` commands, don't forget to mention your case id!" 
         let msgs = [ awaitResult (state.messageSender.Warning(msg, sprintf "internal error | case id: %s" (caseId.ToString()), err)) ]
         registerCmdCacheEntry msg.Id msgs
         
@@ -357,7 +358,7 @@ module CommandHandler =
             if not tcallback.IsCompleted then
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
                 if not tcallback.IsCompleted then
-                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command \'%s\' is timing out!" cmd.name)) |> ignore
+                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command `%s` is timing out!" cmd.name)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmd.name)
                 return tres
             else
@@ -503,7 +504,7 @@ module CommandHandler =
         | None when botMention -> 
             let showCmd cmdName = state.prefix + cmdName
             let helper =
-                sprintf "Hey there %s, looking for something? Use %s or %s!" msg.Author.Mention (showCmd "help") (showCmd "info")
+                sprintf "Hey there %s, looking for something? Use `%s` or `%s` or visit the online documentation\n%s" msg.Author.Mention (showCmd "help") (showCmd "info") Config.Instance.URIs.WebsiteURL
             awaitIgnore (state.messageSender.SendRaw(msg, helper))
         | None -> ()
 
