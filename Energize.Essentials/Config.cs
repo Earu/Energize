@@ -63,6 +63,7 @@ namespace Energize.Essentials
         public string TwitchURL;
         public string GitHubURL;
         public string InviteURL;
+        public string WebsiteURL;
     }
 
     public struct Blacklist

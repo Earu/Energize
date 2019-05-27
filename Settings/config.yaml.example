@@ -25,4 +25,5 @@ URIs:
   TwitchURL: https://www.twitch.tv/earuio
   GitHubURL: https://github.com/Earu/Energize
   InviteURL: https://discordapp.com/oauth2/authorize?client_id=0000000000000000&scope=bot&permissions=8
+  WebsiteURL: http://energize.earu.io/docs
 DBConnectionString: Data Source=EnergizeDB.db
