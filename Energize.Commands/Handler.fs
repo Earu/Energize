@@ -442,15 +442,18 @@ module CommandHandler =
         match cmd with
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
-            awaitIgnore (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
+            let warnMsg = awaitResult (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
+            registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd when not hasPermissions ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with missing permissions <%s>" author cmd.name)
             let permDisplay = String.Join(", ", missingPerms |> List.map (fun perm -> sprintf "`%s`" (perm.ToString())))
-            awaitIgnore (state.messageSender.Warning(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
+            let warnMsg = awaitResult (state.messageSender.Warning(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
+            registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd when not hasConditions ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with unmet conditions <%s>" author cmd.name)
             let condDisplay = String.Join(", ", missingConds |> List.map (fun cond -> sprintf "`%s`" (cond.ToString())))
-            awaitIgnore (state.messageSender.Warning(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
+            let warnMsg = awaitResult (state.messageSender.Warning(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
+            registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd ->
             runCmd state msg cmd input (Context.isPrivate msg)
 
@@ -505,7 +508,8 @@ module CommandHandler =
             let showCmd cmdName = state.prefix + cmdName
             let helper =
                 sprintf "Hey there %s, looking for something? Use `%s` or `%s` or visit the online documentation\n%s" msg.Author.Mention (showCmd "help") (showCmd "info") Config.Instance.URIs.WebsiteURL
-            awaitIgnore (state.messageSender.SendRaw(msg, helper))
+            let helpMsg = awaitResult (state.messageSender.SendRaw(msg, helper))
+            registerCmdCacheEntry msg.Id [ helpMsg ]
         | None -> ()
 
     let HandleMessageReceived (msg : SocketMessage) =

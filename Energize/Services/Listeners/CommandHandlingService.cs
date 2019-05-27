@@ -6,6 +6,7 @@ using Energize.Interfaces.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
@@ -42,6 +43,9 @@ namespace Energize.Services.Listeners
             foreach(KeyValuePair<string, Commands.Command.Command> kv in cmds)
             {
                 if (msg.Content.StartsWith($"{Config.Instance.Discord.Prefix}{kv.Key}"))
+                    return true;
+
+                if (Regex.IsMatch(msg.Content, $"^<@!?{Config.Instance.Discord.BotID}> {kv.Key}"))
                     return true;
             }
 
