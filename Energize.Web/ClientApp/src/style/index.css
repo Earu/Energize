@@ -6,6 +6,7 @@ html, body {
     font-family: 'Roboto', sans-serif;
     scrollbar-width: none;
     background: #333333;
+    overflow-y: hidden;
 }
 
 ::-webkit-scrollbar {
@@ -36,6 +37,7 @@ header {
     padding: 0px;
     width: 100%;
     z-index: 10;
+    height: 70px;
 }
 
 header > h1 {
@@ -58,15 +60,15 @@ header > button {
     border-radius: 5px;
     width: 56px;
     height: 56px;
+    display: none;
+    transition: 0.25s;
 }
 
 footer {
     background: #262828;
     padding: 10px;
     color: white;
-    box-shadow: 0 -2px 5px black;
-    z-index: 10;
-    position: absolute;
+    box-shadow: 0 -2px 5px #333333;
     width: 100%;
 }
 
@@ -155,6 +157,8 @@ h4 {
     padding: 0;
     padding-bottom: 1%;
     color: #333333;
+    overflow-y: scroll;
+    height: 93vh;
 }
 
 .content-container {
@@ -165,12 +169,32 @@ h4 {
 .summary {
     position: fixed;
     top: 2;
-    right: 0;
+    right: 35px;
     font-size: 14px;
     background-color: #EDEDED;
     padding: 1%;
     box-shadow: 0 0 5px #333333;
     border-radius: 2px;
+    display: block;
+}
+
+@media only screen and (max-width: 767px) {
+    header > button {
+        display: block;
+    }
+
+    .menu {
+        display: none;
+    }
+
+    .content-container {
+        padding-right: 5%;
+        padding-left: 5%;
+    }
+
+    .summary {
+        display: none;
+    }
 }
 
 .summary > div {

@@ -18,12 +18,14 @@ export default class Layout extends React.Component {
                         <Col md={1} className='menu p-0'>
                             <Menu />
                         </Col>
-                        <Col md={11}>
-                            <div className='content'>{this.props.children}</div>
+                        <Col md={11} className='p-0'>
+                            <div className='content'>
+                                {this.props.children}
+                                <Footer/>
+                            </div>
                         </Col>
                     </Row>
                 </div>
-                <Footer/>
             </div>
         );
     }

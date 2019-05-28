@@ -146,7 +146,8 @@ export default class Menu extends React.Component {
 
         try {
             let targetElement = document.getElementById(id);
-            window.scroll({
+            let content = document.getElementsByClassName('content')[0];
+            content.scroll({
                 top: targetElement.offsetTop,
                 behavior: 'smooth'
             })
@@ -157,7 +158,8 @@ export default class Menu extends React.Component {
     }
 
     onFabTopclick = (e) => {
-        window.scroll({
+        let content = document.getElementsByClassName('content')[0];
+        content.scroll({
             top: 0,
             behavior: 'smooth'
         })
