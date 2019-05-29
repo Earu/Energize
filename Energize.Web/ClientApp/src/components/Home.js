@@ -8,7 +8,7 @@ export default class Home extends React.Component {
     render() {
         return (
             <div className='home'>
-                <video id='visualizer' src='./video/visualizer.mp4' autoPlay loop/>
+                <video id='visualizer' src='./video/visualizer.mp4' autoPlay loop muted/>
                 <div className='intro'>
                     <Row className='p-0 m-0'>
                         <Col md={2} className='p-0 m-0'/>
