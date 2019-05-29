@@ -1,0 +1,93 @@
+.summary {
+    position: fixed;
+    top: 2;
+    right: 35px;
+    font-size: 14px;
+    background-color: #EDEDED;
+    padding: 1%;
+    box-shadow: 0 0 5px #333333;
+    border-radius: 2px;
+    display: block;
+}
+
+.summary > div {
+    border-bottom: 1px solid #A51C15;
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.summary > span, .summary > span > span {
+    display: block;
+}
+
+.summary > span {
+    margin-left: 15px;
+}
+
+.summary > span > span {
+    margin-left: 30px;
+    font-size: 12px;
+}
+
+.summary > button {
+    width: 56px;
+    height: 56px;
+    color: white;
+    font-size: 30px;
+    background-color: #A51C15;
+    border-radius: 9999px;
+    box-shadow: 0 0 5px #333333;
+    border: 2px solid #A51C15;
+    outline-width: 0;
+}
+
+.summary > span:before, .summary > span > span:before {
+    content: '/ ';
+}
+
+@media only screen and (max-width: 767px) {
+    .summary {
+        display: none;
+    }
+}
+
+.fabTop {
+    bottom: 0;
+    right: 0;
+    position: fixed;
+    width: 56px;
+    height: 56px;
+    color: white;
+    font-size: 30px;
+    background-color: #A51C15;
+    border-radius: 9999px;
+    box-shadow: 0 0 5px #333333;
+    margin: 10px;
+    border: 2px solid #A51C15;;
+    z-index: 999;
+    outline-width: 0;
+}
+
+.content-img {
+    width: 100%;
+    max-width: 500px;
+    display: block;
+    box-shadow: 0 0 5px #333333;
+    margin-top: 1%;
+    margin-bottom: 1%;
+    border: 1px solid #333333;
+    border-left: 3px solid #A51C15;
+    border-radius: 3px;
+}
+
+.command {
+    background-color: #EDEDED;
+    border-left: 2px solid #A51C15;
+    padding: 1%;
+    margin-bottom: 1%;
+}
+
+.command > u {
+    font-size: large;
+}

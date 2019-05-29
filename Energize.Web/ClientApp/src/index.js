@@ -1,6 +1,8 @@
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 import './style/index.css';
+import './style/documentation.css';
+import './style/home.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
