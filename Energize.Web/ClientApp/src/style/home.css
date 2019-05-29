@@ -1,0 +1,103 @@
+.home {
+    background: black;
+    overflow-x: hidden;
+    padding: 0;
+}
+
+#visualizer {
+    height: 400px;
+    filter: blur(6px);
+    margin-bottom: 0;
+}
+
+.intro {
+    height: 400px;
+    margin-top: -400px;
+    color: white;
+    width: 100%;
+    z-index: 999;
+    position: relative;
+    box-shadow: 0 2px 10px #333333;
+    margin-bottom: 0;
+    border-bottom: 5px solid #2c2f34;
+}
+
+.intro-description {
+    margin-top: 4%;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 700;
+    font-style: oblique;
+    text-shadow: 0 0 5px black;
+}
+
+.logo {
+    display: block;
+    width: 200px;
+    margin: 0 auto;
+    margin-top: 40px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 999px;
+    box-shadow: 0 0 10px black;
+}
+
+.invite-btn, .learn-more-btn {
+    text-align: center;
+    margin: 0 auto;
+    border-radius: 40px;
+    padding: 10px;
+    width: 200px;
+    box-shadow: 0 0 10px black;
+    border: 2px solid white;
+    display: block;
+    transition: 0.25s;
+}
+
+.invite-btn {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: white;
+    margin-top: 80px;
+}
+
+.invite-btn:hover {
+    color: #A51C15 !important;
+    border: 2px solid #A51C15;
+}
+
+.learn-more-btn {
+    color: black !important;
+    background-color: white;
+    margin-top: 40px;
+}
+
+.learn-more-btn:hover {
+    background-color: #cccccc;
+    border: 2px solid #cccccc;
+}
+
+.getting-started {
+    background: white;
+    padding: 1%;
+    width: 100%;
+    height: 49.2vh;
+}
+
+.getting-started > h2 {
+    margin: 0;
+}
+
+@media only screen and (max-width: 767px) {
+    .invite-btn, .learn-more-btn {
+        margin: 0 auto;
+        margin-top: 30px;
+    }
+
+    .logo {
+        margin: 0 auto;
+        margin-top: 30px;
+    }
+
+    .intro-description {
+        display: none;
+    }
+}
