@@ -216,17 +216,22 @@ export default class Menu extends React.Component {
                     </p><br />
 
                     <h3 id='commands'>Commands</h3><hr />
+                    <b><u>Explanation on symbolism:</u></b><br/>
+                    - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br/>
+                    - <code>|</code> indicates an "<b>or</b>" which means it can be either one thing, either the other.<br />
+                    - <code>...</code> indicates that the <b>last argument can be repeated</b> multiple times.<br />
+                    - <code>,</code> indicates an argument <b>separator</b>, it means, a command may need fewer arguments to work.<br /><br />
                     <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
                     <div id='commandRoot'>Generating commands documentation...</div><br/>
 
                     <h4 id='modifying-cmd-msg'>Editing or deleting a command message</h4>
-                    Ever tried to edit one of your messages that contained a bot command before, and realized it did not do <b>anything</b>? With Energize we thought about you! In fact if you edit one
-                    of your command messages, Energize will pick it up and give you a new command result! There is more to that, if you are in a server and cannot delete the bot message, simply delete your own
-                    message, the associated command result should also get deleted by Energize.
+                    Ever tried to edit one of your messages that contained a bot command before, and realized it did not do <b>anything</b>? With Energize we thought about you! In fact if you <b>edit</b> one
+                    of your command messages, Energize will pick it up and give you a <b>new command result</b>! There is more to that, if you are in a server and cannot delete the bot message, simply <b>delete</b> your own
+                    message, the associated <b>command result</b> should also get <b>deleted</b> by Energize.
                     <br/><br/><br/>
 
                     <h4 id='paginated-cmd-results'>Paginated command results</h4>
-                    Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4</b> reactions.<br/><br/
+                    Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4 reactions</b>.<br/><br/
                     >Here is an example: <br/>
                     <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
                     Each reaction added by Energize corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
@@ -238,31 +243,31 @@ export default class Menu extends React.Component {
                     </Twemoji><br/>
 
                     <u><b>Paginated results behaviors:</b></u><br/>
-                    - If you stopped using the paginated message during 5 minutes Energize will <b>not</b> react to any of your reactions anymore.<br/>
-                    - Only the command author can use the paginated result reactions.<br/><br/>
+                    - If you <b>stopped</b> using the paginated message during <b>5 minutes</b> Energize will <b>not react</b> to any of your reactions anymore.<br/>
+                    - <b>Only the command author</b> can use the paginated result reactions.<br/><br/>
 
                     <h4 id='cmd-user-input'>Ways to target users in commands</h4>
-                    Some commands require you to pass a user as argument, there are a few ways to feed Energize a user.
+                    Some commands require you to <b>pass a user as argument</b>, there are a few ways to feed Energize a user.
                     Here are the several ways this can be achieved:<br/><br/>
                     <ol>
-                        <li>Typing the name (nickname in a guild) of the user.</li>
-                        <li>Mentioning the user.</li>
-                        <li>Using built-in tagging system.</li>
+                        <li>Typing the <b>name</b> (nickname in a guild) of the user.</li>
+                        <li><b>Mentioning</b> the user.</li>
+                        <li>Using <b>built-in tagging</b> system.</li>
                     </ol><br/>
 
                     <h4 id='target-user-tags'>Targetting users with tags</h4>
                     As mentioned before, Energize features a <b>built-in tagging system</b>, it means that there is an existing
-                    syntax to tag a wanted user. There are currently <b>4</b> usable built-in tags. You can use the tags by prefixing
-                    one of the existing tags with the <b>$</b> character like so as an argument in commands that require user arguments.<br/><br/>
+                    syntax to tag a wanted user. There are currently <b>4 usable built-in tags</b>. You can use the tags by prefixing
+                    one of the existing tags with the <b>$ character</b> like so as an argument in commands that require user arguments.<br/><br/>
                     Here is an example:<br/>
                     <code>cmd $random,$last</code><br/><br/>
                     {this.formatBuiltInTags()}<br/>
 
                     <h3 id='playable-messages'>Playable messages</h3><hr />
                     <Twemoji options={{className: 'twemoji'}}>
-                        If Energize has the permissions necessary you maybe have noticed that some messages get a ⏯ reaction. This means that
-                        those messages have content that can be added to the track queue. Although this will only work if you are in a voice channel.
-                        Usually messages that can be "played" are messages containing Youtube, SoundCloud and Twitch content.
+                        If Energize has the <b>permissions necessary</b> you maybe have noticed that some messages get a ⏯ reaction. This means that
+                        those messages have content that can be <b>added to the track queue</b>. Although this will only work if you are in a <b>voice channel</b>.
+                        Usually messages that can be "played" are messages containing <b>Youtube, SoundCloud and Twitch content</b>.
                     </Twemoji><br/>
 
                     Example:<br/>
