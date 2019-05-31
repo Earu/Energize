@@ -1,13 +1,17 @@
+.docs-container {
+    padding-right: 10%;
+    padding-left: 10%;
+}
+
 .summary {
     position: fixed;
-    top: 2;
-    right: 35px;
     font-size: 14px;
-    background-color: #EDEDED;
-    padding: 1%;
-    box-shadow: 0 0 5px #333333;
     border-radius: 2px;
-    display: block;
+    margin: 0 auto;
+    margin-top: 1%;
+    margin-right: 2%;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 5px;
 }
 
 .summary > div {
@@ -30,25 +34,26 @@
     font-size: 12px;
 }
 
-.summary > button {
-    width: 56px;
-    height: 56px;
-    color: white;
-    font-size: 30px;
-    background-color: #A51C15;
-    border-radius: 9999px;
-    box-shadow: 0 0 5px #333333;
-    border: 2px solid #A51C15;
-    outline-width: 0;
-}
-
 .summary > span:before, .summary > span > span:before {
     content: '/ ';
+}
+
+.docs-column {
+    border-right: 1px solid #eeeeee;
 }
 
 @media only screen and (max-width: 767px) {
     .summary {
         display: none;
+    }
+
+    .docs-container {
+        padding-right: 5%;
+        padding-left: 5%;
+    }
+
+    .docs-column {
+        border-right: none;
     }
 }
 
