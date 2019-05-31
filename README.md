@@ -21,6 +21,7 @@ If you are lost in how to use Energize, or how to make it work, feel free to ope
 If you are willing to contribute to Energize, here are a few things that needs to be done to stay consistent with the rest of the code:
 - C# projects have: local variables in *camelCase*, methods, properties and fields in *PascalCase*.
 - F# projects have: methods available for the whole solution in *PascalCase*, the rest is *camelCased*.
+- JavaScript files use the typical JavaScript conventions, except that class files names are in *PascalCase*
 - If you create a new service do **not** create interfaces in Energize.Interfaces unless they are used in other projects.
 - The bot purpose is focused on the music, administration and social areas, try to keep this in mind if you want to add new commands.
 - Try to use the *interfaces* proposed by Discord.NET and other packages as much as possible in your method signatures.
