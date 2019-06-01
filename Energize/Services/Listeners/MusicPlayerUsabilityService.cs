@@ -23,11 +23,13 @@ namespace Energize.Services.Listeners
 
         private readonly Logger Logger;
         private readonly ServiceManager ServiceManager;
+        private readonly MessageSender MessageSender;
 
         public MusicPlayerUsabilityService(EnergizeClient client)
         {
             this.Logger = client.Logger;
             this.ServiceManager = client.ServiceManager;
+            this.MessageSender = client.MessageSender;
         }
 
         private static Regex CompiledRegex(string pattern)
@@ -50,12 +52,21 @@ namespace Energize.Services.Listeners
             return this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url);
         }
 
+        private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
+        {
+            if (reaction.Emote?.Name == null) return false;
+            if (!reaction.Emote.Name.Equals(Emote.Name)) return false;
+            if (reaction.UserId == Config.Instance.Discord.BotID) return false;
+            if (!(chan is IGuildChannel) || reaction.User.Value == null) return false;
+
+            return true;
+        }
+
         private bool IsValidMessage(IMessage msg)
         {
             if (msg.Channel is IDMChannel) return false;
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
-            if (msg.Embeds.Count < 1) return false;
-            if (msg.Embeds.Last().Type == EmbedType.Rich) return false;
+            if (msg.Embeds.Count < 1 && msg.Attachments.Count < 1) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
 
@@ -75,27 +86,50 @@ namespace Energize.Services.Listeners
             }
         }
 
+        private async Task TryPlayUrl(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
+        {
+            SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
+            List<LavaTrack> tracks = result.Tracks.ToList();
+            switch (result.LoadType)
+            {
+                case LoadType.SearchResult:
+                case LoadType.TrackLoaded:
+                    if (tracks.Count > 0)
+                        await music.AddTrackAsync(guser.VoiceChannel, textChan, tracks[0]);
+                    break;
+                case LoadType.PlaylistLoaded:
+                    if (tracks.Count > 0)
+                        await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
+                    break;
+                case LoadType.LoadFailed:
+                case LoadType.NoMatches:
+                    await this.MessageSender.Warning(textChan, "music player", $"The content at `{url}` shared by {msg.Author.Mention} could not be played because it is corrupted or could not be found");
+                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not play a playable message ({url})");
+                    break;
+            }
+        }
+
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
             if (!this.IsValidMessage(msg)) return;
 
-            Embed embed = msg.Embeds.Last();
-            if (!this.IsValidURL(embed.Url)) return;
-
-            try
+            if(msg.Embeds.Any(embed => this.IsValidURL(embed.Url)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
-                SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
-                SocketGuild guild = chan.Guild;
-                if (guild.CurrentUser.GetPermissions(chan).AddReactions)
+                try
                 {
-                    IUserMessage userMsg = (IUserMessage)msg;
-                    await userMsg.AddReactionAsync(Emote);
+                    SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
+                    SocketGuild guild = chan.Guild;
+                    if (guild.CurrentUser.GetPermissions(chan).AddReactions)
+                    {
+                        IUserMessage userMsg = (IUserMessage)msg;
+                        await userMsg.AddReactionAsync(Emote);
+                    }
                 }
-            }
-            catch(Exception ex)
-            {
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable link usable: {ex.Message}");
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
+                }
             }
         }
 
@@ -104,31 +138,31 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsValidMessage(msg)) return;
 
-            Embed embed = msg.Embeds.Last();
-            if (!this.IsValidURL(embed.Url)) return;
-
-            try
+            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
-                SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
-                SocketGuild guild = chan.Guild;
-                if (guild.CurrentUser.GetPermissions(chan).AddReactions)
+                try
                 {
-                    IUserMessage userMsg = (IUserMessage)msg;
-                    if (userMsg.Reactions.ContainsKey(Emote))
+                    SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
+                    SocketGuild guild = chan.Guild;
+                    if (guild.CurrentUser.GetPermissions(chan).AddReactions)
                     {
-                        ReactionMetadata metadata = userMsg.Reactions[Emote];
-                        if (!metadata.IsMe)
+                        IUserMessage userMsg = (IUserMessage)msg;
+                        if (userMsg.Reactions.ContainsKey(Emote))
+                        {
+                            ReactionMetadata metadata = userMsg.Reactions[Emote];
+                            if (!metadata.IsMe)
+                                await userMsg.AddReactionAsync(Emote);
+                        }
+                        else
+                        {
                             await userMsg.AddReactionAsync(Emote);
-                    }
-                    else
-                    {
-                        await userMsg.AddReactionAsync(Emote);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable link usable: {ex.Message}");
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
+                }
             }
         }
 
@@ -142,34 +176,25 @@ namespace Energize.Services.Listeners
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (reaction.Emote?.Name == null) return;
-            if (!reaction.Emote.Name.Equals(Emote.Name)) return;
-            if (reaction.UserId == Config.Instance.Discord.BotID) return;
-            if (!(chan is IGuildChannel) || reaction.User.Value == null) return;
+            if (!this.IsValidReaction(chan, reaction)) return;
             IGuildUser guser = (IGuildUser)reaction.User.Value;
             if (guser.VoiceChannel == null) return;
             ITextChannel textChan = (ITextChannel)chan;
-
             IUserMessage msg = await cache.GetOrDownloadAsync();
             if (!this.IsValidMessage(msg)) return;
-            IEmbed embed = msg.Embeds.Last();
-            if (this.IsValidURL(embed.Url))
+
+            IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
+
+            foreach (Embed embed in msg.Embeds)
             {
-                IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(embed.Url));
-                List<LavaTrack> tracks = result.Tracks.ToList();
-                switch(result.LoadType)
-                {
-                    case LoadType.SearchResult:
-                    case LoadType.TrackLoaded:
-                        if (tracks.Count > 0)
-                            await music.AddTrackAsync(guser.VoiceChannel, textChan, tracks[0]);
-                        break;
-                    case LoadType.PlaylistLoaded:
-                        if (tracks.Count > 0)
-                            await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
-                        break;
-                }
+                if (!this.IsValidURL(embed.Url)) continue;
+                await this.TryPlayUrl(music, textChan, msg, guser, embed.Url);
+            }
+
+            foreach(Attachment attachment in msg.Attachments)
+            {
+                if (!attachment.IsPlayableAttachment()) continue;
+                await this.TryPlayUrl(music, textChan, msg, guser, attachment.Url);
             }
         }
     }

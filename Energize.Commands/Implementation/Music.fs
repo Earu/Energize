@@ -10,6 +10,7 @@ open Energize.Essentials
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
+open System.Collections.ObjectModel
 
 [<CommandModule("Music")>]
 module Voice =
@@ -69,35 +70,45 @@ module Voice =
         else
             url
 
-    [<CommandParameters(1)>]
-    [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("playurl", "Tries to play a track/stream from an url", "playurl <url>")>]
-    let playUrl (ctx : CommandContext) = async {
+    let private playUrl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            if HttpClient.IsURL(ctx.input) then
-                let input = sanitizeYtUrl ctx.input
-                let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
-                handleSearchResult music ctx res vc
-            else
-                [ ctx.sendWarn None "Expected an url" ]
+            let input = sanitizeYtUrl ctx.input
+            let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
+            handleSearchResult music ctx res vc
         )
     }
 
-    // Use playurl whenever passed a link, users tend to do that
-    let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) = 
-        if HttpClient.IsURL(ctx.input) then
-            playUrl ctx
-        else
-            cb ctx
+    let private playFile (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let enumerator = ctx.message.Attachments.GetEnumerator()
+            if enumerator.MoveNext() then
+                let attachment = enumerator.Current :?> Attachment
+                if attachment.IsPlayableAttachment() then
+                    let res = awaitResult (music.LavaRestClient.SearchTracksAsync(attachment.Url))
+                    handleSearchResult music ctx res vc
+                else
+                    [ ctx.sendWarn None "The given file format is not supported"]
+            else
+                [ ctx.sendWarn None "Could not read the given file" ]
+        )
+    }
+
+    let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) =
+        match ctx with
+        | _ when ctx.message.Attachments.Count > 0 -> playFile ctx
+        | _ when ctx.arguments.Length > 0 && HttpClient.IsURL(ctx.input) -> playUrl ctx
+        | _ -> cb ctx
             
-    [<CommandParameters(1)>]
     [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("play", "Plays a track/stream from youtube", "play <song name>")>]
+    [<Command("play", "Plays a track/stream from youtube, from a link or from a file", "play <song name|url|file>")>]
     let play (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
             return musicAction ctx (fun music vc _ ->   
-                let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
-                handleSearchResult music ctx res vc
+                if ctx.arguments.Length > 0 then
+                    let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
+                    handleSearchResult music ctx res vc
+                else
+                    [ ctx.sendWarn None "Expected a song name, a link (url) or a file" ]
             )
         })
 

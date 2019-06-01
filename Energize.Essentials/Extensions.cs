@@ -1,8 +1,10 @@
 ﻿using Discord;
+using System.IO;
+using System.Linq;
 
 namespace Energize.Essentials
 {
-    public static class EmbedExtensions
+    public static class Extensions
     {
         public static EmbedBuilder WithField(this EmbedBuilder builder, string title, object value, bool inline = true)
         {
@@ -31,6 +33,16 @@ namespace Energize.Essentials
             }
 
             return builder;
+        }
+
+        private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm" };
+
+        public static bool IsPlayableAttachment(this Attachment attachment)
+        {
+            string fileName = attachment.Filename;
+            FileInfo fileInfo = new FileInfo(fileName);
+            if (string.IsNullOrWhiteSpace(fileInfo.Extension) || fileInfo.Extension.Length < 2) return false; // 2 = ".|xxxx" 
+            return ValidExtensions.Any(ext => ext.Equals(fileInfo.Extension.Substring(1)));
         }
     }
 }
