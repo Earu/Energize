@@ -76,7 +76,7 @@ export default class Menu extends React.Component {
                 name: 'last',
                 description: 'Targets the last user who has spoken in the channel'
             }
-        ]
+        ];
 
         return tags.map((tag, i) => (
             <div key={'tag_' + i} className='command'>
@@ -152,7 +152,7 @@ export default class Menu extends React.Component {
             content.scroll({
                 top: targetElement.offsetTop,
                 behavior: 'smooth'
-            })
+            });
         } catch {
             console.debug('Could not find specified id: ' + id);
         }
@@ -164,7 +164,7 @@ export default class Menu extends React.Component {
         content.scroll({
             top: 0,
             behavior: 'smooth'
-        })
+        });
     }
 
     render() {
@@ -189,7 +189,8 @@ export default class Menu extends React.Component {
 
                             <h3 id='commands'>Commands</h3><hr />
                             <b><u>Explanation on symbolism:</u></b><br/>
-                            - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br/>
+                            - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br />
+                            Note: The <code>{"<FILE>"}</code> argument often refers to a <b>file attachment</b> and not an actual typed argument.<br />
                             - <code>|</code> indicates an "<b>or</b>" which means it can be either one thing, either the other.<br />
                             - <code>...</code> indicates that the <b>last argument can be repeated</b> multiple times.<br />
                             - <code>,</code> indicates an argument <b>separator</b>, it means, a command may need fewer arguments to work.<br /><br />
