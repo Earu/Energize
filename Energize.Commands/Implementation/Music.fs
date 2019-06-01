@@ -100,7 +100,7 @@ module Voice =
         | _ -> cb ctx
             
     [<CommandConditions(CommandCondition.GuildOnly)>]
-    [<Command("play", "Plays a track/stream from youtube, from a link or from a file", "play <song name|url|file>")>]
+    [<Command("play", "Plays a track/stream from youtube, from a link or from a file", "play <song name|url|FILE>")>]
     let play (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
             return musicAction ctx (fun music vc _ ->   
