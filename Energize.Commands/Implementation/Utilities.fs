@@ -296,10 +296,16 @@ module Util =
         return [ ctx.sendEmbed (builder.Build()) ]
     }
 
+    [<Command("docs", "Gets the documentation link", "docs <nothing>")>]
+    let docs (ctx : CommandContext) = async {
+        let docsUrl = Config.Instance.URIs.WebsiteURL
+        return [ ctx.sendRaw docsUrl ]
+    }
+
     [<Command("invite", "Gets the bot invite links", "invite <nothing>")>]
     let invite (ctx : CommandContext) = async {
-        let invite = Config.Instance.URIs.InviteURL
-        return [ ctx.sendRaw invite ]
+        let inviteUrl = Config.Instance.URIs.InviteURL
+        return [ ctx.sendRaw inviteUrl ]
     }
 
     [<Command("user", "Gets information about a specific user", "user <user|userid|nothing>")>]
