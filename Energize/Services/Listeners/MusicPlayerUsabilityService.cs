@@ -57,14 +57,13 @@ namespace Energize.Services.Listeners
             if (reaction.Emote?.Name == null) return false;
             if (!reaction.Emote.Name.Equals(Emote.Name)) return false;
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
-            if (!(chan is IGuildChannel) || reaction.User.Value == null) return false;
+            if (chan is IDMChannel || reaction.User.Value == null) return false;
 
             return true;
         }
 
         private bool IsValidMessage(IMessage msg)
         {
-            if (msg.Channel is IDMChannel) return false;
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
             if (msg.Embeds.Count < 1 && msg.Attachments.Count < 1) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
