@@ -190,7 +190,11 @@ export default class Menu extends React.Component {
                             <h3 id='commands'>Commands</h3><hr />
                             <b><u>Explanation on symbolism:</u></b><br/>
                             - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br />
-                            Note: The <code>{"<FILE>"}</code> argument refers to a <b>file attachment</b> and not an actual typed argument.<br />
+                            Notes:
+                            <ul>
+                                <li>The <code>{"<FILE>"}</code> argument refers to a <b>file attachment</b> and not an actual typed argument.</li>
+                                <li>The <code>{"<nothing>"}</code> argument means that the command does <b>not need any arguments</b> or that the argument is <b>optional</b>.</li>
+                            </ul>
                             - <code>|</code> indicates an "<b>or</b>" which means it can be either one thing, either the other.<br />
                             - <code>...</code> indicates that the <b>last argument can be repeated</b> multiple times.<br />
                             - <code>,</code> indicates an argument <b>separator</b>, it means, a command need fewer arguments to work.<br /><br />
