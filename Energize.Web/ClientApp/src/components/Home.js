@@ -22,7 +22,7 @@ export default class Home extends React.Component {
                                     <a href='./docs' className='learn-more-btn'>Learn more</a>
                                 </Col>
                                 <Col md={12} className='p-0 m-0'>
-                                    <h2 className='intro-description'>A variety of music for Discord at hand's reach!</h2>
+                                    <h2 className='intro-description'>An augmented Discord experience</h2>
                                 </Col>
                             </Row>
                         </Col>
