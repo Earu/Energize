@@ -190,10 +190,10 @@ export default class Menu extends React.Component {
                             <h3 id='commands'>Commands</h3><hr />
                             <b><u>Explanation on symbolism:</u></b><br/>
                             - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br />
-                            Note: The <code>{"<FILE>"}</code> argument often refers to a <b>file attachment</b> and not an actual typed argument.<br />
+                            Note: The <code>{"<FILE>"}</code> argument refers to a <b>file attachment</b> and not an actual typed argument.<br />
                             - <code>|</code> indicates an "<b>or</b>" which means it can be either one thing, either the other.<br />
                             - <code>...</code> indicates that the <b>last argument can be repeated</b> multiple times.<br />
-                            - <code>,</code> indicates an argument <b>separator</b>, it means, a command may need fewer arguments to work.<br /><br />
+                            - <code>,</code> indicates an argument <b>separator</b>, it means, a command need fewer arguments to work.<br /><br />
                             <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
                             <div id='commandRoot'>Generating commands documentation...</div><br/>
 
@@ -206,7 +206,7 @@ export default class Menu extends React.Component {
                             <h4 id='paginated-cmd-results'>Paginated command results</h4>
                             Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4 reactions</b>.<br/><br/
                             >Here is an example: <br/>
-                            <img src='./img/docs/paginated_result_1.png' alt='paginated result example' className='content-img' /><br/>
+                            <img src='./img/docs/paginated_result.png' alt='paginated result example' className='content-img' /><br/>
                             Each reaction added by Energize corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
                             <Twemoji options={{className: 'twemoji'}}>
                                 - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/>
@@ -244,7 +244,14 @@ export default class Menu extends React.Component {
                             </Twemoji><br/>
 
                             Example:<br/>
-                            <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img'/><br/>
+                            <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img' /><br />
+
+                            <h3 id='quoted-messages'>Quotes</h3><hr />
+                            Discord has this very useful that allows you to <b>quote messages</b> but sometimes you might just <b>want to see the message right away</b> instead of scrolling to it, for that Energize has a feature
+                            that allows you to display the message content by <b>clicking on the reaction</b> it added.<br /><br />
+
+                            Example:<br />
+                            <img src='./img/docs/quote_message.png' alt='quoted message example' className='content-img' /><br />
                         </Col>
                         <Col md={2}>
                             <Summary>
@@ -275,6 +282,11 @@ export default class Menu extends React.Component {
                                 <span>
                                     <a id='sum-playable-messages' href='docs#playable-messages' onClick={this.onSummaryClick}>
                                         Playable messages
+                                    </a>
+                                </span>
+                                <span>
+                                    <a id='sum-quoted-messages' href='docs#quoted-messages' onClick={this.onSummaryClick}>
+                                        Quotes
                                     </a>
                                 </span>
                             </Summary>
