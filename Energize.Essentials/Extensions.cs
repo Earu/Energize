@@ -16,18 +16,38 @@ namespace Energize.Essentials
     {
         public static EmbedBuilder WithField(this EmbedBuilder builder, string title, object value, bool inline = true)
         {
+            if (string.IsNullOrWhiteSpace(title)) return builder;
+
+            if (value == null) return builder;
             string val = value.ToString();
+            if (string.IsNullOrWhiteSpace(val)) return builder;
+
             EmbedFieldBuilder fieldBuilder = new EmbedFieldBuilder();
             fieldBuilder
                 .WithIsInline(inline)
                 .WithName(title)
                 .WithValue(val.Length > 1024 ? $"{val.Substring(0, 1021)}..." : val);
+
             builder.WithFields(fieldBuilder);
+
             return builder;
         }
 
+        public static EmbedBuilder WithLimitedTitle(this EmbedBuilder builder, string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return builder;
+            else
+                return builder.WithTitle(title.Length > 256 ?  $"{title.Substring(0,253)}..." : title);
+        }
+
         public static EmbedBuilder WithLimitedDescription(this EmbedBuilder builder, string description)
-            => builder.WithDescription(description.Length > 2048 ? $"{description.Substring(0, 2045)}..." : description);
+        {
+            if (string.IsNullOrWhiteSpace(description))
+                return builder;
+            else
+                return builder.WithDescription(description.Length > 2048 ? $"{description.Substring(0, 2045)}..." : description);
+        }
 
         public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IMessage msg)
         {
@@ -62,7 +82,7 @@ namespace Energize.Essentials
             }
         }
 
-        private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm" };
+        private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm", "mov" };
 
         public static bool IsPlayableAttachment(this Attachment attachment)
         {

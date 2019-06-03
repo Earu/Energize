@@ -86,6 +86,7 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
                 string json = await HttpClient.GetAsync(endpoint, this.Logger);
                 GitHubRepo repo = JsonPayload.Deserialize<GitHubRepo>(json, this.Logger);
                 if (repo == null) continue;
+                if (repo.Owner == null) continue;
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
@@ -95,15 +96,19 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
                     .WithField("Stars", repo.StargazersCount)
                     .WithField("Forks", repo.ForksCount)
                     .WithField("Language", repo.Language)
-                    .WithField("Homepage", repo.Homepage)
-                    .WithField("License", repo.License.Name)
+                    .WithField("Homepage", repo.Homepage);
+
+                if (repo.License != null)
+                    builder.WithField("License", repo.License.Name);
+
+                builder
                     .WithField("Default Branch", repo.DefaultBranch)
                     .WithField("Open Issues", repo.OpenIssuesCount)
                     .WithField("Fork", repo.IsFork)
                     .WithField("Archived", repo.IsArchived)
                     .WithField("Disabled", repo.IsDisabled)
                     .WithAuthorNickname(msg)
-                    .WithTitle($"**{repo.Owner.Login}/{repo.Name}**")
+                    .WithLimitedTitle($"**{repo.Owner.Login}/{repo.Name}**")
                     .WithUrl(repo.Url);
 
                 embeds.Add(builder.Build());

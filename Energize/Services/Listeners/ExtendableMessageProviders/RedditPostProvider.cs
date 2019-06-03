@@ -104,7 +104,7 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
                     .WithField("Locked", innerPost.Locked)
                     .WithField("SubReddit Subscribers", innerPost.SubredditSubscriberCount)
                     .WithUrl($"https://www.reddit.com/{innerPost.PermaLink}")
-                    .WithTitle($"**{innerPost.Title}**");
+                    .WithLimitedTitle($"**{innerPost.Title}**");
 
                 if (innerPost.IsVideo)
                     builder.WithDescription($"Video post, [**open in your browser**]({innerPost.URL}/DASH_720?source=fallback) to see it.");
