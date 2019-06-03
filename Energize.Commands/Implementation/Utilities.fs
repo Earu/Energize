@@ -219,7 +219,7 @@ module Util =
                     .WithColor(ctx.messageSender.ColorGood)
                     .WithFooter("message sniped from " + msg.Author.ToString(), avurl)
                     .WithTimestamp(msg.CreatedAt)
-                    .WithDescription(msg.Content)
+                    .WithLimitedDescription(msg.Content)
                     |> ignore
                 match getLastImgUrl msg with
                 | Some url -> builder.WithImageUrl(url) |> ignore

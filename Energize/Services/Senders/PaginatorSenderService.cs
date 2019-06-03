@@ -68,7 +68,7 @@ namespace Energize.Services.Senders
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithAuthorNickname(msg)
-                .WithDescription(display)
+                .WithLimitedDescription(display)
                 .WithColor(this.MessageSender.ColorGood)
                 .WithFooter(head);
             Embed embed = builder.Build();

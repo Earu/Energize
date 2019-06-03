@@ -250,16 +250,33 @@ export default class Menu extends React.Component {
                             Example:<br/>
                             <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img' /><br />
 
-                            <h3 id='quoted-messages'>Quotes</h3><hr />
+                            <h3 id='extendable-messages'>Extendable messages</h3><hr />
+                            Energize implements a feature called "extendable messages", what those messages are, are messages that Energize can give you <b>more information about</b> or generally that can help
+                            <b>making your life easier</b> with them.<br /><br />
+
+                            <h4 id='quotes'>Quotes</h4>
                             Discord has this very useful that allows you to <b>quote messages</b> but sometimes you might just <b>want to see the message right away</b> instead of scrolling to it, for that Energize has a feature
                             that allows you to display the message content by <b>clicking on the reaction</b> it added.<br /><br />
 
                             Example:<br />
-                            <img src='./img/docs/quote_message.png' alt='quoted message example' className='content-img' /><br />
+                            <img src='./img/docs/quote_message.png' alt='quoted message example' className='content-img' />
+                            <img src='./img/docs/quote_message_result.png' alt='quoted message result example' className='content-img' /><br />
+
+                            <h4 id='reddit-posts'>Reddit Posts</h4>
+                            Even if Discord shows <b>relevant information</b> most of the time when you paste a link in the chat it does not with Reddit posts, Energize will <b>show you the actual post</b> upon clicking
+                            on the message reaction.<br />
+
+                            Example:<br />
+                            <img src='./img/docs/reddit_message.png' alt='reddit message example' className='content-img' />
+                            <img src='./img/docs/reddit_message_result.png' alt='reddit message result example' className='content-img' />
                         </Col>
                         <Col md={2}>
                             <Summary>
-                                <span><a id='sum-description' href='docs#description' onClick={this.onSummaryClick}>Description</a></span>
+                                <span>
+                                    <a id='sum-description' href='docs#description' onClick={this.onSummaryClick}>
+                                        Description
+                                    </a>
+                                </span>
                                 <span>
                                     <a id='sum-commands' href='docs#commands' onClick={this.onSummaryClick}>Commands</a>
                                     <span>
@@ -289,9 +306,19 @@ export default class Menu extends React.Component {
                                     </a>
                                 </span>
                                 <span>
-                                    <a id='sum-quoted-messages' href='docs#quoted-messages' onClick={this.onSummaryClick}>
-                                        Quotes
+                                    <a id='sum-extendable-messages' href='docs#quoted-messages' onClick={this.onSummaryClick}>
+                                        Extendable messages
                                     </a>
+                                    <span>
+                                        <a id='sum-quotes' href='docs#quotes' onClick={this.onSummaryClick}>
+                                            Quotes
+                                        </a>
+                                    </span>
+                                    <span>
+                                        <a id='sum-reddit-posts' href='docs#reddit-posts' onClick={this.onSummaryClick}>
+                                            Reddit Posts
+                                        </a>
+                                    </span>
                                 </span>
                             </Summary>
                         </Col>

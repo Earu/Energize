@@ -129,8 +129,9 @@ module CommandHandler =
 
         let builder = EmbedBuilder()
         builder
-            .WithDescription(feedback)
+            .WithLimitedDescription(feedback)
             .WithTimestamp(ctx.message.CreatedAt)
+            .WithField("Channel ID", ctx.message.Channel.Id, false)
             .WithFooter(log)
             |> ignore
 
