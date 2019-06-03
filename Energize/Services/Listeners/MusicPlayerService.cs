@@ -162,6 +162,7 @@ namespace Energize.Services.Listeners
                     ply.BecameInactive += async () => await this.DisconnectAsync(vc);
                 }
 
+                this.LavaClient.UpdateTextChannel(vc.GuildId, chan);
                 if (vc.Id != ply.Lavalink.VoiceChannel.Id)
                     await this.LavaClient.MoveChannelsAsync(vc);
 
@@ -219,7 +220,7 @@ namespace Energize.Services.Listeners
             {
                 await ply.Lavalink.PlayAsync(track, false);
                 ply.Refresh(track);
-                return await this.SendPlayerAsync(ply, track);
+                return await this.SendPlayerAsync(ply, track, chan);
             }
         }
 
