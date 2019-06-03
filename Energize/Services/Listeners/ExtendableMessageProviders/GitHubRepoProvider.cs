@@ -20,9 +20,6 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
         [JsonProperty("html_url")]
         public string Url { get; set; }
 
-        [JsonProperty("description")]
-        public string Description { get; set; }
-
         [JsonProperty("fork")]
         public bool IsFork { get; set; }
 
@@ -91,7 +88,6 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithColorType(EmbedColorType.Good)
-                    .WithDescription(repo.Description)
                     .WithField("Owner", $"{repo.Owner.Login} ({repo.Owner.Type})")
                     .WithField("Stars", repo.StargazersCount)
                     .WithField("Forks", repo.ForksCount)
