@@ -137,7 +137,7 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsValidMessage(msg)) return;
 
-            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
+            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || embed.Video.HasValue) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
                 try
                 {
@@ -186,8 +186,10 @@ namespace Energize.Services.Listeners
 
             foreach (Embed embed in msg.Embeds)
             {
-                if (!this.IsValidURL(embed.Url)) continue;
-                await this.TryPlayUrl(music, textChan, msg, guser, embed.Url);
+                if (this.IsValidURL(embed.Url)) 
+                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Url);
+                else if(embed.Video.HasValue)
+                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Video.Value.Url);
             }
 
             foreach(Attachment attachment in msg.Attachments)

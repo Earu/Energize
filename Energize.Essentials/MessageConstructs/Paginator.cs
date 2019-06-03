@@ -94,7 +94,7 @@ namespace Energize.Essentials.MessageConstructs
                     EmbedBuilder builder = new EmbedBuilder();
                     builder
                         .WithColor(oldembed.Color.Value)
-                        .WithTitle(oldembed.Title)
+                        .WithLimitedTitle(oldembed.Title)
                         .WithLimitedDescription(display);
 
                     if (oldembed.Timestamp.HasValue)
