@@ -18,7 +18,7 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
-        Task<IUserMessage> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
+        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 

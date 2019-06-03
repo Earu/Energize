@@ -224,24 +224,30 @@ namespace Energize.Services.Listeners
             }
         }
 
-        public async Task<IUserMessage> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
+        public async Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return null;
 
             List<LavaTrack> tracks = trs.ToList();
+            if (tracks.Count < 1)
+                return new List<IUserMessage>
+                {
+                    await this.MessageSender.Warning(chan, "music player", "The loaded playlist does not contain any tracks")
+                };
+
             if (ply.IsPlaying)
             {
                 foreach (LavaTrack track in tracks)
                     ply.Queue.Enqueue(track);
 
-                return await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}");
+                return new List<IUserMessage>
+                {
+                    await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}")
+                };
             }
             else
             {
-                if (tracks.Count > 0)
-                    return await this.MessageSender.Warning(chan, "music player", "The loaded playlist does not contain any tracks");
-
                 LavaTrack track = tracks[0];
                 tracks.RemoveAt(0);
 
@@ -251,7 +257,11 @@ namespace Energize.Services.Listeners
 
                 await ply.Lavalink.PlayAsync(track, false);
                 ply.Refresh(track);
-                return await this.SendPlayerAsync(ply, track);
+                return new List<IUserMessage>
+                {
+                    await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`"),
+                    await this.SendPlayerAsync(ply, track, chan)
+                };
             }
         }
 
@@ -279,8 +289,6 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             ply.Queue.Clear();
-            if (ply.IsPlaying)
-                await ply.Lavalink.StopAsync();
         }
 
         public async Task PauseTrackAsync(IVoiceChannel vc, ITextChannel chan)
