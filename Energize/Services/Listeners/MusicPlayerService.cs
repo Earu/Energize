@@ -537,6 +537,7 @@ namespace Energize.Services.Listeners
             if (reaction.Emote?.Name == null) return false;
             if (reaction.User.Value == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
+
             return ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 

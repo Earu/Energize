@@ -18,6 +18,9 @@ namespace Energize.Essentials
             return builder;
         }
 
+        public static EmbedBuilder WithLimitedDescription(this EmbedBuilder builder, string description)
+            => builder.WithDescription(description.Length > 2048 ? $"{description.Substring(0, 2045)}..." : description);
+
         public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IMessage msg)
         {
             if (msg.Channel is IGuildChannel)

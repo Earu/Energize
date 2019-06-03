@@ -6,7 +6,6 @@ open Energize.Commands.Context
 open Energize.Essentials
 open Energize.Commands.UserHelper
 open Energize.Commands.AsyncHelper
-open System.Net
 open Discord
 open Energize.Interfaces.Services.Database
 open Energize.Interfaces.Services.Senders
@@ -199,7 +198,7 @@ module Social =
         let builder = EmbedBuilder()
         builder
             .WithAuthor(msg.Author)
-            .WithDescription(msg.Content)
+            .WithLimitedDescription(msg.Content)
             .WithFooter("#" + msg.Channel.Name)
             .WithTimestamp(msg.CreatedAt)
             .WithColor(ctx.messageSender.ColorNormal)

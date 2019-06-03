@@ -74,7 +74,7 @@ namespace Energize.Essentials
                 string userName = msg.Author.Username;
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithColor(color);
-                builder.WithDescription(content);
+                builder.WithLimitedDescription(content);
                 builder.WithFooter(header);
                 builder.WithAuthorNickname(msg);
 
@@ -98,7 +98,7 @@ namespace Energize.Essentials
             {
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithColor(color);
-                builder.WithDescription(content);
+                builder.WithLimitedDescription(content);
                 builder.WithFooter(header);
 
                 if (!string.IsNullOrWhiteSpace(content))
@@ -176,7 +176,7 @@ namespace Energize.Essentials
             {
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithColor(this.ColorGood);
-                builder.WithDescription(content);
+                builder.WithLimitedDescription(content);
                 builder.WithFooter(header);
                 builder.WithAuthor(msg.Author);
 
