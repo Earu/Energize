@@ -10,7 +10,6 @@ open Energize.Essentials
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
-open System.Collections.ObjectModel
 
 [<CommandModule("Music")>]
 module Voice =
@@ -28,13 +27,9 @@ module Voice =
         | LoadType.NoMatches ->
             [ ctx.sendWarn None "Could not find any matches for the specified track" ]
         | LoadType.PlaylistLoaded ->
-            let index = res.PlaylistInfo.SelectedTrack 
-            match res.Tracks |> Seq.toList |> List.tryItem index with
-            | Some tr ->
-                let textChan = ctx.message.Channel :?> ITextChannel
-                [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
-            | None ->
-                [ ctx.sendWarn None "Could not find any matches for the specified track" ]
+            let playlistName = res.PlaylistInfo.Name
+            let textChan = ctx.message.Channel :?> ITextChannel
+            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks)) |> Seq.toList
         | _ ->
             let tracks = res.Tracks |> Seq.toList 
             if tracks.Length > 0 then
