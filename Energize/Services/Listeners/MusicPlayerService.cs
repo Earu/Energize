@@ -395,7 +395,7 @@ namespace Energize.Services.Listeners
                 builder.WithThumbnailUrl(thumbnailUrl);
             return builder
                 .WithDescription(desc)
-                .WithColor(this.MessageSender.ColorGood)
+                .WithColorType(EmbedColorType.Good)
                 .WithFooter("music player")
                 .WithField("Title", track.Title)
                 .WithField("Author", track.Author)
@@ -493,7 +493,7 @@ namespace Energize.Services.Listeners
 
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithColor(this.MessageSender.ColorWarning)
+                .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 There was a problem playing the following track")
                 .WithField("Title", track.Title)

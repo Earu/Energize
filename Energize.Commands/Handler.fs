@@ -49,7 +49,7 @@ module CommandHandler =
         builder
             .WithAuthorNickname(ctx.message)
             .WithFields(fields)
-            .WithColor(if iswarn then ctx.messageSender.ColorWarning else ctx.messageSender.ColorGood)
+            .WithColorType(if iswarn then EmbedColorType.Warning else EmbedColorType.Good)
             .WithFooter(sprintf (if iswarn then "bad usage [ %s ]" else "help [ %s ]") cmd.name)
             |> ignore
         ctx.sendEmbed (builder.Build())
@@ -339,7 +339,7 @@ module CommandHandler =
             .WithField("Case ID", caseId)
             .WithTimestamp(msg.CreatedAt)
             .WithFooter(source)
-            .WithColor(state.messageSender.ColorDanger)
+            .WithColorType(EmbedColorType.Good)
             |> ignore
         match state.client.GetChannel(Config.Instance.Discord.FeedbackChannelID) with
         | null -> ()

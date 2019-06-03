@@ -147,7 +147,7 @@ module Social =
                     .WithAuthorNickname(ctx.message)
                     .WithFields(fields)
                     .WithThumbnailUrl(user.GetAvatarUrl())
-                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithColorType(EmbedColorType.Good)
                     .WithFooter(ctx.commandName)
                     |> ignore
 
@@ -201,7 +201,7 @@ module Social =
             .WithLimitedDescription(msg.Content)
             .WithFooter("#" + msg.Channel.Name)
             .WithTimestamp(msg.CreatedAt)
-            .WithColor(ctx.messageSender.ColorNormal)
+            .WithColorType(EmbedColorType.Normal)
             |> ignore
         match ImageUrlProvider.getLastImgUrl msg with
         | Some url -> builder.WithImageUrl(url) |> ignore
