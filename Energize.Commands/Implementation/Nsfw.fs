@@ -15,7 +15,7 @@ module Nsfw =
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
         builder
             .WithAuthorNickname(ctx.message)
-            .WithColor(ctx.messageSender.ColorGood)
+            .WithColorType(EmbedColorType.Good)
             .WithImageUrl(pic)
             .WithFooter(ctx.commandName)
             .WithDescription(sprintf "\n[**CHECK ON %s**](%s)" (ctx.commandName.ToUpper()) url)

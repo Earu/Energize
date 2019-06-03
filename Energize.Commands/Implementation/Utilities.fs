@@ -128,7 +128,7 @@ module Util =
 
                 builder
                     .WithAuthorNickname(ctx.message)
-                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithColorType(EmbedColorType.Good)
                     .WithFooter(ctx.commandName)
                     .WithFields(fields)
                     |> ignore
@@ -149,7 +149,7 @@ module Util =
                     .WithAuthorNickname(ctx.message)
                     .WithFooter(ctx.commandName)
                     .WithImageUrl(avurl)
-                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithColorType(EmbedColorType.Good)
                     |> ignore
                 [ ctx.sendEmbed (builder.Build()) ]
             | None ->
@@ -166,7 +166,7 @@ module Util =
             .WithAuthorNickname(ctx.message)
             .WithFooter(ctx.commandName)
             .WithImageUrl(guild.IconUrl)
-            .WithColor(ctx.messageSender.ColorGood)
+            .WithColorType(EmbedColorType.Good)
             |> ignore
         return [ ctx.sendEmbed (builder.Build()) ]
     }
@@ -182,7 +182,7 @@ module Util =
                     .WithAuthorNickname(ctx.message)
                     .WithFooter("emote")
                     .WithImageUrl(e.Value.Url)
-                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithColorType(EmbedColorType.Good)
                     |> ignore
                 [ ctx.sendEmbed (builder.Build()) ]
             else
@@ -216,7 +216,7 @@ module Util =
                 let builder = EmbedBuilder()
                 builder
                     .WithAuthorNickname(ctx.message)
-                    .WithColor(ctx.messageSender.ColorGood)
+                    .WithColorType(EmbedColorType.Good)
                     .WithFooter("message sniped from " + msg.Author.ToString(), avurl)
                     .WithTimestamp(msg.CreatedAt)
                     .WithLimitedDescription(msg.Content)
@@ -261,7 +261,7 @@ module Util =
             .WithAuthorNickname(ctx.message)
             .WithFields(fields)
             .WithThumbnailUrl(guild.IconUrl)
-            .WithColor(ctx.messageSender.ColorGood)
+            .WithColorType(EmbedColorType.Good)
             .WithFooter(guild.Name)
             |> ignore
 
@@ -289,7 +289,7 @@ module Util =
             .WithAuthorNickname(ctx.message)
             .WithFields(fields)
             .WithThumbnailUrl(ctx.client.CurrentUser.GetAvatarUrl())
-            .WithColor(ctx.messageSender.ColorGood)
+            .WithColorType(EmbedColorType.Good)
             .WithFooter("info")
             |> ignore
 
@@ -364,7 +364,7 @@ module Util =
                 .WithAuthorNickname(ctx.message)
                 .WithFields(fields)
                 .WithThumbnailUrl(user.GetAvatarUrl())
-                .WithColor(ctx.messageSender.ColorGood)
+                .WithColorType(EmbedColorType.Good)
                 .WithFooter("info")
                 |> ignore
             return [ ctx.sendEmbed (builder.Build()) ]

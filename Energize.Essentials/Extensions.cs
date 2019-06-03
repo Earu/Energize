@@ -4,6 +4,14 @@ using System.Linq;
 
 namespace Energize.Essentials
 {
+    public enum EmbedColorType
+    {
+        Good = 0,
+        Warning = 1,
+        Danger = 2,
+        Normal = 3,
+    }
+
     public static class Extensions
     {
         public static EmbedBuilder WithField(this EmbedBuilder builder, string title, object value, bool inline = true)
@@ -36,6 +44,22 @@ namespace Energize.Essentials
             }
 
             return builder;
+        }
+
+        public static EmbedBuilder WithColorType(this EmbedBuilder builder, EmbedColorType colorType)
+        {
+            switch(colorType)
+            {
+                case EmbedColorType.Good:
+                    return builder.WithColor(MessageSender.SColorGood);
+                case EmbedColorType.Warning:
+                    return builder.WithColor(MessageSender.SColorWarning);
+                case EmbedColorType.Danger:
+                    return builder.WithColor(MessageSender.SColorDanger);
+                case EmbedColorType.Normal:
+                default:
+                    return builder.WithColor(MessageSender.SColorNormal);
+            }
         }
 
         private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm" };

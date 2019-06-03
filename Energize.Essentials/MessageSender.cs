@@ -18,10 +18,6 @@ namespace Energize.Essentials
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
 
         public Logger Logger { get; private set; }
-        public Color ColorGood { get => SColorGood; }
-        public Color ColorNormal { get => SColorNormal; }
-        public Color ColorWarning { get => SColorWarning; }
-        public Color ColorDanger { get => SColorDanger; }
 
         private void LogFailedMessage(IMessage msg)
         {
@@ -67,16 +63,17 @@ namespace Energize.Essentials
             }
         }
 
-        public async Task<IUserMessage> Send(IMessage msg, string header = "", string content = "", Color color = new Color(), string picUrl = null)
+        public async Task<IUserMessage> Send(IMessage msg, string header = "", string content = "", EmbedColorType colorType = EmbedColorType.Normal, string picUrl = null)
         {
             try
             {
                 string userName = msg.Author.Username;
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(color);
-                builder.WithLimitedDescription(content);
-                builder.WithFooter(header);
-                builder.WithAuthorNickname(msg);
+                builder
+                    .WithColorType(colorType)
+                    .WithLimitedDescription(content)
+                    .WithFooter(header)
+                    .WithAuthorNickname(msg);
 
                 if (picUrl != null)
                     builder.WithThumbnailUrl(picUrl);
@@ -92,14 +89,15 @@ namespace Energize.Essentials
             return null;
         }
 
-        public async Task<IUserMessage> Send(ISocketMessageChannel chan, string header = "", string content = "", Color color = new Color())
+        public async Task<IUserMessage> Send(ISocketMessageChannel chan, string header = "", string content = "", EmbedColorType colorType = EmbedColorType.Normal)
         {
             try
             {
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(color);
-                builder.WithLimitedDescription(content);
-                builder.WithFooter(header);
+                builder
+                    .WithColorType(colorType)
+                    .WithLimitedDescription(content)
+                    .WithFooter(header);
 
                 if (!string.IsNullOrWhiteSpace(content))
                     return await chan.SendMessageAsync(string.Empty, false, builder.Build());
@@ -175,10 +173,11 @@ namespace Energize.Essentials
             try
             {
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithColor(this.ColorGood);
-                builder.WithLimitedDescription(content);
-                builder.WithFooter(header);
-                builder.WithAuthor(msg.Author);
+                builder
+                    .WithColorType(EmbedColorType.Good)
+                    .WithLimitedDescription(content)
+                    .WithFooter(header)
+                    .WithAuthor(msg.Author);
 
                 IDMChannel chan = await msg.Author.GetOrCreateDMChannelAsync();
                 return await chan.SendMessageAsync(string.Empty, false, builder.Build());
@@ -192,28 +191,28 @@ namespace Energize.Essentials
         }
 
         public async Task<IUserMessage> Normal(IMessage msg, string header, string content)
-            => await this.Send(msg, header, content, this.ColorNormal);
+            => await this.Send(msg, header, content);
 
         public async Task<IUserMessage> Normal(IChannel chan, string header, string content)
-            => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorNormal);
+            => await this.Send((chan as ISocketMessageChannel), header, content);
 
         public async Task<IUserMessage> Warning(IMessage msg, string header, string content)
-            => await this.Send(msg, header, content, this.ColorWarning);
+            => await this.Send(msg, header, content, EmbedColorType.Warning);
 
         public async Task<IUserMessage> Warning(IChannel chan, string header, string content)
-            => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorWarning);
+            => await this.Send((chan as ISocketMessageChannel), header, content, EmbedColorType.Warning);
 
         public async Task<IUserMessage> Danger(IMessage msg, string header, string content)
-            => await this.Send(msg, header, content, this.ColorDanger);
+            => await this.Send(msg, header, content, EmbedColorType.Danger);
 
         public async Task<IUserMessage> Danger(IChannel chan, string header, string content)
-            => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorDanger);
+            => await this.Send((chan as ISocketMessageChannel), header, content, EmbedColorType.Danger);
 
         public async Task<IUserMessage> Good(IMessage msg, string header, string content)
-            => await this.Send(msg, header, content, this.ColorGood);
+            => await this.Send(msg, header, content, EmbedColorType.Good);
 
         public async Task<IUserMessage> Good(IChannel chan, string header, string content)
-            => await this.Send((chan as ISocketMessageChannel), header, content, this.ColorGood);
+            => await this.Send((chan as ISocketMessageChannel), header, content, EmbedColorType.Good);
 
         public async Task Disconnect(DiscordSocketClient client)
             => await client.LogoutAsync();
