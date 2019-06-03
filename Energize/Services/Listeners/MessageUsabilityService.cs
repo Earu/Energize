@@ -36,6 +36,7 @@ namespace Energize.Services.Listeners
             {
                 new DiscordMessageProvider(this.DiscordClient, @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
                 new RedditPostProvider(this.Logger, @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
+                new GitHubRepoProvider(this.Logger, @"https?:\/\/github\.com\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)"),
             };
         }
 
@@ -95,7 +96,7 @@ namespace Energize.Services.Listeners
             if (!this.HasSupportedURL(msg)) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
-            if (!(msg.Reactions.ContainsKey(Emote) && msg.Reactions[Emote].IsMe)) return false;
+            if (!msg.Reactions.ContainsKey(Emote) || (msg.Reactions.ContainsKey(Emote) && !msg.Reactions[Emote].IsMe)) return false;
 
             return true;
         }

@@ -65,9 +65,6 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
         [JsonProperty("subreddit_subscribers")]
         public long SubredditSubscriberCount { get; set; }
 
-        [JsonProperty("created_utc")]
-        public double Created { get; set; }
-
         [JsonProperty("is_video")]
         public bool IsVideo { get; set; }
     }
@@ -100,13 +97,14 @@ namespace Energize.Services.Listeners.ExtendableMessageProviders
                     .WithAuthorNickname(msg)
                     .WithColorType(EmbedColorType.Good)
                     .WithField("SubReddit", $"r/{innerPost.SubReddit}/", false)
+                    .WithField("Author", innerPost.Author)
                     .WithField("Upvote Percentage", $"{innerPost.UpvoteRatio * 100}%")
                     .WithField("Comments", innerPost.CommentCount)
                     .WithField("Cross-posts", innerPost.CrossPostCount)
                     .WithField("Locked", innerPost.Locked)
                     .WithField("SubReddit Subscribers", innerPost.SubredditSubscriberCount)
                     .WithUrl($"https://www.reddit.com/{innerPost.PermaLink}")
-                    .WithTitle(innerPost.Title);
+                    .WithTitle($"**{innerPost.Title}**");
 
                 if (innerPost.IsVideo)
                     builder.WithDescription($"Video post, [**open in your browser**]({innerPost.URL}/DASH_720?source=fallback) to see it.");
