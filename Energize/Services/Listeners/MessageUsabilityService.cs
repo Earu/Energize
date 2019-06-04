@@ -14,7 +14,7 @@ namespace Energize.Services.Listeners
     [Service("MessageUsability")]
     class MessageUsabilityService : ServiceImplementationBase
     {
-        private static readonly Emoji Emote = new Emoji("⏬");
+        private static readonly Emoji EmoteExtend = new Emoji("⏬");
 
         private readonly DiscordShardedClient DiscordClient;
         private readonly MessageSender MessageSender;
@@ -75,14 +75,14 @@ namespace Energize.Services.Listeners
             if (botUser.GetPermissions(chan).AddReactions)
             {
                 IUserMessage userMsg = (IUserMessage)msg;
-                await userMsg.AddReactionAsync(Emote);
+                await userMsg.AddReactionAsync(EmoteExtend);
             }
         }
 
         private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (reaction.Emote?.Name == null) return false;
-            if (!reaction.Emote.Name.Equals(Emote.Name)) return false;
+            if (!reaction.Emote.Name.Equals(EmoteExtend.Name)) return false;
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
             if (!(chan is IGuildChannel) || reaction.User.Value == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
@@ -96,7 +96,7 @@ namespace Energize.Services.Listeners
             if (!this.HasSupportedURL(msg)) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
-            if (!msg.Reactions.ContainsKey(Emote) || (msg.Reactions.ContainsKey(Emote) && !msg.Reactions[Emote].IsMe)) return false;
+            if (!msg.Reactions.ContainsKey(EmoteExtend) || (msg.Reactions.ContainsKey(EmoteExtend) && !msg.Reactions[EmoteExtend].IsMe)) return false;
 
             return true;
         }
@@ -131,7 +131,7 @@ namespace Energize.Services.Listeners
             foreach (Embed embed in embeds)
                 await this.MessageSender.Send(chan, embed);
 
-            await msg.RemoveReactionAsync(Emote, botUser);
+            await msg.RemoveReactionAsync(EmoteExtend, botUser);
         }
     }
 }

@@ -101,9 +101,12 @@ namespace Energize.Services.Listeners
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
+                    await this.MessageSender.Warning(textChan, "music player", $"Content from `{url}` was corrupted or had an invalid format");
+                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
+                    break;
                 case LoadType.NoMatches:
-                    await this.MessageSender.Warning(textChan, "music player", $"The content at `{url}` shared by {msg.Author.Mention} could not be played because it is corrupted or could not be found");
-                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not play a playable message ({url})");
+                    await this.MessageSender.Warning(textChan, "music player", $"Content from `{url}` could not be found");
+                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
                     break;
             }
         }
