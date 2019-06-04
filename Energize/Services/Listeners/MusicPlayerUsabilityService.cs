@@ -85,6 +85,20 @@ namespace Energize.Services.Listeners
             }
         }
 
+        private async Task<IUserMessage> SendNonPlayableContent(IUserMessage msg, ITextChannel textChan, string url, string error)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder
+                .WithColorType(EmbedColorType.Warning)
+                .WithFooter("music player")
+                .WithDescription("Could not play/add track:")
+                .WithField("URL", url)
+                .WithField("Posted By", msg.Author.Mention)
+                .WithField("Error", error);
+
+            return await this.MessageSender.Send(textChan, builder.Build());
+        }
+
         private async Task TryPlayUrl(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
         {
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
@@ -101,11 +115,11 @@ namespace Energize.Services.Listeners
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
-                    await this.MessageSender.Warning(textChan, "music player", $"Content from `{url}` was corrupted or had an invalid format");
+                    await this.SendNonPlayableContent(msg, textChan, url, "File is corrupted or has a non-supported format");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
                     break;
                 case LoadType.NoMatches:
-                    await this.MessageSender.Warning(textChan, "music player", $"Content from `{url}` could not be found");
+                    await this.SendNonPlayableContent(msg, textChan, url, "Could not find the track to be added/played");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
                     break;
             }
