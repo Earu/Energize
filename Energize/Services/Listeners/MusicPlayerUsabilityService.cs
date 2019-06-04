@@ -89,6 +89,7 @@ namespace Energize.Services.Listeners
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
+                .WithAuthorNickname(msg)
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("Could not play/add track:")
