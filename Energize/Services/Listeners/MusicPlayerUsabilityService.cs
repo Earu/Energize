@@ -116,7 +116,7 @@ namespace Energize.Services.Listeners
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
-                    await this.SendNonPlayableContent(msg, textChan, url, "File is corrupted or has a non-supported format");
+                    await this.SendNonPlayableContent(msg, textChan, url, "File is corrupted or does not have audio");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
                     break;
                 case LoadType.NoMatches:
