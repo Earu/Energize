@@ -92,7 +92,7 @@ module CommandHandler =
         | None -> ()
     
     [<CommandParameters(2)>]
-    [<CommandConditions(CommandCondition.OwnerOnly)>]
+    [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
     let enable (ctx : CommandContext) = async {
         let cmdName = ctx.arguments.[0].Trim()
@@ -149,7 +149,7 @@ module CommandHandler =
     let bug (ctx : CommandContext) = feedback ctx
 
     [<CommandParameters(2)>]
-    [<CommandConditions(CommandCondition.OwnerOnly)>]
+    [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid>,<sentence>")>]
     let sendMsg (ctx : CommandContext) = async {
         return
@@ -419,7 +419,7 @@ module CommandHandler =
                 cmd.conditions |> List.map (fun cond ->
                     let valid = 
                         match cond with
-                        | CommandCondition.OwnerOnly ->
+                        | CommandCondition.DevOnly ->
                             msg.Author.Id.Equals(Config.Instance.Discord.OwnerID)
                         | CommandCondition.GuildOnly ->
                             not (Context.isPrivate msg)
