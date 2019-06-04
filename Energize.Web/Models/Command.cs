@@ -9,7 +9,7 @@ namespace Energize.Web.Models
         AdminOnly = 0,
         NsfwOnly = 1,
         GuildOnly = 2,
-        OwnerOnly = 3,
+        DevOnly = 3,
     }
 
     public class Command
