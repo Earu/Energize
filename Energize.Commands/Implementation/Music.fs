@@ -10,6 +10,7 @@ open Energize.Essentials
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
+open System
 
 [<CommandModule("Music")>]
 module Voice =
@@ -187,7 +188,7 @@ module Voice =
             try
                 let vol = int ctx.arguments.[0]
                 await (music.SetTrackVolumeAsync(vc, ctx.message.Channel :?> ITextChannel, vol))
-                [ ctx.sendOK None (sprintf "Setting the volume to %d" vol) ]
+                [ ctx.sendOK None (sprintf "Setting the volume to %d" (Math.Clamp(vol, 0 , 200))) ]
             with _ ->
                 [ ctx.sendWarn None "Incorrect volume, expecting a number" ]
         )
