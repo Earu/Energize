@@ -87,8 +87,8 @@ namespace Energize.Services.Listeners
 
         private readonly static List<Regex> GIFRegexes = new List<Regex>
         {
-            new Regex(@"https?:\/\/(media\.)?(gph|giphy)\.(is|com)", RegexOptions.Compiled | RegexOptions.IgnoreCase), 
-            new Regex(@"https?:\/\/tenor\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase)
+            CompiledRegex(@"https?:\/\/(media[0-9]?\.)?(gph|giphy)\.(is|com)"), 
+            CompiledRegex(@"https?:\/\/(media\.)?tenor\.com?")
         };
 
         private bool IsGIFSource(string url)
