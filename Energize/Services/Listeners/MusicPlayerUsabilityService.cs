@@ -85,6 +85,26 @@ namespace Energize.Services.Listeners
             }
         }
 
+        private readonly static List<Regex> GIFRegexes = new List<Regex>
+        {
+            new Regex(@"https?:\/\/(media\.)?(gph|giphy)\.(is|com)", RegexOptions.Compiled | RegexOptions.IgnoreCase), 
+            new Regex(@"https?:\/\/tenor\.com", RegexOptions.Compiled | RegexOptions.IgnoreCase)
+        };
+
+        private bool IsGIFSource(string url)
+        {
+            foreach(Regex regex in GIFRegexes)
+            {
+                if (regex.IsMatch(url))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool HasPlayableVideo(Embed embed)
+            => embed.Video.HasValue && !this.IsGIFSource(embed.Video.Value.Url);
+
         private async Task<IUserMessage> SendNonPlayableContent(IUserMessage msg, ITextChannel textChan, string url, string error)
         {
             EmbedBuilder builder = new EmbedBuilder();
@@ -131,7 +151,7 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsValidMessage(msg)) return;
 
-            if(msg.Embeds.Any(embed => this.IsValidURL(embed.Url)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
+            if(msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || this.HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
                 try
                 {
@@ -155,7 +175,7 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsValidMessage(msg)) return;
 
-            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || embed.Video.HasValue) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
+            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || this.HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
                 try
                 {
