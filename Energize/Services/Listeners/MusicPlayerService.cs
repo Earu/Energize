@@ -504,16 +504,9 @@ namespace Energize.Services.Listeners
             builder
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
-                .WithDescription("🎶 There was a problem playing the following track")
-                .WithField("Title", track.Title)
-                .WithField("Author", track.Author)
-                .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
-                .WithField("Stream", track.IsStream)
-                .WithField("Error", $"`{error ?? "The track got stuck"}`", false);
-
-            string thumbnailUrl = await this.GetThumbnailAsync(track);
-            if (!string.IsNullOrWhiteSpace(thumbnailUrl))
-                builder.WithThumbnailUrl(thumbnailUrl);
+                .WithDescription("🎶 Could not play track:")
+                .WithField("URL", track.Uri)
+                .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());
             await this.SkipTrackAsync(ply.VoiceChannel, ply.TextChannel);
