@@ -37,6 +37,7 @@ namespace Energize.Services.Listeners
                 new DiscordMessageProvider(this.DiscordClient, @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
                 new RedditPostProvider(this.Logger, @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
                 new GitHubRepoProvider(this.Logger, @"https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+)"),
+                new FAArtworkProvider(this.Logger, @"https?:\/\/www\.furaffinity\.net\/view\/[0-9]+"),
             };
         }
 
