@@ -1,6 +1,7 @@
 ﻿using Discord;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Energize.Essentials
 {
@@ -83,13 +84,25 @@ namespace Energize.Essentials
         }
 
         private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm", "mov" };
+        private static readonly Regex URLExtensionRegex = new Regex(@"https?:\/\/[^\s\/]+\/[^\s\.]+\.([A-Za-z0-9]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        public static bool IsPlayableURL(this string url)
+        {
+            if (HttpClient.IsURL(url))
+            {
+                Match match = URLExtensionRegex.Match(url);
+                string extension = match.Groups[1].Value;
+                return ValidExtensions.Any(ext => ext.Equals(extension));
+            }
+            else
+            {
+                FileInfo fileInfo = new FileInfo(url);
+                if (string.IsNullOrWhiteSpace(fileInfo.Extension) || fileInfo.Extension.Length < 2) return false; // 2 = ".|xxxx" 
+                return ValidExtensions.Any(ext => ext.Equals(fileInfo.Extension.Substring(1)));
+            }
+        }
 
         public static bool IsPlayableAttachment(this Attachment attachment)
-        {
-            string fileName = attachment.Filename;
-            FileInfo fileInfo = new FileInfo(fileName);
-            if (string.IsNullOrWhiteSpace(fileInfo.Extension) || fileInfo.Extension.Length < 2) return false; // 2 = ".|xxxx" 
-            return ValidExtensions.Any(ext => ext.Equals(fileInfo.Extension.Substring(1)));
-        }
+            => attachment.Filename.IsPlayableURL();
     }
 }
