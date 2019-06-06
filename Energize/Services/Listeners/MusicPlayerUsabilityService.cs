@@ -88,11 +88,14 @@ namespace Energize.Services.Listeners
         private readonly static List<Regex> GIFRegexes = new List<Regex>
         {
             CompiledRegex(@"https?:\/\/(media[0-9]?\.)?(gph|giphy)\.(is|com)"), 
-            CompiledRegex(@"https?:\/\/(media\.)?tenor\.com?")
+            CompiledRegex(@"https?:\/\/(media\.)?tenor\.com?"),
+            CompiledRegex(@"https?:\/\/(i\.)?imgur\.com"),
         };
 
-        private bool IsGIFSource(string url)
+        private bool IsValidSource(string url)
         {
+            if (!url.IsPlayableURL()) return false;
+
             foreach(Regex regex in GIFRegexes)
             {
                 if (regex.IsMatch(url))
@@ -103,7 +106,7 @@ namespace Energize.Services.Listeners
         }
 
         private bool HasPlayableVideo(Embed embed)
-            => embed.Video.HasValue && !this.IsGIFSource(embed.Video.Value.Url);
+            => embed.Video.HasValue && !this.IsValidSource(embed.Video.Value.Url);
 
         private async Task<IUserMessage> SendNonPlayableContent(IUserMessage msg, ITextChannel textChan, string url, string error)
         {
