@@ -18,8 +18,8 @@ namespace Energize.Services.Listeners
         private static readonly Emoji Emote = new Emoji("⏯");
         private static readonly Regex YTPlaylistPattern = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W");
         private static readonly Regex YTPattern = CompiledRegex(@"(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
-        private static readonly Regex SCPattern = CompiledRegex(@"https?:\/\/(soundcloud\.com|snd\.sc)\/(.*)");
-        private static readonly Regex TwitchPattern = CompiledRegex(@"https?://www.twitch.tv/.+");
+        private static readonly Regex SCPattern = CompiledRegex(@"https?:\/\/soundcloud\.com\/[^\/\s]+\/[^\/\s]+");
+        private static readonly Regex TwitchPattern = CompiledRegex(@"https?:\/\/(www\.)?twitch\.tv\/([^\/\s]+)");
 
         private readonly Logger Logger;
         private readonly ServiceManager ServiceManager;
@@ -42,7 +42,16 @@ namespace Energize.Services.Listeners
             => SCPattern.IsMatch(url);
 
         private bool IsTwitchURL(string url)
-            => TwitchPattern.IsMatch(url);
+        {
+            if (TwitchPattern.IsMatch(url))
+            {
+                Match match = TwitchPattern.Match(url);
+                if (match.Groups[2].Value != "videos")
+                    return true;
+            }
+
+            return false;
+        }
 
         private bool IsValidURL(string url)
         {
@@ -85,37 +94,22 @@ namespace Energize.Services.Listeners
             }
         }
 
-        private readonly static List<Regex> GIFRegexes = new List<Regex>
+        private bool HasPlayableVideo(Embed embed)
         {
-            CompiledRegex(@"https?:\/\/(media[0-9]?\.)?(gph|giphy)\.(is|com)"), 
-            CompiledRegex(@"https?:\/\/(media\.)?tenor\.com?"),
-            CompiledRegex(@"https?:\/\/(i\.)?imgur\.com"),
-        };
-
-        private bool IsValidSource(string url)
-        {
-            if (!url.IsPlayableURL()) return false;
-
-            foreach(Regex regex in GIFRegexes)
-            {
-                if (regex.IsMatch(url))
-                    return true;
-            }
-
-            return false;
+            if (embed.Type == EmbedType.Video)
+                return embed.Video.HasValue && embed.Video.Value.Url.IsPlayableURL();
+            else
+                return false;
         }
 
-        private bool HasPlayableVideo(Embed embed)
-            => embed.Video.HasValue && !this.IsValidSource(embed.Video.Value.Url);
-
-        private async Task<IUserMessage> SendNonPlayableContent(IUserMessage msg, ITextChannel textChan, string url, string error)
+        private async Task<IUserMessage> SendNonPlayableContent(IGuildUser user, IUserMessage msg, ITextChannel textChan, string url, string error)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithAuthorNickname(msg)
+                .WithAuthorNickname(user)
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
-                .WithDescription("Could not play/add track:")
+                .WithDescription("🎶 Could not play/add track:")
                 .WithField("URL", url)
                 .WithField("Posted By", msg.Author.Mention)
                 .WithField("Error", error);
@@ -139,11 +133,11 @@ namespace Energize.Services.Listeners
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
-                    await this.SendNonPlayableContent(msg, textChan, url, "File is corrupted or does not have audio");
+                    await this.SendNonPlayableContent(guser, msg, textChan, url, "File is corrupted or does not have audio");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
                     break;
                 case LoadType.NoMatches:
-                    await this.SendNonPlayableContent(msg, textChan, url, "Could not find the track to be added/played");
+                    await this.SendNonPlayableContent(guser, msg, textChan, url, "Could not find the track to be added/played");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
                     break;
             }
@@ -235,8 +229,8 @@ namespace Energize.Services.Listeners
 
             foreach(Attachment attachment in msg.Attachments)
             {
-                if (!attachment.IsPlayableAttachment()) continue;
-                await this.TryPlayUrl(music, textChan, msg, guser, attachment.Url);
+                if (attachment.IsPlayableAttachment()) 
+                    await this.TryPlayUrl(music, textChan, msg, guser, attachment.Url);
             }
         }
     }
