@@ -29,9 +29,7 @@ namespace Energize.Essentials
                 .WithName(title)
                 .WithValue(val.Length > 1024 ? $"{val.Substring(0, 1021)}..." : val);
 
-            builder.WithFields(fieldBuilder);
-
-            return builder;
+            return builder.WithFields(fieldBuilder);
         }
 
         public static EmbedBuilder WithLimitedTitle(this EmbedBuilder builder, string title)
@@ -51,17 +49,19 @@ namespace Energize.Essentials
         }
 
         public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IMessage msg)
+            => builder.WithAuthorNickname(msg.Author);
+
+        public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IUser user)
         {
-            if (msg.Channel is IGuildChannel)
+            if (user is IGuildUser author)
             {
-                IGuildUser author = msg.Author as IGuildUser;
                 string nick = author.Nickname != null ? $"{author.Nickname} ({author})" : author.ToString();
                 string url = author.GetAvatarUrl(ImageFormat.Auto, 32);
                 builder.WithAuthor(nick, url);
             }
             else
             {
-                builder.WithAuthor(msg.Author);
+                builder.WithAuthor(user);
             }
 
             return builder;
@@ -91,6 +91,8 @@ namespace Energize.Essentials
             if (HttpClient.IsURL(url))
             {
                 Match match = URLExtensionRegex.Match(url);
+                if (match == null) return false;
+
                 string extension = match.Groups[1].Value;
                 return ValidExtensions.Any(ext => ext.Equals(extension));
             }
