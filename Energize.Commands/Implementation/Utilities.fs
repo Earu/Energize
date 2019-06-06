@@ -118,9 +118,9 @@ module Util =
                 let builder = EmbedBuilder()
                 let uptime = sprintf "%dd%dh%dm" stats.Uptime.Days stats.Uptime.Hours stats.Uptime.Minutes
                 let fields = [
-                    ctx.embedField "CPU Load" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad) true
+                    ctx.embedField "CPU Load" (sprintf "%.2f%s" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad * 100.0) "%") true
                     ctx.embedField "Frames" (match stats.Frames with null -> 0 | _ -> stats.Frames.Sent) true
-                    ctx.embedField "Memory(MB)" (match stats.Memory with null -> 0L | _ -> stats.Memory.Used / 1024L / 1024L) true
+                    ctx.embedField "Memory (MB)" (match stats.Memory with null -> 0L | _ -> stats.Memory.Used / 1024L / 1024L) true
                     ctx.embedField "Music Players" music.PlayerCount true
                     ctx.embedField "Playing Players" stats.PlayingPlayers true
                     ctx.embedField "Uptime" uptime true
