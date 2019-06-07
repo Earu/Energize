@@ -32,7 +32,7 @@ namespace Energize.Services.Listeners
             this.IsLooping = false;
             this.Queue = new LavaQueue<LavaTrack>();
             this.TimeToLive = 3 * 60 * 1000;
-            this.RefreshTimer(this.TimeToLive, false);
+            this.Refresh();
         }
 
         public LavaPlayer Lavalink { get; set; }
@@ -49,7 +49,7 @@ namespace Energize.Services.Listeners
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
         public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
 
-        private void RefreshTimer(double interval, bool isStream)
+        public void Refresh()
         {
             if (this.TTLTimer != null)
             {
@@ -58,38 +58,13 @@ namespace Energize.Services.Listeners
                 this.TTLTimer = null;
             }
 
-            if (isStream) return;
-
-            this.TTLTimer = new Timer(interval)
+            this.TTLTimer = new Timer(this.TimeToLive)
             {
                 AutoReset = false,
             };
 
-            this.TTLTimer.Elapsed += (_, __) =>
-            {
-                if (this.IsPlaying && this.CurrentTrack.IsStream) return;
-                this.BecameInactive?.Invoke();
-            };
-
+            this.TTLTimer.Elapsed += (_, __) => this.BecameInactive?.Invoke();
             this.TTLTimer.Start();
-        }
-
-        public void Refresh(LavaTrack track = null)
-        {
-            if (track == null)
-            {
-                this.RefreshTimer(this.TimeToLive, false);
-                return;
-            }
-
-            if (track.IsStream)
-                this.RefreshTimer(0, true);
-            else
-            {
-                double len = track.Length.TotalMilliseconds;
-                double pos = track.Position.TotalMilliseconds;
-                this.RefreshTimer(Math.Abs(len - pos) + this.TimeToLive, false);
-            }
         }
     }
 
@@ -129,7 +104,10 @@ namespace Energize.Services.Listeners
             {
                 IEnergizePlayer ply = this.Players[lply.VoiceChannel.GuildId];
                 if (ply.TrackPlayer != null && !ply.IsPaused)
+                {
                     await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+                    ply.Refresh();
+                }
             }
 
             IGuild guild = lply.VoiceChannel.Guild;
@@ -163,8 +141,7 @@ namespace Energize.Services.Listeners
                     ply.BecameInactive += async () =>
                     {
                         this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild {ply.VoiceChannel.Guild} | {ply.VoiceChannel.GuildId}");
-                        await this.MessageSender.Warning(ply.TextChannel, "music player", "Player has became inactive, if you think this is not the case please do send a message via the `feedback` command");
-                        //await this.DisconnectAsync(vc);
+                        await this.DisconnectAsync(vc);
                     };
                 }
 
@@ -226,7 +203,6 @@ namespace Energize.Services.Listeners
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track);
                 return await this.SendPlayerAsync(ply, track, chan);
             }
         }
@@ -263,7 +239,6 @@ namespace Energize.Services.Listeners
                         ply.Queue.Enqueue(tr);
 
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track);
                 return new List<IUserMessage>
                 {
                     await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`"),
@@ -304,10 +279,7 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying && !ply.IsPaused)
-            {
                 await ply.Lavalink.PauseAsync();
-                ply.Refresh();
-            }
         }
 
         public async Task ResumeTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -316,10 +288,7 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying && ply.IsPaused)
-            {
                 await ply.Lavalink.ResumeAsync();
-                ply.Refresh(ply.CurrentTrack);
-            }
         }
 
         public async Task SkipTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -328,10 +297,7 @@ namespace Energize.Services.Listeners
             if (ply == null) return;
 
             if (ply.IsPlaying)
-            {
                 await ply.Lavalink.StopAsync();
-                ply.Refresh();
-            }
         }
 
         public async Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol)
@@ -482,7 +448,6 @@ namespace Energize.Services.Listeners
             {
                 track.ResetPosition();
                 await ply.Lavalink.PlayAsync(track, false);
-                ply.Refresh(track);
             }
             else
             {
@@ -490,7 +455,6 @@ namespace Energize.Services.Listeners
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
-                    ply.Refresh(newtrack);
                 }
                 else
                 {
@@ -590,7 +554,6 @@ namespace Energize.Services.Listeners
                 BufferSize = 8192,
                 PreservePlayers = true,
                 AutoDisconnect = false,
-                LogSeverity = LogSeverity.Debug,
                 InactivityTimeout = TimeSpan.FromMinutes(3),
             };
 
