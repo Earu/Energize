@@ -64,11 +64,13 @@ namespace Energize.Services.Listeners
             {
                 AutoReset = false,
             };
+
             this.TTLTimer.Elapsed += (_, __) =>
             {
                 if (this.IsPlaying && this.CurrentTrack.IsStream) return;
                 this.BecameInactive?.Invoke();
             };
+
             this.TTLTimer.Start();
         }
 
@@ -86,7 +88,7 @@ namespace Energize.Services.Listeners
             {
                 double len = track.Length.TotalMilliseconds;
                 double pos = track.Position.TotalMilliseconds;
-                this.RefreshTimer((len - pos) + this.TimeToLive, false);
+                this.RefreshTimer(Math.Abs(len - pos) + this.TimeToLive, false);
             }
         }
     }
@@ -151,15 +153,19 @@ namespace Energize.Services.Listeners
                 {
                     ply = this.Players[vc.GuildId];
                     if (ply.Lavalink == null) // in case we lose the player object
-                    {
                         ply.Lavalink = await this.LavaClient.ConnectAsync(vc, chan);
-                    }
                 }
                 else
                 {
                     ply = new EnergizePlayer(await this.LavaClient.ConnectAsync(vc, chan));
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Connected to VC in guild {vc.Guild} | {vc.GuildId}");
                     this.Players.Add(vc.GuildId, ply);
-                    ply.BecameInactive += async () => await this.DisconnectAsync(vc);
+                    ply.BecameInactive += async () =>
+                    {
+                        this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild {ply.VoiceChannel.Guild} | {ply.VoiceChannel.GuildId}");
+                        await this.MessageSender.Warning(ply.TextChannel, "music player", "Player has became inactive, if you think this is not the case please do send a message via the `feedback` command");
+                        //await this.DisconnectAsync(vc);
+                    };
                 }
 
                 this.LavaClient.UpdateTextChannel(vc.GuildId, chan);
@@ -187,6 +193,7 @@ namespace Energize.Services.Listeners
                 if (this.Players.ContainsKey(vc.GuildId))
                 {
                     IEnergizePlayer ply = this.Players[vc.GuildId];
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Disconnected from VC in guild {vc.Guild} | {vc.GuildId}");
                     this.Players.Remove(vc.GuildId);
                     if (ply.TrackPlayer != null)
                         await ply.TrackPlayer.DeleteMessage();
@@ -243,7 +250,7 @@ namespace Energize.Services.Listeners
 
                 return new List<IUserMessage>
                 {
-                    await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}")
+                    await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`")
                 };
             }
             else
@@ -583,6 +590,8 @@ namespace Energize.Services.Listeners
                 BufferSize = 8192,
                 PreservePlayers = true,
                 AutoDisconnect = false,
+                LogSeverity = LogSeverity.Debug,
+                InactivityTimeout = TimeSpan.FromMinutes(3),
             };
 
             this.LavaRestClient = new LavaRestClient(config);
@@ -639,7 +648,8 @@ namespace Energize.Services.Listeners
         {
             if (!this.IsDiscordClose(ex)) return;
 
-            foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this.Players)
+            this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Discord sent 1001, and we should have been trying to re-connect");
+            /*foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this.Players)
             {
                 SocketGuild guild = clientShard.GetGuild(ply.Key);
                 if (guild != null)
@@ -655,7 +665,7 @@ namespace Energize.Services.Listeners
                         newPly.Queue.Enqueue(track);
                     await this.SendPlayerAsync(newPly, lastTrack);
                 }
-            }
+            }*/
         }
     }
 }
