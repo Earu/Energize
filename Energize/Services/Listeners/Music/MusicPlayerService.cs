@@ -155,7 +155,7 @@ namespace Energize.Services.Listeners.Music
             {
                 await ply.Lavalink.PlayAsync(track, false);
                 IUserMessage playerMsg = await this.SendPlayerAsync(ply, track, chan);
-                if (ply.Autoplay && ply.Queue.Count == 0 && track.Uri.Host.Contains("youtube"))
+                if (ply.Autoplay && ply.Queue.Count == 0)
                     await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
                 return playerMsg;
             }
@@ -438,6 +438,7 @@ namespace Energize.Services.Listeners.Music
                 using (IDatabaseContext ctx = await dbService.GetContext())
                 {
                     IYoutubeVideoID videoId = await ctx.Instance.GetRandomVideoIdAsync();
+                    if (videoId == null) return;
                     videoUrl = $"https://www.youtube.com/watch?v={videoId.VideoID}";
                 }
             }
@@ -476,7 +477,7 @@ namespace Energize.Services.Listeners.Music
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
-                    if (ply.Autoplay && ply.Queue.Count == 0 && track.Uri.Host.Contains("youtube"))
+                    if (ply.Autoplay && ply.Queue.Count == 0)
                         await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, newtrack);
                 }
                 else
