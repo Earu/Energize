@@ -97,6 +97,8 @@ namespace Energize.Services.Database
         public async Task<IYoutubeVideoID> GetRandomVideoIdAsync()
         {
             int count = await this.SavedVideoIds.CountAsync();
+            if (count == 0) return null;
+
             return await this.SavedVideoIds.SingleAsync(videoId => videoId.Identity == this.Rand.Next(0, count));
         }
     }
