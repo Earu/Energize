@@ -12,6 +12,7 @@ namespace Energize.Interfaces.Services.Listeners
         event Action BecameInactive;
 
         LavaPlayer Lavalink { get; set; }
+        bool Autoplay { get; set; }
         bool IsLooping { get; set; }
         TrackPlayer TrackPlayer { get; set; }
         bool IsPlaying { get; }

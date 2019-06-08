@@ -10,16 +10,16 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Victoria.Entities;
 
-namespace Energize.Services.Listeners
+namespace Energize.Services.Listeners.Music
 {
     [Service("MusicUsability")]
     public class MusicPlayerUsabilityService : ServiceImplementationBase, IServiceImplementation
     {
         private static readonly Emoji Emote = new Emoji("⏯");
-        private static readonly Regex YTPlaylistPattern = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W");
-        private static readonly Regex YTPattern = CompiledRegex(@"(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
-        private static readonly Regex SCPattern = CompiledRegex(@"https?:\/\/soundcloud\.com\/[^\/\s]+\/[^\/\s]+");
-        private static readonly Regex TwitchPattern = CompiledRegex(@"https?:\/\/(www\.)?twitch\.tv\/([^\/\s]+)");
+        private static readonly Regex YTPlaylistRegex = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W");
+        private static readonly Regex YTRegex = CompiledRegex(@"(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
+        private static readonly Regex SCRegex = CompiledRegex(@"https?:\/\/soundcloud\.com\/[^\/\s]+\/[^\/\s]+");
+        private static readonly Regex TwitchRegex = CompiledRegex(@"https?:\/\/(www\.)?twitch\.tv\/([^\/\s]+)");
 
         private readonly Logger Logger;
         private readonly ServiceManager ServiceManager;
@@ -36,16 +36,16 @@ namespace Energize.Services.Listeners
             => new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private bool IsYoutubeURL(string url)
-            => YTPlaylistPattern.IsMatch(url) || YTPattern.IsMatch(url);
+            => YTPlaylistRegex.IsMatch(url) || YTRegex.IsMatch(url);
 
         private bool IsSoundcloudURL(string url)
-            => SCPattern.IsMatch(url);
+            => SCRegex.IsMatch(url);
 
         private bool IsTwitchURL(string url)
         {
-            if (TwitchPattern.IsMatch(url))
+            if (TwitchRegex.IsMatch(url))
             {
-                Match match = TwitchPattern.Match(url);
+                Match match = TwitchRegex.Match(url);
                 if (match.Groups[2].Value != "videos")
                     return true;
             }
@@ -84,9 +84,9 @@ namespace Energize.Services.Listeners
 
         private string SanitizeYoutubeUrl(string url)
         {
-            if (YTPlaylistPattern.IsMatch(url))
+            if (YTPlaylistRegex.IsMatch(url))
             {
-                string identifier = YTPlaylistPattern.Match(url).Groups[1].Value;
+                string identifier = YTPlaylistRegex.Match(url).Groups[1].Value;
                 return $"https://www.youtube.com/watch?v={identifier}";
             }
             else

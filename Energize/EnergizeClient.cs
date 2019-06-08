@@ -27,10 +27,10 @@ namespace Energize
             Console.Clear();
             Console.Title = "Energize's Logs";
 
-            this.Token        = token;
-            this.Prefix        = prefix;
-            this.Separator     = separator;
-            this.Logger        = new Logger();
+            this.Token = token;
+            this.Prefix = prefix;
+            this.Separator = separator;
+            this.Logger = new Logger();
             this.MessageSender = new MessageSender(this.Logger);
             this.DiscordClient = new DiscordShardedClient(new DiscordSocketConfig
             {
