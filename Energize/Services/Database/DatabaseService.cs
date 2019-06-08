@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 using Energize.Services.Listeners.Music;
 using Energize.Interfaces.Services.Listeners;
 using System;
+using System.Linq;
 
 namespace Energize.Services.Database
 {
     public class Database : DbContext, IDatabase
     {
         private readonly string ConnectionString;
-        private readonly Random Rand;
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
@@ -25,7 +25,6 @@ namespace Energize.Services.Database
         public Database(string connectionstring)
         {
             this.ConnectionString = connectionstring;
-            this.Rand = new Random();
         }
     
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -99,7 +98,7 @@ namespace Energize.Services.Database
             int count = await this.SavedVideoIds.CountAsync();
             if (count == 0) return null;
 
-            return await this.SavedVideoIds.SingleAsync(videoId => videoId.Identity == this.Rand.Next(0, count));
+            return this.SavedVideoIds.OrderBy(c => Guid.NewGuid()).Take(1).FirstOrDefault();
         }
     }
 
