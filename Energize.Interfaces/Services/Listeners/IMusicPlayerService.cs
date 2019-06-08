@@ -22,6 +22,8 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
+        Task<bool> AutoplayTrackAsync(IVoiceChannel vc, ITextChannel chan);
+
         Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan);
 
         Task ClearTracksAsync(IVoiceChannel vc, ITextChannel chan);

@@ -56,6 +56,7 @@ namespace Energize.Essentials
     public struct KeysConfig
     {
         public string TwitchKey;
+        public string YoutubeKey;
     }
 
     public struct URIConfig

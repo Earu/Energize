@@ -172,6 +172,18 @@ module Voice =
     }
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("autoplay", "Sets the music player in youtube autoplay mode", "autoplay <nothing>")>]
+    let autoplay (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let autoplaying = awaitResult (music.AutoplayTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
+            if autoplaying then
+                [ ctx.sendOK None "Youtube autoplay enabled" ]
+            else
+                [ ctx.sendOK None "Youtube autoplay disabled" ]
+        )
+    }
+
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("shuffle", "Shuffles the track queue", "shuffle <nothing>")>]
     let shuffle (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->

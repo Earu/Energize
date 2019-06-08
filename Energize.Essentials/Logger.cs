@@ -33,7 +33,12 @@ namespace Energize.Essentials
         }
 
         public void LogTo(string filename, string msg)
-            => File.AppendAllText($"{Path}/{filename}", $"{DateTime.Now} - {msg}\n");
+        {
+            lock (this)
+            {
+                File.AppendAllText($"{Path}/{filename}", $"{DateTime.Now} - {msg}\n");
+            }
+        }
 
         public void Normal(string msg)
         {
