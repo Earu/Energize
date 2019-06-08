@@ -5,21 +5,27 @@ using Energize.Essentials;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Energize.Services.Listeners.Music;
+using Energize.Interfaces.Services.Listeners;
+using System;
 
 namespace Energize.Services.Database
 {
     public class Database : DbContext, IDatabase
     {
         private readonly string ConnectionString;
+        private readonly Random Rand;
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
         public DbSet<DiscordChannel> Channels { get; set; }
         public DbSet<DiscordUserStats> Stats { get; set; }
+        public DbSet<YoutubeVideoID> SavedVideoIds { get; set; }
 
         public Database(string connectionstring)
         {
             this.ConnectionString = connectionstring;
+            this.Rand = new Random();
         }
     
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -79,6 +85,19 @@ namespace Energize.Services.Database
 
                 return guild;
             }
+        }
+
+        public async Task SaveYoutubeVideoIds(IEnumerable<IYoutubeVideoID> ytVideoIds)
+        {
+            foreach (YoutubeVideoID videoId in ytVideoIds)
+                this.SavedVideoIds.Add(videoId);
+            await this.SaveChangesAsync(true);
+        }
+
+        public async Task<IYoutubeVideoID> GetRandomVideoIdAsync()
+        {
+            int count = await this.SavedVideoIds.CountAsync();
+            return await this.SavedVideoIds.SingleAsync(videoId => videoId.Identity == this.Rand.Next(0, count));
         }
     }
 

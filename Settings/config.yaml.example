@@ -21,6 +21,7 @@ Octovisor:
   ProcessName: Energize
 Keys:
   TwitchKey: twitch api token
+  YoutubeKey: youtube api token
 URIs:
   TwitchURL: https://www.twitch.tv/earuio
   GitHubURL: https://github.com/Earu/Energize

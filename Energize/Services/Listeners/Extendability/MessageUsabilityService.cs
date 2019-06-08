@@ -3,13 +3,13 @@ using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services.Database;
-using Energize.Services.Listeners.ExtendableMessageProviders;
+using Energize.Services.Listeners.Extendability.ExtendableMessageProviders;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Listeners
+namespace Energize.Services.Listeners.Extendability
 {
     [Service("MessageUsability")]
     class MessageUsabilityService : ServiceImplementationBase

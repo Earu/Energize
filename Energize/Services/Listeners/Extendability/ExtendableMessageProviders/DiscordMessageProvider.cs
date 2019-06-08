@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Listeners.ExtendableMessageProviders
+namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
     class DiscordMessageProvider : BaseProvider
     {

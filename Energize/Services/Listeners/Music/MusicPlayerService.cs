@@ -1,73 +1,22 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.WebSocket;
-using Energize.Interfaces.Services.Listeners;
 using Energize.Essentials;
+using Energize.Essentials.MessageConstructs;
+using Energize.Interfaces.Services.Database;
+using Energize.Interfaces.Services.Listeners;
+using Energize.Interfaces.Services.Senders;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.WebSockets;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
-using Victoria.Queue;
-using System.Linq;
-using Energize.Essentials.MessageConstructs;
-using Energize.Interfaces.Services.Senders;
-using System.Net.WebSockets;
-using Discord.Net;
-using System.Timers;
 
-namespace Energize.Services.Listeners
+namespace Energize.Services.Listeners.Music
 {
-    // Wrapper class to gain more control over Victoria, and try to prevent weird behaviors
-    internal class EnergizePlayer : IEnergizePlayer
-    {
-        public event Action BecameInactive;
-
-        private readonly double TimeToLive;
-
-        private Timer TTLTimer;
-
-        internal EnergizePlayer(LavaPlayer ply)
-        {
-            this.Lavalink = ply;
-            this.IsLooping = false;
-            this.Queue = new LavaQueue<LavaTrack>();
-            this.TimeToLive = 3 * 60 * 1000;
-            this.Refresh();
-        }
-
-        public LavaPlayer Lavalink { get; set; }
-
-        public bool IsLooping { get; set; }
-        public TrackPlayer TrackPlayer { get; set; }
-        public LavaQueue<LavaTrack> Queue { get; private set; }
-
-        public bool IsPlaying { get => this.Lavalink.IsPlaying; }
-        public bool IsPaused { get => this.Lavalink.IsPaused; }
-
-        public LavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
-        public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
-        public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
-        public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
-
-        public void Refresh()
-        {
-            if (this.TTLTimer != null)
-            {
-                this.TTLTimer.Stop();
-                this.TTLTimer.Close();
-                this.TTLTimer = null;
-            }
-
-            this.TTLTimer = new Timer(this.TimeToLive)
-            {
-                AutoReset = false,
-            };
-
-            this.TTLTimer.Elapsed += (_, __) => this.BecameInactive?.Invoke();
-            this.TTLTimer.Start();
-        }
-    }
-
     [Service("Music")]
     public class MusicPlayerService : ServiceImplementationBase, IMusicPlayerService
     {
@@ -77,6 +26,7 @@ namespace Energize.Services.Listeners
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
         private readonly Dictionary<ulong, IEnergizePlayer> Players;
+        private readonly Random Rand;
 
         private bool Initialized;
 
@@ -90,6 +40,7 @@ namespace Energize.Services.Listeners
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
             this.LavaClient = new LavaShardClient();
+            this.Rand = new Random();
 
             this.LavaClient.OnTrackException += async (ply, track, error) => await this.OnTrackIssue(ply, track, error);
             this.LavaClient.OnTrackStuck += async (ply, track, _) => await this.OnTrackIssue(ply, track);
@@ -203,7 +154,10 @@ namespace Energize.Services.Listeners
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                return await this.SendPlayerAsync(ply, track, chan);
+                IUserMessage playerMsg = await this.SendPlayerAsync(ply, track, chan);
+                if (ply.Autoplay && ply.Queue.Count == 0 && track.Uri.Host.Contains("youtube"))
+                    await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
+                return playerMsg;
             }
         }
 
@@ -255,6 +209,17 @@ namespace Energize.Services.Listeners
             bool isLooping = ply.IsLooping;
             ply.IsLooping = !isLooping;
             return !isLooping;
+        }
+
+        public async Task<bool> AutoplayTrackAsync(IVoiceChannel vc, ITextChannel chan)
+        {
+            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return false;
+
+            bool autoplay = ply.Autoplay;
+            ply.Autoplay = !autoplay;
+
+            return !autoplay;
         }
 
         public async Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan)
@@ -441,6 +406,62 @@ namespace Energize.Services.Listeners
             return ply.TrackPlayer.Message;
         }
 
+        private async Task<YoutubeVideo> FetchYTRelatedVideoAsync(string videoId)
+        {
+            string endpoint = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&key={Config.Instance.Keys.YoutubeKey}&maxResults=11";
+            string json = await HttpClient.GetAsync(endpoint, this.Logger);
+            YoutubeRelatedVideos relatedVideos = JsonPayload.Deserialize<YoutubeRelatedVideos>(json, this.Logger);
+            if (relatedVideos == null || relatedVideos.Videos.Length == 0) return null;
+            IDatabaseService dbService = this.ServiceManager.GetService<IDatabaseService>("Database");
+            using (IDatabaseContext ctx = await dbService.GetContext())
+                await ctx.Instance.SaveYoutubeVideoIds(relatedVideos.Videos.Select(vid => vid.Id));
+
+            return relatedVideos.Videos[this.Rand.Next(0, relatedVideos.Videos.Length)];
+        }
+
+        private static readonly Regex YTRegex = new Regex(@"https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=)?([^\/\s&\?]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack oldTrack)
+        {
+            bool useSaved = false;
+            Match match = YTRegex.Match(oldTrack.Uri.AbsoluteUri);
+            if (match == null)
+                useSaved = true;
+
+            YoutubeVideo video = await this.FetchYTRelatedVideoAsync(match.Groups[4].Value);
+            if (video == null)
+                useSaved = true;
+
+            string videoUrl;
+            if (useSaved)
+            {
+                IDatabaseService dbService = this.ServiceManager.GetService<IDatabaseService>("Database");
+                using (IDatabaseContext ctx = await dbService.GetContext())
+                {
+                    IYoutubeVideoID videoId = await ctx.Instance.GetRandomVideoIdAsync();
+                    videoUrl = $"https://www.youtube.com/watch?v={videoId.VideoID}";
+                }
+            }
+            else
+            {
+                videoUrl = $"https://www.youtube.com/watch?v={video.Id.VideoID}";
+            }
+
+            SearchResult res = await this.LavaRestClient.SearchTracksAsync(videoUrl);
+            List<LavaTrack> tracks = res.Tracks.ToList();
+            if (tracks.Count == 0) return;
+
+            switch (res.LoadType)
+            {
+                case LoadType.SearchResult:
+                case LoadType.TrackLoaded:
+                    await this.AddTrackAsync(vc, chan, tracks[0]);
+                    break;
+                case LoadType.PlaylistLoaded:
+                    await this.AddPlaylistAsync(vc, chan, res.PlaylistInfo.Name, res.Tracks);
+                    break;
+            }
+        }
+
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
         {
             IEnergizePlayer ply = this.Players[lavalink.VoiceChannel.GuildId];
@@ -455,6 +476,8 @@ namespace Energize.Services.Listeners
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
+                    if (ply.Autoplay && ply.Queue.Count == 0 && track.Uri.Host.Contains("youtube"))
+                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, newtrack);
                 }
                 else
                 {
