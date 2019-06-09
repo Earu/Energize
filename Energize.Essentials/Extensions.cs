@@ -1,4 +1,6 @@
 ﻿using Discord;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -108,5 +110,126 @@ namespace Energize.Essentials
 
         public static bool IsPlayableAttachment(this Attachment attachment)
             => attachment.Filename.IsPlayableURL();
+
+        public static bool FuzzyMatch(this string stringToSearch, string pattern, out int outScore)
+        {
+            // Score consts
+            int adjacencyBonus = 5; // bonus for adjacent matches
+            int separatorBonus = 10; // bonus if match occurs after a separator
+            int camelBonus = 10;     // bonus if match is uppercase and prev is lower
+
+            int leadingLetterPenalty = -3;    // penalty applied for every letter in stringToSearch before the first match
+            int maxLeadingLetterPenalty = -9; // maximum penalty for leading letters
+            int unmatchedLetterPenalty = -1;  // penalty for every letter that doesn't matter
+
+            // Loop variables
+            int score = 0;
+            int patternIdx = 0;
+            int patternLength = pattern.Length;
+            int strIdx = 0;
+            int strLength = stringToSearch.Length;
+            bool prevMatched = false;
+            bool prevLower = false;
+            bool prevSeparator = true; // true if first letter match gets separator bonus
+
+            // Use "best" matched letter if multiple string letters match the pattern
+            char? bestLetter = null;
+            char? bestLower = null;
+            int? bestLetterIdx = null;
+            int bestLetterScore = 0;
+
+            List<int> matchedIndices = new List<int>();
+
+            // Loop over strings
+            while (strIdx != strLength)
+            {
+                char? patternChar = patternIdx != patternLength ? pattern[patternIdx] as char? : null;
+                char strChar = stringToSearch[strIdx];
+
+                char? patternLower = patternChar != null ? char.ToLower((char)patternChar) as char? : null;
+                char strLower = char.ToLower(strChar);
+                char strUpper = char.ToUpper(strChar);
+
+                bool nextMatch = patternChar != null && patternLower == strLower;
+                bool rematch = bestLetter != null && bestLower == strLower;
+
+                bool advanced = nextMatch && bestLetter != null;
+                bool patternRepeat = bestLetter != null && patternChar != null && bestLower == patternLower;
+                if (advanced || patternRepeat)
+                {
+                    score += bestLetterScore;
+                    matchedIndices.Add((int)bestLetterIdx);
+                    bestLetter = null;
+                    bestLower = null;
+                    bestLetterIdx = null;
+                    bestLetterScore = 0;
+                }
+
+                if (nextMatch || rematch)
+                {
+                    int newScore = 0;
+
+                    // Apply penalty for each letter before the first pattern match
+                    // Note: Math.Max because penalties are negative values. So max is smallest penalty.
+                    if (patternIdx == 0)
+                    {
+                        int penalty = Math.Max(strIdx * leadingLetterPenalty, maxLeadingLetterPenalty);
+                        score += penalty;
+                    }
+
+                    // Apply bonus for consecutive bonuses
+                    if (prevMatched)
+                        newScore += adjacencyBonus;
+
+                    // Apply bonus for matches after a separator
+                    if (prevSeparator)
+                        newScore += separatorBonus;
+
+                    // Apply bonus across camel case boundaries. Includes "clever" isLetter check.
+                    if (prevLower && strChar == strUpper && strLower != strUpper)
+                        newScore += camelBonus;
+
+                    // Update pattern index IF the next pattern letter was matched
+                    if (nextMatch)
+                        ++patternIdx;
+
+                    // Update best letter in stringToSearch which may be for a "next" letter or a "rematch"
+                    if (newScore >= bestLetterScore)
+                    {
+                        // Apply penalty for now skipped letter
+                        if (bestLetter != null)
+                            score += unmatchedLetterPenalty;
+
+                        bestLetter = strChar;
+                        bestLower = char.ToLower((char)bestLetter);
+                        bestLetterIdx = strIdx;
+                        bestLetterScore = newScore;
+                    }
+
+                    prevMatched = true;
+                }
+                else
+                {
+                    score += unmatchedLetterPenalty;
+                    prevMatched = false;
+                }
+
+                // Includes "clever" isLetter check.
+                prevLower = strChar == strLower && strLower != strUpper;
+                prevSeparator = strChar == '_' || strChar == ' ';
+
+                ++strIdx;
+            }
+
+            // Apply score for last match
+            if (bestLetter != null)
+            {
+                score += bestLetterScore;
+                matchedIndices.Add((int)bestLetterIdx);
+            }
+
+            outScore = score;
+            return patternIdx == patternLength;
+        }
     }
 }
