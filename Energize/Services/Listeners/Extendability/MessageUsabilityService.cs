@@ -34,15 +34,19 @@ namespace Energize.Services.Listeners.Extendability
             this.InviteRegex = new Regex(@"discord\.gg\/.+\s?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             this.ExtendableMessageProviders = new List<BaseProvider>
             {
-                new DiscordMessageProvider(this.DiscordClient, @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
-                new RedditPostProvider(this.Logger, @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
-                new GitHubRepoProvider(this.Logger, @"https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+)"),
-                new FAArtworkProvider(this.Logger, @"https?:\/\/www\.furaffinity\.net\/view\/[0-9]+"),
+                new DiscordMessageProvider(this.DiscordClient, "discordapp", @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
+                new RedditPostProvider(this.Logger, "reddit", @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
+                new GitHubRepoProvider(this.Logger, "github", @"https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+)"),
+                new FAArtworkProvider(this.Logger, "furaffinity", @"https?:\/\/www\.furaffinity\.net\/view\/[0-9]+"),
             };
         }
 
         private bool HasInviteURL(IMessage msg)
-            => this.InviteRegex.IsMatch(msg.Content);
+        {
+            if (!msg.Content.Contains("discord.gg")) return false;
+
+            return this.InviteRegex.IsMatch(msg.Content);
+        }
 
         private bool HasSupportedURL(IMessage msg)  
             => this.ExtendableMessageProviders.Any(provider => provider.IsMatch(msg.Content));

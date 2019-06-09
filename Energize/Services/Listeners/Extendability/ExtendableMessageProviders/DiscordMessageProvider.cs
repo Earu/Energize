@@ -11,7 +11,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
     {
         private readonly DiscordShardedClient DiscordClient;
 
-        public DiscordMessageProvider(DiscordShardedClient discordClient, string pattern) : base(pattern)
+        public DiscordMessageProvider(DiscordShardedClient discordClient, string domain, string pattern) : base(domain, pattern)
         {
             this.DiscordClient = discordClient;
         }
