@@ -16,8 +16,8 @@ namespace Energize.Services.Listeners.Music
     public class MusicPlayerUsabilityService : ServiceImplementationBase, IServiceImplementation
     {
         private static readonly Emoji Emote = new Emoji("⏯");
-        private static readonly Regex YTPlaylistRegex = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W");
-        private static readonly Regex YTRegex = CompiledRegex(@"(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+");
+        private static readonly Regex YTPlaylistRegex = CompiledRegex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
+        private static readonly Regex YTRegex = CompiledRegex(@"(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+");
         private static readonly Regex SCRegex = CompiledRegex(@"https?:\/\/soundcloud\.com\/[^\/\s]+\/[^\/\s]+");
         private static readonly Regex TwitchRegex = CompiledRegex(@"https?:\/\/(www\.)?twitch\.tv\/([^\/\s]+)");
 
@@ -43,9 +43,9 @@ namespace Energize.Services.Listeners.Music
 
         private bool IsTwitchURL(string url)
         {
-            if (TwitchRegex.IsMatch(url))
+            Match match = TwitchRegex.Match(url);
+            if (match.Success)
             {
-                Match match = TwitchRegex.Match(url);
                 if (match.Groups[2].Value != "videos")
                     return true;
             }
@@ -84,9 +84,10 @@ namespace Energize.Services.Listeners.Music
 
         private string SanitizeYoutubeUrl(string url)
         {
-            if (YTPlaylistRegex.IsMatch(url))
+            Match match = YTPlaylistRegex.Match(url);
+            if (match.Success)
             {
-                string identifier = YTPlaylistRegex.Match(url).Groups[1].Value;
+                string identifier = match.Groups[1].Value;
                 return $"https://www.youtube.com/watch?v={identifier}";
             }
             else
