@@ -14,6 +14,7 @@ namespace Energize.Interfaces.Services.Listeners
         LavaPlayer Lavalink { get; set; }
         bool Autoplay { get; set; }
         bool IsLooping { get; set; }
+        bool Disconnected { get; set; }
         TrackPlayer TrackPlayer { get; set; }
         bool IsPlaying { get; }
         bool IsPaused { get; }

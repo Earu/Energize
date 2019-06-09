@@ -23,6 +23,7 @@ namespace Energize.Services.Listeners.Music
             this.Lavalink = ply;
             this.Autoplay = false;
             this.IsLooping = false;
+            this.Disconnected = false;
             this.Queue = new LavaQueue<LavaTrack>();
             this.TimeToLive = 3 * 60 * 1000;
             this.Refresh();
@@ -32,6 +33,7 @@ namespace Energize.Services.Listeners.Music
 
         public bool Autoplay { get; set; }
         public bool IsLooping { get; set; }
+        public bool Disconnected { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
         public LavaQueue<LavaTrack> Queue { get; private set; }
 
@@ -57,7 +59,12 @@ namespace Energize.Services.Listeners.Music
                 AutoReset = false,
             };
 
-            this.TTLTimer.Elapsed += (_, __) => this.BecameInactive?.Invoke();
+            this.TTLTimer.Elapsed += (_, __) =>
+            {
+                if (!this.Disconnected)
+                    this.BecameInactive?.Invoke();
+            };
+
             this.TTLTimer.Start();
         }
     }
