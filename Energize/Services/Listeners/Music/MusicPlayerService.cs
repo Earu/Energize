@@ -45,7 +45,7 @@ namespace Energize.Services.Listeners.Music
             this.LavaClient.OnTrackException += async (ply, track, error) => await this.OnTrackIssue(ply, track, error);
             this.LavaClient.OnTrackStuck += async (ply, track, _) => await this.OnTrackIssue(ply, track);
             this.LavaClient.OnTrackFinished += this.OnTrackFinished;
-            this.LavaClient.Log += async (logmsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logmsg.Message);
+            this.LavaClient.Log += async (logMsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
         }
 
@@ -87,11 +87,11 @@ namespace Energize.Services.Listeners.Music
                 else
                 {
                     ply = new EnergizePlayer(await this.LavaClient.ConnectAsync(vc, chan));
-                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Connected to VC in guild {vc.Guild} | {vc.GuildId}");
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Connected to VC in guild <{vc.Guild}>");
                     this.Players.Add(vc.GuildId, ply);
                     ply.BecameInactive += async () =>
                     {
-                        this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild {ply.VoiceChannel.Guild} | {ply.VoiceChannel.GuildId}");
+                        this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild <{ply.VoiceChannel.Guild}>");
                         await this.DisconnectAsync(vc);
                     };
                 }
@@ -121,8 +121,9 @@ namespace Energize.Services.Listeners.Music
                 if (this.Players.ContainsKey(vc.GuildId))
                 {
                     IEnergizePlayer ply = this.Players[vc.GuildId];
-                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Disconnected from VC in guild {vc.Guild} | {vc.GuildId}");
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Disconnected from VC in guild <{vc.Guild}>");
                     this.Players.Remove(vc.GuildId);
+                    ply.Disconnected = true;
                     if (ply.TrackPlayer != null)
                         await ply.TrackPlayer.DeleteMessage();
                 }
@@ -130,7 +131,14 @@ namespace Energize.Services.Listeners.Music
             catch (ObjectDisposedException)
             {
                 if (this.Players.ContainsKey(vc.GuildId))
+                {
+                    IEnergizePlayer ply = this.Players[vc.GuildId];
                     this.Players.Remove(vc.GuildId);
+                    ply.Disconnected = true;
+                    if (ply.TrackPlayer != null)
+                        await ply.TrackPlayer.DeleteMessage();
+                }
+                    
                 this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not disconnect, threading issue from Discord.NET");
             }
         }
@@ -408,7 +416,7 @@ namespace Energize.Services.Listeners.Music
 
         private async Task<YoutubeVideo> FetchYTRelatedVideoAsync(string videoId)
         {
-            string endpoint = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&key={Config.Instance.Keys.YoutubeKey}&maxResults=11";
+            string endpoint = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&key={Config.Instance.Keys.YoutubeKey}&maxResults=6";
             string json = await HttpClient.GetAsync(endpoint, this.Logger);
             YoutubeRelatedVideos relatedVideos = JsonPayload.Deserialize<YoutubeRelatedVideos>(json, this.Logger);
             if (relatedVideos == null || relatedVideos.Videos.Length == 0) return null;
@@ -416,6 +424,7 @@ namespace Energize.Services.Listeners.Music
             using (IDatabaseContext ctx = await dbService.GetContext())
                 await ctx.Instance.SaveYoutubeVideoIds(relatedVideos.Videos.Select(vid => vid.Id));
 
+            IEnumerable<YoutubeVideo> vids = relatedVideos.Videos.Where(vid => !vid.Id.VideoID.Equals(videoId));
             return relatedVideos.Videos[this.Rand.Next(0, relatedVideos.Videos.Length)];
         }
 
