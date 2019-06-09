@@ -74,6 +74,7 @@ module CommandHandler =
                             if score1 > score2 then (cmd, score1) else (cmd, score2)
                         ) |> List.filter(fun (_, score) -> score > 0)
                         |> List.sortBy (fun (_, score) -> score) 
+                        |> List.rev
                         |> List.map (fun (cmd, _) -> sprintf "`%s`" cmd)
                     if matchingCmds.Length > 0 then
                         let cmdsDisplay = String.Join('\n', matchingCmds)
