@@ -162,10 +162,7 @@ namespace Energize.Services.Listeners.Music
             else
             {
                 await ply.Lavalink.PlayAsync(track, false);
-                IUserMessage playerMsg = await this.SendPlayerAsync(ply, track, chan);
-                if (ply.Autoplay && ply.Queue.Count == 0)
-                    await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
-                return playerMsg;
+                return await this.SendPlayerAsync(ply, track, chan);
             }
         }
 
@@ -429,39 +426,45 @@ namespace Energize.Services.Listeners.Music
         }
 
         private static readonly Regex YTRegex = new Regex(@"(?!videoseries)[a-zA-Z0-9_-]{11}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack oldTrack)
+        private async Task<(bool, YoutubeVideo)> TryGetVideoAsync(LavaTrack track)
         {
-            bool useSaved = false;
+            bool failed = false;
             YoutubeVideo video = null;
-            if (oldTrack.Uri.AbsoluteUri.Contains("youtu"))
+            if (track.Uri.AbsoluteUri.Contains("youtu"))
             {
-                Match match = YTRegex.Match(oldTrack.Uri.AbsoluteUri);
+                Match match = YTRegex.Match(track.Uri.AbsoluteUri);
                 if (!match.Success)
-                    useSaved = true;
+                    failed = true;
 
                 video = await this.FetchYTRelatedVideoAsync(match.Value);
                 if (video == null)
-                    useSaved = true;
+                    failed = true;
             }
             else
-                useSaved = true;
+                failed = true;
 
-            string videoUrl;
-            if (useSaved)
-            {
-                IDatabaseService dbService = this.ServiceManager.GetService<IDatabaseService>("Database");
-                using (IDatabaseContext ctx = await dbService.GetContext())
-                {
-                    IYoutubeVideoID videoId = await ctx.Instance.GetRandomVideoIdAsync();
-                    if (videoId == null) return;
-                    videoUrl = $"https://www.youtube.com/watch?v={videoId.VideoID}";
-                }
-            }
-            else
-            {
-                videoUrl = $"https://www.youtube.com/watch?v={video.Id.VideoID}";
-            }
+            return (failed, video);
+        }
 
+        private async Task<string> GetNextTrackVideoURLAsync(bool useDb, YoutubeVideo video)
+        {
+            if (!useDb)
+                return $"https://www.youtube.com/watch?v={video.Id.VideoID}";
+
+            IDatabaseService dbService = this.ServiceManager.GetService<IDatabaseService>("Database");
+            using (IDatabaseContext ctx = await dbService.GetContext())
+            {
+                IYoutubeVideoID videoId = await ctx.Instance.GetRandomVideoIdAsync();
+                if (videoId == null) return string.Empty;
+
+                return $"https://www.youtube.com/watch?v={videoId.VideoID.Trim()}";
+            }
+        }
+
+        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack oldTrack)
+        {
+            (bool failed, YoutubeVideo video) = await this.TryGetVideoAsync(oldTrack);
+            string videoUrl = await this.GetNextTrackVideoURLAsync(failed, video);
             SearchResult res = await this.LavaRestClient.SearchTracksAsync(videoUrl);
             List<LavaTrack> tracks = res.Tracks.ToList();
             if (tracks.Count == 0) return;
@@ -474,6 +477,9 @@ namespace Energize.Services.Listeners.Music
                     break;
                 case LoadType.PlaylistLoaded:
                     await this.AddPlaylistAsync(vc, chan, res.PlaylistInfo.Name, res.Tracks);
+                    break;
+                default:
+                    await this.MessageSender.Warning(chan, "music player", "Failed to get/load the next autoplay track");
                     break;
             }
         }
@@ -492,13 +498,14 @@ namespace Energize.Services.Listeners.Music
                 {
                     await ply.Lavalink.PlayAsync(newtrack);
                     await this.SendPlayerAsync(ply, newtrack);
-                    if (ply.Autoplay && ply.Queue.Count == 0)
-                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, newtrack);
                 }
                 else
                 {
-                    if (ply.TrackPlayer != null)
-                        await ply.TrackPlayer.DeleteMessage();
+                    if (ply.Autoplay && ply.Queue.Count == 0)
+                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
+                    else
+                        if (ply.TrackPlayer != null)
+                            await ply.TrackPlayer.DeleteMessage();
                 }
             }
         }
