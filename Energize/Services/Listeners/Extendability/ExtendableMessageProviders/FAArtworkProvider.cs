@@ -12,7 +12,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
     {
         private readonly Logger Logger;
 
-        public FAArtworkProvider(Logger logger, string pattern) : base(pattern)
+        public FAArtworkProvider(Logger logger, string domain, string pattern) : base(domain, pattern)
         {
             this.Logger = logger;
         }

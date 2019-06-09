@@ -8,18 +8,24 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
     class BaseProvider
     {
-        private readonly Regex InnerRegex;
+        private readonly Regex Regex;
+        private readonly string Domain;
 
-        protected BaseProvider(string pattern)
+        protected BaseProvider(string domain, string pattern)
         {
-            this.InnerRegex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            this.Domain = domain;
+            this.Regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
         public bool IsMatch(string input)
-            => this.InnerRegex.IsMatch(input);
+        {
+            if (!input.Contains(this.Domain)) return false;
+
+            return this.Regex.IsMatch(input);
+        }
 
         public MatchCollection Matches(string input)
-            => this.InnerRegex.Matches(input);
+            => this.Regex.Matches(input);
 
         public virtual Task BuildEmbedsAsync(List<Embed> embeds, IUserMessage msg, SocketReaction reaction)
             => Task.CompletedTask;
