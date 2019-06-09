@@ -419,15 +419,15 @@ namespace Energize.Services.Listeners.Music
             return relatedVideos.Videos[this.Rand.Next(0, relatedVideos.Videos.Length)];
         }
 
-        private static readonly Regex YTRegex = new Regex(@"https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=)?([^\/\s&\?]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex YTRegex = new Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack oldTrack)
         {
             bool useSaved = false;
             Match match = YTRegex.Match(oldTrack.Uri.AbsoluteUri);
-            if (match == null)
+            if (!match.Success)
                 useSaved = true;
 
-            YoutubeVideo video = await this.FetchYTRelatedVideoAsync(match.Groups[4].Value);
+            YoutubeVideo video = await this.FetchYTRelatedVideoAsync(match.Groups[1].Value);
             if (video == null)
                 useSaved = true;
 
