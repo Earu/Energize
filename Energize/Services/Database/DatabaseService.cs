@@ -15,6 +15,7 @@ namespace Energize.Services.Database
     public class Database : DbContext, IDatabase
     {
         private readonly string ConnectionString;
+        private readonly Random Rand;
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
@@ -25,6 +26,7 @@ namespace Energize.Services.Database
         public Database(string connectionstring)
         {
             this.ConnectionString = connectionstring;
+            this.Rand = new Random();
         }
     
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -95,10 +97,8 @@ namespace Energize.Services.Database
 
         public async Task<IYoutubeVideoID> GetRandomVideoIdAsync()
         {
-            int count = await this.SavedVideoIds.CountAsync();
-            if (count == 0) return null;
-
-            return this.SavedVideoIds.OrderBy(c => Guid.NewGuid()).Take(1).FirstOrDefault();
+            List<YoutubeVideoID> vidIds = await this.SavedVideoIds.ToListAsync();
+            return vidIds[this.Rand.Next(0, vidIds.Count)];
         }
     }
 
