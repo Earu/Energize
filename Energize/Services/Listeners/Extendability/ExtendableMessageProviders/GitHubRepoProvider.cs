@@ -70,7 +70,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
     {
         private readonly Logger Logger;
 
-        public GitHubRepoProvider(Logger logger, string pattern) : base(pattern)
+        public GitHubRepoProvider(Logger logger, string domain, string pattern) : base(domain, pattern)
         {
             this.Logger = logger;
         }

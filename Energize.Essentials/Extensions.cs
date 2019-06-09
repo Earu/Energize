@@ -90,8 +90,10 @@ namespace Energize.Essentials
         {
             if (HttpClient.IsURL(url))
             {
+                if (!url.StartsWith("http")) return false;
+
                 Match match = URLExtensionRegex.Match(url);
-                if (match == null) return false;
+                if (!match.Success) return false;
 
                 string extension = match.Groups[1].Value;
                 return ValidExtensions.Any(ext => ext.Equals(extension));

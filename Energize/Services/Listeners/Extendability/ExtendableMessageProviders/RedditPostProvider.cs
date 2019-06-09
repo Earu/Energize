@@ -73,7 +73,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
     {
         private readonly Logger Logger;
 
-        public RedditPostProvider(Logger logger, string pattern) : base(pattern)
+        public RedditPostProvider(Logger logger, string domain, string pattern) : base(domain, pattern)
         {
             this.Logger = logger;
         }

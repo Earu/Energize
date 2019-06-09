@@ -36,13 +36,23 @@ namespace Energize.Services.Listeners.Music
             => new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private bool IsYoutubeURL(string url)
-            => YTPlaylistRegex.IsMatch(url) || YTRegex.IsMatch(url);
+        {
+            if (!url.Contains("youtu")) return false;
+
+            return YTPlaylistRegex.IsMatch(url) || YTRegex.IsMatch(url);
+        }
 
         private bool IsSoundcloudURL(string url)
-            => SCRegex.IsMatch(url);
+        {
+            if (!url.Contains("soundcloud")) return false;
+
+            return SCRegex.IsMatch(url);
+        }
 
         private bool IsTwitchURL(string url)
         {
+            if (!url.Contains("twitch")) return false;
+
             Match match = TwitchRegex.Match(url);
             if (match.Success)
             {
@@ -84,6 +94,8 @@ namespace Energize.Services.Listeners.Music
 
         private string SanitizeYoutubeUrl(string url)
         {
+            if (!url.Contains("youtu")) return url;
+
             Match match = YTPlaylistRegex.Match(url);
             if (match.Success)
             {
