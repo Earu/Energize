@@ -63,8 +63,25 @@ module CommandHandler =
                 | Some cmd ->
                     [ postCmdHelp cmd ctx false ]
                 | None ->
-                    let warning = sprintf "Could not find any command named `%s`, find out more at %s" cmdName Config.Instance.URIs.WebsiteURL
-                    [ ctx.sendWarn None warning ]
+                    let matchingCmds =
+                        handlerState.Value.commands 
+                        |> Map.toList 
+                        |> List.map (fun (cmd, _) -> 
+                            let mutable score1 : int32 = 0
+                            let mutable score2 : int32 = 0
+                            cmd.FuzzyMatch(cmdName, &score1) |> ignore
+                            cmdName.FuzzyMatch(cmd, &score2) |> ignore
+                            if score1 > score2 then (cmd, score1) else (cmd, score2)
+                        ) |> List.filter(fun (_, score) -> score > 0)
+                        |> List.sortBy (fun (_, score) -> score) 
+                        |> List.map (fun (cmd, _) -> sprintf "`%s`" cmd)
+                    if matchingCmds.Length > 0 then
+                        let cmdsDisplay = String.Join('\n', matchingCmds)
+                        let warning = sprintf "Could not find any command named `%s`, did you mean one of the following:\n%s\n\nFind out more at **%s**" cmdName cmdsDisplay Config.Instance.URIs.WebsiteURL
+                        [ ctx.sendWarn None warning ]
+                    else
+                        let warning = sprintf "Could not find any command named `%s`, find out more at **%s**" cmdName Config.Instance.URIs.WebsiteURL
+                        [ ctx.sendWarn None warning ]
             else
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                 let commands = 
