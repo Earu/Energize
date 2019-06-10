@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
@@ -641,13 +642,36 @@ namespace Energize.Services.Listeners.Music
             return vc;
         }
 
-        [Event("UserVoiceStateUpdated")] // Don't stay in a voice chat if its empty
+        private async Task DisconnectTaskAsync(IVoiceChannel vc, CancellationToken token)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(1), token);
+
+            if (token.IsCancellationRequested)
+                return;
+
+            await this.DisconnectAsync(vc);
+        }
+
+        [Event("UserVoiceStateUpdated")] 
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {
             SocketVoiceChannel vc = this.GetVoiceChannel(user, oldState, newState);
             if (vc == null) return;
+            if (!this.Players.TryGetValue(vc.Guild.Id, out IEnergizePlayer ply)) return;
+
             if (vc.Users.Count(x => !x.IsBot) < 1)
-                await this.DisconnectAsync(vc);
+            {
+                ply.DisconnectTask = this.DisconnectTaskAsync(vc, ply.CTSDisconnect.Token);
+            }    
+            else
+            {
+                if (ply.DisconnectTask != null)
+                {
+                    ply.CTSDisconnect.Cancel(false);
+                    ply.CTSDisconnect = new CancellationTokenSource();
+                    ply.DisconnectTask = null;
+                }
+            }
         }
 
         private bool IsDiscordClose(Exception ex)

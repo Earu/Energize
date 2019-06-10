@@ -2,6 +2,8 @@
 using Energize.Essentials.MessageConstructs;
 using Energize.Interfaces.Services.Listeners;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Timers;
 using Victoria;
 using Victoria.Entities;
@@ -16,11 +18,13 @@ namespace Energize.Services.Listeners.Music
 
         private readonly double TimeToLive;
 
-        private Timer TTLTimer;
+        private System.Timers.Timer TTLTimer;
 
         internal EnergizePlayer(LavaPlayer ply)
         {
             this.Lavalink = ply;
+            this.DisconnectTask = null;
+            this.CTSDisconnect = new CancellationTokenSource();
             this.Autoplay = false;
             this.IsLooping = false;
             this.Disconnected = false;
@@ -31,6 +35,9 @@ namespace Energize.Services.Listeners.Music
 
         public LavaPlayer Lavalink { get; set; }
 
+        public Task DisconnectTask { get; set; }
+        public CancellationTokenSource CTSDisconnect { get; set; }
+
         public bool Autoplay { get; set; }
         public bool IsLooping { get; set; }
         public bool Disconnected { get; set; }
@@ -39,7 +46,6 @@ namespace Energize.Services.Listeners.Music
 
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
         public bool IsPaused { get => this.Lavalink.IsPaused; }
-
         public LavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
         public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
@@ -54,7 +60,7 @@ namespace Energize.Services.Listeners.Music
                 this.TTLTimer = null;
             }
 
-            this.TTLTimer = new Timer(this.TimeToLive)
+            this.TTLTimer = new System.Timers.Timer(this.TimeToLive)
             {
                 AutoReset = false,
             };
