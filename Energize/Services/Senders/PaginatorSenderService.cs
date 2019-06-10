@@ -201,8 +201,19 @@ namespace Energize.Services.Senders
                 await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
-            else if (paginator.CurrentValue is string url)
+            else if (paginator.CurrentValue is PaginatorPlayableItem item)
             {
+                LavaTrack itemTrack = await item.PlayAsync();
+                if (itemTrack != null)
+                {
+                    await music.AddTrackAsync(guser.VoiceChannel, textChan, itemTrack);
+                    await chan.DeleteMessageAsync(paginator.Message);
+                }
+            }
+            else if(paginator.CurrentValue is string url)
+            {
+                if (string.IsNullOrWhiteSpace(url)) return;
+
                 SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
                 List<LavaTrack> tracks = result.Tracks.ToList();
                 if (tracks.Count > 0)
