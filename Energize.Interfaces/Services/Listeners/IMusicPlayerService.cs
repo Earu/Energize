@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Energize.Essentials.MessageConstructs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Victoria;
@@ -49,5 +50,9 @@ namespace Energize.Interfaces.Services.Listeners
         Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null, IChannel chan = null);
+
+        Task<LavaTrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId);
+
+        Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search);
     }
 }

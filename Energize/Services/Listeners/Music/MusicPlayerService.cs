@@ -6,11 +6,16 @@ using Energize.Essentials.MessageConstructs;
 using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
+using SpotifyAPI.Web;
+using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,6 +33,8 @@ namespace Energize.Services.Listeners.Music
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
         private readonly ConcurrentDictionary<ulong, IEnergizePlayer> Players;
+        private readonly SpotifyWebAPI Spotify;
+        private readonly Timer SpotifyAuthTimer;
         private readonly Random Rand;
 
         private bool Initialized;
@@ -42,6 +49,27 @@ namespace Energize.Services.Listeners.Music
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
             this.LavaClient = new LavaShardClient();
+            this.Spotify = new SpotifyWebAPI
+            {
+                TokenType = "Bearer",
+                UseAuth = true,
+                UseAutoRetry = true,
+            };
+
+            this.SpotifyAuthTimer = new Timer(async _ =>
+            {
+                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, req => 
+                {
+                    byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
+                    req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
+                    req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+                });
+
+                var keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
+                if (keys.ContainsKey("access_token"))
+                    this.Spotify.AccessToken = keys["access_token"];
+            });
+
             this.Rand = new Random();
 
             this.LavaClient.OnTrackException += async (ply, track, error) => await this.OnTrackIssue(ply, track, error);
@@ -49,6 +77,12 @@ namespace Energize.Services.Listeners.Music
             this.LavaClient.OnTrackFinished += this.OnTrackFinished;
             this.LavaClient.Log += async (logMsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
+        }
+
+        public override Task InitializeAsync()
+        {
+            this.SpotifyAuthTimer.Change(0, 3600 * 1000);
+            return Task.CompletedTask;
         }
 
         private async Task OnPlayerUpdated(LavaPlayer lply, LavaTrack track, TimeSpan position)
@@ -489,6 +523,31 @@ namespace Energize.Services.Listeners.Music
                     await this.MessageSender.Warning(chan, "music player", "Failed to get/load the next autoplay track");
                     break;
             }
+        }
+
+        public async Task<LavaTrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId)
+        {
+            FullTrack spotifyTrack = await this.Spotify.GetTrackAsync(spotifyId);
+            string artistName = spotifyTrack.Artists.FirstOrDefault()?.Name ?? string.Empty;
+            SearchResult result = await this.LavaRestClient.SearchYouTubeAsync($"{spotifyTrack.Name} {artistName}");
+
+            return result.Tracks.FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search)
+        {
+            SearchItem searchResult = await this.Spotify.SearchItemsAsync(search, SearchType.Track);
+            Paging<FullTrack> tracks = searchResult.Tracks;
+            if (searchResult.HasError())
+                return new List<PaginatorPlayableItem>();
+
+            return tracks
+                .Items
+                .Select(spotifyTrack =>
+                {
+                    string displayUrl = $"https://open.spotify.com/track/{spotifyTrack.Id}";
+                    return new PaginatorPlayableItem(displayUrl, async () => await this.ConvertSpotifyTrackToYoutubeAsync(spotifyTrack.Id));
+                });
         }
 
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)

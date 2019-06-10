@@ -20,6 +20,7 @@ namespace Energize.Services.Listeners.Music
         private static readonly Regex YTRegex = CompiledRegex(@"(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+");
         private static readonly Regex SCRegex = CompiledRegex(@"https?:\/\/soundcloud\.com\/[^\/\s]+\/[^\/\s]+");
         private static readonly Regex TwitchRegex = CompiledRegex(@"https?:\/\/(www\.)?twitch\.tv\/([^\/\s]+)");
+        private static readonly Regex SpotifyRegex = CompiledRegex(@"https?:\/\/open\.spotify\.com\/track\/([^\/\s]+)");
 
         private readonly Logger Logger;
         private readonly ServiceManager ServiceManager;
@@ -63,12 +64,19 @@ namespace Energize.Services.Listeners.Music
             return false;
         }
 
+        private bool IsSpotifyURL(string url)
+        {
+            if (!url.Contains("spotify")) return false;
+
+            return SpotifyRegex.IsMatch(url);
+        }
+
         private bool IsValidURL(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
                 return false;
 
-            return this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url);
+            return this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url) || this.IsSpotifyURL(url);
         }
 
         private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
@@ -92,6 +100,24 @@ namespace Energize.Services.Listeners.Music
             return true;
         }
 
+        private async Task<string> SpotifyToYoutubeURLAsync(string url)
+        {
+            if (!url.Contains("spotify")) return url;
+
+            Match match = SpotifyRegex.Match(url);
+            if (match.Success)
+            {
+                string spotifyId = match.Groups[1].Value;
+                IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
+                LavaTrack track = await music.ConvertSpotifyTrackToYoutubeAsync(spotifyId);
+                return track.Uri.AbsoluteUri;
+            }
+            else
+            {
+                return url;
+            }
+        }
+
         private string SanitizeYoutubeUrl(string url)
         {
             if (!url.Contains("youtu")) return url;
@@ -99,8 +125,8 @@ namespace Energize.Services.Listeners.Music
             Match match = YTPlaylistRegex.Match(url);
             if (match.Success)
             {
-                string identifier = match.Groups[1].Value;
-                return $"https://www.youtube.com/watch?v={identifier}";
+                string ytId = match.Groups[1].Value;
+                return $"https://www.youtube.com/watch?v={ytId}";
             }
             else
             {
@@ -133,6 +159,7 @@ namespace Energize.Services.Listeners.Music
 
         private async Task TryPlayUrl(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
         {
+            url = await this.SpotifyToYoutubeURLAsync(url);
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
             List<LavaTrack> tracks = result.Tracks.ToList();
             switch (result.LoadType)

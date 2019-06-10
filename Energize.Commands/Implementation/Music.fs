@@ -14,6 +14,9 @@ open System
 
 [<CommandModule("Music")>]
 module Voice =
+    let private ytIdRegex = Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+    let private spotifyRegex = Regex(@"https?:\/\/open\.spotify\.com\/track\/([^\/\s]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         let guser = ctx.message.Author :?> IGuildUser
@@ -59,16 +62,32 @@ module Voice =
     }
 
     let private sanitizeYtUrl (url : string) =
-        let pattern = @"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W"
-        if Regex.IsMatch(url, pattern) then
-            let ytIdentifier = Regex.Match(url, pattern).Groups.[1].Value
-            sprintf "https://www.youtube.com/watch?v=%s" ytIdentifier
+        if url.Contains("youtu") then
+            let ytMatch = ytIdRegex.Match(url)
+            if ytMatch.Success then
+                let ytIdentifier = ytMatch.Groups.[1].Value
+                sprintf "https://www.youtube.com/watch?v=%s" ytIdentifier
+            else
+                url
+        else
+            url
+
+    let private spotifyToYtUrl (ctx : CommandContext) (url : string) =
+        if url.Contains("spotify") then
+            let spotifyMatch = spotifyRegex.Match(url)
+            if spotifyMatch.Success then
+                let id = spotifyMatch.Groups.[1].Value
+                let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+                let track = awaitResult (music.ConvertSpotifyTrackToYoutubeAsync(id))
+                track.Uri.AbsoluteUri
+            else
+                url
         else
             url
 
     let private playUrl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let input = sanitizeYtUrl ctx.input
+            let input = (spotifyToYtUrl ctx ctx.input) |> sanitizeYtUrl
             let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
             handleSearchResult music ctx res vc
         )
@@ -235,7 +254,7 @@ module Voice =
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                 [ awaitResult (paginator.SendPlayerPaginator(ctx.message, result.Tracks, fun track ->
                     let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
-                    sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
+                    sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
                 )) ]
             else
                 [ ctx.sendWarn None "Could not find any songs" ]
@@ -279,9 +298,27 @@ module Voice =
                 if len > 0 then
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                     [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
-                        let page = streamUrls |> Seq.tryFindIndex (fun url -> url.Equals(streamUrl))
-                        sprintf "%s #%d out of %d results for \"%s\"\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                        let page = streamUrls |> List.tryFindIndex (fun url -> url.Equals(streamUrl))
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
                     )) ]
                 else
                     [ ctx.sendWarn None "Could not find any streams" ]
+        })
+
+    [<CommandParameters(1)>]
+    [<Command("spotify", "Searches spotify for a song", "spotify <search>")>]
+    let spotify (ctx : CommandContext) = 
+        tryPlay ctx (fun ctx -> async {
+            let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+            let songItems = awaitResult (music.SearchSpotifyAsync(ctx.input)) |> Seq.toList
+            let len = songItems.Length
+            return
+                if len > 0 then
+                    let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                    [ awaitResult (paginator.SendPlayerPaginator(ctx.message, songItems, fun songItem ->
+                        let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.DisplayURL
+                    )) ]
+                else
+                    [ ctx.sendWarn None "Could not find any songs" ]
         })

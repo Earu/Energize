@@ -53,6 +53,12 @@ namespace Energize.Essentials
         public string ProcessName;
     }
 
+    public struct SpotifyConfig
+    {
+        public string ClientID;
+        public string ClientSecret;
+    }
+
     public struct KeysConfig
     {
         public string TwitchKey;
@@ -77,6 +83,7 @@ namespace Energize.Essentials
         public DiscordConfig Discord;
         public LavalinkConfig Lavalink;
         public OctovisorConfig Octovisor;
+        public SpotifyConfig Spotify;
         public KeysConfig Keys;
         public URIConfig URIs;
         public string DBConnectionString;
