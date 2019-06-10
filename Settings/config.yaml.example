@@ -19,6 +19,9 @@ Octovisor:
   Port: 0000
   Token: coolpassword
   ProcessName: Energize
+Spotify:
+  ClientID: spotify client id
+  ClientSecret: spotify client secret
 Keys:
   TwitchKey: twitch api token
   YoutubeKey: youtube api token
