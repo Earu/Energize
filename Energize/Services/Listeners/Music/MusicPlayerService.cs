@@ -7,6 +7,7 @@ using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -25,7 +26,7 @@ namespace Energize.Services.Listeners.Music
         private readonly Logger Logger;
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
-        private readonly Dictionary<ulong, IEnergizePlayer> Players;
+        private readonly ConcurrentDictionary<ulong, IEnergizePlayer> Players;
         private readonly Random Rand;
 
         private bool Initialized;
@@ -33,7 +34,7 @@ namespace Energize.Services.Listeners.Music
         public MusicPlayerService(EnergizeClient client)
         {
             this.Initialized = false;
-            this.Players = new Dictionary<ulong, IEnergizePlayer>();
+            this.Players = new ConcurrentDictionary<ulong, IEnergizePlayer>();
 
             this.Client = client.DiscordClient;
             this.Logger = client.Logger;
@@ -88,12 +89,14 @@ namespace Energize.Services.Listeners.Music
                 {
                     ply = new EnergizePlayer(await this.LavaClient.ConnectAsync(vc, chan));
                     this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Connected to VC in guild <{vc.Guild}>");
-                    this.Players.Add(vc.GuildId, ply);
-                    ply.BecameInactive += async () =>
+                    if (this.Players.TryAdd(vc.GuildId, ply))
                     {
-                        this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild <{ply.VoiceChannel.Guild}>");
-                        await this.DisconnectAsync(vc);
-                    };
+                        ply.BecameInactive += async () =>
+                        {
+                            this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Connected player became inactive in guild <{ply.VoiceChannel.Guild}>");
+                            await this.DisconnectAsync(vc);
+                        };
+                    }
                 }
 
                 this.LavaClient.UpdateTextChannel(vc.GuildId, chan);
@@ -102,9 +105,13 @@ namespace Energize.Services.Listeners.Music
 
                 return ply;
             }
-            catch(ObjectDisposedException)
+            catch(Exception ex)
             {
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not connect, threading issue from Discord.NET");
+                if (ex is ObjectDisposedException)
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not connect, threading issue from Discord.NET");
+                else
+                    this.Logger.Danger(ex);
+
                 await this.DisconnectAsync(vc);
 
                 return null;
@@ -118,28 +125,27 @@ namespace Energize.Services.Listeners.Music
             try
             {
                 await this.LavaClient.DisconnectAsync(vc);
-                if (this.Players.ContainsKey(vc.GuildId))
+                if (this.Players.TryRemove(vc.GuildId, out IEnergizePlayer ply))
                 {
-                    IEnergizePlayer ply = this.Players[vc.GuildId];
                     this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Disconnected from VC in guild <{vc.Guild}>");
-                    this.Players.Remove(vc.GuildId);
                     ply.Disconnected = true;
                     if (ply.TrackPlayer != null)
                         await ply.TrackPlayer.DeleteMessage();
                 }
             }
-            catch (ObjectDisposedException)
+            catch (Exception ex)
             {
-                if (this.Players.ContainsKey(vc.GuildId))
+                if (this.Players.TryRemove(vc.GuildId, out IEnergizePlayer ply))
                 {
-                    IEnergizePlayer ply = this.Players[vc.GuildId];
-                    this.Players.Remove(vc.GuildId);
                     ply.Disconnected = true;
                     if (ply.TrackPlayer != null)
                         await ply.TrackPlayer.DeleteMessage();
                 }
-                    
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not disconnect, threading issue from Discord.NET");
+                
+                if (ex is ObjectDisposedException)
+                    this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Could not disconnect, threading issue from Discord.NET");
+                else
+                    this.Logger.Danger(ex);
             }
         }
 
