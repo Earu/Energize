@@ -35,6 +35,8 @@ namespace Energize
             this.DiscordClient = new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 100,
+                ExclusiveBulkDelete = false,
+                LogLevel = LogSeverity.Verbose,
             });
             this.DiscordRestClient = new DiscordRestClient();
             this.ServiceManager = new ServiceManager(this);
@@ -45,6 +47,12 @@ namespace Energize
                 {
                     Exception e = (Exception)args.ExceptionObject;
                     this.Logger.LogTo("crash.log", e.ToString());
+
+                    SocketChannel feedbackChan = this.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
+                    if (feedbackChan != null)
+                        this.MessageSender
+                            .Danger(feedbackChan, "crash error", $"Something terribly wrong happened, check `crash.log`.\nRestarting...")
+                            .Wait();
                 };
 
                 this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
