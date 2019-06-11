@@ -1,8 +1,10 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -61,8 +63,24 @@ namespace Energize.Services
 
         private void ContinueWithHandler(Task t)
         {
-            if (t.IsFaulted)
-                this.Logger.Danger(t.Exception.InnerException);
+            if (!t.IsFaulted) return;
+
+            this.Logger.Danger(t.Exception.InnerException);
+            SocketChannel chan = this.Client.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
+            if (chan != null)
+            {
+                StackFrame frame = new StackTrace(t.Exception, true).GetFrame(0);
+                EmbedBuilder builder = new EmbedBuilder();
+                builder
+                    .WithColorType(EmbedColorType.Warning)
+                    .WithField("Error", t.Exception.Message, false)
+                    .WithField("File", frame.GetFileName())
+                    .WithField("Method", frame.GetMethod().Name)
+                    .WithField("Line", frame.GetFileLineNumber())
+                    .WithFooter("event handler error");
+
+                this.Client.MessageSender.Send(chan, builder.Build()).Wait();
+            }
         }
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)
