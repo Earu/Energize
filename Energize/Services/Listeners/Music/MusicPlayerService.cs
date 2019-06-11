@@ -616,9 +616,9 @@ namespace Energize.Services.Listeners.Music
             },
         };
 
-        private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (chan is IDMChannel || !cache.HasValue) return false;
+            if (chan is IDMChannel) return false;
             if (reaction.Emote?.Name == null) return false;
             if (reaction.User.Value == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
@@ -631,12 +631,10 @@ namespace Energize.Services.Listeners.Music
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (!this.IsValidReaction(cache, chan, reaction)) return;
+            if (!this.IsValidReaction(chan, reaction)) return;
 
             IGuildUser guser = (IGuildUser)reaction.User.Value;
-            if (!this.Players.ContainsKey(guser.GuildId) || guser.VoiceChannel == null) return;
-
-            IEnergizePlayer ply = this.Players[guser.GuildId];
+            if (!this.Players.TryGetValue(guser.GuildId, out IEnergizePlayer ply) || guser.VoiceChannel == null) return;
             if (!this.IsValidTrackPlayer(ply.TrackPlayer, cache.Id)) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, ply);
