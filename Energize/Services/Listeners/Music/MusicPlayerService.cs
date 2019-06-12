@@ -587,7 +587,7 @@ namespace Energize.Services.Listeners.Music
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 Could not play track:")
-                .WithField("URL", track.Uri)
+                .WithField("URL", $"**{track.Uri}**")
                 .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());

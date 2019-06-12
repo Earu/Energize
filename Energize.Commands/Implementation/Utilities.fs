@@ -280,7 +280,7 @@ module Util =
             ctx.embedField "Server Count" ctx.client.Guilds.Count true
             ctx.embedField "User count" usercount true
             ctx.embedField "Owner" owner true
-            ctx.embedField "Links" (String.Join('\n', [ github; invite; docs ])) false
+            ctx.embedField "Links" (String.Join('\n', [ github; invite; docs ] |> List.map (fun url -> sprintf "**%s**" url))) false
         ]
 
         let builder = EmbedBuilder()

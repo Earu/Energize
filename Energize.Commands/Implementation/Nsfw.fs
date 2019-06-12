@@ -18,7 +18,8 @@ module Nsfw =
             .WithColorType(EmbedColorType.Good)
             .WithImageUrl(pic)
             .WithFooter(ctx.commandName)
-            .WithDescription(sprintf "\n[**CHECK ON %s**](%s)" (ctx.commandName.ToUpper()) url)
+            .WithTitle(sprintf "**CHECK ON %s**" (ctx.commandName.ToUpper()))
+            .WithUrl(url)
             |> ignore
 
     type E621Obj = { sample_url : string; id : string }
