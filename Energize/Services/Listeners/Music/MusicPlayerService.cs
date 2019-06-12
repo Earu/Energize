@@ -37,11 +37,8 @@ namespace Energize.Services.Listeners.Music
         private readonly Timer SpotifyAuthTimer;
         private readonly Random Rand;
 
-        private bool Initialized;
-
         public MusicPlayerService(EnergizeClient client)
         {
-            this.Initialized = false;
             this.Players = new ConcurrentDictionary<ulong, IEnergizePlayer>();
 
             this.Client = client.DiscordClient;
@@ -552,6 +549,8 @@ namespace Energize.Services.Listeners.Music
 
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
         {
+            if (reason == TrackEndReason.Cleanup || reason == TrackEndReason.Replaced) return;
+
             IEnergizePlayer ply = this.Players[lavalink.VoiceChannel.GuildId];
             if (ply.IsLooping)
             {
@@ -649,10 +648,12 @@ namespace Energize.Services.Listeners.Music
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
+        private volatile int CurrentShardCount = 0;
         [Event("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
         {
-            if (this.Initialized) return;
+            if (this.Client.Shards.Count != ++this.CurrentShardCount) return;
+
             Configuration config = new Configuration
             {
                 ReconnectInterval = TimeSpan.FromSeconds(15),
@@ -669,7 +670,6 @@ namespace Energize.Services.Listeners.Music
 
             this.LavaRestClient = new LavaRestClient(config);
             await this.LavaClient.StartAsync(this.Client, config);
-            this.Initialized = true;
         }
 
         private SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
@@ -729,39 +729,6 @@ namespace Energize.Services.Listeners.Music
                     ply.DisconnectTask = null;
                 }
             }
-        }
-
-        private bool IsDiscordClose(Exception ex)
-        {
-            if (ex is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) return true;
-            if (ex is WebSocketClosedException wscex && wscex.CloseCode == 1001) return true;
-
-            return false;
-        }
-
-        [Event("ShardDisconnected")] //nasty hack to resume players where they left off
-        public async Task OnShardDisconnected(Exception ex, DiscordSocketClient clientShard)
-        {
-            if (!this.IsDiscordClose(ex)) return;
-
-            this.Logger.Nice("MusicPlayer", ConsoleColor.Red, "Discord sent 1001, and we should have been trying to re-connect");
-            /*foreach(KeyValuePair<ulong, IEnergizePlayer> ply in this.Players)
-            {
-                SocketGuild guild = clientShard.GetGuild(ply.Key);
-                if (guild != null)
-                {
-                    if (!ply.Value.IsPlaying) continue;
-
-                    LavaTrack lastTrack = ply.Value.CurrentTrack;
-                    LavaQueue<LavaTrack> lastQueue = ply.Value.Queue;
-                    await this.DisconnectAsync(ply.Value.VoiceChannel);
-                    IEnergizePlayer newPly = await this.ConnectAsync(ply.Value.VoiceChannel, ply.Value.TextChannel);
-                    await newPly.Lavalink.PlayAsync(lastTrack, false);
-                    foreach (LavaTrack track in lastQueue.Items)
-                        newPly.Queue.Enqueue(track);
-                    await this.SendPlayerAsync(newPly, lastTrack);
-                }
-            }*/
         }
     }
 }
