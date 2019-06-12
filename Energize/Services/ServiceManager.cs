@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services;
@@ -61,26 +62,31 @@ namespace Energize.Services
             this.Services[serverAtr.Name] = new Service(serverAtr.Name, instance);
         }
 
-        private void ContinueWithHandler(Task t)
+        private void ContinueWithHandler(Task task)
         {
-            if (!t.IsFaulted) return;
+            if (!task.IsFaulted) return;
 
-            this.Logger.Danger(t.Exception.InnerException);
-            SocketChannel chan = this.Client.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
-            if (chan != null)
-            {
-                StackFrame frame = new StackTrace(t.Exception, true).GetFrame(0);
-                EmbedBuilder builder = new EmbedBuilder();
-                builder
-                    .WithColorType(EmbedColorType.Warning)
-                    .WithField("Error", t.Exception.Message, false)
-                    .WithField("File", frame.GetFileName())
-                    .WithField("Method", frame.GetMethod().Name)
-                    .WithField("Line", frame.GetFileLineNumber())
-                    .WithFooter("event handler error");
+            Exception ex = task.Exception.InnerException;
+            this.Logger.Danger(ex);
+            this.Client.DiscordRestClient
+                .GetChannelAsync(Config.Instance.Discord.FeedbackChannelID)
+                .ContinueWith(async t =>
+                {
+                    RestChannel chan = await t;
+                    if (chan == null) return;
 
-                this.Client.MessageSender.Send(chan, builder.Build()).Wait();
-            }
+                    StackFrame frame = new StackTrace(ex, true).GetFrame(0);
+                    EmbedBuilder builder = new EmbedBuilder();
+                    builder
+                        .WithColorType(EmbedColorType.Warning)
+                        .WithField("Error", task.Exception.Message, false)
+                        .WithField("File", frame.GetFileName())
+                        .WithField("Method", frame.GetMethod().Name)
+                        .WithField("Line", frame.GetFileLineNumber())
+                        .WithFooter("event handler error");
+
+                    this.Client.MessageSender.Send(chan, builder.Build()).Wait();
+                });
         }
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)

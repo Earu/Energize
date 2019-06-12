@@ -619,7 +619,7 @@ namespace Energize.Services.Listeners.Music
         {
             if (chan is IDMChannel) return false;
             if (reaction.Emote?.Name == null) return false;
-            if (reaction.User.Value == null) return false;
+            if (reaction.User.GetValueOrDefault() == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
 
             return ReactionCallbacks.ContainsKey(reaction.Emote.Name);
