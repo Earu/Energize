@@ -34,6 +34,7 @@ namespace Energize.Services.Listeners
         [Event("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientShard)
         {
+            this.Log.LogTo("dnet_ws_closes.log", e.ToString());
             if (e is WebSocketException wsex && wsex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely) return;
             if (e is WebSocketClosedException wscex && wscex.CloseCode == 1001) return;
             this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientShard.ShardId} disconnected || Offline for {clientShard.Guilds.Count} guilds");
