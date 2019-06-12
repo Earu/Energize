@@ -96,7 +96,7 @@ module CommandHandler =
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
                     let tip = StaticData.Instance.Tips.[ctx.random.Next(0, StaticData.Instance.Tips.Count)]
                     builder.WithFields([
-                        ctx.embedField "Documentation" Config.Instance.URIs.WebsiteURL false
+                        ctx.embedField "Documentation" (sprintf "**%s**" Config.Instance.URIs.WebsiteURL) false
                         ctx.embedField moduleName (String.Join(',', cmdsDisplay)) false
                         ctx.embedField "Tip" tip false
                     ])

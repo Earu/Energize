@@ -150,7 +150,7 @@ namespace Energize.Services.Listeners.Music
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 Could not play/add track:")
-                .WithField("URL", url)
+                .WithField("URL", $"**{url}**")
                 .WithField("Posted By", msg.Author.Mention)
                 .WithField("Error", error);
 
