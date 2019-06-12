@@ -322,3 +322,24 @@ module Voice =
                 else
                     [ ctx.sendWarn None "Could not find any songs" ]
         })
+
+    let private radios = [
+        ("anime", "https://listen.moe/opus")
+        ("kpop", "https://listen.moe/kpop/opus")
+    ]
+
+    [<CommandParameters(1)>]
+    [<Command("radio", "Adds a radio stream of the specified genre to the track queue", "radio <genre>")>]
+    let radio (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ ->
+            let genre = ctx.arguments.[0].ToLower().Trim()
+            let radioOpt = radios |> List.tryFind (fun (radioGenre, _) -> genre.Equals(radioGenre))
+            match radioOpt with
+            | Some (_, url) -> 
+                let searchResult = awaitResult (music.LavaRestClient.SearchTracksAsync(url))
+                handleSearchResult music ctx searchResult vc
+            | None ->
+                let genres = radios |> List.map (fun (radioGenre, _) -> sprintf "`%s`" radioGenre)
+                [ ctx.sendWarn None (sprintf "Currently available radio genres are:\n%s" (String.Join(',', genres))) ]
+        )
+    }
