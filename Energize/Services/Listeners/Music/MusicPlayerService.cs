@@ -87,9 +87,11 @@ namespace Energize.Services.Listeners.Music
             if (this.Players.ContainsKey(lply.VoiceChannel.GuildId))
             {
                 IEnergizePlayer ply = this.Players[lply.VoiceChannel.GuildId];
-                if (ply.TrackPlayer != null && !ply.IsPaused)
+                if (ply.TrackPlayer != null)
                 {
-                    await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+                    if (!track.IsStream && !ply.IsPaused)
+                        await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+
                     ply.Refresh();
                 }
             }
