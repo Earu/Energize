@@ -40,10 +40,10 @@ namespace Energize.Essentials.MessageConstructs
             return res;
         }
 
-        private async Task UpdateEmbed(LavaTrack track, int volume, bool paused, bool looping)
+        private Embed BuildEmbed(LavaTrack track, int volume, bool paused, bool looping)
         {
             EmbedBuilder builder = new EmbedBuilder();
-            Embed embed = builder
+            builder
                 .WithColor(MessageSender.SColorGood)
                 .WithDescription("🎶 Now playing the following track")
                 .WithField("Title", track.Title)
@@ -52,23 +52,14 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Volume", $"{volume}%")
                 .WithField("Paused", paused)
                 .WithField("Looping", looping)
-                .WithField("Length", this.FormattedTrack(track), false)
-                .WithFooter("music player")
-                .Build();
+                .WithFooter("music player");
 
-            string thumbnailurl;
-            try
-            {
-                thumbnailurl = await track.FetchThumbnailAsync();
-            }
-            catch
-            {
-                thumbnailurl = string.Empty;
-            }
-            if (!string.IsNullOrWhiteSpace(thumbnailurl))
-                builder.WithThumbnailUrl(thumbnailurl);
+            if (!track.IsStream)
+                builder.WithField("Length", this.FormattedTrack(track), false);
+            else
+                builder.WithField("Length", " - ", false);
 
-            this.Embed = embed;
+            return builder.Build();
         }
 
         public async Task DeleteMessage()
@@ -91,13 +82,13 @@ namespace Energize.Essentials.MessageConstructs
 
             if (!modify)
             {
-                await this.UpdateEmbed(track, volume, paused, looping);
+                this.Embed = this.BuildEmbed(track, volume, paused, looping);
                 return;
             }
 
             if (this.Message == null) return;
 
-            await this.UpdateEmbed(track, volume, paused, looping);
+            this.Embed = this.BuildEmbed(track, volume, paused, looping);
             await this.Message.ModifyAsync(prop => prop.Embed = this.Embed);
         }
     }
