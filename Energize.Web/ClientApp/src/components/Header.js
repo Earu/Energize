@@ -1,7 +1,6 @@
 import React from 'react';
 
-export default class Header extends React.Component
-{
+export default class Header extends React.Component {
     displayName = Header.name;
 
     constructor() {
@@ -24,13 +23,12 @@ export default class Header extends React.Component
             menu.style.display = 'none';
     }
 
-    render()
-    {
+    render() {
         return (
             <header>
-                <img  src='./img/logo_white.png' alt='logo' />
+                <img src='./img/logo_white.png' alt='logo' />
                 <h1>Energize</h1>
-                <button onClick={this.onCheeseburgerClick}><i className='fas fa-bars'/></button>
+                <button onClick={this.onCheeseburgerClick}><i className='fas fa-bars' /></button>
             </header>
         );
     }

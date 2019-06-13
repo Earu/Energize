@@ -14,27 +14,29 @@
     padding-bottom: 5px;
 }
 
-.summary > div {
+.summary>div {
     border-bottom: 1px solid #A51C15;
     margin-bottom: 5px;
     font-size: 16px;
     font-weight: 600;
 }
 
-.summary > span, .summary > span > span {
+.summary>span,
+.summary>span>span {
     display: block;
 }
 
-.summary > span {
+.summary>span {
     margin-left: 15px;
 }
 
-.summary > span > span {
+.summary>span>span {
     margin-left: 30px;
     font-size: 12px;
 }
 
-.summary > span:before, .summary > span > span:before {
+.summary>span:before,
+.summary>span>span:before {
     content: '/ ';
 }
 
@@ -69,7 +71,8 @@
     border-radius: 9999px;
     box-shadow: 0 0 5px #333333;
     margin: 10px;
-    border: 2px solid #A51C15;;
+    border: 2px solid #A51C15;
+    ;
     z-index: 999;
     outline-width: 0;
 }
@@ -93,6 +96,6 @@
     margin-bottom: 1%;
 }
 
-.command > u {
+.command>u {
     font-size: large;
 }

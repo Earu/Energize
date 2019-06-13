@@ -12,7 +12,6 @@ export default class Menu extends React.Component {
                 <div><NavLink to="/docs">Docs</NavLink></div>
                 <div><NavLink to="/music">Music</NavLink></div>
                 <div><NavLink to="/admin">Admin</NavLink></div>
-                <div><NavLink to="/stats">Stats</NavLink></div>
             </div>
         );
     }
