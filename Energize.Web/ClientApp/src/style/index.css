@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:300&display=swap');
 
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     font-family: 'Roboto', sans-serif;
@@ -40,16 +41,16 @@ header {
     height: 70px;
 }
 
-header > h1 {
+header>h1 {
     display: inline-block;
 }
 
-header > img {
+header>img {
     width: 55px;
     margin: -28px 10px 0px 10px;
 }
 
-header > button {
+header>button {
     background: transparent;
     color: white;
     border: 1px solid white;
@@ -87,6 +88,14 @@ h4 {
     background: white;
 }
 
+.not-found {
+    text-align: center;
+    color: gray;
+    font-size: 70px;
+    font-weight: bolder;
+    margin: auto;
+}
+
 .menu {
     background-color: #2c2f34;
     padding-top: 1%;
@@ -110,11 +119,11 @@ h4 {
     padding-top: 10px;
 }
 
-.links > hr {
+.links>hr {
     margin: 10px;
 }
 
-.links > div > a {
+.links>div>a {
     padding: 5%;
     padding-left: 15%;
     text-align: left;
@@ -125,11 +134,11 @@ h4 {
     border-left: 5px solid #2c2f34;
 }
 
-.links > div:hover {
+.links>div:hover {
     background: #262828;
 }
 
-.links > div > a:hover {
+.links>div>a:hover {
     color: white;
     border-left: 5px solid #262828;
 }
@@ -146,7 +155,7 @@ h4 {
 }
 
 @media only screen and (max-width: 767px) {
-    header > button {
+    header>button {
         display: block;
     }
 
