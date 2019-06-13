@@ -114,14 +114,14 @@ export default class Menu extends React.Component {
                 let result = <span><b>{elements.length}</b> commands found.</span>;
                 ReactDOM.render(result, document.getElementById('searchResult'));
             } else {
-                ReactDOM.render(<span/>, document.getElementById('searchResult'));
+                ReactDOM.render(<span />, document.getElementById('searchResult'));
             }
 
-            elements = elements.map((cmd,i) => (
+            elements = elements.map((cmd, i) => (
                 <div key={'cmd_' + i} className='command'>
                     <u><b>{cmd.name}</b>  [<i>{cmd.moduleName}</i>]</u>
                     <br /><br />
-                    {this.formatDescription(cmd)}<br/>
+                    {this.formatDescription(cmd)}<br />
                     {this.formatConditions(cmd.conditions)}<br />
                     {this.formatPermissions(cmd.permissions)}
                 </div>
@@ -172,7 +172,7 @@ export default class Menu extends React.Component {
 
         return (
             <div>
-                <button className='fabTop' onClick={this.onFabTopclick}><i className='fas fa-chevron-up'/></button>
+                <button className='fabTop' onClick={this.onFabTopclick}><i className='fas fa-chevron-up' /></button>
 
                 <div className='docs-container'>
                     <Row>
@@ -188,7 +188,7 @@ export default class Menu extends React.Component {
                             </p><br />
 
                             <h3 id='commands'>Commands</h3><hr />
-                            <b><u>Explanation on symbolism:</u></b><br/>
+                            <b><u>Explanation on symbolism:</u></b><br />
                             - <code>{"<argument>"}</code> indicates an argument, <b>something</b> that you need to <b>give the bot</b> for a command to work.<br />
                             Notes:
                             <ul>
@@ -199,60 +199,60 @@ export default class Menu extends React.Component {
                             - <code>...</code> indicates that the <b>last argument can be repeated</b> multiple times.<br />
                             - <code>,</code> indicates an argument <b>separator</b>, it means, a command need fewer arguments to work.<br /><br />
                             <input type='text' onChange={this.onSearch} placeholder='search commands...' /> <span id='searchResult' />
-                            <div id='commandRoot'>Generating commands documentation...</div><br/>
+                            <div id='commandRoot'>Generating commands documentation...</div><br />
 
                             <h4 id='modifying-cmd-msg'>Editing or deleting a command message</h4>
                             Ever tried to edit one of your messages that contained a bot command before, and realized it did not do <b>anything</b>? With Energize we thought about you! In fact if you <b>edit</b> one
                             of your command messages, Energize will pick it up and give you a <b>new command result</b>! There is more to that, if you are in a server and cannot delete the bot message, simply <b>delete</b> your own
                             message, the associated <b>command result</b> should also get <b>deleted</b> by Energize.
-                            <br/><br/><br/>
+                            <br /><br /><br />
 
                             <h4 id='paginated-cmd-results'>Paginated command results</h4>
-                            Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4 reactions</b>.<br/><br/
-                            >Here is an example: <br/>
-                            <img src='./img/docs/paginated_result.png' alt='paginated result example' className='content-img' /><br/>
-                            Each reaction added by Energize corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br/>
-                            <Twemoji options={{className: 'twemoji'}}>
-                                - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br/>
-                                - The ⏹ reaction will <b>delete</b> the result.<br/>
-                                - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br/>
-                                - The ▶ reaction will load the content of the <b>next page</b> of the result.<br/>
-                            </Twemoji><br/>
+                            Often when using a command with Energize, you will get command results that have reactions on them. There are usually <b>3 or 4 reactions</b>.<br /><br /
+                            >Here is an example: <br />
+                            <img src='./img/docs/paginated_result.png' alt='paginated result example' className='content-img' /><br />
+                            Each reaction added by Energize corresponds to a <b>different available action</b>. In the case of paginated results it goes as follows:<br />
+                            <Twemoji options={{ className: 'twemoji' }}>
+                                - The ◀ reaction will load the content of the <b>previous page</b> of the result.<br />
+                                - The ⏹ reaction will <b>delete</b> the result.<br />
+                                - The ⏯ reaction will <b>add the current page result to the track queue</b>, note that this is only available on paginated track results.<br />
+                                - The ▶ reaction will load the content of the <b>next page</b> of the result.<br />
+                            </Twemoji><br />
 
-                            <u><b>Paginated results behaviors:</b></u><br/>
-                            - If you <b>stopped</b> using the paginated message during <b>5 minutes</b> Energize will <b>not react</b> to any of your reactions anymore.<br/>
-                            - <b>Only the command author</b> can use the paginated result reactions.<br/><br/>
+                            <u><b>Paginated results behaviors:</b></u><br />
+                            - If you <b>stopped</b> using the paginated message during <b>5 minutes</b> Energize will <b>not react</b> to any of your reactions anymore.<br />
+                            - <b>Only the command author</b> can use the paginated result reactions.<br /><br />
 
                             <h4 id='cmd-user-input'>Ways to target users in commands</h4>
                             Some commands require you to <b>pass a user as argument</b>, there are a few ways to feed Energize a user.
-                            Here are the several ways this can be achieved:<br/><br/>
+                            Here are the several ways this can be achieved:<br /><br />
                             <ol>
                                 <li>Typing the <b>name</b> (nickname in a guild) of the user.</li>
                                 <li><b>Mentioning</b> the user.</li>
                                 <li>Using <b>built-in tagging</b> system.</li>
-                            </ol><br/>
+                            </ol><br />
 
                             <h4 id='target-user-tags'>Targetting users with tags</h4>
                             As mentioned before, Energize features a <b>built-in tagging system</b>, it means that there is an existing
                             syntax to tag a wanted user. There are currently <b>4 usable built-in tags</b>. You can use the tags by prefixing
-                            one of the existing tags with the <b>$ character</b> like so as an argument in commands that require user arguments.<br/><br/>
-                            Here is an example:<br/>
-                            <code>cmd $random,$last</code><br/><br/>
-                            {this.formatBuiltInTags()}<br/>
+                            one of the existing tags with the <b>$ character</b> like so as an argument in commands that require user arguments.<br /><br />
+                            Here is an example:<br />
+                            <code>cmd $random,$last</code><br /><br />
+                            {this.formatBuiltInTags()}<br />
 
                             <h3 id='playable-messages'>Playable messages</h3><hr />
-                            <Twemoji options={{className: 'twemoji'}}>
+                            <Twemoji options={{ className: 'twemoji' }}>
                                 If Energize has the <b>permissions necessary</b> you maybe have noticed that some messages get a ⏯ reaction. This means that
                                 those messages have content that can be <b>added to the track queue</b>. Although this will only work if you are in a <b>voice channel</b>.
                                 Usually messages that can be "played" are messages containing <b>Youtube, SoundCloud and Twitch content</b>.
-                            </Twemoji><br/>
+                            </Twemoji><br />
 
-                            Example:<br/>
+                            Example:<br />
                             <img src='./img/docs/playable_message.png' alt='playable message example' className='content-img' /><br />
 
                             <h3 id='extendable-messages'>Extendable messages</h3><hr />
-                            Energize implements a feature called "extendable messages", what those messages are, are messages that Energize can give you <b>more information about</b> or generally that can help
-                            <b>making your life easier</b> with them.<br /><br />
+                            Energize implements a feature called "extendable messages", what those messages are, are messages that Energize can give you <b>more information about</b> or generally that can
+                            help <b>making your life easier</b> with them.<br /><br />
 
                             <h4 id='quotes'>Quotes</h4>
                             Discord has this very useful that allows you to <b>quote messages</b> but sometimes you might just <b>want to see the message right away</b> instead of scrolling to it, for that Energize has a feature
@@ -264,11 +264,18 @@ export default class Menu extends React.Component {
 
                             <h4 id='reddit-posts'>Reddit Posts</h4>
                             Even if Discord shows <b>relevant information</b> most of the time when you paste a link in the chat it does not with Reddit posts, Energize will <b>show you the actual post</b> upon clicking
-                            on the message reaction.<br />
+                            on the message reaction.<br /><br />
 
                             Example:<br />
                             <img src='./img/docs/reddit_message.png' alt='reddit message example' className='content-img' />
-                            <img src='./img/docs/reddit_message_result.png' alt='reddit message result example' className='content-img' />
+                            <img src='./img/docs/reddit_message_result.png' alt='reddit message result example' className='content-img' /><br />
+
+                            <h4 id='other-extended-types'>Other Extendable Messages</h4>
+                            Because the list constantly grows here is a <b>non-exhaustive</b> list of all links that are <b>extendable</b>:<br />
+                            <ul>
+                                <li>GitHub repository links such as: <a href='https://github.com/Earu/Energize'>https://github.com/Earu/Energize</a></li>
+                                <li>More to come...</li>
+                            </ul><br /><br /><br />
                         </Col>
                         <Col md={2}>
                             <Summary>
@@ -319,6 +326,11 @@ export default class Menu extends React.Component {
                                             Reddit Posts
                                         </a>
                                     </span>
+                                    <span>
+                                        <a id='sum-other-extended-types' href='docs#other-extended-types' onClick={this.onSummaryClick}>
+                                            Other Extendable Messages
+                                        </a>
+                                    </span>
                                 </span>
                             </Summary>
                         </Col>
@@ -327,6 +339,6 @@ export default class Menu extends React.Component {
                 </div>
 
             </div>
-            );
+        );
     }
 }
