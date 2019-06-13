@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Energize.Essentials.MessageConstructs;
+using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -28,8 +28,11 @@ namespace Energize.Services.Listeners.Music
             this.Autoplay = false;
             this.IsLooping = false;
             this.Disconnected = false;
+            this.TrackPlayer = null;
+            this.CurrentRadio = null;
             this.Queue = new LavaQueue<LavaTrack>();
             this.TimeToLive = 3 * 60 * 1000;
+            this.TTLTimer = null;
             this.Refresh();
         }
 
@@ -42,6 +45,7 @@ namespace Energize.Services.Listeners.Music
         public bool IsLooping { get; set; }
         public bool Disconnected { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
+        public RadioTrack CurrentRadio { get; set; }
         public LavaQueue<LavaTrack> Queue { get; private set; }
 
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
