@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
+using Victoria.Queue;
 
 namespace Energize.Interfaces.Services.Listeners
 {
@@ -18,6 +19,8 @@ namespace Energize.Interfaces.Services.Listeners
         Task DisconnectAllPlayersAsync();
 
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+
+        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
         Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
 
@@ -49,7 +52,7 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track);
 
-        Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null, IChannel chan = null);
+        Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
 
         Task<LavaTrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId);
 

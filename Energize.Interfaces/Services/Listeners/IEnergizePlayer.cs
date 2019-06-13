@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Energize.Essentials.MessageConstructs;
+using Energize.Essentials.TrackTypes;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace Energize.Interfaces.Services.Listeners
         TrackPlayer TrackPlayer { get; set; }
         bool IsPlaying { get; }
         bool IsPaused { get; }
+        RadioTrack CurrentRadio { get; set; }
         LavaQueue<LavaTrack> Queue { get; }
         LavaTrack CurrentTrack { get; }
         IVoiceChannel VoiceChannel { get; }

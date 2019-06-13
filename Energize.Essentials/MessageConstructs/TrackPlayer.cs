@@ -1,8 +1,9 @@
 ﻿using Discord;
+using Energize.Essentials.TrackTypes;
 using System;
 using System.Threading.Tasks;
-using Victoria;
 using Victoria.Entities;
+using Victoria.Queue;
 
 namespace Energize.Essentials.MessageConstructs
 {
@@ -40,11 +41,11 @@ namespace Energize.Essentials.MessageConstructs
             return res;
         }
 
-        private Embed BuildEmbed(LavaTrack track, int volume, bool paused, bool looping)
+        private Embed BuildTrackEmbed(LavaTrack track, int volume, bool paused, bool looping)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithColor(MessageSender.SColorGood)
+                .WithColorType(EmbedColorType.Good)
                 .WithDescription("🎶 Now playing the following track")
                 .WithField("Title", track.Title)
                 .WithField("Author", track.Author)
@@ -62,6 +63,44 @@ namespace Energize.Essentials.MessageConstructs
             return builder.Build();
         }
 
+        private Embed BuildRadioEmbed(RadioTrack radio, int volume, bool paused)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder
+                .WithColorType(EmbedColorType.Good)
+                .WithDescription("📻 Playing radio")
+                .WithField("Genre", radio.Genre)
+                .WithField("Raw Stream", radio.StreamURL)
+                .WithField("Volume", $"{volume}%")
+                .WithField("Paused", paused)
+                .WithFooter("music player");
+
+            return builder.Build();
+        }
+
+        private Embed BuildUnknownEmbed(IQueueObject obj, int volume, bool paused, bool looping)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder
+                .WithColorType(EmbedColorType.Warning)
+                .WithDescription("🎶 Playing unknown type of content")
+                .WithField("ID", obj.Id)
+                .WithField("Volume", $"{volume}%")
+                .WithField("Paused", paused)
+                .WithField("Looping", looping)
+                .WithFooter("music player");
+
+            return builder.Build();
+        }
+
+        private Embed BuildEmbed(IQueueObject obj, int volume, bool paused, bool looping)
+        {
+            if (obj is LavaTrack track) return this.BuildTrackEmbed(track, volume, paused, looping);
+            if (obj is RadioTrack radio) return this.BuildRadioEmbed(radio, volume, paused);
+
+            return this.BuildUnknownEmbed(obj, volume, paused, looping);
+        }
+
         public async Task DeleteMessage()
         {
             if (this.Message == null) return;
@@ -76,7 +115,7 @@ namespace Energize.Essentials.MessageConstructs
             }
         }
 
-        public async Task Update(LavaTrack track, int volume, bool paused, bool looping, bool modify = true)
+        public async Task Update(IQueueObject track, int volume, bool paused, bool looping, bool modify = true)
         {
             if (track == null) return;
 
