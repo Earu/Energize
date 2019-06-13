@@ -24,7 +24,7 @@ module Voice =
         | null -> [ ctx.sendWarn None "Not in a voice channel" ]
         | vc -> cb music vc guser
 
-    let private handleSearchResult (music : IMusicPlayerService) (ctx : CommandContext) (res : SearchResult) (vc : IVoiceChannel) =
+    let private handleSearchResult (music : IMusicPlayerService) (ctx : CommandContext) (res : SearchResult) (vc : IVoiceChannel) (isRadio : bool) =
         match res.LoadType with
         | LoadType.LoadFailed ->
             [ ctx.sendWarn None "Could not load the specified track" ]
@@ -39,7 +39,10 @@ module Voice =
             if tracks.Length > 0 then
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
-                [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
+                if isRadio then
+                    [ awaitResult (music.PlayRadioAsync(vc, textChan, tr)) ]
+                else
+                    [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
             else
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 
@@ -89,7 +92,7 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             let input = (spotifyToYtUrl ctx ctx.input) |> sanitizeYtUrl
             let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
-            handleSearchResult music ctx res vc
+            handleSearchResult music ctx res vc false
         )
     }
 
@@ -100,7 +103,7 @@ module Voice =
                 let attachment = enumerator.Current :?> Attachment
                 if attachment.IsPlayableAttachment() then
                     let res = awaitResult (music.LavaRestClient.SearchTracksAsync(attachment.Url))
-                    handleSearchResult music ctx res vc
+                    handleSearchResult music ctx res vc false
                 else
                     [ ctx.sendWarn None "The given file format is not supported"]
             else
@@ -121,7 +124,7 @@ module Voice =
             return musicAction ctx (fun music vc _ ->   
                 if ctx.arguments.Length > 0 then
                     let res = awaitResult (music.LavaRestClient.SearchYouTubeAsync(ctx.input))
-                    handleSearchResult music ctx res vc
+                    handleSearchResult music ctx res vc false
                 else
                     [ ctx.sendWarn None "Expected a song name, a link (url) or a file" ]
             )
@@ -323,32 +326,22 @@ module Voice =
                     [ ctx.sendWarn None "Could not find any songs" ]
         })
 
-    let private radios = [
-        ("anime", "https://listen.moe/opus")
-        ("kpop", "https://listen.moe/kpop/opus")
-        ("drum n bass", "http://bassdrive.radioca.st/;stream/1")
-        ("metal", "http://ice1.somafm.com/metal-128-mp3")
-        ("dubstep", "http://ice1.somafm.com/dubstep-128-mp3")
-        ("70s", "http://ice1.somafm.com/seventies-128-mp3")
-        ("alt rock", "http://ice1.somafm.com/bagel-128-mp3")
-        ("jazz", "http://ice1.somafm.com/sonicuniverse-128-mp3")
-        ("defcon", "http://ice1.somafm.com/defcon-128-mp3")
-        ("progressive house", "http://ice1.somafm.com/thetrip-128-mp3")
-        ("folk", "http://ice1.somafm.com/folkfwd-128-mp3")
-        ("celtic", "http://ice1.somafm.com/thistle-128-mp3")
-        ("deep house", "http://ice1.somafm.com/beatblender-128-mp3")
-    ]
+    let private toMap dictionary = 
+        (dictionary :> seq<_>)
+        |> Seq.map (|KeyValue|)
+        |> Map.ofSeq
 
     [<CommandParameters(1)>]
     [<Command("radio", "Adds a radio stream of the specified genre to the track queue", "radio <genre>")>]
     let radio (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             let genre = ctx.arguments.[0].ToLower().Trim()
+            let radios = toMap StaticData.Instance.RadioSources |> Map.toList
             let radioOpt = radios |> List.tryFind (fun (radioGenre, _) -> genre.Equals(radioGenre))
             match radioOpt with
             | Some (_, url) -> 
                 let searchResult = awaitResult (music.LavaRestClient.SearchTracksAsync(url))
-                handleSearchResult music ctx searchResult vc
+                handleSearchResult music ctx searchResult vc true
             | None ->
                 let genres = radios |> List.map (fun (radioGenre, _) -> sprintf "`%s`" radioGenre)
                 [ ctx.sendWarn None (sprintf "Currently available radio genres are:\n%s" (String.Join(',', genres))) ]

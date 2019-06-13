@@ -1,8 +1,8 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
+using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
@@ -14,13 +14,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.WebSockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
+using Victoria.Queue;
 
 namespace Energize.Services.Listeners.Music
 {
@@ -84,9 +84,8 @@ namespace Energize.Services.Listeners.Music
 
         private async Task OnPlayerUpdated(LavaPlayer lply, LavaTrack track, TimeSpan position)
         {
-            if (this.Players.ContainsKey(lply.VoiceChannel.GuildId))
+            if (this.Players.TryGetValue(lply.VoiceChannel.GuildId, out IEnergizePlayer ply))
             {
-                IEnergizePlayer ply = this.Players[lply.VoiceChannel.GuildId];
                 if (ply.TrackPlayer != null)
                 {
                     if (!track.IsStream && !ply.IsPaused)
@@ -206,6 +205,18 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
+        public async Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        {
+            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return null;
+
+            RadioTrack radio = RadioTrack.FromLavaTrack(track);
+            ply.Queue.Clear();
+            ply.CurrentRadio = radio;
+            await ply.Lavalink.PlayAsync(track, false);
+            return await this.SendPlayerAsync(ply, radio, chan);
+        }
+
         public async Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
@@ -305,6 +316,9 @@ namespace Energize.Services.Listeners.Music
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return;
+
+            if (ply.CurrentRadio != null)
+                ply.CurrentRadio = null;
 
             if (ply.IsPlaying)
                 await ply.Lavalink.StopAsync();
@@ -410,7 +424,7 @@ namespace Energize.Services.Listeners.Music
             return await this.MessageSender.Send(chan, embed);
         }
 
-        private void AddPlayerReactions(IUserMessage msg)
+        private void AddPlayerReactions(IUserMessage msg, bool isRadio = false)
         {
             Task.Run(async () =>
             {
@@ -418,7 +432,10 @@ namespace Energize.Services.Listeners.Music
                 SocketGuild guild = chan.Guild;
                 if (guild.CurrentUser.GetPermissions(chan).AddReactions)
                 {
-                    string[] unicodeStrings = new string[] { "⏯", "🔁", "⬆", "⬇", "⏭" };
+                    List<string> unicodeStrings = new List<string> { "⏯", "🔁", "⬆", "⬇", "⏭" };
+                    if (isRadio)
+                        unicodeStrings.RemoveAt(1);
+
                     foreach (string unicode in unicodeStrings)
                         await msg.AddReactionAsync(new Emoji(unicode));
                 }
@@ -429,25 +446,25 @@ namespace Energize.Services.Listeners.Music
             });
         }
 
-        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, LavaTrack track = null, IChannel chan = null)
+        public async Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null)
         {
-            track = track ?? ply.CurrentTrack;
+            obj = obj ?? ply.CurrentTrack;
 
             if (ply.TrackPlayer == null)
             {
                 ply.TrackPlayer = new TrackPlayer(ply.VoiceChannel.GuildId);
-                await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, false);
+                await ply.TrackPlayer.Update(obj, ply.Volume, ply.IsPaused, ply.IsLooping, false);
             }
             else
             {
-                await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, false);
+                await ply.TrackPlayer.Update(obj, ply.Volume, ply.IsPaused, ply.IsLooping, false);
                 await ply.TrackPlayer.DeleteMessage();
             }
 
-            if (track == null) return null;
+            if (obj == null) return null;
 
             ply.TrackPlayer.Message = await this.MessageSender.Send(chan ?? ply.TextChannel, ply.TrackPlayer.Embed);
-            this.AddPlayerReactions(ply.TrackPlayer.Message);
+            this.AddPlayerReactions(ply.TrackPlayer.Message, obj is RadioTrack);
             return ply.TrackPlayer.Message;
         }
 
@@ -639,7 +656,10 @@ namespace Energize.Services.Listeners.Music
             if (!this.IsValidTrackPlayer(ply.TrackPlayer, cache.Id)) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, ply);
-            await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+            if (ply.CurrentRadio != null)
+                await ply.TrackPlayer.Update(ply.CurrentRadio, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+            else
+                await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
         }
 
         [Event("ReactionAdded")]
