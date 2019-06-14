@@ -9,13 +9,13 @@ namespace Energize.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CommandsController : ControllerBase
+    public class InfoController : ControllerBase
     {
-        // GET: api/commands
+        // GET: api/info
         [HttpGet]
-        public async Task<CommandInformation> Get()
+        public async Task<BotInformation> Get()
         {
-            CommandInformation cmdInfo = null;
+            BotInformation botInfo = null;
             try
             {
                 OctoClient client = TransmissionService.Instance.Client;
@@ -23,13 +23,13 @@ namespace Energize.Web.Controllers
                     await client.ConnectAsync();
 
                 if (client.TryGetProcess("Energize", out RemoteProcess proc))
-                    cmdInfo = await proc.TransmitAsync<CommandInformation>("commands");
+                    botInfo = await proc.TransmitAsync<BotInformation>("info");
 
-                return cmdInfo ?? new CommandInformation();
+                return botInfo ?? new BotInformation();
             }
-            catch(TimeOutException)
+            catch (TimeOutException)
             {
-                return new CommandInformation();
+                return new BotInformation();
             }
         }
     }

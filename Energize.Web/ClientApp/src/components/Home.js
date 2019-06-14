@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Row from 'react-bootstrap/lib/Row';
 import Col from 'react-bootstrap/lib/Col';
 
@@ -6,9 +7,14 @@ export default class Home extends React.Component {
     displayName = Home.name;
 
     async displayUserCount() {
-        let response = await fetch('./api/commands', {
+        let response = await fetch('./api/info', {
             method: 'GET'
         });
+
+        if (response.ok) {
+            let botInfo = await response.json();
+            ReactDOM.render(<span>{`Already ${botInfo.userCount} users convinced`}</span>, document.getElementById('userCountRoot'));
+        }
     }
 
     render() {
@@ -29,7 +35,7 @@ export default class Home extends React.Component {
                                     <a href='./docs' className='learn-more-btn'>Learn more</a>
                                 </Col>
                                 <Col md={12} className='p-0 m-0'>
-                                    <h2 className='intro-description'>An augmented Discord™ experience<br /><span id='userCountRoot'/></h2>
+                                    <h2 className='intro-description'>An augmented Discord™ experience<br /><br /><span id='userCountRoot'/></h2>
                                 </Col>
                             </Row>
                         </Col>

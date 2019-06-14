@@ -18,12 +18,11 @@ namespace Energize.Web.Services
             return service;
         }
 
-        static void OnLog(LogMessage log)
+        private static void OnLog(LogMessage log)
         {
             if (log.Severity == LogSeverity.Info)
                 Console.WriteLine(log.Content);
         }
-
 
         public OctoClient Client { get; private set; }
     }
