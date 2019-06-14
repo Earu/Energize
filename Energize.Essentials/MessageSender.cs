@@ -1,8 +1,6 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Energize.Essentials
@@ -19,47 +17,62 @@ namespace Energize.Essentials
 
         public Logger Logger { get; private set; }
 
-        private void LogFailedMessage(IMessage msg)
+        private void LogFailedMessage(IMessage msg, Exception ex)
         {
             string log = string.Empty;
             if (!(msg.Channel is IDMChannel))
             {
                 IGuildChannel chan = msg.Channel as IGuildChannel;
-                log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username} doesn't have <send message> right";
+                log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username}: {ex.Message}";
             }
             else
             {
-                log += $"(DM) {msg.Author.Username} blocked a message";
+                log += $"(DM) {msg.Author.Username}: {ex.Message}";
             }
-            this.Logger.Nice("Message", ConsoleColor.Red, log);
+            this.Logger.Nice("MessageSender", ConsoleColor.Red, log);
         }
 
-        private void LogFailedMessage(IChannel chan)
+        private void LogFailedMessage(IChannel chan, Exception ex)
         {
             string log = string.Empty;
             if (!(chan is IDMChannel))
             {
                 IGuildChannel c = chan as IGuildChannel;
-                log += $"({c.Guild.Name} - #{c.Name}) doesn't have <send message> right";
+                log += $"({c.Guild.Name} - #{c.Name}): {ex.Message}";
             }
             else
             {
                 IDMChannel c = chan as IDMChannel;
-                log += $"(DM) {c.Recipient} blocked a message";
+                log += $"(DM) {c.Recipient}: {ex.Message}";
             }
-            this.Logger.Nice("Message", ConsoleColor.Red, log);
+            this.Logger.Nice("MessageSender", ConsoleColor.Red, log);
         }
+
+        private bool CanSendMessage(IChannel chan)
+        {
+            if (chan is SocketGuildChannel guildChannel)
+            {
+                SocketGuildUser botUser = guildChannel.Guild.CurrentUser;
+                return botUser.GetPermissions(guildChannel).SendMessages;
+            }
+
+            return true;
+        }
+
+        private bool CanSendMessage(IMessage msg)
+            => this.CanSendMessage(msg.Channel);
 
         public async Task TriggerTyping(ISocketMessageChannel chan)
         {
             try
             {
+                if (!this.CanSendMessage(chan)) return;
+
                 await chan.TriggerTypingAsync();
             }
-            catch(HttpException ex)
+            catch(Exception ex)
             {
-                if (ex.HttpCode != HttpStatusCode.Forbidden)
-                    this.LogFailedMessage(chan);
+                this.LogFailedMessage(chan, ex);
             }
         }
 
@@ -67,6 +80,8 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(msg)) return null;
+
                 string userName = msg.Author.Username;
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
@@ -81,9 +96,9 @@ namespace Energize.Essentials
                 if (!string.IsNullOrWhiteSpace(content))
                     return await msg.Channel.SendMessageAsync(string.Empty, false, builder.Build());
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(msg);
+                this.LogFailedMessage(msg, ex);
             }
 
             return null;
@@ -93,6 +108,8 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(chan)) return null;
+
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithColorType(colorType)
@@ -102,9 +119,9 @@ namespace Energize.Essentials
                 if (!string.IsNullOrWhiteSpace(content))
                     return await chan.SendMessageAsync(string.Empty, false, builder.Build());
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(chan as IChannel);
+                this.LogFailedMessage(chan, ex);
             }
 
             return null;
@@ -114,11 +131,13 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(msg)) return null;
+
                 return await msg.Channel.SendMessageAsync(string.Empty, false, embed);
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(msg);
+                this.LogFailedMessage(msg, ex);
             }
 
             return null;
@@ -128,11 +147,13 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(msg)) return null;
+
                 return await msg.Channel.SendMessageAsync(content);
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(msg);
+                this.LogFailedMessage(msg, ex);
             }
 
             return null;
@@ -142,12 +163,14 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(chan)) return null;
+
                 IMessageChannel c = chan as IMessageChannel;
                 return await c.SendMessageAsync(string.Empty, false, embed);
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(chan);
+                this.LogFailedMessage(chan, ex);
             }
 
             return null;
@@ -157,34 +180,14 @@ namespace Energize.Essentials
         {
             try
             {
+                if (!this.CanSendMessage(chan)) return null;
+
                 IMessageChannel c = chan as IMessageChannel;
                 return await c.SendMessageAsync(content);
             }
-            catch
+            catch(Exception ex)
             {
-                this.LogFailedMessage(chan);
-            }
-
-            return null;
-        }
-
-        public async Task<IUserMessage> RespondByDM(IMessage msg, string header = "", string content = "")
-        {
-            try
-            {
-                EmbedBuilder builder = new EmbedBuilder();
-                builder
-                    .WithColorType(EmbedColorType.Good)
-                    .WithLimitedDescription(content)
-                    .WithFooter(header)
-                    .WithAuthor(msg.Author);
-
-                IDMChannel chan = await msg.Author.GetOrCreateDMChannelAsync();
-                return await chan.SendMessageAsync(string.Empty, false, builder.Build());
-            }
-            catch
-            {
-                this.LogFailedMessage(msg);
+                this.LogFailedMessage(chan, ex);
             }
 
             return null;
@@ -213,22 +216,5 @@ namespace Energize.Essentials
 
         public async Task<IUserMessage> Good(IChannel chan, string header, string content)
             => await this.Send((chan as ISocketMessageChannel), header, content, EmbedColorType.Good);
-
-        public async Task Disconnect(DiscordSocketClient client)
-            => await client.LogoutAsync();
-
-        public async Task<IUserMessage> SendFile(IMessage msg, string path)
-        {
-            try
-            {
-                return await msg.Channel.SendFileAsync(path);
-            }
-            catch
-            {
-                this.LogFailedMessage(msg);
-            }
-
-            return null;
-        }
     }
 }
