@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Webhook;
+using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services.Senders;
 using System;
@@ -19,16 +20,29 @@ namespace Energize.Services.Senders
             this.Logger = client.Logger;
         }
 
+        private bool CanUseWebhooks(IChannel chan)
+        {
+            if (chan is SocketGuildChannel guildChannel)
+            {
+                SocketGuildUser botUser = guildChannel.Guild.CurrentUser;
+                return botUser.GetPermissions(guildChannel).ManageWebhooks;
+            }
+
+            return false;
+        }
+
         private async Task<DiscordWebhookClient> CreateWebhook(string name, ITextChannel chan)
         {
             try
             {
+                if (!this.CanUseWebhooks(chan)) return null;
+
                 IWebhook webhook = await chan.CreateWebhookAsync(name);
                 return new DiscordWebhookClient(webhook);
             }
             catch(Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not create webhook\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not create webhook: {ex.Message}");
                 return null;
             }
         }
@@ -37,13 +51,15 @@ namespace Energize.Services.Senders
         {
             try
             {
+                if (!this.CanUseWebhooks(chan)) return null;
+
                 IReadOnlyCollection<IWebhook> webhooks = await chan.GetWebhooksAsync();
                 IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == name);
                 return webhook == null ? await this.CreateWebhook(name, chan) : new DiscordWebhookClient(webhook);
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not get a list of webhooks\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not get a list of webhooks: {ex.Message}");
                 return null;
             }  
         }
@@ -52,12 +68,12 @@ namespace Energize.Services.Senders
         {
             if (chan is IDMChannel) return null;
 
-            ITextChannel textChan = (ITextChannel)chan;
-            IGuildUser bot = await textChan.Guild.GetCurrentUserAsync();
-            if (!bot.GuildPermissions.ManageWebhooks)
+            SocketGuildChannel guildChan = (SocketGuildChannel)chan;
+            SocketGuildUser botUser = guildChan.Guild.CurrentUser;
+            if (!botUser.GetPermissions(guildChan).ManageWebhooks)
                 return null;
 
-            return await this.GetOrCreateWebhook(bot.Username, textChan);
+            return await this.GetOrCreateWebhook(botUser.Username, (ITextChannel)guildChan);
         }
 
         public async Task<ulong> SendRaw(IMessage msg, string content, string username, string avatarUrl)
@@ -71,7 +87,8 @@ namespace Energize.Services.Senders
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+
                 return 0;
             }
         }
@@ -87,7 +104,7 @@ namespace Energize.Services.Senders
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
                 return 0;
             }
         }
@@ -103,7 +120,7 @@ namespace Energize.Services.Senders
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
                 return 0;
             }
         }
@@ -119,7 +136,7 @@ namespace Energize.Services.Senders
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message\n {ex}");
+                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
                 return 0;
             }
         }

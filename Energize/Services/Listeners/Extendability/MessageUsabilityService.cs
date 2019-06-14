@@ -89,7 +89,7 @@ namespace Energize.Services.Listeners.Extendability
             if (reaction.Emote?.Name == null) return false;
             if (!reaction.Emote.Name.Equals(EmoteExtend.Name)) return false;
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
-            if (!(chan is IGuildChannel) || reaction.User.Value == null) return false;
+            if (!(chan is IGuildChannel) || reaction.User.GetValueOrDefault() == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
 
             return true;
