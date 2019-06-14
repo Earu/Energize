@@ -1,12 +1,14 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open Microsoft.FSharp.Collections
 open System.Text.RegularExpressions
 open Energize.Commands.Context
 open Discord
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.AsyncHelper
 open Energize.Essentials
+open Energize.Essentials.TrackTypes
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
@@ -33,16 +35,16 @@ module Voice =
         | LoadType.PlaylistLoaded ->
             let playlistName = res.PlaylistInfo.Name
             let textChan = ctx.message.Channel :?> ITextChannel
-            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks)) |> Seq.toList
+            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks |> Seq.map(fun(lavaTrack) -> TrackFactory.Create(lavaTrack)))) |> Seq.toList
         | _ ->
             let tracks = res.Tracks |> Seq.toList 
             if tracks.Length > 0 then
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
                 if isRadio then
-                    [ awaitResult (music.PlayRadioAsync(vc, textChan, tr)) ]
+                    [ awaitResult (music.PlayRadioAsync(vc, textChan, TrackFactory.Create(tr))) ]
                 else
-                    [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
+                    [ awaitResult (music.AddTrackAsync(vc, textChan, TrackFactory.Create(tr))) ]
             else
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 
@@ -82,7 +84,7 @@ module Voice =
                 let id = spotifyMatch.Groups.[1].Value
                 let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
                 let track = awaitResult (music.ConvertSpotifyTrackToYoutubeAsync(id))
-                track.Uri.AbsoluteUri
+                track.InnerTrack.Uri.AbsoluteUri
             else
                 url
         else

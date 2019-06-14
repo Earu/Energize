@@ -4,9 +4,9 @@ using Victoria.Queue;
 
 namespace Energize.Essentials.TrackTypes
 {
-    public class RadioTrack : IQueueObject
+    public class RadioTrack : ITrack
     {
-        public static RadioTrack FromLavaTrack(LavaTrack track)
+        public static RadioTrack FromTrack(LavaTrack track)
         {
             foreach (KeyValuePair<string, string> radio in StaticData.Instance.RadioSources)
                 if (radio.Value.Equals(track.Uri.AbsoluteUri))
