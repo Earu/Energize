@@ -59,13 +59,9 @@ namespace Energize.Services.Senders
 
                 return vote.Message;
             }
-            catch (HttpException)
-            {
-                this.Logger.Nice("Vote", ConsoleColor.Yellow, "Could not create vote, missing permissions");
-            }
             catch (Exception ex)
             {
-                this.Logger.Danger(ex);
+                this.Logger.Nice("Vote", ConsoleColor.Yellow, $"Could not create vote: {ex.Message}");
             }
 
             return null;

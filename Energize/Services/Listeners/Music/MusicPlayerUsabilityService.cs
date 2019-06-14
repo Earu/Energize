@@ -84,7 +84,7 @@ namespace Energize.Services.Listeners.Music
             if (reaction.Emote?.Name == null) return false;
             if (!reaction.Emote.Name.Equals(Emote.Name)) return false;
             if (reaction.UserId == Config.Instance.Discord.BotID) return false;
-            if (chan is IDMChannel || reaction.User.Value == null) return false;
+            if (chan is IDMChannel || reaction.User.GetValueOrDefault() == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
 
             return true;

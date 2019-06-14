@@ -58,7 +58,7 @@ namespace Energize.Services.Senders
             }).ContinueWith(t =>
             {
                 if (t.IsFaulted)
-                    this.Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create reactions, message was deleted or missing permissions");
+                    this.Logger.Nice("Paginator", ConsoleColor.Yellow, $"Could not create reactions: {t.Exception.Message}");
             });
         }
 
@@ -79,14 +79,9 @@ namespace Energize.Services.Senders
                 paginator.Message = posted;
                 this.Paginators.Add(posted.Id, paginator.ToObject());
                 this.AddReactions(posted, "◀", "⏹", "▶");
+            }
 
-                return posted;
-            }
-            else
-            {
-                this.Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
-                return null;
-            }
+            return posted;
         }
 
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displayCallback) where T : class
@@ -106,14 +101,9 @@ namespace Energize.Services.Senders
                 paginator.Message = posted;
                 this.Paginators.Add(posted.Id, paginator.ToObject());
                 this.AddReactions(posted, "◀", "⏹", "▶");
+            }
 
-                return posted;
-            }
-            else
-            {
-                this.Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
-                return null;
-            }
+            return posted;
         }
 
         public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
@@ -126,14 +116,9 @@ namespace Energize.Services.Senders
                 paginator.Message = posted;
                 this.Paginators.Add(posted.Id, paginator.ToObject());
                 this.AddReactions(posted, "◀", "⏹", "▶");
+            }
 
-                return posted;
-            }
-            else
-            {
-                this.Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
-                return null;
-            }
+            return posted;
         }
 
         public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
@@ -146,14 +131,9 @@ namespace Energize.Services.Senders
                 paginator.Message = posted;
                 this.Paginators.Add(posted.Id, paginator.ToObject());
                 this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
+            }
 
-                return posted;
-            }
-            else
-            {
-                this.Logger.Nice("Paginator", ConsoleColor.Yellow, "Could not create paginator, missing permissions");
-                return null;
-            }
+            return posted;
         }
 
         private delegate Task ReactionCallback(PaginatorSenderService sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction);

@@ -428,6 +428,8 @@ namespace Energize.Services.Listeners.Music
         {
             Task.Run(async () =>
             {
+                if (msg == null) return;
+
                 SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
                 SocketGuild guild = chan.Guild;
                 if (guild.CurrentUser.GetPermissions(chan).AddReactions)
