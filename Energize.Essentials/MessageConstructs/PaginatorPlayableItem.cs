@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Energize.Essentials.TrackTypes;
 using Victoria.Entities;
 
 namespace Energize.Essentials.MessageConstructs
 {
     public class PaginatorPlayableItem
     {
-        private readonly Func<Task<LavaTrack>> PlayCallback;
+        private readonly Func<Task<ITrack>> PlayCallback;
 
-        public PaginatorPlayableItem(string displayUrl, Func<Task<LavaTrack>> playCallback)
+        public PaginatorPlayableItem(string displayUrl, Func<Task<ITrack>> playCallback)
         {
             this.DisplayURL = displayUrl;
             this.PlayCallback = playCallback;
@@ -16,7 +17,7 @@ namespace Energize.Essentials.MessageConstructs
 
         public string DisplayURL { get; private set; }
 
-        public async Task<LavaTrack> PlayAsync()
+        public async Task<ITrack> PlayAsync()
             => await this.PlayCallback();
     }
 }

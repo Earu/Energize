@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Energize.Essentials.TrackTypes;
 using Victoria.Entities;
 
 namespace Energize.Services.Senders
@@ -176,14 +177,14 @@ namespace Energize.Services.Senders
             ITextChannel textChan = (ITextChannel)chan;
             IMusicPlayerService music = sender.ServiceManager.GetService<IMusicPlayerService>("Music");
 
-            if (paginator.CurrentValue is LavaTrack track)
+            if (paginator.CurrentValue is ITrack track)
             {
                 await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
             else if (paginator.CurrentValue is PaginatorPlayableItem item)
             {
-                LavaTrack itemTrack = await item.PlayAsync();
+                var itemTrack = await item.PlayAsync();
                 if (itemTrack != null)
                 {
                     await music.AddTrackAsync(guser.VoiceChannel, textChan, itemTrack);
@@ -199,7 +200,7 @@ namespace Energize.Services.Senders
                 if (tracks.Count > 0)
                 {
                     LavaTrack tr = tracks[0];
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
+                    await music.AddTrackAsync(guser.VoiceChannel, textChan, TrackFactory.Create(tr));
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
                 else

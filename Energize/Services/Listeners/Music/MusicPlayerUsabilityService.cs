@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Energize.Essentials.TrackTypes;
 using Victoria.Entities;
 
 namespace Energize.Services.Listeners.Music
@@ -109,8 +110,8 @@ namespace Energize.Services.Listeners.Music
             {
                 string spotifyId = match.Groups[1].Value;
                 IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                LavaTrack track = await music.ConvertSpotifyTrackToYoutubeAsync(spotifyId);
-                return track.Uri.AbsoluteUri;
+                ITrack track = await music.ConvertSpotifyTrackToYoutubeAsync(spotifyId);
+                return track.InnerTrack.Uri.AbsoluteUri;
             }
             else
             {
@@ -161,7 +162,7 @@ namespace Energize.Services.Listeners.Music
         {
             url = await this.SpotifyToYoutubeURLAsync(url);
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
-            List<LavaTrack> tracks = result.Tracks.ToList();
+            List<ITrack> tracks = result.Tracks.Select(lavaTrack => TrackFactory.Create(lavaTrack)).ToList();
             switch (result.LoadType)
             {
                 case LoadType.SearchResult:

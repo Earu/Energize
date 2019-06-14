@@ -24,8 +24,8 @@ namespace Energize.Interfaces.Services.Listeners
         bool IsPlaying { get; }
         bool IsPaused { get; }
         RadioTrack CurrentRadio { get; set; }
-        LavaQueue<LavaTrack> Queue { get; }
-        LavaTrack CurrentTrack { get; }
+        LavaQueue<ITrack> Queue { get; }
+        ITrack CurrentTrack { get; }
         IVoiceChannel VoiceChannel { get; }
         ITextChannel TextChannel { get; }
         int Volume { get; }
