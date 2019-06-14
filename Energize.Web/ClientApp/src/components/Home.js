@@ -13,7 +13,8 @@ export default class Home extends React.Component {
 
         if (response.ok) {
             let botInfo = await response.json();
-            ReactDOM.render(<span>{`Already ${botInfo.userCount} users convinced`}</span>, document.getElementById('userCountRoot'));
+            ReactDOM.render(botInfo.userCount, document.getElementById('userCount'))
+            ReactDOM.render(botInfo.serverCount, document.getElementById('serverCount'))
         }
     }
 
@@ -35,28 +36,92 @@ export default class Home extends React.Component {
                                     <a href='./docs' className='learn-more-btn'>Learn more</a>
                                 </Col>
                                 <Col md={12} className='p-0 m-0'>
-                                    <h2 className='intro-description'>An augmented Discord™ experience<br /><br /><span id='userCountRoot'/></h2>
+                                    <h2 className='intro-description'>An augmented Discord™ experience</h2>
                                 </Col>
                             </Row>
                         </Col>
                         <Col md={2} className='p-0 m-0' />
                     </Row>
                 </div>
-                <div>
-                    <Row className='pros'>
+                <div className='pros-container'>
+                    <Row className='pros container'>
                         <Col md={4}>
-                            <img src='./img/radio.png' alt='radio' />
-                            <p>Take advantage of a large number of radio stations.</p>
+                            <div>
+                                <i className='fas fa-broadcast-tower' />
+                                <br />
+                                <span>Radios</span>
+                                <hr />
+                                <p>Take advantage of a large number of radio stations.</p>
+                            </div>
                         </Col>
                         <Col md={4}>
-                            <img src='./img/network.png' alt='network_logo' />
-                            <p>Search and play songs from your favorite websites.</p>
+                            <div>
+                                <i className='fab fa-youtube' />
+                                <br />
+                                <span>Diverse Sources</span>
+                                <hr />
+                                <p>Search and play songs from your favorite websites, including Spotify!</p>
+                            </div>
                         </Col>
                         <Col md={4}>
-                            <img src='./img/noob.png' alt='noob' />
-                            <p>Enjoy Energize features like a Discord pro.</p>
+                            <div>
+                                <i className='fas fa-user-tie' />
+                                <br />
+                                <span>User Friendly</span>
+                                <hr />
+                                <p>Enjoy Energize features like a Discord pro.</p>
+                            </div>
+                        </Col>
+                        <Col md={4}>
+                            <div>
+                                <i className='fas fa-chart-bar' />
+                                <br />
+                                <span>Uptime</span>
+                                <hr />
+                                <p>Energize is accessible at any moment as long as you have a connected Discord account.</p>
+                            </div>
+                        </Col>
+                        <Col md={4}>
+                            <div>
+                                <i className='fas fa-terminal' />
+                                <br />
+                                <span>Commands</span>
+                                <hr />
+                                <p>A large number of commands to empower our users.</p>
+                            </div>
+                        </Col>
+                        <Col md={4}>
+                            <div>
+                                <i className='fas fa-envelope-open-text' />
+                                <br />
+                                <span>Support</span>
+                                <hr />
+                                <p>Send us your bugs and ideas and expect a quick answer!</p>
+                            </div>
                         </Col>
                     </Row>
+                </div>
+                <div className='stats' style={{backgroundImage: 'url(./img/mixer.png)'}}>
+                    <br /><h3 style={{ margin: 0 }}>Facts about Energize⚡</h3>
+                    <div className='container'>
+                        <Row>
+                            <Col md={4}>
+                                <div className='stat'>
+                                    <i className="fas fa-users" /><br /><span id='serverCount'>0</span> Servers
+                                    </div>
+                            </Col>
+                            <Col md={4}>
+                                <div className='stat'>
+                                    <i className="fas fa-user" /><br /><span id='userCount'>0</span> Users
+                                    </div>
+                                </Col>
+                            <Col md={4}>
+                                <div className='stat'>
+                                    <i className="fas fa-code" /><br /> 20+K lines of code
+                                </div>
+                            </Col>
+                        </Row>
+                    </div>
                 </div>
             </div>
         );
