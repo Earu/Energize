@@ -485,9 +485,7 @@ module CommandHandler =
                     seq { for msg in msgs -> match msg with null -> Task.CompletedTask | _ -> msg.DeleteAsync() } 
                     |> Task.WhenAll 
                     |> await
-                with _ ->
-                    let ex = "A message was removed but the command message associated could not be removed"
-                    state.logger.Nice("Commands", ConsoleColor.Yellow, ex)
+                with _ -> ()
                 let newCmdCache = state.commandCache |> List.except [ (id, msgs) ]
                 handlerState <- Some { state with commandCache = newCmdCache }
             | None -> ()
