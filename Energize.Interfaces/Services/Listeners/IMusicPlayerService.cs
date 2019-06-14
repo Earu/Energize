@@ -2,6 +2,7 @@
 using Energize.Essentials.MessageConstructs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Energize.Essentials.TrackTypes;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -18,11 +19,11 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAllPlayersAsync();
 
-        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ITrack track);
 
-        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ITrack track);
 
-        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
+        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<ITrack> tracks);
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
@@ -48,13 +49,13 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(IMessage msg, ITrack track);
 
-        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track);
+        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ITrack track);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
 
-        Task<LavaTrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId);
+        Task<ITrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId);
 
         Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search);
     }

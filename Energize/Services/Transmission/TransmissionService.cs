@@ -71,7 +71,7 @@ namespace Energize.Services.Transmission
                     };
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.Logger.Nice("Octovisor", ConsoleColor.Red, ex.Message);
             }
