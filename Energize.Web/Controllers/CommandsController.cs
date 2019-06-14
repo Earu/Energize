@@ -11,8 +11,6 @@ namespace Energize.Web.Controllers
     [ApiController]
     public class CommandsController : ControllerBase
     {
-        private OctoClient Client;
-
         // GET: api/commands
         [HttpGet]
         public async Task<CommandInformation> Get()
@@ -20,11 +18,11 @@ namespace Energize.Web.Controllers
             CommandInformation cmdInfo = null;
             try
             {
-                this.Client = TransmissionService.Instance.Client;
-                if (!this.Client.IsConnected)
-                    await this.Client.ConnectAsync();
+                OctoClient client = TransmissionService.Instance.Client;
+                if (!client.IsConnected)
+                    await client.ConnectAsync();
 
-                if (this.Client.TryGetProcess("Energize", out RemoteProcess proc))
+                if (client.TryGetProcess("Energize", out RemoteProcess proc))
                     cmdInfo = await proc.TransmitAsync<CommandInformation>("commands");
 
                 return cmdInfo ?? new CommandInformation();
