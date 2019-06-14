@@ -38,7 +38,7 @@ header {
     padding: 0px;
     width: 100%;
     z-index: 10;
-    height: 70px;
+    height: 5%;
 }
 
 header>h1 {
@@ -149,7 +149,7 @@ h4 {
     padding-bottom: 1%;
     color: #333333;
     overflow-y: auto;
-    height: 93vh;
+    height: 96.6vh;
     display: flex;
     flex-direction: column;
 }
