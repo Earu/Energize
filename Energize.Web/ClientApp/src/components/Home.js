@@ -6,7 +6,34 @@ import Col from 'react-bootstrap/lib/Col';
 export default class Home extends React.Component {
     displayName = Home.name;
 
-    async displayUserCount() {
+    capitalize(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    async fetchAndDisplayChangelog()
+    {
+        let response = await fetch('https://api.github.com/repos/Earu/Energize/commits', {
+            method: 'GET'
+        });
+
+        if (response.ok)
+        {
+            let commits = await response.json();
+            commits = commits.map(commit => (
+                <li className='commit'>
+                    <a href={commit.html_url}>
+                        {this.capitalize(commit.commit.message)}
+                        <img src={commit.author.avatar_url} alt='author_avatar'/>
+                        <span>{commit.author.login}</span>
+                    </a>
+                </li>
+            ));
+            console.debug(commits);
+            ReactDOM.render(<ul>{commits}</ul>, document.getElementById('changelogRoot'));
+        }
+    }
+
+    async fetchAndDisplayBotInformation() {
         let response = await fetch('./api/info', {
             method: 'GET'
         });
@@ -19,7 +46,8 @@ export default class Home extends React.Component {
     }
 
     render() {
-        this.displayUserCount();
+        this.fetchAndDisplayChangelog();
+        this.fetchAndDisplayBotInformation();
         return (
             <div className='home'>
                 <video id='visualizer' src='./video/visualizer.mp4' autoPlay loop muted />
@@ -117,10 +145,16 @@ export default class Home extends React.Component {
                                 </Col>
                             <Col md={4}>
                                 <div className='stat'>
-                                    <i className="fas fa-code" /><br /> 20+K lines of code
+                                    <i className="fas fa-code" /><br /> 20K+ lines of code
                                 </div>
                             </Col>
                         </Row>
+                    </div>
+                </div>
+                <div className='changelog'>
+                    <div className='container'>
+                        <h3>Changelog</h3>
+                        <ul id='changelogRoot'/>
                     </div>
                 </div>
             </div>
