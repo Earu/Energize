@@ -69,11 +69,11 @@ namespace Energize.Services.Listeners.Music
 
             this.Rand = new Random();
 
-            this.LavaClient.OnTrackException += async (ply, lavaTrack, error) => await this.OnTrackIssue(ply, TrackFactory.Create(lavaTrack), error);
-            this.LavaClient.OnTrackStuck += async (ply, lavaTrack, _) => await this.OnTrackIssue(ply, TrackFactory.Create(lavaTrack));
-            this.LavaClient.OnTrackFinished += async (lavalink, lavaTrack, reason) => await this.OnTrackFinished(lavalink, TrackFactory.Create(lavaTrack), reason);
+            this.LavaClient.OnTrackException += async (ply, lavaTrack, error) => await this.OnTrackIssue(ply, new DependentTrack(lavaTrack), error);
+            this.LavaClient.OnTrackStuck += async (ply, lavaTrack, _) => await this.OnTrackIssue(ply, new DependentTrack(lavaTrack));
+            this.LavaClient.OnTrackFinished += async (lavalink, lavaTrack, reason) => await this.OnTrackFinished(lavalink, new DependentTrack(lavaTrack), reason);
             this.LavaClient.Log += async (logMsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
-            this.LavaClient.OnPlayerUpdated += async (ply, lavaTrack, position) => await this.OnPlayerUpdated(ply, TrackFactory.Create(lavaTrack), position);
+            this.LavaClient.OnPlayerUpdated += async (ply, lavaTrack, position) => await this.OnPlayerUpdated(ply, new DependentTrack(lavaTrack), position);
         }
 
         public override Task InitializeAsync()
@@ -525,7 +525,7 @@ namespace Energize.Services.Listeners.Music
             (bool failed, YoutubeVideo video) = await this.TryGetVideoAsync(oldTrack);
             string videoUrl = await this.GetNextTrackVideoURLAsync(failed, video);
             SearchResult res = await this.LavaRestClient.SearchTracksAsync(videoUrl);
-            List<ITrack> tracks = res.Tracks.Select(lavaTrack => TrackFactory.Create(lavaTrack)).ToList();
+            List<ITrack> tracks = res.Tracks.Select(lavaTrack => (ITrack) new DependentTrack(lavaTrack)).ToList();
             if (tracks.Count == 0) return;
 
             switch (res.LoadType)
@@ -546,10 +546,11 @@ namespace Energize.Services.Listeners.Music
         public async Task<ITrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId)
         {
             FullTrack spotifyTrack = await this.Spotify.GetTrackAsync(spotifyId);
-            string artistName = spotifyTrack.Artists.FirstOrDefault()?.Name ?? string.Empty;
+            string artistName = spotifyTrack.Artists.FirstOrDefault()?.Name + " - " ?? string.Empty;
+            
             SearchResult result = await this.LavaRestClient.SearchYouTubeAsync($"{spotifyTrack.Name} {artistName}");
 
-            return result.Tracks.Select(lavaTrack => TrackFactory.Create(lavaTrack)).FirstOrDefault();
+            return result.Tracks.Select(lavaTrack => new DependentTrack(lavaTrack)).FirstOrDefault();
         }
 
         public async Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search)
