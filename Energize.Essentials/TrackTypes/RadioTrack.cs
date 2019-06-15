@@ -1,29 +1,29 @@
 ﻿using System.Collections.Generic;
 using Victoria.Entities;
-using Victoria.Queue;
 
 namespace Energize.Essentials.TrackTypes
 {
-    public class RadioTrack : ITrack
+    public class RadioTrack : DependentTrack
     {
-        public static RadioTrack FromTrack(LavaTrack track)
+        public RadioTrack(ITrack track)
         {
-            foreach (KeyValuePair<string, string> radio in StaticData.Instance.RadioSources)
-                if (radio.Value.Equals(track.Uri.AbsoluteUri))
-                    return new RadioTrack(radio.Key, track);
+            foreach ((string key, string value) in StaticData.Instance.RadioSources)
+                if (value.Equals(track.Uri.AbsoluteUri))
+                    Genre = key;
 
-            return new RadioTrack("unknown", track);
+            Genre = "unknown";
+            InnerTrack = track.InnerTrack;
         }
 
         public RadioTrack(string genre, LavaTrack innerTrack)
         {
-            this.Genre = genre;
-            this.InnerTrack = innerTrack;
+            Genre = genre;
+            InnerTrack = innerTrack;
         }
 
-        public string Genre { get; private set; }
-        public LavaTrack InnerTrack { get; private set; }
-        public string StreamURL { get => this.InnerTrack.Uri.AbsoluteUri; }
-        public string Id { get => this.InnerTrack.Id; }
+        public string Genre { get; }
+        public LavaTrack InnerTrack { get; }
+        public string StreamURL { get => InnerTrack.Uri.AbsoluteUri; }
+        public string Id { get => InnerTrack.Id; }
     }
 }
