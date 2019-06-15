@@ -103,8 +103,9 @@ h4 {
     color: white;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 5px #333333;
+    box-shadow: 2px 0 5px black;
     z-index: 5;
+    font-size: 17px;
 }
 
 .active {

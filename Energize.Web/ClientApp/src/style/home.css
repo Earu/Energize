@@ -22,18 +22,18 @@
     margin-bottom: 0;
 }
 
-.intro-description {
-    margin-top: 100px;
-    text-align: center;
-    font-size: 40px;
-    font-weight: 700;
-    font-style: oblique;
-    text-shadow: 0 0 5px black;
+.intro-text {
+    display: block;
+    margin-top: 150px;
+    margin-left: 25px;
+    font-size: 25px;
+    font-weight: bolder;
+    margin-bottom: 20px;
 }
 
 .logo {
     display: block;
-    width: 200px;
+    width: 300px;
     margin: 0 auto;
     margin-top: 100px;
     background-color: rgba(0, 0, 0, 0.5);
@@ -45,35 +45,38 @@
 .learn-more-btn {
     text-align: center;
     margin: 0 auto;
-    border-radius: 40px;
+    border-radius: 999px;
     padding: 10px;
-    width: 200px;
+    width: 50%;
+    max-width: 200px;
     box-shadow: 0 0 10px black;
     border: 2px solid white;
-    display: block;
+    display: inline-block;
     transition: 0.25s;
+    font-size: 15px;
+    margin: 10px;
 }
 
 .invite-btn {
     background-color: rgba(0, 0, 0, 0.3);
     color: white;
-    margin-top: 140px;
 }
 
 .invite-btn:hover {
     color: #A51C15 !important;
     border: 2px solid #A51C15;
+    text-decoration: none;
 }
 
 .learn-more-btn {
     color: black !important;
     background-color: white;
-    margin-top: 40px;
 }
 
 .learn-more-btn:hover {
     background-color: #cccccc;
     border: 2px solid #cccccc;
+    text-decoration: none;
 }
 
 .pros-container {
@@ -133,6 +136,7 @@
     background-color: #212121;
     text-align: justify;
     font-size: 20px;
+    padding-bottom: 40px;
 }
 
 .changelog>div>h3 {
@@ -173,7 +177,7 @@
     color: white;
     text-decoration: none;
     border-left: 6px solid #A51C15;
-    transform: scale(1.1);
+    transform: scale(1.02);
 }
 
 @media only screen and (max-width: 767px) {
@@ -186,19 +190,21 @@
         margin-top: -90vh;
     }
 
+    .intro-text {
+        display: none;
+    }
+
     .invite-btn,
     .learn-more-btn {
         margin: 0 auto;
         margin-top: 30px;
+        display: block;
     }
 
     .logo {
         margin: 0 auto;
-        margin-top: 30%;
-    }
-
-    .intro-description {
-        display: none;
+        margin-top: 10%;
+        width: 250px;
     }
 
     .stat {

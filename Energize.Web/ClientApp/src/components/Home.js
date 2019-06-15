@@ -19,16 +19,17 @@ export default class Home extends React.Component {
         if (response.ok)
         {
             let commits = await response.json();
-            commits = commits.map(commit => (
+            commits = commits.slice(0, 10).map(commit => (
                 <li className='commit'>
                     <a href={commit.html_url}>
                         {this.capitalize(commit.commit.message)}
+                        <hr />
+                        {new Date(commit.commit.author.date).toLocaleString()}
                         <img src={commit.author.avatar_url} alt='author_avatar'/>
                         <span>{commit.author.login}</span>
                     </a>
                 </li>
             ));
-            console.debug(commits);
             ReactDOM.render(<ul>{commits}</ul>, document.getElementById('changelogRoot'));
         }
     }
@@ -60,11 +61,9 @@ export default class Home extends React.Component {
                                     <img src='./img/logo.png' className='logo' alt='logo' />
                                 </Col>
                                 <Col md={6} className='p-0 m-0'>
+                                    <span className='intro-text'>An augmented Discord experience</span>
                                     <a href='https://discordapp.com/oauth2/authorize?client_id=360116713829695489&scope=bot&permissions=0' className='invite-btn'>Invite</a>
                                     <a href='./docs' className='learn-more-btn'>Learn more</a>
-                                </Col>
-                                <Col md={12} className='p-0 m-0'>
-                                    <h2 className='intro-description'>An augmented Discord™ experience</h2>
                                 </Col>
                             </Row>
                         </Col>
@@ -130,7 +129,7 @@ export default class Home extends React.Component {
                     </Row>
                 </div>
                 <div className='stats' style={{backgroundImage: 'url(./img/mixer.png)'}}>
-                    <br /><h3 style={{ margin: 0 }}>Facts about Energize⚡</h3>
+                    <br /><h3 style={{ margin: 0 }}>Facts about Energize<span role='img' aria-label='thunderbolt'>⚡</span></h3>
                     <div className='container'>
                         <Row>
                             <Col md={4}>
