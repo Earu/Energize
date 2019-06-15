@@ -88,7 +88,7 @@ namespace Energize.Services.Listeners.Music
             {
                 if (ply.TrackPlayer != null)
                 {
-                    if (!track.InnerTrack.IsStream && !ply.IsPaused)
+                    if (!track.IsStream && !ply.IsPaused)
                         await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
 
                     ply.Refresh();
@@ -96,7 +96,7 @@ namespace Energize.Services.Listeners.Music
             }
 
             IGuild guild = lply.VoiceChannel.Guild;
-            string msg = $"Updated track <{track.InnerTrack.Title}> ({position}) for player in guild <{guild.Name}>";
+            string msg = $"Updated track <{track.Title}> ({position}) for player in guild <{guild.Name}>";
             this.Logger.LogTo("victoria.log", msg);
         }
 
@@ -210,7 +210,7 @@ namespace Energize.Services.Listeners.Music
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return null;
 
-            RadioTrack radio = RadioTrack.FromTrack(track.InnerTrack);
+            RadioTrack radio = new RadioTrack(track);
             ply.Queue.Clear();
             ply.CurrentRadio = radio;
             await ply.Lavalink.PlayAsync(track.InnerTrack, false);
@@ -341,9 +341,8 @@ namespace Energize.Services.Listeners.Music
             if (!ply.IsPlaying) return;
 
             ITrack track = ply.CurrentTrack;
-            LavaTrack lavaTrack = track.InnerTrack;
-            TimeSpan total = lavaTrack.Position.Add(TimeSpan.FromSeconds(amount));
-            if (total < lavaTrack.Length && total >= TimeSpan.Zero)
+            TimeSpan total = track.Position.Add(TimeSpan.FromSeconds(amount));
+            if (total < track.Length && total >= TimeSpan.Zero)
                 await ply.Lavalink.SeekAsync(total);
         }
 
@@ -372,14 +371,13 @@ namespace Energize.Services.Listeners.Music
             {
                 return await paginator.SendPaginator(msg, "track queue", tracks, async (track, builder) =>
                 {
-                    LavaTrack lavaTrack = track.InnerTrack;
                     int i = tracks.IndexOf(track);
                     builder
                         .WithDescription($"🎶 Track `#{i + 1}` out of `{tracks.Count}` in the queue")
-                        .WithField("Title", lavaTrack.Title)
-                        .WithField("Author", lavaTrack.Author)
-                        .WithField("Length", lavaTrack.IsStream ? " - " : lavaTrack.Length.ToString(@"hh\:mm\:ss"))
-                        .WithField("Stream", lavaTrack.IsStream);
+                        .WithField("Title", track.Title)
+                        .WithField("Author", track.Author)
+                        .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
+                        .WithField("Stream", track.IsStream);
 
                     string thumbnailurl = await this.GetThumbnailAsync(track);
                     if (!string.IsNullOrWhiteSpace(thumbnailurl))
@@ -401,15 +399,14 @@ namespace Energize.Services.Listeners.Music
             string desc = "🎶 Added the following track to the queue:";
             if (!string.IsNullOrWhiteSpace(thumbnailUrl))
                 builder.WithThumbnailUrl(thumbnailUrl);
-            LavaTrack lavaTrack = track.InnerTrack;
             return builder
                 .WithDescription(desc)
                 .WithColorType(EmbedColorType.Good)
                 .WithFooter("music player")
-                .WithField("Title", lavaTrack.Title)
-                .WithField("Author", lavaTrack.Author)
-                .WithField("Length", lavaTrack.IsStream ? " - " : lavaTrack.Length.ToString(@"hh\:mm\:ss"))
-                .WithField("Stream", lavaTrack.IsStream)
+                .WithField("Title", track.Title)
+                .WithField("Author", track.Author)
+                .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
+                .WithField("Stream", track.IsStream)
                 .Build();
         }
 
@@ -492,10 +489,9 @@ namespace Energize.Services.Listeners.Music
         {
             bool failed = false;
             YoutubeVideo video = null;
-            LavaTrack lavaTrack = track.InnerTrack;
-            if (lavaTrack.Uri.AbsoluteUri.Contains("youtu"))
+            if (track.Uri.AbsoluteUri.Contains("youtu"))
             {
-                Match match = YTRegex.Match(lavaTrack.Uri.AbsoluteUri);
+                Match match = YTRegex.Match(track.Uri.AbsoluteUri);
                 if (!match.Success)
                     failed = true;
 
@@ -579,15 +575,15 @@ namespace Energize.Services.Listeners.Music
             IEnergizePlayer ply = this.Players[lavalink.VoiceChannel.GuildId];
             if (ply.IsLooping)
             {
-                track.InnerTrack.ResetPosition();
+                track.ResetPosition();
                 await ply.Lavalink.PlayAsync(track.InnerTrack, false);
             }
             else
             {
-                if (ply.Queue.TryDequeue(out ITrack newLavaTrack))
+                if (ply.Queue.TryDequeue(out ITrack newTrack))
                 {
-                    await ply.Lavalink.PlayAsync(newLavaTrack.InnerTrack);
-                    await this.SendPlayerAsync(ply, newLavaTrack);
+                    await ply.Lavalink.PlayAsync(newTrack.InnerTrack);
+                    await this.SendPlayerAsync(ply, newTrack);
                 }
                 else
                 {
@@ -602,18 +598,17 @@ namespace Energize.Services.Listeners.Music
 
         private async Task OnTrackIssue(LavaPlayer ply, ITrack track, string error = null)
         {
-            LavaTrack lavaTrack = track.InnerTrack;
             if (error != null)
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{lavaTrack.Title}>\n{error}");
+                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
             else
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{lavaTrack.Title}> got stuck");
+                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{track.Title}> got stuck");
 
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 Could not play track:")
-                .WithField("URL", $"**{lavaTrack.Uri}**")
+                .WithField("URL", $"**{track.Uri}**")
                 .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());

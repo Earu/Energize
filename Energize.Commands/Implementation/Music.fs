@@ -84,7 +84,7 @@ module Voice =
                 let id = spotifyMatch.Groups.[1].Value
                 let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
                 let track = awaitResult (music.ConvertSpotifyTrackToYoutubeAsync(id))
-                track.InnerTrack.Uri.AbsoluteUri
+                track.Uri.AbsoluteUri
             else
                 url
         else
