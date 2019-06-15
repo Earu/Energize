@@ -7,7 +7,7 @@ export default class Menu extends React.Component {
     render() {
         return (
             <div className='links'>
-                <div><NavLink to="/" exact>Back to Home</NavLink></div>
+                <div><NavLink to="/" exact>Home</NavLink></div>
                 <hr />
                 <div><NavLink to="/docs">Docs</NavLink></div>
                 <div><NavLink to="/music">Music</NavLink></div>
