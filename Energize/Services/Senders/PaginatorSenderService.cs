@@ -200,7 +200,7 @@ namespace Energize.Services.Senders
                 if (tracks.Count > 0)
                 {
                     LavaTrack tr = tracks[0];
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, TrackFactory.Create(tr));
+                    await music.AddTrackAsync(guser.VoiceChannel, textChan, new DependentTrack(tr));
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
                 else

@@ -32,7 +32,7 @@ namespace Energize.Essentials.TrackTypes
         {
         }
 
-        internal DependentTrack(LavaTrack innerTrack, string id = null)
+        public DependentTrack(LavaTrack innerTrack, string id = null)
         {
             InnerTrack = innerTrack;
             Id = id ?? innerTrack.Id;

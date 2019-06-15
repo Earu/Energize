@@ -35,16 +35,16 @@ module Voice =
         | LoadType.PlaylistLoaded ->
             let playlistName = res.PlaylistInfo.Name
             let textChan = ctx.message.Channel :?> ITextChannel
-            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks |> Seq.map(fun(lavaTrack) -> TrackFactory.Create(lavaTrack)))) |> Seq.toList
+            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks |> Seq.map(fun(lavaTrack) -> new DependentTrack(lavaTrack) :> ITrack))) |> Seq.toList
         | _ ->
             let tracks = res.Tracks |> Seq.toList 
             if tracks.Length > 0 then
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
                 if isRadio then
-                    [ awaitResult (music.PlayRadioAsync(vc, textChan, TrackFactory.Create(tr))) ]
+                    [ awaitResult (music.PlayRadioAsync(vc, textChan, new DependentTrack(tr))) ]
                 else
-                    [ awaitResult (music.AddTrackAsync(vc, textChan, TrackFactory.Create(tr))) ]
+                    [ awaitResult (music.AddTrackAsync(vc, textChan, new DependentTrack(tr))) ]
             else
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 

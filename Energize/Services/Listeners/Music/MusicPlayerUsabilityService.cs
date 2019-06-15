@@ -162,7 +162,7 @@ namespace Energize.Services.Listeners.Music
         {
             url = await this.SpotifyToYoutubeURLAsync(url);
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
-            List<ITrack> tracks = result.Tracks.Select(lavaTrack => TrackFactory.Create(lavaTrack)).ToList();
+            List<ITrack> tracks = result.Tracks.Select(lavaTrack => (ITrack) new DependentTrack(lavaTrack)).ToList();
             switch (result.LoadType)
             {
                 case LoadType.SearchResult:

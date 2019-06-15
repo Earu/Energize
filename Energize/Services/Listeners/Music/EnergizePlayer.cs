@@ -50,7 +50,7 @@ namespace Energize.Services.Listeners.Music
 
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
         public bool IsPaused { get => this.Lavalink.IsPaused; }
-        public ITrack CurrentTrack { get => TrackFactory.Create(this.Lavalink?.CurrentTrack); }
+        public ITrack CurrentTrack { get => new DependentTrack(this.Lavalink?.CurrentTrack); }
         public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
         public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
