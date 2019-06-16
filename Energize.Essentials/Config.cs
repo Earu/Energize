@@ -31,6 +31,7 @@ namespace Energize.Essentials
         public char Separator;
         public ulong OwnerID;
         public ulong FeedbackChannelID;
+        public ulong BugReportChannelID;
         public string BotListToken;
         public string BotsToken;
 

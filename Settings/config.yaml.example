@@ -9,7 +9,9 @@ Discord:
   Separator: ","
   OwnerID: '0000000000000000'
   FeedbackChannelID: '0000000000000000'
-  BotListToken: '0000000000000000'
+  BugReportChannelID: '0000000000000000'
+  BotListToken: dbl token
+  BotsToken: bots org token
 Lavalink:
   Host: google.com
   Port: 0000
