@@ -257,6 +257,15 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
+        public async Task StopTrackAsync(IVoiceChannel vc, ITextChannel chan)
+        {
+            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
+            if (ply == null) return;
+
+            ply.Queue.Clear();
+            await ply.Lavalink.StopAsync();
+        }
+
         public async Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
