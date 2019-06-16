@@ -32,4 +32,5 @@ URIs:
   GitHubURL: https://github.com/Earu/Energize
   InviteURL: https://discordapp.com/oauth2/authorize?client_id=0000000000000000&scope=bot&permissions=8
   WebsiteURL: http://energize.earu.io/docs
+  DiscordURL: https://discord.gg/RXZtBr5
 DBConnectionString: Data Source=EnergizeDB.db
