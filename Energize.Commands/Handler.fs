@@ -359,7 +359,7 @@ module CommandHandler =
             .WithFooter(source)
             .WithColorType(EmbedColorType.Warning)
             |> ignore
-        match state.client.GetChannel(Config.Instance.Discord.FeedbackChannelID) with
+        match state.client.GetChannel(Config.Instance.Discord.BugReportChannelID) with
         | null -> ()
         | c ->
             let chan = c :> IChannel :?> ITextChannel
