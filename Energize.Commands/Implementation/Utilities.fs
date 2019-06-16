@@ -272,6 +272,7 @@ module Util =
         let invite = Config.Instance.URIs.InviteURL
         let github = Config.Instance.URIs.GitHubURL
         let docs = Config.Instance.URIs.WebsiteURL
+        let discord = Config.Instance.URIs.DiscordURL
         let owner = match ctx.client.GetUser(Config.Instance.Discord.OwnerID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [
@@ -280,7 +281,7 @@ module Util =
             ctx.embedField "Server Count" ctx.client.Guilds.Count true
             ctx.embedField "User count" usercount true
             ctx.embedField "Owner" owner true
-            ctx.embedField "Links" (String.Join('\n', [ github; invite; docs ] |> List.map (fun url -> sprintf "**%s**" url))) false
+            ctx.embedField "Links" (String.Join('\n', [ github; invite; docs; discord ] |> List.map (fun url -> sprintf "**%s**" url))) false
         ]
 
         let builder = EmbedBuilder()

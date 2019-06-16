@@ -70,7 +70,7 @@ namespace Energize.Essentials.MessageConstructs
                 .WithColorType(EmbedColorType.Good)
                 .WithDescription("📻 Playing radio")
                 .WithField("Genre", radio.Genre)
-                .WithField("Raw Stream", radio.StreamURL)
+                .WithField("Raw Stream", $"**{radio.StreamURL}**")
                 .WithField("Volume", $"{volume}%")
                 .WithField("Paused", paused)
                 .WithFooter("music player");
