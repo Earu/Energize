@@ -1,10 +1,10 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.WebSocket;
-using Energize.Interfaces.Services.Senders;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
+using Energize.Interfaces.Services.Senders;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,13 +22,13 @@ namespace Energize.Services.Senders
 
         private readonly Logger Logger;
         private readonly MessageSender MessageSender;
-        private readonly Dictionary<ulong, Vote> Votes;
+        private readonly ConcurrentDictionary<ulong, Vote> Votes;
 
         public VoteSenderService(EnergizeClient client)
         {
             this.Logger = client.Logger;
             this.MessageSender = client.MessageSender;
-            this.Votes = new Dictionary<ulong, Vote>();
+            this.Votes = new ConcurrentDictionary<ulong, Vote>();
         }
 
         private async Task AddReactions(IUserMessage msg, int choiceCount)
@@ -52,12 +52,16 @@ namespace Energize.Services.Senders
                     await vote.Message.DeleteAsync();
                     await this.MessageSender.Send(msg, vote.VoteEmbed);
                     
-                    this.Votes.Remove(vote.Message.Id);
+                    this.Votes.TryRemove(vote.Message.Id, out Vote _);
                 };
-                this.Votes.Add(vote.Message.Id, vote);
-                await this.AddReactions(vote.Message, vote.ChoiceCount);
 
-                return vote.Message;
+                if (this.Votes.TryAdd(vote.Message.Id, vote))
+                {
+                    await this.AddReactions(vote.Message, vote.ChoiceCount);
+                    return vote.Message;
+                }
+
+                return null;
             }
             catch (Exception ex)
             {
