@@ -13,6 +13,22 @@ using System.Threading.Tasks;
 
 namespace Energize.Services
 {
+    public class EventHandlerException
+    {
+        public EventHandlerException(Exception ex, string fileName, string methodName, int line)
+        {
+            this.Error = ex;
+            this.FileName = fileName;
+            this.MethodName = methodName;
+            this.Line = line;
+        }
+
+        public Exception Error { get; private set; }
+        public string FileName { get; private set; }
+        public string MethodName { get; private set; }
+        public int Line { get; private set; }
+    }
+
     public class ServiceManager : IServiceManager
     {
         private static readonly string Namespace = typeof(ServiceManager).Namespace;
@@ -25,6 +41,7 @@ namespace Energize.Services
         private readonly IEnumerable<Type> ServiceTypes;
         private readonly EnergizeClient Client;
         private readonly Logger Logger;
+        private readonly List<EventHandlerException> CaughtExceptions;
 
         public ServiceManager(EnergizeClient client)
         {
@@ -32,6 +49,15 @@ namespace Energize.Services
             this.ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
             this.Client = client;
             this.Logger = client.Logger;
+            this.CaughtExceptions = new List<EventHandlerException>();
+        }
+
+        public IEnumerable<IGrouping<Exception, EventHandlerException>> TakeCaughtExceptions()
+        {
+            IEnumerable<IGrouping<Exception, EventHandlerException>> exs = this.CaughtExceptions.GroupBy(x => x.Error);
+            this.CaughtExceptions.Clear();
+
+            return exs;
         }
 
         private bool IsService(Type type)
@@ -68,25 +94,10 @@ namespace Energize.Services
 
             Exception ex = task.Exception.InnerException;
             this.Logger.Danger(ex);
-            this.Client.DiscordRestClient
-                .GetChannelAsync(Config.Instance.Discord.FeedbackChannelID)
-                .ContinueWith(async t =>
-                {
-                    RestChannel chan = await t;
-                    if (chan == null) return;
 
-                    StackFrame frame = new StackTrace(ex, true).GetFrame(0);
-                    EmbedBuilder builder = new EmbedBuilder();
-                    builder
-                        .WithColorType(EmbedColorType.Warning)
-                        .WithField("Error", task.Exception.Message, false)
-                        .WithField("File", frame.GetFileName())
-                        .WithField("Method", frame.GetMethod().Name)
-                        .WithField("Line", frame.GetFileLineNumber())
-                        .WithFooter("event handler error");
-
-                    this.Client.MessageSender.Send(chan, builder.Build()).Wait();
-                });
+            StackFrame frame = new StackTrace(ex, true).GetFrame(0);
+            EventHandlerException eventEx = new EventHandlerException(ex, frame.GetFileName(), frame.GetMethod().Name, frame.GetFileLineNumber());
+            this.CaughtExceptions.Add(eventEx);
         }
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)
