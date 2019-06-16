@@ -182,6 +182,15 @@ module Voice =
     }
 
     [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("stop", "Stops the current track and empties the queue", "stop <nothing>")>]
+    let stop (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ -> 
+            await (music.StopTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
+            [ ctx.sendOK None "Stopped the music player" ]
+        )
+    }
+
+    [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("loop", "Loops or unloop the current track/stream", "loop <nothing>")>]
     let loop (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
