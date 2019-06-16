@@ -142,7 +142,7 @@ namespace Energize
 
         private async Task NotifyCaughtExceptionsAsync()
         {
-            RestChannel chan = await this.DiscordRestClient.GetChannelAsync(Config.Instance.Discord.FeedbackChannelID);
+            RestChannel chan = await this.DiscordRestClient.GetChannelAsync(Config.Instance.Discord.BugReportChannelID);
             if (chan == null) return;
 
             IEnumerable<IGrouping<Exception, EventHandlerException>> exs = this.ServiceManager.TakeCaughtExceptions();
