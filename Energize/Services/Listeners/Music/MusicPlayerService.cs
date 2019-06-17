@@ -263,7 +263,8 @@ namespace Energize.Services.Listeners.Music
             if (ply == null) return;
 
             ply.Queue.Clear();
-            await ply.Lavalink.StopAsync();
+            if (ply.IsPlaying)
+                await ply.Lavalink.StopAsync();
         }
 
         public async Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan)
