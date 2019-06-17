@@ -699,6 +699,7 @@ namespace Energize.Services.Listeners.Music
                 BufferSize = 8192,
                 PreservePlayers = true,
                 AutoDisconnect = false,
+                LogSeverity = LogSeverity.Debug,
                 DefaultVolume = 50,
                 InactivityTimeout = TimeSpan.FromMinutes(3),
             };
