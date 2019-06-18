@@ -609,9 +609,16 @@ namespace Energize.Services.Listeners.Music
         private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error = null)
         {
             if (error != null)
+            {
                 this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
+                if (track.Uri.AbsoluteUri.Contains("soundcloud.com"))
+                    error = $"{error} It is likely that this track is not usable outside of SoundCloud.";
+            }
             else
+            {
                 this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{track.Title}> got stuck");
+                error = "The track got stuck.";
+            }
 
             EmbedBuilder builder = new EmbedBuilder();
             builder
@@ -622,7 +629,6 @@ namespace Energize.Services.Listeners.Music
                 .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());
-            await this.SkipTrackAsync(ply.VoiceChannel, ply.TextChannel);
         }
 
         private delegate Task ReactionCallback(MusicPlayerService music, IEnergizePlayer ply);
