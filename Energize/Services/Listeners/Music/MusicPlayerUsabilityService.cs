@@ -1,14 +1,14 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Energize.Essentials;
-using Energize.Interfaces.Services;
-using Energize.Interfaces.Services.Listeners;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord;
+using Discord.WebSocket;
+using Energize.Essentials;
 using Energize.Essentials.TrackTypes;
+using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Listeners;
 using Victoria.Entities;
 
 namespace Energize.Services.Listeners.Music
@@ -29,9 +29,9 @@ namespace Energize.Services.Listeners.Music
 
         public MusicPlayerUsabilityService(EnergizeClient client)
         {
-            this.Logger = client.Logger;
-            this.ServiceManager = client.ServiceManager;
-            this.MessageSender = client.MessageSender;
+            Logger = client.Logger;
+            ServiceManager = client.ServiceManager;
+            MessageSender = client.MessageSender;
         }
 
         private static Regex CompiledRegex(string pattern)
@@ -77,7 +77,7 @@ namespace Energize.Services.Listeners.Music
             if (string.IsNullOrWhiteSpace(url))
                 return false;
 
-            return this.IsYoutubeURL(url) || this.IsSoundcloudURL(url) || this.IsTwitchURL(url) || this.IsSpotifyURL(url);
+            return IsYoutubeURL(url) || IsSoundcloudURL(url) || IsTwitchURL(url) || IsSpotifyURL(url);
         }
 
         private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
@@ -95,7 +95,7 @@ namespace Energize.Services.Listeners.Music
         {
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
             if (msg.Embeds.Count < 1 && msg.Attachments.Count < 1) return false;
-            CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
+            CommandHandlingService commands = ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
 
             return true;
@@ -109,14 +109,12 @@ namespace Energize.Services.Listeners.Music
             if (match.Success)
             {
                 string spotifyId = match.Groups[1].Value;
-                IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                ITrack track = await music.ConvertSpotifyTrackToYoutubeAsync(spotifyId);
-                return track.InnerTrack.Uri.AbsoluteUri;
+                IMusicPlayerService music = ServiceManager.GetService<IMusicPlayerService>("Music");
+                var spotifyTrack = await music.GetSpotifyTrackAsync(spotifyId);
+                LavaTrack innerTrack = await spotifyTrack.GetInnerTrackAsync();
+                return innerTrack.Uri.AbsoluteUri;
             }
-            else
-            {
-                return url;
-            }
+            return url;
         }
 
         private string SanitizeYoutubeUrl(string url)
@@ -129,18 +127,14 @@ namespace Energize.Services.Listeners.Music
                 string ytId = match.Groups[1].Value;
                 return $"https://www.youtube.com/watch?v={ytId}";
             }
-            else
-            {
-                return url;
-            }
+            return url;
         }
 
         private bool HasPlayableVideo(Embed embed)
         {
             if (embed.Type == EmbedType.Video)
                 return embed.Video.HasValue && embed.Video.Value.Url.IsPlayableURL();
-            else
-                return false;
+            return false;
         }
 
         private async Task<IUserMessage> SendNonPlayableContent(IGuildUser user, IUserMessage msg, ITextChannel textChan, string url, string error)
@@ -155,14 +149,14 @@ namespace Energize.Services.Listeners.Music
                 .WithField("Posted By", msg.Author.Mention)
                 .WithField("Error", error);
 
-            return await this.MessageSender.Send(textChan, builder.Build());
+            return await MessageSender.Send(textChan, builder.Build());
         }
 
         private async Task TryPlayUrl(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
         {
-            url = await this.SpotifyToYoutubeURLAsync(url);
-            SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
-            List<ITrack> tracks = result.Tracks.Select(lavaTrack => (ITrack) new DependentTrack(lavaTrack)).ToList();
+            url = await SpotifyToYoutubeURLAsync(url);
+            SearchResult result = await music.LavaRestClient.SearchTracksAsync(SanitizeYoutubeUrl(url));
+            List<LavaTrack> tracks = result.Tracks.ToList();
             switch (result.LoadType)
             {
                 case LoadType.SearchResult:
@@ -175,12 +169,12 @@ namespace Energize.Services.Listeners.Music
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
-                    await this.SendNonPlayableContent(guser, msg, textChan, url, "File is corrupted or does not have audio");
-                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
+                    await SendNonPlayableContent(guser, msg, textChan, url, "File is corrupted or does not have audio");
+                    Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
                     break;
                 case LoadType.NoMatches:
-                    await this.SendNonPlayableContent(guser, msg, textChan, url, "Could not find the track to be added/played");
-                    this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
+                    await SendNonPlayableContent(guser, msg, textChan, url, "Could not find the track to be added/played");
+                    Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
                     break;
             }
         }
@@ -188,9 +182,9 @@ namespace Energize.Services.Listeners.Music
         [Event("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (!this.IsValidMessage(msg)) return;
+            if (!IsValidMessage(msg)) return;
 
-            if(msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || this.HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
+            if(msg.Embeds.Any(embed => IsValidURL(embed.Url) || HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
                 try
                 {
@@ -204,7 +198,7 @@ namespace Energize.Services.Listeners.Music
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
+                    Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
                 }
             }
         }
@@ -212,9 +206,9 @@ namespace Energize.Services.Listeners.Music
         [Event("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> _, SocketMessage msg, ISocketMessageChannel __)
         {
-            if (!this.IsValidMessage(msg)) return;
+            if (!IsValidMessage(msg)) return;
 
-            if (msg.Embeds.Any(embed => this.IsValidURL(embed.Url) || this.HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
+            if (msg.Embeds.Any(embed => IsValidURL(embed.Url) || HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
                 try
                 {
@@ -237,42 +231,42 @@ namespace Energize.Services.Listeners.Music
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
+                    Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not make a playable message usable: {ex.Message}");
                 }
             }
         }
 
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
+            => await OnReaction(cache, chan, reaction);
 
         [Event("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
+            => await OnReaction(cache, chan, reaction);
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (!this.IsValidReaction(chan, reaction)) return;
+            if (!IsValidReaction(chan, reaction)) return;
             IGuildUser guser = (IGuildUser)reaction.User.Value;
             if (guser.VoiceChannel == null) return;
             ITextChannel textChan = (ITextChannel)chan;
             IUserMessage msg = await cache.GetOrDownloadAsync();
-            if (!this.IsValidMessage(msg)) return;
+            if (!IsValidMessage(msg)) return;
 
-            IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
+            IMusicPlayerService music = ServiceManager.GetService<IMusicPlayerService>("Music");
 
             foreach (Embed embed in msg.Embeds)
             {
-                if (this.IsValidURL(embed.Url)) 
-                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Url);
+                if (IsValidURL(embed.Url)) 
+                    await TryPlayUrl(music, textChan, msg, guser, embed.Url);
                 else if(embed.Video.HasValue)
-                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Video.Value.Url);
+                    await TryPlayUrl(music, textChan, msg, guser, embed.Video.Value.Url);
             }
 
             foreach(Attachment attachment in msg.Attachments)
             {
                 if (attachment.IsPlayableAttachment()) 
-                    await this.TryPlayUrl(music, textChan, msg, guser, attachment.Url);
+                    await TryPlayUrl(music, textChan, msg, guser, attachment.Url);
             }
         }
     }
