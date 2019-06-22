@@ -331,7 +331,17 @@ namespace Energize.Services.Listeners.Music
                 ply.CurrentRadio = null;
 
             if (ply.IsPlaying)
-                await ply.Lavalink.StopAsync();
+            {
+                if (ply.Queue.Count > 0)
+                {
+                    await ply.Lavalink.SkipAsync();
+                    await this.SendPlayerAsync(ply, ply.CurrentTrack);
+                }
+                else
+                {
+                    await ply.Lavalink.StopAsync();
+                }
+            }
         }
 
         public async Task SetTrackVolumeAsync(IVoiceChannel vc, ITextChannel chan, int vol)
@@ -376,22 +386,34 @@ namespace Energize.Services.Listeners.Music
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
             IPaginatorSenderService paginator = this.ServiceManager.GetService<IPaginatorSenderService>("Paginator");
-            List<LavaTrack> tracks = ply.Queue.Items.ToList();
-            if (tracks.Count > 0)
+            List<IQueueObject> objs = ply.Queue.Items.ToList();
+            if (objs.Count > 0)
             {
-                return await paginator.SendPaginator(msg, "track queue", tracks, async (track, builder) =>
+                return await paginator.SendPaginator(msg, "track queue", objs, async (obj, builder) =>
                 {
-                    int i = tracks.IndexOf(track);
-                    builder
-                        .WithDescription($"🎶 Track `#{i + 1}` out of `{tracks.Count}` in the queue")
-                        .WithField("Title", track.Title)
-                        .WithField("Author", track.Author)
-                        .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
-                        .WithField("Stream", track.IsStream);
+                    int i = objs.IndexOf(obj);
+                    builder.WithDescription($"🎶 Track `#{i + 1}` out of `{objs.Count}` in the queue");
 
-                    string thumbnailurl = await this.GetThumbnailAsync(track);
-                    if (!string.IsNullOrWhiteSpace(thumbnailurl))
-                        builder.WithThumbnailUrl(thumbnailurl);
+                    if (obj is LavaTrack track)
+                    {
+                        builder
+                            .WithField("Title", track.Title)
+                            .WithField("Author", track.Author)
+                            .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
+                            .WithField("Stream", track.IsStream);
+
+                        string thumbnailurl = await this.GetThumbnailAsync(track);
+                        if (!string.IsNullOrWhiteSpace(thumbnailurl))
+                            builder.WithThumbnailUrl(thumbnailurl);
+                    }
+                    else
+                    {
+                        builder
+                            .WithField("Title", "?")
+                            .WithField("Author", "?")
+                            .WithField("Length", "?")
+                            .WithField("Stream", "?");
+                    }
                 });
             }
             else
@@ -580,7 +602,7 @@ namespace Energize.Services.Listeners.Music
 
         private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
         {
-            if (reason == TrackEndReason.Cleanup || reason == TrackEndReason.Replaced) return;
+            if (!reason.ShouldPlayNext()) return;
 
             IEnergizePlayer ply = this.Players[lavalink.VoiceChannel.GuildId];
             if (ply.IsLooping)
@@ -590,18 +612,25 @@ namespace Energize.Services.Listeners.Music
             }
             else
             {
-                if (ply.Queue.TryDequeue(out LavaTrack newtrack))
+                if (ply.Queue.TryDequeue(out IQueueObject obj))
                 {
-                    await ply.Lavalink.PlayAsync(newtrack);
-                    await this.SendPlayerAsync(ply, newtrack);
+                    if (obj is LavaTrack newTrack)
+                    {
+                        await ply.Lavalink.PlayAsync(newTrack);
+                        await this.SendPlayerAsync(ply, newTrack);
+                    }
                 }
                 else
                 {
                     if (ply.Autoplay && ply.Queue.Count == 0)
+                    {
                         await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
+                    }
                     else
+                    {
                         if (ply.TrackPlayer != null)
                             await ply.TrackPlayer.DeleteMessage();
+                    }
                 }
             }
         }
