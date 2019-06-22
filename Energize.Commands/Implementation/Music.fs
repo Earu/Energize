@@ -35,16 +35,16 @@ module Voice =
         | LoadType.PlaylistLoaded ->
             let playlistName = res.PlaylistInfo.Name
             let textChan = ctx.message.Channel :?> ITextChannel
-            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks |> Seq.map(fun(lavaTrack) -> new DependentTrack(lavaTrack) :> ITrack))) |> Seq.toList
+            awaitResult (music.AddPlaylistAsync(vc, textChan, playlistName, res.Tracks)) |> Seq.toList
         | _ ->
             let tracks = res.Tracks |> Seq.toList 
             if tracks.Length > 0 then
                 let tr = tracks.[0]
                 let textChan = ctx.message.Channel :?> ITextChannel
                 if isRadio then
-                    [ awaitResult (music.PlayRadioAsync(vc, textChan, new DependentTrack(tr))) ]
+                    [ awaitResult (music.PlayRadioAsync(vc, textChan, tr)) ]
                 else
-                    [ awaitResult (music.AddTrackAsync(vc, textChan, new DependentTrack(tr))) ]
+                    [ awaitResult (music.AddTrackAsync(vc, textChan, tr)) ]
             else
                 [ ctx.sendWarn None "Could not find any matches for the specified track" ]
 
@@ -83,8 +83,9 @@ module Voice =
             if spotifyMatch.Success then
                 let id = spotifyMatch.Groups.[1].Value
                 let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-                let track = awaitResult (music.ConvertSpotifyTrackToYoutubeAsync(id))
-                track.Uri.AbsoluteUri
+                let track = awaitResult (music.GetSpotifyTrackAsync(id))
+                let uri = awaitResult (track.GetUriAsync())
+                uri.AbsoluteUri
             else
                 url
         else
@@ -322,7 +323,8 @@ module Voice =
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                     [ awaitResult (paginator.SendPlayerPaginator(ctx.message, songItems, fun songItem ->
                         let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
-                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.DisplayURL
+                        let uri = awaitResult (songItem.GetUriAsync())
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] uri.AbsoluteUri 
                     )) ]
                 else
                     [ ctx.sendWarn None "Could not find any songs" ]
