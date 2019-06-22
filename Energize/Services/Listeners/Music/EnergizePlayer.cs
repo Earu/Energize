@@ -30,7 +30,6 @@ namespace Energize.Services.Listeners.Music
             this.Disconnected = false;
             this.TrackPlayer = null;
             this.CurrentRadio = null;
-            this.Queue = new LavaQueue<LavaTrack>();
             this.TimeToLive = 3 * 60 * 1000;
             this.TTLTimer = null;
             this.Refresh();
@@ -46,8 +45,8 @@ namespace Energize.Services.Listeners.Music
         public bool Disconnected { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
         public RadioTrack CurrentRadio { get; set; }
-        public LavaQueue<LavaTrack> Queue { get; private set; }
 
+        public LavaQueue<IQueueObject> Queue { get => this.Lavalink.Queue; }
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
         public bool IsPaused { get => this.Lavalink.IsPaused; }
         public LavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
