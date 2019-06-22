@@ -1,7 +1,6 @@
-﻿using Discord;
-using Energize.Essentials.MessageConstructs;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord;
 using Energize.Essentials.TrackTypes;
 using Victoria;
 using Victoria.Entities;
@@ -19,11 +18,13 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAllPlayersAsync();
 
-        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ITrack track);
+        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack lavaTrack);
+        
+        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, IAsyncLazyLoadTrack lavaTrack);
 
-        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ITrack track);
+        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack lavaTrack);
 
-        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<ITrack> tracks);
+        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
@@ -49,14 +50,14 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTrackAsync(IMessage msg, ITrack track);
+        Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack lavaTrack);
 
-        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ITrack track);
+        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack lavaTrack);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
 
-        Task<ITrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId);
+        Task<SpotifyTrack> GetSpotifyTrackAsync(string spotifyId);
 
-        Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search);
+        Task<IEnumerable<SpotifyTrack>> SearchSpotifyAsync(string search);
     }
 }

@@ -35,6 +35,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Energize.Interfaces\Energize.Interfaces.csproj" />
     <ProjectReference Include="..\Energize.Essentials\Energize.Essentials.csproj" />
+    <ProjectReference Include="..\Energize.Victoria\Energize.Victoria.csproj" />
   </ItemGroup>
 
   <ItemGroup>
