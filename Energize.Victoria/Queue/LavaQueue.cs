@@ -18,9 +18,9 @@ namespace Victoria.Queue
         /// <inheritdoc cref="LavaQueue{T}" />
         public LavaQueue()
         {
-            _random = new Random();
-            _linked = new LinkedList<T>();
-            _lockObj = new object();
+            this._random = new Random();
+            this._linked = new LinkedList<T>();
+            this._lockObj = new object();
         }
 
         /// <summary>
@@ -30,9 +30,9 @@ namespace Victoria.Queue
         {
             get
             {
-                lock (_lockObj)
+                lock (this._lockObj)
                 {
-                    return _linked.Count;
+                    return this._linked.Count;
                 }
             }
         }
@@ -42,9 +42,9 @@ namespace Victoria.Queue
         {
             get
             {
-                lock (_lockObj)
+                lock (this._lockObj)
                 {
-                    for (var node = _linked.First; node != null; node = node.Next)
+                    for (var node = this._linked.First; node != null; node = node.Next)
                         yield return node.Value;
                 }
             }
@@ -58,9 +58,9 @@ namespace Victoria.Queue
         /// </param>
         public void Enqueue(T value)
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                _linked.AddLast(value);
+                this._linked.AddLast(value);
             }
         }
 
@@ -72,10 +72,10 @@ namespace Victoria.Queue
         /// </returns>
         public T Dequeue()
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                var result = _linked.First.Value;
-                _linked.RemoveFirst();
+                var result = this._linked.First.Value;
+                this._linked.RemoveFirst();
                 return result;
             }
         }
@@ -89,22 +89,22 @@ namespace Victoria.Queue
         /// <returns><see cref="bool" /> based on if dequeue-ing was successful.</returns>
         public bool TryDequeue(out T value)
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                if (_linked.Count < 1)
+                if (this._linked.Count < 1)
                 {
                     value = default;
                     return false;
                 }
 
-                var result = _linked.First.Value;
+                var result = this._linked.First.Value;
                 if (result == null)
                 {
                     value = default;
                     return false;
                 }
 
-                _linked.RemoveFirst();
+                this._linked.RemoveFirst();
                 value = result;
                 return true;
             }
@@ -118,9 +118,9 @@ namespace Victoria.Queue
         /// </returns>
         public T Peek()
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                return _linked.First.Value;
+                return this._linked.First.Value;
             }
         }
 
@@ -132,9 +132,9 @@ namespace Victoria.Queue
         /// </param>
         public void Remove(T value)
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                _linked.Remove(value);
+                this._linked.Remove(value);
             }
         }
 
@@ -143,9 +143,9 @@ namespace Victoria.Queue
         /// </summary>
         public void Clear()
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                _linked.Clear();
+                this._linked.Clear();
             }
         }
 
@@ -154,25 +154,25 @@ namespace Victoria.Queue
         /// </summary>
         public void Shuffle()
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                if (_linked.Count < 2)
+                if (this._linked.Count < 2)
                     return;
 
-                var shadow = new T[_linked.Count];
+                var shadow = new T[this._linked.Count];
                 var i = 0;
-                for (var node = _linked.First; !(node is null); node = node.Next)
+                for (var node = this._linked.First; !(node is null); node = node.Next)
                 {
-                    var j = _random.Next(i + 1);
+                    var j = this._random.Next(i + 1);
                     if (i != j)
                         shadow[i] = shadow[j];
                     shadow[j] = node.Value;
                     i++;
                 }
 
-                _linked.Clear();
+                this._linked.Clear();
                 foreach (var value in shadow)
-                    _linked.AddLast(value);
+                    this._linked.AddLast(value);
             }
         }
 
@@ -185,9 +185,9 @@ namespace Victoria.Queue
         /// </returns>
         public T RemoveAt(int index)
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                var currentNode = _linked.First;
+                var currentNode = this._linked.First;
 
                 for (var i = 0; i <= index && currentNode != null; i++)
                 {
@@ -197,7 +197,7 @@ namespace Victoria.Queue
                         continue;
                     }
 
-                    _linked.Remove(currentNode);
+                    this._linked.Remove(currentNode);
                     break;
                 }
 
@@ -212,19 +212,19 @@ namespace Victoria.Queue
         /// <param name="to">End index.</param>
         public void RemoveRange(int from, int to)
         {
-            lock (_lockObj)
+            lock (this._lockObj)
             {
-                var currentNode = _linked.First;
+                var currentNode = this._linked.First;
                 for (var i = 0; i <= to && currentNode != null; i++)
                 {
                     if (from <= i)
                     {
-                        _linked.Remove(currentNode);
+                        this._linked.Remove(currentNode);
                         currentNode = currentNode.Next;
                         continue;
                     }
 
-                    _linked.Remove(currentNode);
+                    this._linked.Remove(currentNode);
                 }
             }
         }

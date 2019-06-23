@@ -9,7 +9,7 @@ namespace Victoria.Entities.Payloads
 
         protected BasePayload(string op)
         {
-            Op = op;
+            this.Op = op;
         }
     }
 }

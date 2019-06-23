@@ -9,7 +9,7 @@ namespace Victoria.Entities.Payloads
 
         public PausePayload(ulong guildId, bool pause) : base(guildId, "pause")
         {
-            Pause = pause;
+            this.Pause = pause;
         }
     }
 }

@@ -14,6 +14,6 @@ namespace Victoria.Entities
         public LoadType LoadType { get; private set; }
 
         [JsonIgnore]
-        public IEnumerable<LavaTrack> Tracks { get; internal set; }
+        public IEnumerable<ILavaTrack> Tracks { get; internal set; }
     }
 }

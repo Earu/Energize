@@ -17,22 +17,23 @@ namespace Victoria
         /// <param name="configuration"><see cref="Configuration"/></param>
         public Task StartAsync(DiscordSocketClient socketClient, Configuration configuration = null)
         {
-            socketClient.Disconnected += OnDisconnected;
-            return InitializeAsync(socketClient, configuration);
+            socketClient.Disconnected += this.OnDisconnected;
+            return this.InitializeAsync(socketClient, configuration);
         }
 
         private async Task OnDisconnected(Exception exception)
         {
-            if (Configuration.PreservePlayers)
+            if (this.Configuration.PreservePlayers)
                 return;
 
-            foreach (var player in Players.Values)
+            foreach (var player in this.Players.Values)
             {
                 await player.DisposeAsync().ConfigureAwait(false);
             }
-            Players.Clear();
 
-            ShadowLog?.WriteLog(LogSeverity.Error, "WebSocket disconnected! Disposing all connected players.", exception);
+            this.Players.Clear();
+
+            this.ShadowLog?.WriteLog(LogSeverity.Error, "WebSocket disconnected! Disposing all connected players.", exception);
         }
     }
 }

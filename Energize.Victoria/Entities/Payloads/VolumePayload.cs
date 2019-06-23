@@ -9,7 +9,7 @@ namespace Victoria.Entities.Payloads
 
         public VolumePayload(ulong guildId, int volume) : base(guildId, "volume")
         {
-            Volume = volume;
+            this.Volume = volume;
         }
     }
 }

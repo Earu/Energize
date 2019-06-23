@@ -74,9 +74,9 @@ namespace Victoria
 
         public Configuration SetInternals(ulong userId, int shards)
         {
-            UserId = userId;
-            Shards = shards;
-            InternalSeverity = LogSeverity;
+            this.UserId = userId;
+            this.Shards = shards;
+            InternalSeverity = this.LogSeverity;
             return this;
         }
     }

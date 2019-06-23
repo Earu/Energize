@@ -21,16 +21,16 @@ namespace Victoria.Entities.Payloads
                               TimeSpan start, TimeSpan end,
                               bool noReplace) : base(guildId, "play")
         {
-            Hash = trackHash;
-            StartTime = (int)start.TotalMilliseconds;
-            EndTime = (int)end.TotalMilliseconds;
-            NoReplace = noReplace;
+            this.Hash = trackHash;
+            this.StartTime = (int)start.TotalMilliseconds;
+            this.EndTime = (int)end.TotalMilliseconds;
+            this.NoReplace = noReplace;
         }
 
         public PlayPayload(ulong guildId, string trackHash, bool noReplace) : base(guildId, "play")
         {
-            Hash = trackHash;
-            NoReplace = noReplace;
+            this.Hash = trackHash;
+            this.NoReplace = noReplace;
         }
     }
 }

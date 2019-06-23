@@ -40,64 +40,65 @@ namespace Energize.Essentials.TrackTypes
         
         public SpotifyTrackInfo(SimpleTrack simpleTrack)
         {
-            Artists = simpleTrack.Artists;
-            AvailableMarkets = simpleTrack.AvailableMarkets;
-            DiscNumber = simpleTrack.DiscNumber;
-            Duration = TimeSpan.FromMilliseconds(simpleTrack.DurationMs);
-            Explicit = simpleTrack.Explicit;
-            ExternUrls = new Dictionary<string, Uri>(
+            this.Artists = simpleTrack.Artists;
+            this.AvailableMarkets = simpleTrack.AvailableMarkets;
+            this.DiscNumber = simpleTrack.DiscNumber;
+            this.Duration = TimeSpan.FromMilliseconds(simpleTrack.DurationMs);
+            this.Explicit = simpleTrack.Explicit;
+            this.ExternUrls = new Dictionary<string, Uri>(
                 simpleTrack.ExternUrls
                     .Select(pair => new KeyValuePair<string, Uri>(pair.Key, new Uri(pair.Value)))); // Convert value to URI
-            Id = simpleTrack.Id;
-            Name = simpleTrack.Name;
-            PreviewUrl = simpleTrack.PreviewUrl;
-            TrackNumber = simpleTrack.TrackNumber;
-            Type = simpleTrack.Type;
+            this.Id = simpleTrack.Id;
+            this.Name = simpleTrack.Name;
+            this.PreviewUrl = simpleTrack.PreviewUrl;
+            this.TrackNumber = simpleTrack.TrackNumber;
+            this.Type = simpleTrack.Type;
             try
             {
-                Uri = ExternUrls["spotify"];
+                this.Uri = this.ExternUrls["spotify"];
             }
             catch (KeyNotFoundException) // Should never fail
             {
                 // Convert Spotify URI to a track link (wont link track to playlist or album if it was linked)
-                Uri = new Uri($"https://open.spotify.com/track/{Id}");
+                this.Uri = new Uri($"https://open.spotify.com/track/{this.Id}");
             }
         }
 
         public SpotifyTrackInfo(FullTrack fullTrack)
         {
-            Artists = fullTrack.Artists;
-            AvailableMarkets = fullTrack.AvailableMarkets;
-            DiscNumber = fullTrack.DiscNumber;
-            Duration = TimeSpan.FromMilliseconds(fullTrack.DurationMs);
-            Explicit = fullTrack.Explicit;
+            this.Artists = fullTrack.Artists;
+            this.AvailableMarkets = fullTrack.AvailableMarkets;
+            this.DiscNumber = fullTrack.DiscNumber;
+            this.Duration = TimeSpan.FromMilliseconds(fullTrack.DurationMs);
+            this.Explicit = fullTrack.Explicit;
             try
             {
-                ExternUrls = new Dictionary<string, Uri>(
+                this.ExternUrls = new Dictionary<string, Uri>(
                     fullTrack.ExternUrls
                         .Select(pair => new KeyValuePair<string, Uri>(pair.Key, new Uri(pair.Value))));
                     // Convert value to URI
             }
             catch
             {
-                ExternUrls = new Dictionary<string, Uri>();
+                this.ExternUrls = new Dictionary<string, Uri>();
             }
-            
-            Id = fullTrack.Id;
-            Name = fullTrack.Name;
-            PreviewUrl = fullTrack.PreviewUrl;
-            TrackNumber = fullTrack.TrackNumber;
-            Type = fullTrack.Type;
+
+            this.Id = fullTrack.Id;
+            this.Name = fullTrack.Name;
+            this.PreviewUrl = fullTrack.PreviewUrl;
+            this.TrackNumber = fullTrack.TrackNumber;
+            this.Type = fullTrack.Type;
             try
             {
-                Uri = ExternUrls["spotify"];
+                this.Uri = this.ExternUrls["spotify"];
             }
             catch (KeyNotFoundException) // Should never fail
             {
                 // Convert Spotify URI to a track link (wont link track to playlist or album if it was linked)
-                Uri = new Uri($"https://open.spotify.com/track/{Id}");
+                this.Uri = new Uri($"https://open.spotify.com/track/{this.Id}");
             }
-            Images = fullTrack.Album?.Images?.Select(image => image.Url)
+
+            this.Images = fullTrack.Album?.Images?.Select(image => image.Url)
                 .ToArray();
         }
     }

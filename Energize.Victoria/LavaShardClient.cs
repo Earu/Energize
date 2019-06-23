@@ -17,25 +17,25 @@ namespace Victoria
         /// <param name="configuration"><see cref="Configuration"/></param>
         public Task StartAsync(DiscordShardedClient shardedClient, Configuration configuration = null)
         {
-            shardedClient.ShardDisconnected += OnShardDisconnected;
-            return InitializeAsync(shardedClient, configuration);
+            shardedClient.ShardDisconnected += this.OnShardDisconnected;
+            return this.InitializeAsync(shardedClient, configuration);
         }
 
         private async Task OnShardDisconnected(Exception exception, DiscordSocketClient socketClient)
         {
-            if (Configuration.PreservePlayers)
+            if (this.Configuration.PreservePlayers)
                 return;
 
             foreach (var guild in socketClient.Guilds)
             {
-                if (!Players.TryRemove(guild.Id, out var player))
+                if (!this.Players.TryRemove(guild.Id, out var player))
                     continue;
 
                 await player.DisposeAsync().ConfigureAwait(false);
             }
 
-            Players.Clear();
-            ShadowLog?.WriteLog(LogSeverity.Error, "Shards disconnecting. Disposing all connected players.", exception);
+            this.Players.Clear();
+            this.ShadowLog?.WriteLog(LogSeverity.Error, "Shards disconnecting. Disposing all connected players.", exception);
         }
     }
 }
