@@ -74,12 +74,32 @@ namespace Energize.Services.Listeners.Music
             this.LavaClient.OnTrackFinished += this.OnTrackFinished;
             this.LavaClient.Log += async (logMsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
+            this.LavaClient.OnSocketClosed += this.OnSocketClosed;
         }
 
         public override Task InitializeAsync()
         {
             this.SpotifyAuthTimer.Change(0, 3600 * 1000);
             return Task.CompletedTask;
+        }
+
+        private async Task OnSocketClosed(int errorCode, string reason, bool byRemote)
+        {
+            await this.DisconnectAllPlayersAsync("Music streaming is unavailable at the moment, disconnecting");
+            SocketChannel chan = this.Client.GetChannel(Config.Instance.Discord.BugReportChannelID);
+            if (chan != null)
+            {
+                EmbedBuilder builder = new EmbedBuilder();
+                builder
+                    .WithDescription("Lost connection to Lavalink node")
+                    .WithField("Error Code", errorCode)
+                    .WithField("Reason", reason)
+                    .WithField("By Remote", byRemote)
+                    .WithColorType(EmbedColorType.Danger)
+                    .WithFooter("lavalink error");
+
+                await this.MessageSender.Send(chan, builder.Build());
+            }
         }
 
         private async Task OnPlayerUpdated(LavaPlayer lply, LavaTrack track, TimeSpan position)
@@ -182,10 +202,20 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        public async Task DisconnectAllPlayersAsync()
+        public async Task DisconnectAllPlayersAsync(string warnMsg)
         {
-            foreach (KeyValuePair<ulong, IEnergizePlayer> ply in this.Players)
-                await this.DisconnectAsync(ply.Value.VoiceChannel);
+            int count = this.Players.Count;
+            foreach ((ulong _, IEnergizePlayer ply) in this.Players)
+            {
+                if (ply.VoiceChannel != null)
+                {
+                    await this.DisconnectAsync(ply.VoiceChannel);
+                    if (ply.TextChannel != null)
+                        await this.MessageSender.Warning(ply.TextChannel, "music player", warnMsg);
+                }
+            }
+
+            this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
         }
 
         public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
@@ -800,6 +830,27 @@ namespace Energize.Services.Listeners.Music
                     ply.DisconnectTask = null;
                 }
             }
+        }
+
+        [Event("ShardDisconnected")]
+        public async Task OnShardDisconnected(Exception _, DiscordSocketClient client)
+        {
+            int count = 0;
+            foreach(SocketGuild guild in client.Guilds)
+            {
+                if (this.Players.TryGetValue(guild.Id, out IEnergizePlayer ply))
+                {
+                    count++;
+                    if (ply.VoiceChannel != null)
+                    {
+                        await this.DisconnectAsync(ply.VoiceChannel);
+                        if (ply.TextChannel != null)
+                            await this.MessageSender.Warning(ply.TextChannel, "music player", "There was a problem with Discord, disconnecting...");
+                    }
+                }
+            }
+
+            this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
         }
     }
 }
