@@ -23,18 +23,18 @@ namespace Energize.Services.Listeners.Music
 
         internal EnergizePlayer(LavaPlayer ply)
         {
-            Lavalink = ply;
-            DisconnectTask = null;
-            CTSDisconnect = new CancellationTokenSource();
-            Autoplay = false;
-            IsLooping = false;
-            Disconnected = false;
-            TrackPlayer = null;
-            CurrentRadioLava = null;
-            Queue = new LavaQueue<LavaTrack>();
-            TimeToLive = 3 * 60 * 1000;
-            TTLTimer = null;
-            Refresh();
+            this.Lavalink = ply;
+            this.DisconnectTask = null;
+            this.CTSDisconnect = new CancellationTokenSource();
+            this.Autoplay = false;
+            this.IsLooping = false;
+            this.Disconnected = false;
+            this.TrackPlayer = null;
+            this.CurrentRadioLava = null;
+            this.Queue = new LavaQueue<ILavaTrack>();
+            this.TimeToLive = 3 * 60 * 1000;
+            this.TTLTimer = null;
+            this.Refresh();
         }
 
         public LavaPlayer Lavalink { get; set; }
@@ -47,36 +47,42 @@ namespace Energize.Services.Listeners.Music
         public bool Disconnected { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
         public RadioTrack CurrentRadioLava { get; set; }
-        public LavaQueue<LavaTrack> Queue { get; private set; }
+        public LavaQueue<ILavaTrack> Queue { get; private set; }
 
-        public bool IsPlaying { get => Lavalink.IsPlaying; }
-        public bool IsPaused { get => Lavalink.IsPaused; }
-        public LavaTrack CurrentTrack { get => Lavalink?.CurrentTrack; }
-        public IVoiceChannel VoiceChannel { get => Lavalink?.VoiceChannel; }
-        public ITextChannel TextChannel { get => Lavalink?.TextChannel; }
-        public int Volume { get => Lavalink == null ? 100 : Lavalink.CurrentVolume; }
+        public bool IsPlaying { get =>
+            this.Lavalink.IsPlaying; }
+        public bool IsPaused { get =>
+            this.Lavalink.IsPaused; }
+        public ILavaTrack CurrentTrack { get =>
+            this.Lavalink?.CurrentTrack; }
+        public IVoiceChannel VoiceChannel { get =>
+            this.Lavalink?.VoiceChannel; }
+        public ITextChannel TextChannel { get =>
+            this.Lavalink?.TextChannel; }
+        public int Volume { get =>
+            this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
 
         public void Refresh()
         {
-            if (TTLTimer != null)
+            if (this.TTLTimer != null)
             {
-                TTLTimer.Stop();
-                TTLTimer.Close();
-                TTLTimer = null;
+                this.TTLTimer.Stop();
+                this.TTLTimer.Close();
+                this.TTLTimer = null;
             }
 
-            TTLTimer = new Timer(TimeToLive)
+            this.TTLTimer = new Timer(this.TimeToLive)
             {
                 AutoReset = false
             };
 
-            TTLTimer.Elapsed += (_, __) =>
+            this.TTLTimer.Elapsed += (_, __) =>
             {
-                if (!Disconnected)
-                    BecameInactive?.Invoke();
+                if (!this.Disconnected)
+                    this.BecameInactive?.Invoke();
             };
 
-            TTLTimer.Start();
+            this.TTLTimer.Start();
         }
     }
 }

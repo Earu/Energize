@@ -18,8 +18,8 @@ namespace Victoria
         /// <summary>
         /// Fetches thumbnail of the specified track.
         /// </summary>
-        /// <param name="track"><see cref="LavaTrack"/></param>
-        public static async Task<string> FetchThumbnailAsync(this LavaTrack track)
+        /// <param name="track"><see cref="ILavaTrack"/></param>
+        public static async Task<string> FetchThumbnailAsync(this ILavaTrack track)
         {
             var url = string.Empty;
 
@@ -51,8 +51,8 @@ namespace Victoria
         /// <summary>
         /// Searches lyrics for the specified track.
         /// </summary>
-        /// <param name="track"><see cref="LavaTrack"/></param>
-        public static Task<string> FetchLyricsAsync(this LavaTrack track)
+        /// <param name="track"><see cref="ILavaTrack"/></param>
+        public static Task<string> FetchLyricsAsync(this ILavaTrack track)
         {
             return LyricsHelper.SearchAsync(track.Author, track.Title);
         }

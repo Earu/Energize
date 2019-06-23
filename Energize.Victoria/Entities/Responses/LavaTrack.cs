@@ -4,28 +4,29 @@ using Victoria.Queue;
 
 namespace Victoria.Entities
 {
-    public class LavaTrack : IQueueObject
+    public class LavaTrack : ILavaTrack
     {
         [JsonIgnore]
-        internal string Hash { get; set; }
+        public string Hash { get; set; }
 
         [JsonProperty("identifier")]
-        public virtual string Id { get; set; }
+        public virtual string Id { get; internal set; }
 
         [JsonProperty("isSeekable")]
-        public virtual bool IsSeekable { get; set; }
+        public virtual bool IsSeekable { get; internal set; }
 
         [JsonProperty("author")]
-        public virtual string Author { get; set; }
+        public virtual string Author { get; internal set; }
 
         [JsonProperty("isStream")]
-        public virtual bool IsStream { get; set; }
+        public virtual bool IsStream { get; internal set; }
 
         [JsonIgnore]
         public virtual TimeSpan Position
         {
-            get => new TimeSpan(TrackPosition);
-            set => TrackPosition = value.Ticks;
+            get => new TimeSpan(this.TrackPosition);
+            set =>
+                this.TrackPosition = value.Ticks;
         }
 
         [JsonProperty("position")]
@@ -33,16 +34,19 @@ namespace Victoria.Entities
 
         [JsonIgnore]
         public virtual TimeSpan Length
-            => TimeSpan.FromMilliseconds(TrackLength);
+        {
+            get => TimeSpan.FromMilliseconds(this.TrackLength);
+            set => this.TrackLength = value.Milliseconds;
+        }
 
         [JsonProperty("length")]
         internal long TrackLength { get; set; }
 
         [JsonProperty("title")]
-        public virtual string Title { get; set; }
+        public virtual string Title { get; internal set; }
 
         [JsonProperty("uri")]
-        public virtual Uri Uri { get; set; }
+        public virtual Uri Uri { get; internal set; }
 
         [JsonIgnore]
         public virtual string Provider
@@ -55,7 +59,7 @@ namespace Victoria.Entities
         /// </summary>
         public virtual void ResetPosition()
         {
-            Position = TimeSpan.Zero;
+            this.Position = TimeSpan.Zero;
         }
     }
 }

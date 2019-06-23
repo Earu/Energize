@@ -19,7 +19,7 @@ namespace Victoria
         /// <summary>
         /// Keeps track of <see cref="PauseAsync"/> & <see cref="ResumeAsync"/>.
         /// </summary>
-        public bool IsPaused => _isPaused;
+        public bool IsPaused => this._isPaused;
 
         /// <summary>
         /// Checks whether the <see cref="LavaPlayer"/> is playing or not.
@@ -29,7 +29,7 @@ namespace Victoria
         /// <summary>
         /// Current track that is playing.
         /// </summary>
-        public LavaTrack CurrentTrack { get; internal set; }
+        public ILavaTrack CurrentTrack { get; internal set; }
 
         /// <summary>
         /// Optional text channel.
@@ -66,28 +66,29 @@ namespace Victoria
         internal LavaPlayer(IVoiceChannel voiceChannel, ITextChannel textChannel,
             SocketHelper socketHelper)
         {
-            VoiceChannel = voiceChannel;
-            TextChannel = textChannel;
-            _socketHelper = socketHelper;
-            CurrentVolume = 100;
-            Queue = new LavaQueue<IQueueObject>();
+            this.VoiceChannel = voiceChannel;
+            this.TextChannel = textChannel;
+            this._socketHelper = socketHelper;
+            this.CurrentVolume = 100;
+            this.Queue = new LavaQueue<IQueueObject>();
         }
 
         /// <summary>
         /// Plays the specified <paramref name="track"/>.
         /// </summary>
-        /// <param name="track"><see cref="LavaTrack"/></param>
+        /// <param name="track"><see cref="ILavaTrack"/></param>
         /// <param name="noReplace">If set to true, this operation will be ignored if a track is already playing or paused.</param>
-        public Task PlayAsync(LavaTrack track, bool noReplace = false)
+        public async Task PlayAsync(ILavaTrack track, bool noReplace = false)
         {
-            IsPlaying = true;
-            CurrentTrack = track;
+            this.IsPlaying = true;
+            this.CurrentTrack = track;
             if (!noReplace)
-                Volatile.Write(ref _isPaused, false);
-            var payload = new PlayPayload(VoiceChannel.GuildId, track.Hash, noReplace);
-            return _socketHelper.SendPayloadAsync(payload);
+                Volatile.Write(ref this._isPaused, false);
+            string trackHash = await GetTrackHash(track);
+            var payload = new PlayPayload(this.VoiceChannel.GuildId, trackHash, noReplace);
+            await this._socketHelper.SendPayloadAsync(payload);
         }
-
+        
         /// <summary>
         /// Plays the specified <paramref name="track"/>.
         /// </summary>
@@ -95,7 +96,7 @@ namespace Victoria
         /// <param name="startTime">Optional setting that determines the number of milliseconds to offset the track by.</param>
         /// <param name="stopTime">optional setting that determines at the number of milliseconds at which point the track should stop playing.</param>
         /// <param name="noReplace">If set to true, this operation will be ignored if a track is already playing or paused.</param>
-        public Task PlayAsync(LavaTrack track, TimeSpan startTime, TimeSpan stopTime, bool noReplace = false)
+        public async Task PlayAsync(ILavaTrack track, TimeSpan startTime, TimeSpan stopTime, bool noReplace = false)
         {
             if (startTime.TotalMilliseconds < 0 || stopTime.TotalMilliseconds < 0)
                 throw new InvalidOperationException("Start and stop must be greater than 0.");
@@ -103,27 +104,39 @@ namespace Victoria
             if (startTime <= stopTime)
                 throw new InvalidOperationException("Stop time must be greater than start time.");
 
-            IsPlaying = true;
-            CurrentTrack = track;
+            this.IsPlaying = true;
+            this.CurrentTrack = track;
             if (!noReplace)
-                Volatile.Write(ref _isPaused, false);
-            var payload = new PlayPayload(VoiceChannel.GuildId, track.Hash, startTime, stopTime, noReplace);
-            return _socketHelper.SendPayloadAsync(payload);
+                Volatile.Write(ref this._isPaused, false);
+            string trackHash = await GetTrackHash(track);
+            var payload = new PlayPayload(this.VoiceChannel.GuildId, trackHash, startTime, stopTime, noReplace);
+            await this._socketHelper.SendPayloadAsync(payload);
         }
 
+        private static async Task<string> GetTrackHash(ILavaTrack track)
+        {
+            string trackHash = track.Hash;
+            if (track is IAsyncLazyLoadTrack async)
+            {
+                trackHash = (await async.GetInnerTrackAsync()).Hash;
+            }
+
+            return trackHash;
+        }
+        
         /// <summary>
         /// Stops playing the current track and sets <see cref="IsPlaying"/> to false.
         /// </summary>
         public Task StopAsync()
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            IsPlaying = false;
-            CurrentTrack = null;
-            Volatile.Write(ref _isPaused, false);
-            var payload = new StopPayload(VoiceChannel.GuildId);
-            return _socketHelper.SendPayloadAsync(payload);
+            this.IsPlaying = false;
+            this.CurrentTrack = null;
+            Volatile.Write(ref this._isPaused, false);
+            var payload = new StopPayload(this.VoiceChannel.GuildId);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
@@ -131,12 +144,12 @@ namespace Victoria
         /// </summary>
         public Task ResumeAsync()
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            Volatile.Write(ref _isPaused, false);
-            var payload = new PausePayload(VoiceChannel.GuildId, IsPaused);
-            return _socketHelper.SendPayloadAsync(payload);
+            Volatile.Write(ref this._isPaused, false);
+            var payload = new PausePayload(this.VoiceChannel.GuildId, this.IsPaused);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
@@ -144,28 +157,28 @@ namespace Victoria
         /// </summary>
         public Task PauseAsync()
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            Volatile.Write(ref _isPaused, true);
-            var payload = new PausePayload(VoiceChannel.GuildId, IsPaused);
-            return _socketHelper.SendPayloadAsync(payload);
+            Volatile.Write(ref this._isPaused, true);
+            var payload = new PausePayload(this.VoiceChannel.GuildId, this.IsPaused);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
-        /// Replaces the <see cref="CurrentTrack"/> with the next <see cref="LavaTrack"/> from <see cref="Queue"/>.
+        /// Replaces the <see cref="CurrentTrack"/> with the next <see cref="ILavaTrack"/> from <see cref="Queue"/>.
         /// </summary>
-        /// <returns>Returns the skipped <see cref="LavaTrack"/>.</returns>
-        public async Task<LavaTrack> SkipAsync()
+        /// <returns>Returns the skipped <see cref="ILavaTrack"/>.</returns>
+        public async Task<ILavaTrack> SkipAsync()
         {
-            if (!Queue.TryDequeue(out var item))
-                throw new InvalidOperationException($"There are no more items in {nameof(Queue)}.");
+            if (!this.Queue.TryDequeue(out var item))
+                throw new InvalidOperationException($"There are no more items in {nameof(this.Queue)}.");
 
-            if (!(item is LavaTrack track))
-                throw new InvalidCastException($"Couldn't cast {item.GetType()} to {typeof(LavaTrack)}.");
+            if (!(item is ILavaTrack track))
+                throw new InvalidCastException($"Couldn't cast {item.GetType()} to {typeof(ILavaTrack)}.");
 
-            var previousTrack = CurrentTrack;
-            await PlayAsync(track);
+            var previousTrack = this.CurrentTrack;
+            await this.PlayAsync(track);
             return previousTrack;
         }
 
@@ -175,14 +188,14 @@ namespace Victoria
         /// <param name="position">Position must be less than <see cref="CurrentTrack"/>'s position.</param>
         public Task SeekAsync(TimeSpan position)
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            if (position > CurrentTrack.Length)
+            if (position > this.CurrentTrack.Length)
                 throw new ArgumentOutOfRangeException($"{nameof(position)} is greater than current track's length.");
 
-            var payload = new SeekPayload(VoiceChannel.GuildId, position);
-            return _socketHelper.SendPayloadAsync(payload);
+            var payload = new SeekPayload(this.VoiceChannel.GuildId, position);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
@@ -194,9 +207,9 @@ namespace Victoria
             if (volume > 1000)
                 throw new ArgumentOutOfRangeException($"{nameof(volume)} was greater than max limit which is 1000.");
 
-            CurrentVolume = volume;
-            var payload = new VolumePayload(VoiceChannel.GuildId, volume);
-            return _socketHelper.SendPayloadAsync(payload);
+            this.CurrentVolume = volume;
+            var payload = new VolumePayload(this.VoiceChannel.GuildId, volume);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
@@ -205,11 +218,11 @@ namespace Victoria
         /// <param name="bands"><see cref="EqualizerBand"/></param>
         public Task EqualizerAsync(List<EqualizerBand> bands)
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            var payload = new EqualizerPayload(VoiceChannel.GuildId, bands);
-            return _socketHelper.SendPayloadAsync(payload);
+            var payload = new EqualizerPayload(this.VoiceChannel.GuildId, bands);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         /// <summary>
@@ -218,19 +231,19 @@ namespace Victoria
         /// <param name="bands"><see cref="EqualizerBand"/></param>
         public Task EqualizerAsync(params EqualizerBand[] bands)
         {
-            if (!IsPlaying)
+            if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            var payload = new EqualizerPayload(VoiceChannel.GuildId, bands);
-            return _socketHelper.SendPayloadAsync(payload);
+            var payload = new EqualizerPayload(this.VoiceChannel.GuildId, bands);
+            return this._socketHelper.SendPayloadAsync(payload);
         }
 
         internal ValueTask DisposeAsync()
         {
-            IsPlaying = false;
-            Queue.Clear();
-            Queue = null;
-            CurrentTrack = null;
+            this.IsPlaying = false;
+            this.Queue.Clear();
+            this.Queue = null;
+            this.CurrentTrack = null;
             GC.SuppressFinalize(this);
 
             return default;

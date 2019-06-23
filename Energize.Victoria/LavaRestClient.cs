@@ -22,9 +22,9 @@ namespace Victoria
         /// <param name="password">Lavalink server password.</param>
         public LavaRestClient(string host, int port, string password)
         {
-            _rest.Host = host;
-            _rest.Port = port;
-            _rest.Password = password;
+            this._rest.Host = host;
+            this._rest.Port = port;
+            this._rest.Password = password;
         }
 
         /// <summary>
@@ -34,9 +34,9 @@ namespace Victoria
         public LavaRestClient(Configuration configuration = null)
         {
             configuration ??= new Configuration();
-            _rest.Host = configuration.Host;
-            _rest.Port = configuration.Port;
-            _rest.Password = configuration.Password;
+            this._rest.Host = configuration.Host;
+            this._rest.Port = configuration.Port;
+            this._rest.Password = configuration.Password;
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Victoria
         /// <returns><see cref="SearchResult"/></returns>
         public Task<SearchResult> SearchSoundcloudAsync(string query)
         {
-            return SearchTracksAsync($"scsearch:{query}");
+            return this.SearchTracksAsync($"scsearch:{query}");
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace Victoria
         /// <returns><see cref="SearchResult"/></returns>
         public Task<SearchResult> SearchYouTubeAsync(string query)
         {
-            return SearchTracksAsync($"ytsearch:{query}");
+            return this.SearchTracksAsync($"ytsearch:{query}");
         }
 
         /// <summary>
@@ -69,19 +69,19 @@ namespace Victoria
             if (!loadFullPlaylist)
                 query = query.SanitizeYoutubeUrl();
 
-            var url = $"http://{_rest.Host}:{_rest.Port}/loadtracks?identifier={WebUtility.UrlEncode(query)}";
+            var url = $"http://{this._rest.Host}:{this._rest.Port}/loadtracks?identifier={WebUtility.UrlEncode(query)}";
             var request = await HttpHelper.Instance
-                .WithCustomHeader("Authorization", _rest.Password)
+                .WithCustomHeader("Authorization", this._rest.Password)
                 .GetStringAsync(url).ConfigureAwait(false);
 
             var json = JObject.Parse(request);
             var result = json.ToObject<SearchResult>();
             var trackInfo = json.GetValue("tracks").ToObject<JArray>();
-            var hashset = new HashSet<LavaTrack>();
+            var hashset = new HashSet<ILavaTrack>();
 
             foreach (var info in trackInfo)
             {
-                var track = info["info"].ToObject<LavaTrack>();
+                ILavaTrack track = info["info"].ToObject<LavaTrack>();
                 track.Hash = info["track"].ToObject<string>();
                 hashset.Add(track);
             }

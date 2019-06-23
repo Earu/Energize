@@ -19,9 +19,9 @@ namespace Victoria.Helpers
 
         public string ReadJavaUtf8()
         {
-            var length = ReadUInt16(); // string size in bytes
+            var length = this.ReadUInt16(); // string size in bytes
             var bytes = new byte[length];
-            var amountRead = Read(bytes, 0, length);
+            var amountRead = this.Read(bytes, 0, length);
             if (amountRead < length)
                 throw new InvalidDataException("EOS unexpected");
 
@@ -68,58 +68,58 @@ namespace Victoria.Helpers
 
         public string ReadNullableString()
         {
-            return ReadBoolean() ? ReadJavaUtf8() : null;
+            return this.ReadBoolean() ? this.ReadJavaUtf8() : null;
         }
 
         public override float ReadSingle()
         {
-            return Read(4, BitConverter.ToSingle);
+            return this.Read(4, BitConverter.ToSingle);
         }
 
         public override double ReadDouble()
         {
-            return Read(8, BitConverter.ToDouble);
+            return this.Read(8, BitConverter.ToDouble);
         }
 
         public override short ReadInt16()
         {
-            return Read(2, BitConverter.ToInt16);
+            return this.Read(2, BitConverter.ToInt16);
         }
 
         public override int ReadInt32()
         {
-            return Read(4, BitConverter.ToInt32);
+            return this.Read(4, BitConverter.ToInt32);
         }
 
         public override long ReadInt64()
         {
-            return Read(8, BitConverter.ToInt64);
+            return this.Read(8, BitConverter.ToInt64);
         }
 
         public override ushort ReadUInt16()
         {
-            return Read(2, BitConverter.ToUInt16);
+            return this.Read(2, BitConverter.ToUInt16);
         }
 
         public override uint ReadUInt32()
         {
-            return Read(4, BitConverter.ToUInt32);
+            return this.Read(4, BitConverter.ToUInt32);
         }
 
         public override ulong ReadUInt64()
         {
-            return Read(8, BitConverter.ToUInt64);
+            return this.Read(8, BitConverter.ToUInt64);
         }
 
         private T Read<T>(int size, Func<byte[], int, T> converter) where T : struct
         {
-            var bytes = GetNextBytesNativeEndian(size);
+            var bytes = this.GetNextBytesNativeEndian(size);
             return converter(bytes, 0);
         }
 
         private byte[] GetNextBytesNativeEndian(int count)
         {
-            var bytes = GetNextBytes(count);
+            var bytes = this.GetNextBytes(count);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(bytes);
             return bytes;
@@ -128,7 +128,7 @@ namespace Victoria.Helpers
         private byte[] GetNextBytes(int count)
         {
             var buffer = new byte[count];
-            var bytesRead = BaseStream.Read(buffer, 0, count);
+            var bytesRead = this.BaseStream.Read(buffer, 0, count);
 
             if (bytesRead != count)
                 throw new EndOfStreamException();

@@ -84,8 +84,7 @@ module Voice =
                 let id = spotifyMatch.Groups.[1].Value
                 let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
                 let track = awaitResult (music.GetSpotifyTrackAsync(id))
-                let uri = awaitResult (track.GetUriAsync())
-                uri.AbsoluteUri
+                track.Uri.AbsoluteUri
             else
                 url
         else
@@ -323,8 +322,7 @@ module Voice =
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                     [ awaitResult (paginator.SendPlayerPaginator(ctx.message, songItems, fun songItem ->
                         let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
-                        let uri = awaitResult (songItem.GetUriAsync())
-                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] uri.AbsoluteUri 
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.Uri.AbsoluteUri 
                     )) ]
                 else
                     [ ctx.sendWarn None "Could not find any songs" ]

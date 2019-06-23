@@ -16,9 +16,9 @@ namespace Victoria.Entities
 
         public VoiceServerUpdate(SocketVoiceServer server)
         {
-            Token = server.Token;
-            Endpoint = server.Endpoint;
-            GuildId = $"{server.Guild.Id}";
+            this.Token = server.Token;
+            this.Endpoint = server.Endpoint;
+            this.GuildId = $"{server.Guild.Id}";
         }
     }
 }

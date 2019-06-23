@@ -5,25 +5,25 @@ namespace Energize.Essentials.TrackTypes
 {
     public class RadioTrack : IQueueObject
     {
-        public RadioTrack(LavaTrack innerTrack)
+        public RadioTrack(ILavaTrack innerTrack)
         {
             foreach ((string key, string value) in StaticData.Instance.RadioSources)
                 if (value.Equals(innerTrack.Uri.AbsoluteUri))
-                    Genre = key;
+                    this.Genre = key;
 
-            Genre = "unknown";
-            InnerTrack = innerTrack;
+            this.Genre = "unknown";
+            this.InnerTrack = innerTrack;
         }
 
-        public RadioTrack(string genre, LavaTrack innerTrack)
+        public RadioTrack(string genre, ILavaTrack innerTrack)
         {
-            Genre = genre;
-            InnerTrack = innerTrack;
+            this.Genre = genre;
+            this.InnerTrack = innerTrack;
         }
 
         public string Genre { get; }
-        public LavaTrack InnerTrack { get; }
-        public string StreamURL => InnerTrack.Uri.AbsoluteUri;
-        public string Id => InnerTrack.Id;
+        public ILavaTrack InnerTrack { get; }
+        public string StreamURL => this.InnerTrack.Uri.AbsoluteUri;
+        public string Id => this.InnerTrack.Id;
     }
 }

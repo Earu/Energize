@@ -6,7 +6,7 @@ namespace Victoria.Helpers
 {
     internal sealed class TrackHelper
     {
-        public static LavaTrack DecodeTrack(string trackString)
+        public static ILavaTrack DecodeTrack(string trackString)
         {
             const int trackInfoVersioned = 1;
             var raw = Convert.FromBase64String(trackString);

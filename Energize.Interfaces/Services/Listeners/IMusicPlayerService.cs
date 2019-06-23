@@ -18,13 +18,13 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAllPlayersAsync();
 
-        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack lavaTrack);
+        Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack);
         
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, IAsyncLazyLoadTrack lavaTrack);
 
-        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack lavaTrack);
+        Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack);
 
-        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> tracks);
+        Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<ILavaTrack> tracks);
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
@@ -50,9 +50,9 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
-        Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack lavaTrack);
+        Task<IUserMessage> SendNewTrackAsync(IMessage msg, ILavaTrack lavaTrack);
 
-        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack lavaTrack);
+        Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ILavaTrack lavaTrack);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
 

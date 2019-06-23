@@ -14,8 +14,8 @@ namespace Victoria.Entities.Payloads
         public VoiceServerPayload(SocketVoiceServer server, string voiceSessionId)
             : base(server.Guild.Id, "voiceUpdate")
         {
-            SessionId = voiceSessionId;
-            VoiceServerUpdate = new VoiceServerUpdate(server);
+            this.SessionId = voiceSessionId;
+            this.VoiceServerUpdate = new VoiceServerUpdate(server);
         }
     }
 }
