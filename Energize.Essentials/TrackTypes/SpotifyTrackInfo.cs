@@ -5,9 +5,15 @@ using SpotifyAPI.Web.Models;
 
 namespace Energize.Essentials.TrackTypes
 {
+    /// <summary>
+    /// Model class that wraps the different track results from Spotify API
+    /// <seealso cref="SimpleTrack" />
+    /// <seealso cref="FullTrack" />
+    /// </summary>
     public class SpotifyTrackInfo
     {
         public string[] Images { get; }
+
         public List<SimpleArtist> Artists { get; }
         
         public List<string> AvailableMarkets { get; }
