@@ -3,6 +3,10 @@ using Victoria.Entities;
 
 namespace Energize.Essentials.TrackTypes
 {
+    /// <summary>
+    /// Inherrits LavaTrack and provides initialization from constructor for all fields and methods
+    /// <seealso cref="LavaTrack" />
+    /// </summary>
     internal class EasyLavaTrack : LavaTrack
     {
         private readonly Action _resetPositionCallback;

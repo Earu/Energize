@@ -3,7 +3,11 @@ using System.Threading.Tasks;
 
 namespace Energize.Essentials.TrackTypes
 {
-    public interface IAsyncLavaTrack
+    /// <summary>
+    /// An interface with asynchronous getters of the public fields of LavaTrack
+    /// <see cref="Victoria.Entities.LavaTrack" />
+    /// </summary>
+    public interface IAsyncTrack
     {
         Task<string> GetIdAsync();
         Task<bool> GetIsSeekableAsync();
