@@ -3,9 +3,9 @@ using Victoria.Entities;
 
 namespace Energize.Essentials.TrackTypes
 {
-    public static class AsyncLavaTrackExtensions
+    public static class AsyncTrackExtensions
     {
-        public static async Task<LavaTrack> ToLavaTrackAsync(this IAsyncLavaTrack asyncTrack)
+        public static async Task<LavaTrack> ToLavaTrackAsync(this IAsyncTrack asyncTrack)
         {
             return new EasyLavaTrack(
                 await asyncTrack.GetIdAsync(),
