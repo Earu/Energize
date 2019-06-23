@@ -16,7 +16,7 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAsync(IVoiceChannel vc);
 
-        Task DisconnectAllPlayersAsync();
+        Task DisconnectAllPlayersAsync(string warnMsg);
 
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track);
 
