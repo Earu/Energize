@@ -25,7 +25,7 @@ namespace Victoria.Entities
         private long RawUptime { get; set; }
 
         [JsonIgnore]
-        public TimeSpan Uptime => TimeSpan.FromMilliseconds(RawUptime);
+        public TimeSpan Uptime => TimeSpan.FromMilliseconds(this.RawUptime);
 
         [JsonProperty("frameStats")]
         public Frames Frames { get; private set; }

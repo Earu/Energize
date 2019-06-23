@@ -27,90 +27,90 @@ namespace Victoria.Helpers
 
         public SocketHelper(Configuration configuration, Func<LogMessage, Task> log)
         {
-            ShadowLog = log;
-            _config = configuration;
-            _encoding = new UTF8Encoding(false);
+            this.ShadowLog = log;
+            this._config = configuration;
+            this._encoding = new UTF8Encoding(false);
             ServicePointManager.ServerCertificateValidationCallback += (_, __, ___, ____) => true;
         }
 
         public async Task ConnectAsync()
         {
-            _cancellationTokenSource = new CancellationTokenSource();
+            this._cancellationTokenSource = new CancellationTokenSource();
 
-            _clientWebSocket = new ClientWebSocket();
-            _clientWebSocket.Options.SetRequestHeader("User-Id", $"{_config.UserId}");
-            _clientWebSocket.Options.SetRequestHeader("Num-Shards", $"{_config.Shards}");
-            _clientWebSocket.Options.SetRequestHeader("Authorization", _config.Password);
-            var url = new Uri($"ws://{_config.Host}:{_config.Port}");
+            this._clientWebSocket = new ClientWebSocket();
+            this._clientWebSocket.Options.SetRequestHeader("User-Id", $"{this._config.UserId}");
+            this._clientWebSocket.Options.SetRequestHeader("Num-Shards", $"{this._config.Shards}");
+            this._clientWebSocket.Options.SetRequestHeader("Authorization", this._config.Password);
+            var url = new Uri($"ws://{this._config.Host}:{this._config.Port}");
 
-            if (_reconnectAttempts == _config.ReconnectAttempts)
+            if (this._reconnectAttempts == this._config.ReconnectAttempts)
                 return;
 
             try
             {
-                ShadowLog?.WriteLog(LogSeverity.Info, $"Connecting to {url}.");
-                await _clientWebSocket.ConnectAsync(url, CancellationToken.None).ContinueWith(VerifyConnectionAsync);
+                this.ShadowLog?.WriteLog(LogSeverity.Info, $"Connecting to {url}.");
+                await this._clientWebSocket.ConnectAsync(url, CancellationToken.None).ContinueWith(this.VerifyConnectionAsync);
             }
             catch { }
         }
 
         public Task SendPayloadAsync(BasePayload payload)
         {
-            if (!_isUseable)
+            if (!this._isUseable)
                 return Task.CompletedTask;
 
             var serialize = JsonConvert.SerializeObject(payload);
-            ShadowLog?.WriteLog(LogSeverity.Debug, serialize);
-            var seg = new ArraySegment<byte>(_encoding.GetBytes(serialize));
-            return _clientWebSocket.SendAsync(seg, WebSocketMessageType.Text, true, CancellationToken.None);
+            this.ShadowLog?.WriteLog(LogSeverity.Debug, serialize);
+            var seg = new ArraySegment<byte>(this._encoding.GetBytes(serialize));
+            return this._clientWebSocket.SendAsync(seg, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
         public async ValueTask DisposeAsync()
         {
-            _isUseable = false;
+            this._isUseable = false;
 
-            await _clientWebSocket
+            await this._clientWebSocket
                 .CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed called.", CancellationToken.None)
                 .ConfigureAwait(false);
 
-            _cancellationTokenSource.Cancel(false);
-            _clientWebSocket.Dispose();
+            this._cancellationTokenSource.Cancel(false);
+            this._clientWebSocket.Dispose();
         }
 
         private async Task VerifyConnectionAsync(Task task)
         {
             if (task.IsCanceled || task.IsFaulted || task.Exception != null)
             {
-                _isUseable = false;
-                await RetryConnectionAsync().ConfigureAwait(false);
+                this._isUseable = false;
+                await this.RetryConnectionAsync().ConfigureAwait(false);
             }
             else
             {
-                ShadowLog?.WriteLog(LogSeverity.Info, "WebSocket connection established!");
-                _isUseable = true;
-                _reconnectAttempts = 0;
-                await ReceiveAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+                this.ShadowLog?.WriteLog(LogSeverity.Info, "WebSocket connection established!");
+                this._isUseable = true;
+                this._reconnectAttempts = 0;
+                await this.ReceiveAsync(this._cancellationTokenSource.Token).ConfigureAwait(false);
             }
         }
 
         private async Task RetryConnectionAsync()
         {
-            _cancellationTokenSource.Cancel(false);
+            this._cancellationTokenSource.Cancel(false);
 
-            if (_reconnectAttempts > _config.ReconnectAttempts && _config.ReconnectAttempts != -1)
+            if (this._reconnectAttempts > this._config.ReconnectAttempts && this._config.ReconnectAttempts != -1)
                 return;
 
-            if (_isUseable)
+            if (this._isUseable)
                 return;
 
-            _reconnectAttempts++;
-            _interval += _config.ReconnectInterval;
-            ShadowLog?.WriteLog(LogSeverity.Warning,
-                _reconnectAttempts == _config.ReconnectAttempts ?
+            this._reconnectAttempts++;
+            this._interval += this._config.ReconnectInterval;
+            this.ShadowLog?.WriteLog(LogSeverity.Warning,
+                                     this._reconnectAttempts == this._config.ReconnectAttempts ?
                 $"This was the last attempt at re-establishing websocket connection." :
-                $"Attempt #{_reconnectAttempts}. Next retry in {_interval.TotalSeconds} seconds.");
+                $"Attempt #{this._reconnectAttempts}. Next retry in {this._interval.TotalSeconds} seconds.");
 
-            await Task.Delay(_interval).ContinueWith(_ => ConnectAsync()).ConfigureAwait(false);
+            await Task.Delay(this._interval).ContinueWith(_ => this.ConnectAsync()).ConfigureAwait(false);
         }
 
         private async Task ReceiveAsync(CancellationToken cancellationToken)
@@ -122,17 +122,17 @@ namespace Victoria.Helpers
                     byte[] bytes;
                     using (var stream = new MemoryStream())
                     {
-                        var buffer = new byte[_config.BufferSize.Value];
+                        var buffer = new byte[this._config.BufferSize.Value];
                         var segment = new ArraySegment<byte>(buffer);
-                        while (_clientWebSocket.State == WebSocketState.Open)
+                        while (this._clientWebSocket.State == WebSocketState.Open)
                         {
-                            var result = await _clientWebSocket.ReceiveAsync(segment, cancellationToken)
+                            var result = await this._clientWebSocket.ReceiveAsync(segment, cancellationToken)
                                 .ConfigureAwait(false);
                             if (result.MessageType == WebSocketMessageType.Close)
                                 if (result.CloseStatus == WebSocketCloseStatus.EndpointUnavailable)
                                 {
-                                    _isUseable = false;
-                                    await RetryConnectionAsync().ConfigureAwait(false);
+                                    this._isUseable = false;
+                                    await this.RetryConnectionAsync().ConfigureAwait(false);
                                     break;
                                 }
 
@@ -147,15 +147,15 @@ namespace Victoria.Helpers
                     if (bytes.Length <= 0)
                         continue;
 
-                    var parse = _encoding.GetString(bytes).Trim('\0');
-                    OnMessage(parse);
+                    var parse = this._encoding.GetString(bytes).Trim('\0');
+                    this.OnMessage(parse);
                 }
             }
             catch (Exception ex) when (ex.HResult == -2147467259)
             {
-                _isUseable = false;
-                await OnClosed.Invoke();
-                await RetryConnectionAsync().ConfigureAwait(false);
+                this._isUseable = false;
+                await this.OnClosed.Invoke();
+                await this.RetryConnectionAsync().ConfigureAwait(false);
             }
         }
     }

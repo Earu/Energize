@@ -17,23 +17,23 @@ namespace Victoria.Helpers
 
         private void CheckClient()
         {
-            if (!(_client is null))
+            if (!(this._client is null))
                 return;
 
-            _client = new HttpClient(new HttpClientHandler
+            this._client = new HttpClient(new HttpClientHandler
             {
                 UseCookies = false,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             });
-            _client.DefaultRequestHeaders.Clear();
-            _client.DefaultRequestHeaders.Add("User-Agent", "Victoria");
+            this._client.DefaultRequestHeaders.Clear();
+            this._client.DefaultRequestHeaders.Add("User-Agent", "Victoria");
         }
 
         public async Task<string> GetStringAsync(string url)
         {
-            CheckClient();
+            this.CheckClient();
 
-            var get = await _client.GetAsync(url).ConfigureAwait(false);
+            var get = await this._client.GetAsync(url).ConfigureAwait(false);
             if (!get.IsSuccessStatusCode)
                 return string.Empty;
 
@@ -44,12 +44,12 @@ namespace Victoria.Helpers
 
         public HttpHelper WithCustomHeader(string key, string value)
         {
-            CheckClient();
+            this.CheckClient();
 
-            if (_client.DefaultRequestHeaders.Contains(key))
+            if (this._client.DefaultRequestHeaders.Contains(key))
                 return this;
 
-            _client.DefaultRequestHeaders.Add(key, value);
+            this._client.DefaultRequestHeaders.Add(key, value);
             return this;
         }
     }

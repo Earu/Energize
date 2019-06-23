@@ -13,8 +13,8 @@ namespace Victoria.Entities.Payloads
 
         public SessionPayload(string key, TimeSpan time) : base("configureResuming")
         {
-            Key = key;
-            Timeout = (int)time.TotalMilliseconds;
+            this.Key = key;
+            this.Timeout = (int)time.TotalMilliseconds;
         }
     }
 }

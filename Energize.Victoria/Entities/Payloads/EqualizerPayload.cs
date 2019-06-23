@@ -16,7 +16,7 @@ namespace Victoria.Entities.Payloads
                 throw new ArgumentOutOfRangeException(nameof(bands),
                     "Gain value must be between -0.25 - 1.0 and Band value must be between 0 - 14.");
 
-            Bands = new List<EqualizerBand>(bands);
+            this.Bands = new List<EqualizerBand>(bands);
         }
 
         public EqualizerPayload(ulong guildId, List<EqualizerBand> bands) : base(guildId, "equalizer")
@@ -25,7 +25,7 @@ namespace Victoria.Entities.Payloads
                 throw new ArgumentOutOfRangeException(nameof(bands),
                     "Gain value must be between -0.25 - 1.0 and Band value must be between 0 - 14.");
 
-            Bands = bands;
+            this.Bands = bands;
         }
     }
 }

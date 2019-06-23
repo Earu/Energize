@@ -9,7 +9,7 @@ namespace Victoria.Entities.Payloads
 
         protected LavaPayload(ulong guildId, string op) : base(op)
         {
-            GuildId = $"{guildId}";
+            this.GuildId = $"{guildId}";
         }
     }
 }
