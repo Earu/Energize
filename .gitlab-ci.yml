@@ -10,8 +10,3 @@ build:
     stage: build
     script:
         - "dotnet build"
-
-test:
-    stage: test
-    script: 
-        - "dotnet test"
