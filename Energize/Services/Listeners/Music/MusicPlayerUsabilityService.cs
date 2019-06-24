@@ -1,13 +1,14 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Energize.Essentials;
-using Energize.Interfaces.Services;
-using Energize.Interfaces.Services.Listeners;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord;
+using Discord.WebSocket;
+using Energize.Essentials;
+using Energize.Essentials.TrackTypes;
+using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Listeners;
 using Victoria.Entities;
 
 namespace Energize.Services.Listeners.Music
@@ -109,13 +110,11 @@ namespace Energize.Services.Listeners.Music
             {
                 string spotifyId = match.Groups[1].Value;
                 IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                LavaTrack track = await music.ConvertSpotifyTrackToYoutubeAsync(spotifyId);
-                return track.Uri.AbsoluteUri;
+                var spotifyTrack = await music.GetSpotifyTrackAsync(spotifyId);
+                ILavaTrack innerTrack = await spotifyTrack.GetInnerTrackAsync();
+                return innerTrack.Uri.AbsoluteUri;
             }
-            else
-            {
-                return url;
-            }
+            return url;
         }
 
         private string SanitizeYoutubeUrl(string url)
@@ -128,18 +127,14 @@ namespace Energize.Services.Listeners.Music
                 string ytId = match.Groups[1].Value;
                 return $"https://www.youtube.com/watch?v={ytId}";
             }
-            else
-            {
-                return url;
-            }
+            return url;
         }
 
         private bool HasPlayableVideo(Embed embed)
         {
             if (embed.Type == EmbedType.Video)
                 return embed.Video.HasValue && embed.Video.Value.Url.IsPlayableURL();
-            else
-                return false;
+            return false;
         }
 
         private async Task<IUserMessage> SendNonPlayableContent(IGuildUser user, IUserMessage msg, ITextChannel textChan, string url, string error)
@@ -161,7 +156,7 @@ namespace Energize.Services.Listeners.Music
         {
             url = await this.SpotifyToYoutubeURLAsync(url);
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
-            List<LavaTrack> tracks = result.Tracks.ToList();
+            List<ILavaTrack> tracks = result.Tracks.ToList();
             switch (result.LoadType)
             {
                 case LoadType.SearchResult:

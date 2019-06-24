@@ -114,7 +114,7 @@ namespace Energize.Services.Database
 
             this.Pool = new List<DatabaseContext>();
             for (uint i = 0; i < 10; i++)
-                Pool.Add(new DatabaseContext(this.Create(), this.Logger));
+                this.Pool.Add(new DatabaseContext(this.Create(), this.Logger));
         }
 
         public async Task<IDatabaseContext> GetContext()
