@@ -38,7 +38,10 @@ namespace Energize.Essentials.MessageConstructs
                     line = "⚪" + new string('─', 24);
             }
 
-            return $"`{len}`\n[```http\n▶ {line} {pos}\n```]({track.Uri})";
+            if (track.Uri.AbsoluteUri.Length > 1000)
+                return $"`{len}`\n```http\n▶ {line} {pos}\n```";
+            else
+                return $"`{len}`\n[```http\n▶ {line} {pos}\n```]({track.Uri})";
         }
 
         private Embed BuildTrackEmbed(ILavaTrack track, int volume, bool paused, bool looping)
