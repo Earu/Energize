@@ -2,10 +2,8 @@ image: microsoft/dotnet:latest
 
 stages:
     - build
-#    - test
-
+    
 before_script:
-    - "cd src"
     - "dotnet restore"
 
 build:
