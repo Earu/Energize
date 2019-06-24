@@ -182,14 +182,6 @@ namespace Energize.Services.Senders
                 await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
             }
-//            else if (paginator.CurrentValue is IAsyncLazyLoadTrack item)
-//            {
-//                if (item != null)
-//                {
-//                    await music.AddTrackAsync(guser.VoiceChannel, textChan, item);
-//                    await chan.DeleteMessageAsync(paginator.Message);
-//                }
-//            }
             else if(paginator.CurrentValue is string url)
             {
                 if (string.IsNullOrWhiteSpace(url)) return;
