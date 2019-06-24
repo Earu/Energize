@@ -16,13 +16,15 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAsync(IVoiceChannel vc);
 
-        Task DisconnectAllPlayersAsync();
+        Task DisconnectAllPlayersAsync(string warnMsg);
 
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack);
         
         Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack);
 
         Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<ILavaTrack> tracks);
+
+        Task StopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 
         Task<bool> LoopTrackAsync(IVoiceChannel vc, ITextChannel chan);
 

@@ -10,6 +10,12 @@ using Energize.Essentials.MessageConstructs;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Victoria.Entities;
 
 namespace Energize.Services.Senders
@@ -17,7 +23,7 @@ namespace Energize.Services.Senders
     [Service("Paginator")]
     public class PaginatorSenderService : ServiceImplementationBase, IPaginatorSenderService
     {
-        private readonly Dictionary<ulong, Paginator<object>> Paginators;
+        private readonly ConcurrentDictionary<ulong, Paginator<object>> Paginators;
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
         private readonly Logger Logger;
@@ -25,7 +31,7 @@ namespace Energize.Services.Senders
 
         public PaginatorSenderService(EnergizeClient client)
         {
-            this.Paginators = new Dictionary<ulong, Paginator<object>>();
+            this.Paginators = new ConcurrentDictionary<ulong, Paginator<object>>();
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
             this.Logger = client.Logger;
@@ -39,7 +45,7 @@ namespace Energize.Services.Senders
                         toRemove.Add(paginator.Key);
 
                 foreach (ulong msgId in toRemove)
-                    this.Paginators.Remove(msgId);
+                    this.Paginators.TryRemove(msgId, out Paginator<object> _);
                 
                 if(toRemove.Count > 0)
                     this.Logger.Nice("Paginator", ConsoleColor.Gray, $"Cleared {toRemove.Count} paginator instance{(toRemove.Count == 1 ? string.Empty : "s")}");
@@ -78,8 +84,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -100,8 +106,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -115,8 +121,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -130,8 +136,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
             }
 
             return posted;
@@ -144,8 +150,8 @@ namespace Energize.Services.Senders
             ["▶"] = async (sender, paginator, cache, chan, reaction) => await paginator.Next(),
             ["⏹"] = async (sender, paginator, cache, chan, reaction) =>
             {
-                sender.Paginators.Remove(cache.Value.Id);
-                await chan.DeleteMessageAsync(paginator.Message);
+                if (sender.Paginators.TryRemove(cache.Value.Id, out Paginator<object> _))
+                    await chan.DeleteMessageAsync(paginator.Message);
             },
             ["⏯"] = OnPlayReaction
         };
@@ -160,9 +166,7 @@ namespace Energize.Services.Senders
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
-            if (!this.Paginators.ContainsKey(cache.Value.Id)) return;
-
-            Paginator<object> paginator = this.Paginators[cache.Value.Id];
+            if (!this.Paginators.TryGetValue(cache.Value.Id, out Paginator<object> paginator)) return;
             if (paginator.UserID != reaction.UserId) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);

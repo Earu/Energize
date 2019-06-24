@@ -30,8 +30,7 @@ namespace Energize.Services.Listeners.Music
             this.IsLooping = false;
             this.Disconnected = false;
             this.TrackPlayer = null;
-            this.CurrentRadioLava = null;
-            this.Queue = new LavaQueue<ILavaTrack>();
+            this.CurrentRadio = null;
             this.TimeToLive = 3 * 60 * 1000;
             this.TTLTimer = null;
             this.Refresh();
@@ -46,21 +45,15 @@ namespace Energize.Services.Listeners.Music
         public bool IsLooping { get; set; }
         public bool Disconnected { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
-        public RadioTrack CurrentRadioLava { get; set; }
-        public LavaQueue<ILavaTrack> Queue { get; private set; }
+        public RadioTrack CurrentRadio { get; set; }
 
-        public bool IsPlaying { get =>
-            this.Lavalink.IsPlaying; }
-        public bool IsPaused { get =>
-            this.Lavalink.IsPaused; }
-        public ILavaTrack CurrentTrack { get =>
-            this.Lavalink?.CurrentTrack; }
-        public IVoiceChannel VoiceChannel { get =>
-            this.Lavalink?.VoiceChannel; }
-        public ITextChannel TextChannel { get =>
-            this.Lavalink?.TextChannel; }
-        public int Volume { get =>
-            this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
+        public LavaQueue<IQueueObject> Queue { get => this.Lavalink.Queue; }
+        public bool IsPlaying { get => this.Lavalink.IsPlaying; }
+        public bool IsPaused { get => this.Lavalink.IsPaused; }
+        public ILavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
+        public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
+        public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
+        public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
 
         public void Refresh()
         {

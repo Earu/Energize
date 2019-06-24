@@ -5,6 +5,8 @@ Energize⚡ is a robust **music** / **administration** / **social** bot featurin
 [![Discord Bots](https://discordbots.org/api/widget/360116713829695489.svg)](https://discordbots.org/bot/360116713829695489)
 <img src="https://dl.dropboxusercontent.com/s/8k0lwukl9n1shki/new_attempt_2.png" width="25%">
 
+Join our support server to learn more about Energize: https://discord.gg/RXZtBr5
+
 ### Structure
 Almost everything in Energize is a service, services are implemented under the **Energize** project under [Services](https://github.com/Earu/Energize/tree/master/Energize/Services). Because the command service is in F# it has its own project (**Energize.Commands**), and because it needed to interface with other projects **Energize.Interfaces** was born, it contains interfaces for services. **Energize.Essentials** contains essential classes used in the other projects; see it as a toolbox. Finally **Energize.Web** is the [upcoming (WIP) online documentation and graphic interface to interact with Energize](http://energize.earu.io/docs).
 
