@@ -203,21 +203,6 @@ namespace Energize.Services.Listeners.Music
             return await this.SendPlayerAsync(ply, lavaTrack, chan);
         }
 
-        public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, IAsyncLazyLoadTrack track)
-        {
-            IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply == null) return null;
-
-            ILavaTrack innerTrack = await track.GetInnerTrackAsync();
-            if (ply.IsPlaying)
-            {
-                ply.Queue.Enqueue(innerTrack);
-                return await this.SendNewTrackAsync(chan, track);
-            }
-            await ply.Lavalink.PlayAsync(innerTrack);
-            return await this.SendPlayerAsync(ply, track, chan);
-        }
-
         public async Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
