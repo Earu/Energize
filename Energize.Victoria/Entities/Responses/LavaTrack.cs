@@ -4,25 +4,25 @@ using Victoria.Queue;
 
 namespace Victoria.Entities
 {
-    public class LavaTrack : ILavaTrack
+    public sealed class LavaTrack : ILavaTrack
     {
         [JsonIgnore]
         public string Hash { get; set; }
 
         [JsonProperty("identifier")]
-        public virtual string Id { get; internal set; }
+        public string Id { get; internal set; }
 
         [JsonProperty("isSeekable")]
-        public virtual bool IsSeekable { get; internal set; }
+        public bool IsSeekable { get; internal set; }
 
         [JsonProperty("author")]
-        public virtual string Author { get; internal set; }
+        public string Author { get; internal set; }
 
         [JsonProperty("isStream")]
-        public virtual bool IsStream { get; internal set; }
+        public bool IsStream { get; internal set; }
 
         [JsonIgnore]
-        public virtual TimeSpan Position
+        public TimeSpan Position
         {
             get => new TimeSpan(this.TrackPosition);
             set =>
@@ -33,7 +33,7 @@ namespace Victoria.Entities
         internal long TrackPosition { get; set; }
 
         [JsonIgnore]
-        public virtual TimeSpan Length
+        public TimeSpan Length
         {
             get => TimeSpan.FromMilliseconds(this.TrackLength);
             set => this.TrackLength = value.Milliseconds;
@@ -43,13 +43,13 @@ namespace Victoria.Entities
         internal long TrackLength { get; set; }
 
         [JsonProperty("title")]
-        public virtual string Title { get; internal set; }
+        public string Title { get; internal set; }
 
         [JsonProperty("uri")]
-        public virtual Uri Uri { get; internal set; }
+        public Uri Uri { get; internal set; }
 
         [JsonIgnore]
-        public virtual string Provider
+        public string Provider
         {
             get => this.Uri.GetProvider();
         }
@@ -57,7 +57,7 @@ namespace Victoria.Entities
         /// <summary>
         /// 
         /// </summary>
-        public virtual void ResetPosition()
+        public void ResetPosition()
         {
             this.Position = TimeSpan.Zero;
         }
