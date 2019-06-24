@@ -22,6 +22,7 @@ namespace Energize.Essentials.MessageConstructs
         {
             string len = (track.IsStream ? TimeSpan.Zero : track.Length).ToString(@"hh\:mm\:ss");
             string pos = (track.IsStream ? TimeSpan.Zero : track.Position).ToString(@"hh\:mm\:ss");
+
             string line;
             if (track.IsStream)
             {
@@ -36,9 +37,8 @@ namespace Energize.Essentials.MessageConstructs
                 else
                     line = "⚪" + new string('─', 24);
             }
-            string res = $"`{len}`\n```http\n▶ {line} {pos}\n```";
 
-            return res;
+            return $"`{len}`\n[```http\n▶ {line} {pos}\n```]({track.Uri})";
         }
 
         private Embed BuildTrackEmbed(ILavaTrack track, int volume, bool paused, bool looping)
