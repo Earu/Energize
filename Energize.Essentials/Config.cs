@@ -6,28 +6,9 @@ namespace Energize.Essentials
 {
     public struct DiscordConfig
     {
-        [YamlMember(Alias = "TokenDev")]
-        public string TokenDev { get; set; }
-        [YamlMember(Alias = "BotIDDev")]
-        public ulong BotIDDev { get; set; }
-        [YamlMember(Alias = "PrefixDev")]
-        public string PrefixDev { get; set; }
-        [YamlMember(Alias = "TokenProd")]
-        public string TokenProd { get; set; }
-        [YamlMember(Alias = "BotIDProd")]
-        public ulong BotIDProd { get; set; }
-        [YamlMember(Alias = "PrefixProd")]
-        public string PrefixProd { get; set; }
-
-#if DEBUG
-        public string Token { get => this.TokenDev; }
-        public ulong BotID { get => this.BotIDDev; }
-        public string Prefix { get => this.PrefixDev; }
-#else
-        public string Token { get => this.TokenProd; }
-        public ulong BotID { get => this.BotIDProd; }
-        public string Prefix { get => this.PrefixProd; }
-#endif
+        public string Token;
+        public ulong BotID;
+        public string Prefix;
         public char Separator;
         public ulong OwnerID;
         public ulong FeedbackChannelID;
@@ -109,7 +90,11 @@ namespace Energize.Essentials
         }
 
         private static Config LoadConfig()
-            => DeserializeYAML<Config>("Settings/config.yaml");
+#if DEBUG
+            => DeserializeYAML<Config>("Settings/config_debug.yaml");
+#else
+            => DeserializeYAML<Config>("Settings/config_prod.yaml");
+#endif
 
         private static Blacklist LoadBlacklist()
             => DeserializeYAML<Blacklist>("Settings/blacklist.yaml");
