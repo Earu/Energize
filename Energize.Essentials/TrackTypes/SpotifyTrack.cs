@@ -7,8 +7,6 @@ namespace Energize.Essentials.TrackTypes
     /// <summary>
     ///     An AsyncLazyLoadTrack that uses SpotifyTrackInfo for the required metadata instead of the ones of a searched
     ///     LavaTrack (it does not a LavaTrack until play time)
-    ///     At the moment this track does partially depend on a searched LavaTrack for metadata, but this will improve in the
-    ///     future
     ///     <see cref="IAsyncLazyLoadTrack" />
     ///     <see cref="SpotifyTrackInfo" />
     /// </summary>
@@ -53,40 +51,6 @@ namespace Energize.Essentials.TrackTypes
             return track;
         }
 
-
-        //public string[] Images => SpotifyInfo.Images ?? new [] {(await GetInnerTrackAsync()).FetchThumbnailAsync().ConfigureAwait(false).GetAwaiter().GetResult()};
-//
-//        public async Task<T> ToLavaTrackAsync<T>() where T : LavaTrack
-//        {
-//            async void ResetPositionCallback() => await this.ResetPositionAsync();
-//
-//            var sourceTrack = new EasyLavaTrack(
-//                await this.GetIdAsync(),
-//                await this.GetIsSeekableAsync(),
-//                await this.GetAuthorAsync(),
-//                await this.GetIsStreamAsync(),
-//                await this.GetPositionAsync(),
-//                await this.GetLengthAsync(),
-//                await this.GetTitleAsync(),
-//                await this.GetUriAsync(),
-//                await this.GetProviderAsync(),
-//                ResetPositionCallback);
-//            LavaTrack thisInnerTrack = await this.GetInnerTrackAsync();
-//            var outerTrack = new EasyLavaTrack(
-//                thisInnerTrack.Id,
-//                thisInnerTrack.IsSeekable,
-//                thisInnerTrack.Author,
-//                thisInnerTrack.IsStream,
-//                thisInnerTrack.Position,
-//                thisInnerTrack.Length,
-//                thisInnerTrack.Title,
-//                thisInnerTrack.Uri,
-//                thisInnerTrack.Provider,
-//                sourceTrack,
-//                ResetPositionCallback);
-//            return outerTrack as T;
-//        }
-        
         public string Hash { get; set; }
         
         public string Id => this.SpotifyInfo.Id ?? this._innerTrack?.Id;
