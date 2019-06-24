@@ -1,0 +1,12 @@
+image: microsoft/dotnet:latest
+
+stages:
+    - build
+    
+before_script:
+    - "dotnet restore"
+
+build:
+    stage: build
+    script:
+        - "dotnet build"
