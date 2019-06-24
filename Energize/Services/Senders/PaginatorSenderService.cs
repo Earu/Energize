@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
-using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using System;

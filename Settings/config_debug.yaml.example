@@ -1,11 +1,8 @@
 ---
 Discord:
-  TokenDev: discord dev token
-  TokenProd: discord production token
-  BotIDDev: '0000000000000000'
-  BotIDProd: '0000000000000000'
-  PrefixDev: xx
-  PrefixProd: x
+  Token: discord dev token
+  BotID: '0000000000000000'
+  Prefix: x
   Separator: ","
   OwnerID: '0000000000000000'
   FeedbackChannelID: '0000000000000000'
