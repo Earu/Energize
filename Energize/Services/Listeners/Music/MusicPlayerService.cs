@@ -355,17 +355,20 @@ namespace Energize.Services.Listeners.Music
             if (ply.CurrentRadio != null)
                 ply.CurrentRadio = null;
 
-            if (ply.IsPlaying)
+            if (!ply.IsPlaying) return;
+
+            if (ply.Queue.Count > 0)
             {
-                if (ply.Queue.Count > 0)
-                {
-                    await ply.Lavalink.SkipAsync();
-                    await this.SendPlayerAsync(ply, ply.CurrentTrack);
-                }
-                else
-                {
-                    await ply.Lavalink.StopAsync();
-                }
+                await ply.Lavalink.SkipAsync();
+                await this.SendPlayerAsync(ply, ply.CurrentTrack);
+                return;
+            }
+            else
+            {
+                ILavaTrack oldTrack = ply.CurrentTrack;
+                await ply.Lavalink.StopAsync();
+                if (ply.Autoplay)
+                    await this.AddRelatedYTContentAsync(vc, chan, oldTrack);
             }
         }
 
@@ -391,11 +394,9 @@ namespace Energize.Services.Listeners.Music
                 await ply.Lavalink.SeekAsync(total);
         }
 
-        public ServerStats LavalinkStats { get =>
-            this.LavaClient.ServerStats; }
+        public ServerStats LavalinkStats { get => this.LavaClient.ServerStats; }
 
-        public int PlayerCount { get =>
-            this.Players.Count; }
+        public int PlayerCount { get => this.Players.Count; }
 
         private static async Task<string> GetThumbnailAsync(ILavaTrack track)
         {
