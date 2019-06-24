@@ -1,4 +1,13 @@
-﻿using Discord;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
@@ -9,15 +18,6 @@ using Energize.Interfaces.Services.Senders;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -50,12 +50,13 @@ namespace Energize.Services.Listeners.Music
             {
                 TokenType = "Bearer",
                 UseAuth = true,
-                UseAutoRetry = true,
+                UseAutoRetry = true
             };
 
             this.SpotifyAuthTimer = new Timer(async _ =>
             {
-                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, req => 
+                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty,
+                                                         this.Logger, null, req => 
                 {
                     byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
                     req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
@@ -69,10 +70,10 @@ namespace Energize.Services.Listeners.Music
 
             this.Rand = new Random();
 
-            this.LavaClient.OnTrackException += async (ply, track, error) => await this.OnTrackIssue(ply, track, error);
+            this.LavaClient.OnTrackException += this.OnTrackIssue;
             this.LavaClient.OnTrackStuck += async (ply, track, _) => await this.OnTrackIssue(ply, track);
             this.LavaClient.OnTrackFinished += this.OnTrackFinished;
-            this.LavaClient.Log += async (logMsg) => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
+            this.LavaClient.Log += async logMsg => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
             this.LavaClient.OnSocketClosed += this.OnSocketClosed;
         }
@@ -102,7 +103,7 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        private async Task OnPlayerUpdated(LavaPlayer lply, LavaTrack track, TimeSpan position)
+        private async Task OnPlayerUpdated(LavaPlayer lply, ILavaTrack track, TimeSpan position)
         {
             if (this.Players.TryGetValue(lply.VoiceChannel.GuildId, out IEnergizePlayer ply))
             {
@@ -218,41 +219,38 @@ namespace Energize.Services.Listeners.Music
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
         }
 
-        public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return null;
 
             if (ply.IsPlaying)
             {
-                ply.Queue.Enqueue(track);
-                return await this.SendNewTrackAsync(chan, track);
+                ply.Queue.Enqueue(lavaTrack);
+                return await this.SendNewTrackAsync(chan, lavaTrack);
             }
-            else
-            {
-                await ply.Lavalink.PlayAsync(track, false);
-                return await this.SendPlayerAsync(ply, track, chan);
-            }
+            await ply.Lavalink.PlayAsync(lavaTrack);
+            return await this.SendPlayerAsync(ply, lavaTrack, chan);
         }
 
-        public async Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> PlayRadioAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return null;
 
-            RadioTrack radio = RadioTrack.FromLavaTrack(track);
+            RadioTrack radio = new RadioTrack(lavaTrack);
             ply.Queue.Clear();
             ply.CurrentRadio = radio;
-            await ply.Lavalink.PlayAsync(track, false);
+            await ply.Lavalink.PlayAsync(lavaTrack);
             return await this.SendPlayerAsync(ply, radio, chan);
         }
 
-        public async Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<LavaTrack> trs)
+        public async Task<List<IUserMessage>> AddPlaylistAsync(IVoiceChannel vc, ITextChannel chan, string name, IEnumerable<ILavaTrack> trs)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
             if (ply == null) return null;
 
-            List<LavaTrack> tracks = trs.ToList();
+            List<ILavaTrack> tracks = trs.ToList();
             if (tracks.Count < 1)
                 return new List<IUserMessage>
                 {
@@ -269,22 +267,19 @@ namespace Energize.Services.Listeners.Music
                     await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`")
                 };
             }
-            else
+            ILavaTrack lavaTrack = tracks[0];
+            tracks.RemoveAt(0);
+
+            if (tracks.Count > 0)
+                foreach (ILavaTrack tr in tracks)
+                    ply.Queue.Enqueue(tr);
+
+            await ply.Lavalink.PlayAsync(lavaTrack);
+            return new List<IUserMessage>
             {
-                LavaTrack track = tracks[0];
-                tracks.RemoveAt(0);
-
-                if (tracks.Count > 0)
-                    foreach (LavaTrack tr in tracks)
-                        ply.Queue.Enqueue(tr);
-
-                await ply.Lavalink.PlayAsync(track, false);
-                return new List<IUserMessage>
-                {
-                    await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`"),
-                    await this.SendPlayerAsync(ply, track, chan)
-                };
-            }
+                await this.MessageSender.Good(chan, "music player", $"🎶 Added `{tracks.Count}` tracks from `{name}`"),
+                await this.SendPlayerAsync(ply, lavaTrack, chan)
+            };
         }
 
         public async Task StopTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -390,17 +385,19 @@ namespace Energize.Services.Listeners.Music
             if (ply == null) return;
             if (!ply.IsPlaying) return;
 
-            LavaTrack track = ply.CurrentTrack;
-            TimeSpan total = track.Position.Add(TimeSpan.FromSeconds(amount));
-            if (total < track.Length && total >= TimeSpan.Zero)
+            ILavaTrack lavaTrack = ply.CurrentTrack;
+            TimeSpan total = lavaTrack.Position.Add(TimeSpan.FromSeconds(amount));
+            if (total < lavaTrack.Length && total >= TimeSpan.Zero)
                 await ply.Lavalink.SeekAsync(total);
         }
 
-        public ServerStats LavalinkStats { get => this.LavaClient.ServerStats; }
+        public ServerStats LavalinkStats { get =>
+            this.LavaClient.ServerStats; }
 
-        public int PlayerCount { get => this.Players.Count; }
+        public int PlayerCount { get =>
+            this.Players.Count; }
 
-        private async Task<string> GetThumbnailAsync(LavaTrack track)
+        private static async Task<string> GetThumbnailAsync(ILavaTrack track)
         {
             try
             {
@@ -411,7 +408,7 @@ namespace Energize.Services.Listeners.Music
                 return string.Empty;
             }
         }
-
+        
         public async Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, msg.Channel as ITextChannel);
@@ -424,7 +421,7 @@ namespace Energize.Services.Listeners.Music
                     int i = objs.IndexOf(obj);
                     builder.WithDescription($"🎶 Track `#{i + 1}` out of `{objs.Count}` in the queue");
 
-                    if (obj is LavaTrack track)
+                    if (obj is ILavaTrack track)
                     {
                         builder
                             .WithField("Title", track.Title)
@@ -432,7 +429,7 @@ namespace Energize.Services.Listeners.Music
                             .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
                             .WithField("Stream", track.IsStream);
 
-                        string thumbnailurl = await this.GetThumbnailAsync(track);
+                        string thumbnailurl = await GetThumbnailAsync(track);
                         if (!string.IsNullOrWhiteSpace(thumbnailurl))
                             builder.WithThumbnailUrl(thumbnailurl);
                     }
@@ -446,15 +443,12 @@ namespace Energize.Services.Listeners.Music
                     }
                 });
             }
-            else
-            {
-                return await this.MessageSender.Good(msg, "track queue", "The track queue is empty");
-            }
+            return await this.MessageSender.Good(msg, "track queue", "The track queue is empty");
         }
 
-        private async Task<Embed> GetNewTrackEmbed(LavaTrack track, IMessage msg = null)
+        private async Task<Embed> GetNewTrackEmbed(ILavaTrack lavaTrack, IMessage msg = null)
         {
-            string thumbnailUrl = await this.GetThumbnailAsync(track);
+            string thumbnailUrl = await GetThumbnailAsync(lavaTrack);
             EmbedBuilder builder = new EmbedBuilder();
             if (msg != null)
                 builder.WithAuthorNickname(msg);
@@ -465,23 +459,23 @@ namespace Energize.Services.Listeners.Music
                 .WithDescription(desc)
                 .WithColorType(EmbedColorType.Good)
                 .WithFooter("music player")
-                .WithField("Title", track.Title)
-                .WithField("Author", track.Author)
-                .WithField("Length", track.IsStream ? " - " : track.Length.ToString(@"hh\:mm\:ss"))
-                .WithField("Stream", track.IsStream)
+                .WithField("Title", lavaTrack.Title)
+                .WithField("Author", lavaTrack.Author)
+                .WithField("Length", lavaTrack.IsStream ? " - " : lavaTrack.Length.ToString(@"hh\:mm\:ss"))
+                .WithField("Stream", lavaTrack.IsStream)
                 .Build();
         }
 
-        public async Task<IUserMessage> SendNewTrackAsync(IMessage msg, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(IMessage msg, ILavaTrack lavaTrack)
         {
-            Embed embed = await this.GetNewTrackEmbed(track, msg);
+            Embed embed = await this.GetNewTrackEmbed(lavaTrack, msg);
 
             return await this.MessageSender.Send(msg, embed);
         }
 
-        public async Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, LavaTrack track)
+        public async Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ILavaTrack lavaTrack)
         {
-            Embed embed = await this.GetNewTrackEmbed(track);
+            Embed embed = await this.GetNewTrackEmbed(lavaTrack);
 
             return await this.MessageSender.Send(chan, embed);
         }
@@ -547,13 +541,13 @@ namespace Energize.Services.Listeners.Music
         }
 
         private static readonly Regex YTRegex = new Regex(@"(?!videoseries)[a-zA-Z0-9_-]{11}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private async Task<(bool, YoutubeVideo)> TryGetVideoAsync(LavaTrack track)
+        private async Task<(bool, YoutubeVideo)> TryGetVideoAsync(ILavaTrack lavaTrack)
         {
             bool failed = false;
             YoutubeVideo video = null;
-            if (track.Uri.AbsoluteUri.Contains("youtu"))
+            if (lavaTrack.Uri.AbsoluteUri.Contains("youtu"))
             {
-                Match match = YTRegex.Match(track.Uri.AbsoluteUri);
+                Match match = YTRegex.Match(lavaTrack.Uri.AbsoluteUri);
                 if (!match.Success)
                     failed = true;
 
@@ -582,12 +576,12 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, LavaTrack oldTrack)
+        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack oldTrack)
         {
             (bool failed, YoutubeVideo video) = await this.TryGetVideoAsync(oldTrack);
             string videoUrl = await this.GetNextTrackVideoURLAsync(failed, video);
             SearchResult res = await this.LavaRestClient.SearchTracksAsync(videoUrl);
-            List<LavaTrack> tracks = res.Tracks.ToList();
+            List<ILavaTrack> tracks = res.Tracks.ToList();
             if (tracks.Count == 0) return;
 
             switch (res.LoadType)
@@ -597,7 +591,7 @@ namespace Energize.Services.Listeners.Music
                     await this.AddTrackAsync(vc, chan, tracks[0]);
                     break;
                 case LoadType.PlaylistLoaded:
-                    await this.AddPlaylistAsync(vc, chan, res.PlaylistInfo.Name, res.Tracks);
+                    await this.AddPlaylistAsync(vc, chan, res.PlaylistInfo.Name, tracks);
                     break;
                 default:
                     await this.MessageSender.Warning(chan, "music player", "Failed to get/load the next autoplay track");
@@ -605,46 +599,50 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        public async Task<LavaTrack> ConvertSpotifyTrackToYoutubeAsync(string spotifyId)
+        public async Task<SpotifyTrack> GetSpotifyTrackAsync(string spotifyId)
         {
-            FullTrack spotifyTrack = await this.Spotify.GetTrackAsync(spotifyId);
-            string artistName = spotifyTrack.Artists.FirstOrDefault()?.Name ?? string.Empty;
-            SearchResult result = await this.LavaRestClient.SearchYouTubeAsync($"{spotifyTrack.Name} {artistName}");
-
-            return result.Tracks.FirstOrDefault();
+            FullTrack spotifyResult = await this.Spotify.GetTrackAsync(spotifyId);
+            return new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult));
         }
 
-        public async Task<IEnumerable<PaginatorPlayableItem>> SearchSpotifyAsync(string search)
+        private async Task<ILavaTrack> SearchSpotifyCallback(FullTrack spotifyResult)
+        {
+            string artistName = spotifyResult.Artists.FirstOrDefault()
+                ?.Name + " - " ?? string.Empty;
+            SearchResult searchYouTubeAsync = await this.LavaRestClient.SearchYouTubeAsync($"{artistName}{spotifyResult.Name}");
+            return searchYouTubeAsync.Tracks.FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<SpotifyTrack>> SearchSpotifyAsync(string search)
         {
             SearchItem searchResult = await this.Spotify.SearchItemsAsync(search, SearchType.Track);
             Paging<FullTrack> tracks = searchResult.Tracks;
             if (searchResult.HasError())
-                return new List<PaginatorPlayableItem>();
-
+                return new List<SpotifyTrack>();
+            
             return tracks
                 .Items
-                .Select(spotifyTrack =>
+                .Select(spotifyResult =>
                 {
-                    string displayUrl = $"https://open.spotify.com/track/{spotifyTrack.Id}";
-                    return new PaginatorPlayableItem(displayUrl, async () => await this.ConvertSpotifyTrackToYoutubeAsync(spotifyTrack.Id));
+                    return new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult));
                 });
         }
 
-        private async Task OnTrackFinished(LavaPlayer lavalink, LavaTrack track, TrackEndReason reason)
+        private async Task OnTrackFinished(LavaPlayer lavalink, ILavaTrack lavaTrack, TrackEndReason reason)
         {
             if (!reason.ShouldPlayNext()) return;
 
             IEnergizePlayer ply = this.Players[lavalink.VoiceChannel.GuildId];
             if (ply.IsLooping)
             {
-                track.ResetPosition();
-                await ply.Lavalink.PlayAsync(track, false);
+                lavaTrack.ResetPosition();
+                await ply.Lavalink.PlayAsync(lavaTrack);
             }
             else
             {
                 if (ply.Queue.TryDequeue(out IQueueObject obj))
                 {
-                    if (obj is LavaTrack newTrack)
+                    if (obj is ILavaTrack newTrack)
                     {
                         await ply.Lavalink.PlayAsync(newTrack);
                         await this.SendPlayerAsync(ply, newTrack);
@@ -654,7 +652,7 @@ namespace Energize.Services.Listeners.Music
                 {
                     if (ply.Autoplay && ply.Queue.Count == 0)
                     {
-                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, track);
+                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, lavaTrack);
                     }
                     else
                     {
@@ -665,17 +663,17 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        private async Task OnTrackIssue(LavaPlayer ply, LavaTrack track, string error = null)
+        private async Task OnTrackIssue(LavaPlayer ply, ILavaTrack lavaTrack, string error = null)
         {
             if (error != null)
             {
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{track.Title}>\n{error}");
-                if (track.Uri.AbsoluteUri.Contains("soundcloud.com"))
+                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Exception thrown by lavalink for track <{lavaTrack.Title}>\n{error}");
+                if (lavaTrack.Uri.AbsoluteUri.Contains("soundcloud.com"))
                     error = $"{error} It is likely that this track is not usable outside of SoundCloud.";
             }
             else
             {
-                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{track.Title}> got stuck");
+                this.Logger.Nice("MusicPlayer", ConsoleColor.Red, $"Track <{lavaTrack.Title}> got stuck");
                 error = "The track got stuck.";
             }
 
@@ -684,7 +682,7 @@ namespace Energize.Services.Listeners.Music
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 Could not play track:")
-                .WithField("URL", $"**{track.Uri}**")
+                .WithField("URL", $"**{lavaTrack.Uri}**")
                 .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());
@@ -708,7 +706,7 @@ namespace Energize.Services.Listeners.Music
             {
                 await ply.TrackPlayer.DeleteMessage();
                 await music.SkipTrackAsync(ply.VoiceChannel, ply.TextChannel);
-            },
+            }
         };
 
         private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
@@ -734,7 +732,7 @@ namespace Energize.Services.Listeners.Music
 
             await ReactionCallbacks[reaction.Emote.Name](this, ply);
             if (ply.CurrentRadio != null)
-                await ply.TrackPlayer.Update(ply.CurrentRadio, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+                await ply.TrackPlayer.Update(ply.CurrentRadio, ply.Volume, ply.IsPaused, ply.IsLooping);
             else
                 await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
         }
@@ -747,7 +745,7 @@ namespace Energize.Services.Listeners.Music
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
-        private volatile int CurrentShardCount = 0;
+        private volatile int CurrentShardCount;
         [Event("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
         {

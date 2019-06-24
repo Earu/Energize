@@ -1,7 +1,13 @@
-﻿using Discord;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
+using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using System;
@@ -147,7 +153,7 @@ namespace Energize.Services.Senders
                 if (sender.Paginators.TryRemove(cache.Value.Id, out Paginator<object> _))
                     await chan.DeleteMessageAsync(paginator.Message);
             },
-            ["⏯"] = OnPlayReaction,
+            ["⏯"] = OnPlayReaction
         };
 
         private bool IsValidEmote(SocketReaction reaction)
@@ -175,29 +181,20 @@ namespace Energize.Services.Senders
             ITextChannel textChan = (ITextChannel)chan;
             IMusicPlayerService music = sender.ServiceManager.GetService<IMusicPlayerService>("Music");
 
-            if (paginator.CurrentValue is LavaTrack track)
+            if (paginator.CurrentValue is ILavaTrack track)
             {
                 await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
-            }
-            else if (paginator.CurrentValue is PaginatorPlayableItem item)
-            {
-                LavaTrack itemTrack = await item.PlayAsync();
-                if (itemTrack != null)
-                {
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, itemTrack);
-                    await chan.DeleteMessageAsync(paginator.Message);
-                }
             }
             else if(paginator.CurrentValue is string url)
             {
                 if (string.IsNullOrWhiteSpace(url)) return;
 
                 SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
-                List<LavaTrack> tracks = result.Tracks.ToList();
+                List<ILavaTrack> tracks = result.Tracks.ToList();
                 if (tracks.Count > 0)
                 {
-                    LavaTrack tr = tracks[0];
+                    ILavaTrack tr = tracks[0];
                     await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
                     await chan.DeleteMessageAsync(paginator.Message);
                 }
