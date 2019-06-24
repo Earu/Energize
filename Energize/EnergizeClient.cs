@@ -6,7 +6,9 @@ using DiscordBotsList.Api.Objects;
 using Energize.Essentials;
 using Energize.Services;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,12 +49,6 @@ namespace Energize
                 {
                     Exception e = (Exception)args.ExceptionObject;
                     this.Logger.LogTo("crash.log", e.ToString());
-
-                    SocketChannel feedbackChan = this.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
-                    if (feedbackChan != null)
-                        this.MessageSender
-                            .Danger(feedbackChan, "crash error", $"Something terribly wrong happened, check `crash.log`.\nRestarting...")
-                            .Wait();
                 };
 
                 this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
@@ -144,6 +140,31 @@ namespace Energize
             await this.DiscordClient.SetActivityAsync(game);
         }
 
+        private async Task NotifyCaughtExceptionsAsync()
+        {
+            RestChannel chan = await this.DiscordRestClient.GetChannelAsync(Config.Instance.Discord.BugReportChannelID);
+            if (chan == null) return;
+
+            IEnumerable<IGrouping<Exception, EventHandlerException>> exs = this.ServiceManager.TakeCaughtExceptions();
+            foreach(IGrouping<Exception, EventHandlerException> grouping in exs)
+            {
+                EventHandlerException ex = grouping.FirstOrDefault();
+                if (ex == null) continue;
+
+                EmbedBuilder builder = new EmbedBuilder();
+                builder
+                    .WithField("Message", ex.Error.Message)
+                    .WithField("File", ex.FileName)
+                    .WithField("Method", ex.MethodName)
+                    .WithField("Line", ex.Line)
+                    .WithField("Occurences", grouping.Count())
+                    .WithColorType(EmbedColorType.Warning)
+                    .WithFooter("event handler error");
+
+                await this.MessageSender.Send(chan, builder.Build());
+            }
+        }
+
         public async Task InitializeAsync()
         {
             if (!this.HasToken) return;
@@ -167,6 +188,7 @@ namespace Energize
                         this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count, API might be down");
 
                     await this.UpdateActivity();
+                    await this.NotifyCaughtExceptionsAsync();
                 });
 
                 int hour = 1000 * 60 * 60;

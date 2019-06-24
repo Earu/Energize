@@ -31,6 +31,7 @@ namespace Energize.Essentials
         public char Separator;
         public ulong OwnerID;
         public ulong FeedbackChannelID;
+        public ulong BugReportChannelID;
         public string BotListToken;
         public string BotsToken;
 
@@ -71,6 +72,7 @@ namespace Energize.Essentials
         public string GitHubURL;
         public string InviteURL;
         public string WebsiteURL;
+        public string DiscordURL;
     }
 
     public struct Blacklist
