@@ -4,7 +4,7 @@
         <Version></Version>
         <PackageVersion></PackageVersion>
         <LangVersion>8.0</LangVersion>
-        <TargetFrameworks>netstandard2.0;netcoreapp3.0</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;</TargetFrameworks>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <RootNamespace>Victoria</RootNamespace>

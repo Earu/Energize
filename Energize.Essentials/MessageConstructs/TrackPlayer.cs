@@ -38,10 +38,7 @@ namespace Energize.Essentials.MessageConstructs
                     line = "⚪" + new string('─', 24);
             }
 
-            if (track.Uri.AbsoluteUri.Length > 1000)
-                return $"`{len}`\n```http\n▶ {line} {pos}\n```";
-            else
-                return $"`{len}`\n[```http\n▶ {line} {pos}\n```]({track.Uri})";
+            return $"`{len}`\n```http\n▶ {line} {pos}\n```";
         }
 
         private Embed BuildTrackEmbed(ILavaTrack track, int volume, bool paused, bool looping)
@@ -49,8 +46,7 @@ namespace Energize.Essentials.MessageConstructs
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithColorType(EmbedColorType.Good)
-                .WithDescription("🎶 Now playing the following track")
-                .WithField("Title", track.Title)
+                .WithTitle(track.Title)
                 .WithField("Author", track.Author)
                 .WithField("Stream", track.IsStream)
                 .WithField("Volume", $"{volume}%")
@@ -58,10 +54,12 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Looping", looping)
                 .WithFooter("music player");
 
-            if (!track.IsStream)
-                builder.WithField("Length", this.FormattedTrack(track), false);
+            if (track.Uri.AbsoluteUri.Length < 1000)
+                builder.WithDescription($"🎶 Now playing the **[following track]({track.Uri})**");
             else
-                builder.WithField("Length", " - ", false);
+                builder.WithDescription("🎶 Now playing the following track");
+
+            builder.WithField("Length", this.FormattedTrack(track), false);
 
             return builder.Build();
         }
