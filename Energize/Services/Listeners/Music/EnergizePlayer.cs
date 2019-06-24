@@ -1,13 +1,14 @@
-﻿using Discord;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Discord;
 using Energize.Essentials.MessageConstructs;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
+using Timer = System.Timers.Timer;
 
 namespace Energize.Services.Listeners.Music
 {
@@ -18,7 +19,7 @@ namespace Energize.Services.Listeners.Music
 
         private readonly double TimeToLive;
 
-        private System.Timers.Timer TTLTimer;
+        private Timer TTLTimer;
 
         internal EnergizePlayer(LavaPlayer ply)
         {
@@ -49,7 +50,7 @@ namespace Energize.Services.Listeners.Music
         public LavaQueue<IQueueObject> Queue { get => this.Lavalink.Queue; }
         public bool IsPlaying { get => this.Lavalink.IsPlaying; }
         public bool IsPaused { get => this.Lavalink.IsPaused; }
-        public LavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
+        public ILavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
         public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
         public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
         public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
@@ -63,9 +64,9 @@ namespace Energize.Services.Listeners.Music
                 this.TTLTimer = null;
             }
 
-            this.TTLTimer = new System.Timers.Timer(this.TimeToLive)
+            this.TTLTimer = new Timer(this.TimeToLive)
             {
-                AutoReset = false,
+                AutoReset = false
             };
 
             this.TTLTimer.Elapsed += (_, __) =>

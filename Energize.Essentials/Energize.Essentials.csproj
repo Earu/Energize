@@ -7,8 +7,11 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta0006" />
-    <PackageReference Include="Victoria" Version="4.0.16" />
+    <PackageReference Include="SpotifyAPI-NET" Version="2.19.0" />
     <PackageReference Include="YamlDotNet" Version="6.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Energize.Victoria\Energize.Victoria.csproj" />
   </ItemGroup>
 
 </Project>

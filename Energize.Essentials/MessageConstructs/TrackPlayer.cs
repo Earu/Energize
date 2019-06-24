@@ -18,7 +18,7 @@ namespace Energize.Essentials.MessageConstructs
         public Embed Embed { get; private set; }
         public ulong GuildID { get; private set; }
 
-        private string FormattedTrack(LavaTrack track)
+        private string FormattedTrack(ILavaTrack track)
         {
             string len = (track.IsStream ? TimeSpan.Zero : track.Length).ToString(@"hh\:mm\:ss");
             string pos = (track.IsStream ? TimeSpan.Zero : track.Position).ToString(@"hh\:mm\:ss");
@@ -41,7 +41,7 @@ namespace Energize.Essentials.MessageConstructs
             return res;
         }
 
-        private Embed BuildTrackEmbed(LavaTrack track, int volume, bool paused, bool looping)
+        private Embed BuildTrackEmbed(ILavaTrack track, int volume, bool paused, bool looping)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
@@ -95,10 +95,15 @@ namespace Energize.Essentials.MessageConstructs
 
         private Embed BuildEmbed(IQueueObject obj, int volume, bool paused, bool looping)
         {
-            if (obj is LavaTrack track) return this.BuildTrackEmbed(track, volume, paused, looping);
-            if (obj is RadioTrack radio) return this.BuildRadioEmbed(radio, volume, paused);
-
-            return this.BuildUnknownEmbed(obj, volume, paused, looping);
+            switch (obj)
+            {
+                case ILavaTrack track:
+                    return this.BuildTrackEmbed(track, volume, paused, looping);
+                case RadioTrack radio:
+                    return this.BuildRadioEmbed(radio, volume, paused);
+                default:
+                    return this.BuildUnknownEmbed(obj, volume, paused, looping);
+            }
         }
 
         public async Task DeleteMessage()
