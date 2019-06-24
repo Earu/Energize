@@ -3,6 +3,9 @@ using Victoria.Queue;
 
 namespace Victoria.Entities
 {
+    /// <summary>
+    /// Interface for LavaTrack, has all of the public required properties for playing a track 
+    /// </summary>
     public interface ILavaTrack : IQueueObject
     {
         string Hash { get; set; }
