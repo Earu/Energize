@@ -1,9 +1,9 @@
-﻿using Discord;
-using Energize.Essentials.MessageConstructs;
-using Energize.Essentials.TrackTypes;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord;
+using Energize.Essentials.MessageConstructs;
+using Energize.Essentials.TrackTypes;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -24,8 +24,8 @@ namespace Energize.Interfaces.Services.Listeners
         bool IsPlaying { get; }
         bool IsPaused { get; }
         RadioTrack CurrentRadio { get; set; }
-        LavaQueue<LavaTrack> Queue { get; }
-        LavaTrack CurrentTrack { get; }
+        LavaQueue<IQueueObject> Queue { get; }
+        ILavaTrack CurrentTrack { get; }
         IVoiceChannel VoiceChannel { get; }
         ITextChannel TextChannel { get; }
         int Volume { get; }

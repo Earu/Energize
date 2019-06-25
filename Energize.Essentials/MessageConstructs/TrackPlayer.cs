@@ -18,10 +18,11 @@ namespace Energize.Essentials.MessageConstructs
         public Embed Embed { get; private set; }
         public ulong GuildID { get; private set; }
 
-        private string FormattedTrack(LavaTrack track)
+        private string FormattedTrack(ILavaTrack track)
         {
             string len = (track.IsStream ? TimeSpan.Zero : track.Length).ToString(@"hh\:mm\:ss");
             string pos = (track.IsStream ? TimeSpan.Zero : track.Position).ToString(@"hh\:mm\:ss");
+
             string line;
             if (track.IsStream)
             {
@@ -36,18 +37,16 @@ namespace Energize.Essentials.MessageConstructs
                 else
                     line = "⚪" + new string('─', 24);
             }
-            string res = $"`{len}`\n```http\n▶ {line} {pos}\n```";
 
-            return res;
+            return $"`{len}`\n```http\n▶ {line} {pos}\n```";
         }
 
-        private Embed BuildTrackEmbed(LavaTrack track, int volume, bool paused, bool looping)
+        private Embed BuildTrackEmbed(ILavaTrack track, int volume, bool paused, bool looping)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithColorType(EmbedColorType.Good)
-                .WithDescription("🎶 Now playing the following track")
-                .WithField("Title", track.Title)
+                .WithTitle(track.Title)
                 .WithField("Author", track.Author)
                 .WithField("Stream", track.IsStream)
                 .WithField("Volume", $"{volume}%")
@@ -55,10 +54,12 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Looping", looping)
                 .WithFooter("music player");
 
-            if (!track.IsStream)
-                builder.WithField("Length", this.FormattedTrack(track), false);
+            if (track.Uri.AbsoluteUri.Length < 1000)
+                builder.WithDescription($"🎶 Now playing the **[following track]({track.Uri})**");
             else
-                builder.WithField("Length", " - ", false);
+                builder.WithDescription("🎶 Now playing the following track");
+
+            builder.WithField("Length", this.FormattedTrack(track), false);
 
             return builder.Build();
         }
@@ -70,7 +71,7 @@ namespace Energize.Essentials.MessageConstructs
                 .WithColorType(EmbedColorType.Good)
                 .WithDescription("📻 Playing radio")
                 .WithField("Genre", radio.Genre)
-                .WithField("Raw Stream", radio.StreamURL)
+                .WithField("Raw Stream", $"**{radio.StreamURL}**")
                 .WithField("Volume", $"{volume}%")
                 .WithField("Paused", paused)
                 .WithFooter("music player");
@@ -95,10 +96,15 @@ namespace Energize.Essentials.MessageConstructs
 
         private Embed BuildEmbed(IQueueObject obj, int volume, bool paused, bool looping)
         {
-            if (obj is LavaTrack track) return this.BuildTrackEmbed(track, volume, paused, looping);
-            if (obj is RadioTrack radio) return this.BuildRadioEmbed(radio, volume, paused);
-
-            return this.BuildUnknownEmbed(obj, volume, paused, looping);
+            switch (obj)
+            {
+                case ILavaTrack track:
+                    return this.BuildTrackEmbed(track, volume, paused, looping);
+                case RadioTrack radio:
+                    return this.BuildRadioEmbed(radio, volume, paused);
+                default:
+                    return this.BuildUnknownEmbed(obj, volume, paused, looping);
+            }
         }
 
         public async Task DeleteMessage()

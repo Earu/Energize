@@ -270,3 +270,7 @@ Energize\.Web/octo_config\.yaml
 \.DS_Store
 
 restartlog\.txt
+
+Settings/config_debug\.yaml
+
+Settings/config_prod\.yaml
