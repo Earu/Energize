@@ -22,7 +22,7 @@ namespace Energize.Essentials.TrackTypes
         /// </summary>
         /// <param name="spotifyInfo">Spotify information from the Spotify API</param>
         /// <param name="innerTrack">Searched LavaTrack</param>
-        public SpotifyTrack(SpotifyTrackInfo spotifyInfo, LavaTrack innerTrack)
+        public SpotifyTrack(SpotifyTrackInfo spotifyInfo, ILavaTrack innerTrack)
         {
             this.SpotifyInfo = spotifyInfo;
             this._innerTrack = innerTrack;
