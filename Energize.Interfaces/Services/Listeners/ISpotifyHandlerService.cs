@@ -5,10 +5,10 @@ using SpotifyAPI.Web.Enums;
 
 namespace Energize.Interfaces.Services.Listeners
 {
-    public interface ISpotifyHandlerService
+    public interface ISpotifyHandlerService : IServiceImplementation
     {
-        Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType);
-
         Task<SpotifyTrack> GetTrackAsync(string id);
+        
+        Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType = SearchType.All);
     }
 }
