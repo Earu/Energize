@@ -78,10 +78,14 @@ module CommandHandler =
                         |> List.map (fun (cmd, _) -> sprintf "`%s`" cmd)
                     if matchingCmds.Length > 0 then
                         let cmdsDisplay = String.Join('\n', matchingCmds)
-                        let warning = sprintf "Could not find any command named `%s`, did you mean one of the following:\n%s\n\nFind out more at **%s**" cmdName cmdsDisplay Config.Instance.URIs.WebsiteURL
+                        let warning = 
+                            sprintf "Could not find any command named `%s`, did you mean one of the following:\n%s\n\nFind out more at **%s**, or join our server **%s**" 
+                                cmdName cmdsDisplay Config.Instance.URIs.WebsiteURL Config.Instance.URIs.DiscordURL
                         [ ctx.sendWarn None warning ]
                     else
-                        let warning = sprintf "Could not find any command named `%s`, find out more at **%s**" cmdName Config.Instance.URIs.WebsiteURL
+                        let warning = 
+                            sprintf "Could not find any command named `%s`, find out more at **%s**, or join our server **%s**" 
+                                cmdName Config.Instance.URIs.WebsiteURL Config.Instance.URIs.DiscordURL
                         [ ctx.sendWarn None warning ]
             else
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
@@ -97,6 +101,7 @@ module CommandHandler =
                     let tip = StaticData.Instance.Tips.[ctx.random.Next(0, StaticData.Instance.Tips.Count)]
                     builder.WithFields([
                         ctx.embedField "Documentation" (sprintf "**%s**" Config.Instance.URIs.WebsiteURL) false
+                        ctx.embedField "Support Server" (sprintf "**%s**" Config.Instance.URIs.DiscordURL) false
                         ctx.embedField moduleName (String.Join(',', cmdsDisplay)) false
                         ctx.embedField "Tip" tip false
                     ])
@@ -359,7 +364,7 @@ module CommandHandler =
             .WithFooter(source)
             .WithColorType(EmbedColorType.Warning)
             |> ignore
-        match state.client.GetChannel(Config.Instance.Discord.FeedbackChannelID) with
+        match state.client.GetChannel(Config.Instance.Discord.BugReportChannelID) with
         | null -> ()
         | c ->
             let chan = c :> IChannel :?> ITextChannel
@@ -524,7 +529,8 @@ module CommandHandler =
         | None when botMention -> 
             let showCmd cmdName = state.prefix + cmdName
             let helper =
-                sprintf "Hey there %s, looking for something? Use `%s` or `%s` or visit the online documentation\n%s" msg.Author.Mention (showCmd "help") (showCmd "info") Config.Instance.URIs.WebsiteURL
+                sprintf "Hey there %s, looking for something? Use `%s` or `%s`, visit the online documentation or join our server!\n%s\n%s" 
+                    msg.Author.Mention (showCmd "help") (showCmd "info") Config.Instance.URIs.WebsiteURL Config.Instance.URIs.DiscordURL
             let helpMsg = awaitResult (state.messageSender.SendRaw(msg, helper))
             registerCmdCacheEntry msg.Id [ helpMsg ]
         | None -> ()

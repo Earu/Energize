@@ -1,0 +1,33 @@
+---
+Discord:
+  Token: discord dev token
+  BotID: '0000000000000000'
+  Prefix: x
+  Separator: ","
+  OwnerID: '0000000000000000'
+  FeedbackChannelID: '0000000000000000'
+  BugReportChannelID: '0000000000000000'
+  BotListToken: dbl token
+  BotsToken: bots org token
+Lavalink:
+  Host: google.com
+  Port: 0000
+  Password: coolpassword
+Octovisor:
+  Address: google.com
+  Port: 0000
+  Token: coolpassword
+  ProcessName: Energize
+Spotify:
+  ClientID: spotify client id
+  ClientSecret: spotify client secret
+Keys:
+  TwitchKey: twitch api token
+  YoutubeKey: youtube api token
+URIs:
+  TwitchURL: https://www.twitch.tv/earuio
+  GitHubURL: https://github.com/Earu/Energize
+  InviteURL: https://discordapp.com/oauth2/authorize?client_id=0000000000000000&scope=bot&permissions=8
+  WebsiteURL: http://energize.earu.io/docs
+  DiscordURL: https://discord.gg/RXZtBr5
+DBConnectionString: Data Source=EnergizeDB.db

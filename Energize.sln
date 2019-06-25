@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize.Essentials", "Ener
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Energize.Interfaces", "Energize.Interfaces\Energize.Interfaces.csproj", "{8DFFFA3B-43FB-4EDA-BEA4-462A435F7051}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Energize.Web", "Energize.Web\Energize.Web.csproj", "{0C35F995-D0A9-4984-8C45-8CCBD81226B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Energize.Victoria", "Energize.Victoria\Energize.Victoria.csproj", "{C17670FD-461E-4A16-B633-838FA56B2041}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +39,10 @@ Global
 		{0C35F995-D0A9-4984-8C45-8CCBD81226B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C35F995-D0A9-4984-8C45-8CCBD81226B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C35F995-D0A9-4984-8C45-8CCBD81226B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C17670FD-461E-4A16-B633-838FA56B2041}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C17670FD-461E-4A16-B633-838FA56B2041}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C17670FD-461E-4A16-B633-838FA56B2041}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C17670FD-461E-4A16-B633-838FA56B2041}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
