@@ -82,8 +82,8 @@ module Voice =
             let spotifyMatch = spotifyRegex.Match(url)
             if spotifyMatch.Success then
                 let id = spotifyMatch.Groups.[1].Value
-                let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-                let track = awaitResult (music.GetSpotifyTrackAsync(id))
+                let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
+                let track = awaitResult (spotify.GetTrackAsync(id))
                 track.Uri.AbsoluteUri
             else
                 url
@@ -323,8 +323,8 @@ module Voice =
     [<Command("spotify", "Searches spotify for a song", "spotify <search>")>]
     let spotify (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
-            let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-            let songItems = awaitResult (music.SearchSpotifyAsync(ctx.input)) |> Seq.toList
+            let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
+            let songItems = awaitResult (spotify.SearchAsync(ctx.input)) |> Seq.toList
             let len = songItems.Length
             return
                 if len > 0 then

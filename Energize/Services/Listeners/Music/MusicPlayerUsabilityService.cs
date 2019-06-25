@@ -109,8 +109,8 @@ namespace Energize.Services.Listeners.Music
             if (match.Success)
             {
                 string spotifyId = match.Groups[1].Value;
-                IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                var spotifyTrack = await music.GetSpotifyTrackAsync(spotifyId);
+                ISpotifyHandlerService spotify = this.ServiceManager.GetService<ISpotifyHandlerService>("Spotify");
+                SpotifyTrack spotifyTrack = await spotify.GetTrackAsync(spotifyId);
                 ILavaTrack innerTrack = await spotifyTrack.GetInnerTrackAsync();
                 return innerTrack.Uri.AbsoluteUri;
             }
