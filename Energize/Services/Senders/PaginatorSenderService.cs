@@ -5,6 +5,7 @@ using Energize.Essentials.MessageConstructs;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,7 +17,7 @@ namespace Energize.Services.Senders
     [Service("Paginator")]
     public class PaginatorSenderService : ServiceImplementationBase, IPaginatorSenderService
     {
-        private readonly Dictionary<ulong, Paginator<object>> Paginators;
+        private readonly ConcurrentDictionary<ulong, Paginator<object>> Paginators;
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
         private readonly Logger Logger;
@@ -24,7 +25,7 @@ namespace Energize.Services.Senders
 
         public PaginatorSenderService(EnergizeClient client)
         {
-            this.Paginators = new Dictionary<ulong, Paginator<object>>();
+            this.Paginators = new ConcurrentDictionary<ulong, Paginator<object>>();
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
             this.Logger = client.Logger;
@@ -38,7 +39,7 @@ namespace Energize.Services.Senders
                         toRemove.Add(paginator.Key);
 
                 foreach (ulong msgId in toRemove)
-                    this.Paginators.Remove(msgId);
+                    this.Paginators.TryRemove(msgId, out Paginator<object> _);
                 
                 if(toRemove.Count > 0)
                     this.Logger.Nice("Paginator", ConsoleColor.Gray, $"Cleared {toRemove.Count} paginator instance{(toRemove.Count == 1 ? string.Empty : "s")}");
@@ -77,8 +78,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -99,8 +100,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -114,8 +115,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "▶");
             }
 
             return posted;
@@ -129,8 +130,8 @@ namespace Energize.Services.Senders
             if (posted != null)
             {
                 paginator.Message = posted;
-                this.Paginators.Add(posted.Id, paginator.ToObject());
-                this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
+                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                    this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
             }
 
             return posted;
@@ -143,10 +144,10 @@ namespace Energize.Services.Senders
             ["▶"] = async (sender, paginator, cache, chan, reaction) => await paginator.Next(),
             ["⏹"] = async (sender, paginator, cache, chan, reaction) =>
             {
-                sender.Paginators.Remove(cache.Value.Id);
-                await chan.DeleteMessageAsync(paginator.Message);
+                if (sender.Paginators.TryRemove(cache.Value.Id, out Paginator<object> _))
+                    await chan.DeleteMessageAsync(paginator.Message);
             },
-            ["⏯"] = OnPlayReaction,
+            ["⏯"] = OnPlayReaction
         };
 
         private bool IsValidEmote(SocketReaction reaction)
@@ -159,9 +160,7 @@ namespace Energize.Services.Senders
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
-            if (!this.Paginators.ContainsKey(cache.Value.Id)) return;
-
-            Paginator<object> paginator = this.Paginators[cache.Value.Id];
+            if (!this.Paginators.TryGetValue(cache.Value.Id, out Paginator<object> paginator)) return;
             if (paginator.UserID != reaction.UserId) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);
@@ -176,29 +175,20 @@ namespace Energize.Services.Senders
             ITextChannel textChan = (ITextChannel)chan;
             IMusicPlayerService music = sender.ServiceManager.GetService<IMusicPlayerService>("Music");
 
-            if (paginator.CurrentValue is LavaTrack track)
+            if (paginator.CurrentValue is ILavaTrack track)
             {
                 await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                 await chan.DeleteMessageAsync(paginator.Message);
-            }
-            else if (paginator.CurrentValue is PaginatorPlayableItem item)
-            {
-                LavaTrack itemTrack = await item.PlayAsync();
-                if (itemTrack != null)
-                {
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, itemTrack);
-                    await chan.DeleteMessageAsync(paginator.Message);
-                }
             }
             else if(paginator.CurrentValue is string url)
             {
                 if (string.IsNullOrWhiteSpace(url)) return;
 
                 SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
-                List<LavaTrack> tracks = result.Tracks.ToList();
+                List<ILavaTrack> tracks = result.Tracks.ToList();
                 if (tracks.Count > 0)
                 {
-                    LavaTrack tr = tracks[0];
+                    ILavaTrack tr = tracks[0];
                     await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
                     await chan.DeleteMessageAsync(paginator.Message);
                 }

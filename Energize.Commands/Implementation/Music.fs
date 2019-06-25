@@ -1,12 +1,14 @@
 ﻿namespace Energize.Commands.Implementation
 
 open Energize.Commands.Command
+open Microsoft.FSharp.Collections
 open System.Text.RegularExpressions
 open Energize.Commands.Context
 open Discord
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.AsyncHelper
 open Energize.Essentials
+open Energize.Essentials.TrackTypes
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
@@ -81,7 +83,7 @@ module Voice =
             if spotifyMatch.Success then
                 let id = spotifyMatch.Groups.[1].Value
                 let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-                let track = awaitResult (music.ConvertSpotifyTrackToYoutubeAsync(id))
+                let track = awaitResult (music.GetSpotifyTrackAsync(id))
                 track.Uri.AbsoluteUri
             else
                 url
@@ -178,6 +180,15 @@ module Voice =
         return musicAction ctx (fun music vc _ ->
             await (music.SkipTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
             [ ctx.sendOK None "Skipped the current track" ]
+        )
+    }
+
+    [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("stop", "Stops the current track and empties the queue", "stop <nothing>")>]
+    let stop (ctx : CommandContext) = async {
+        return musicAction ctx (fun music vc _ -> 
+            await (music.StopTrackAsync(vc, ctx.message.Channel :?> ITextChannel))
+            [ ctx.sendOK None "Stopped the music player" ]
         )
     }
 
@@ -320,7 +331,7 @@ module Voice =
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                     [ awaitResult (paginator.SendPlayerPaginator(ctx.message, songItems, fun songItem ->
                         let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
-                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.DisplayURL
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.Uri.AbsoluteUri 
                     )) ]
                 else
                     [ ctx.sendWarn None "Could not find any songs" ]
