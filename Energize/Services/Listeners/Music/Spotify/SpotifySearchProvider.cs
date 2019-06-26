@@ -19,7 +19,10 @@ namespace Energize.Services.Listeners.Music.Spotify
         {
         }
 
-        public async Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType = SearchType.All)
+        public async Task<IEnumerable<SpotifyTrack>> SearchAsync(
+            string query,
+            SearchType searchType = SearchType.All,
+            int maxResults = 100)
         {
             SearchItem searchResult = await this.Api.SearchItemsAsync(query, SearchType.Track);
             Paging<FullTrack> tracks = searchResult.Tracks;

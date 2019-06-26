@@ -2,7 +2,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
 using SpotifyAPI.Web;
-using SpotifyAPI.Web.Models;
 using Victoria;
 using Victoria.Entities;
 
