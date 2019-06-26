@@ -25,6 +25,7 @@ namespace Energize.Services.Listeners.Music.Spotify
         private readonly Timer _spotifyAuthTimer;
         private readonly SpotifyTrackProvider _trackProvider;
         private readonly SpotifySearchProvider _searchProvider;
+        private readonly SpotifyPlaylistProvider _playlistProvider;
 
 
         public SpotifyHandlerService(EnergizeClient client)
@@ -43,6 +44,7 @@ namespace Energize.Services.Listeners.Music.Spotify
 
             _trackProvider = new SpotifyTrackProvider(_api, _lavaRest, _lazyLoad);
             _searchProvider = new SpotifySearchProvider(_api, _lavaRest, _lazyLoad);
+            _playlistProvider = new SpotifyPlaylistProvider(_api, _lavaRest, _lazyLoad);
         }
 
         private static LavaRestClient GetLavaRestClient()
@@ -98,7 +100,20 @@ namespace Energize.Services.Listeners.Music.Spotify
         public Task<SpotifyTrack> GetTrackAsync(string id) 
             => _trackProvider.GetTrackAsync(id);
 
-        public Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType = SearchType.All) 
-            => _searchProvider.SearchAsync(query, searchType);
+        public Task<IEnumerable<SpotifyTrack>> SearchAsync(
+            string query,
+            SearchType searchType = SearchType.All,
+            int maxResults = 100)
+        {
+            return _searchProvider.SearchAsync(query, searchType, maxResults);
+        }
+        
+        public Task<SpotifyCollection> GetPlaylistAsync(
+            string playlistId,
+            int startIndex = 0,
+            int maxResults = 100)
+        {
+            return _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
+        }
     }
 }
