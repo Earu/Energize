@@ -69,6 +69,19 @@ module Social =
                 [ ctx.sendWarn None help ]
     }
 
+    [<CommandParameters(1)>]
+    [<CommandConditions(CommandCondition.GuildOnly)>]
+    [<Command("someone", "Mentions a random user of the server and adds your text afterward", "someone <text>")>]
+    let someone (ctx : CommandContext) = async {
+        let user = findUser ctx "$random" true
+        return 
+            match user with
+            | Some u ->
+                [ ctx.sendOK None (sprintf "%s %s" u.Mention ctx.input) ]
+            | None ->
+                [ ctx.sendWarn None "There was a problem getting a random user" ]
+    }
+
     [<CommandParameters(2)>]
     [<Command("love", "Gets how compatible two users are", "love <user|userid>,<user|userid>")>]
     let love (ctx : CommandContext) = async {
