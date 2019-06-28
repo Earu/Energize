@@ -116,7 +116,7 @@ module CommandHandler =
     
     [<CommandParameters(2)>]
     [<CommandConditions(CommandCondition.DevOnly)>]
-    [<Command("enable", "Enables or disables a command", "enable <cmd>,<value>")>]
+    [<Command("enable", "Enables or disables a command", "enable <cmd> <value>")>]
     let enable (ctx : CommandContext) = async {
         let cmdName = ctx.arguments.[0].Trim()
         let value = int (ctx.arguments.[1].Trim())
@@ -173,7 +173,7 @@ module CommandHandler =
 
     [<CommandParameters(2)>]
     [<CommandConditions(CommandCondition.DevOnly)>]
-    [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid>,<sentence>")>]
+    [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid> <sentence>")>]
     let sendMsg (ctx : CommandContext) = async {
         return
             try
@@ -295,7 +295,7 @@ module CommandHandler =
 
     let private getCmdArgs (state : CommandHandlerState) (input : string) : string list =
         let offset = (getPrefixLength state input) + (getCmdName state input).Length
-        let argInputs = input.[offset..].Trim() |> String.map (fun c -> if c.Equals('\t') || c.Equals('\n') then ' ' else c)
+        let argInputs = input.[offset..].Trim() |> sanitizeInput
         
         //TODO: Convert this to a more F# idiomatic algorithm
         let mutable args = []
@@ -316,7 +316,6 @@ module CommandHandler =
 
         args
 
-       
     let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list)
         (isPrivate : bool): CommandContext =
         let users = 

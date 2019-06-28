@@ -39,7 +39,7 @@ module Social =
         dbctx.Dispose()
 
     [<CommandParameters(2)>]
-    [<Command("act", "Social interaction with up to 3 users", "act <action>,<user|userid>,<user|userid|nothing>,<user|userid|nothing>")>]
+    [<Command("act", "Social interaction with up to 3 users", "act <action> <user|userid> <user|userid|nothing> <user|userid|nothing>")>]
     let act (ctx : CommandContext) = async {
         return
             match actions |> Map.tryFind ctx.arguments.[0] with
@@ -83,7 +83,7 @@ module Social =
     }
 
     [<CommandParameters(2)>]
-    [<Command("love", "Gets how compatible two users are", "love <user|userid>,<user|userid>")>]
+    [<Command("love", "Gets how compatible two users are", "love <user|userid> <user|userid>")>]
     let love (ctx : CommandContext) = async {
         let user1 = findUser ctx ctx.arguments.[0] true
         let user2 = findUser ctx ctx.arguments.[1] true
@@ -171,7 +171,7 @@ module Social =
     }
 
     [<CommandParameters(3)>]
-    [<Command("vote","Creates a 5 minutes vote with up to 9 choices","vote <description>,<choice>,<choice>,<choice|nothing>,...")>]
+    [<Command("vote","Creates a 5 minutes vote with up to 9 choices","vote <description> <choice> <choice> <choice|nothing> ...")>]
     let vote (ctx : CommandContext) = async {
         let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
         let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
