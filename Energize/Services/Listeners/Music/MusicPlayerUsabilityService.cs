@@ -101,20 +101,19 @@ namespace Energize.Services.Listeners.Music
             return true;
         }
 
-        private async Task<string> SpotifyToYoutubeURLAsync(string url)
+        private async Task<SpotifyTrack> SpotifyToTrackAsync(IMusicPlayerService music, string url)
         {
-            if (!url.Contains("spotify")) return url;
+            if (!url.Contains("spotify")) return null;
 
             Match match = SpotifyRegex.Match(url);
             if (match.Success)
             {
                 string spotifyId = match.Groups[1].Value;
-                IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
-                var spotifyTrack = await music.GetSpotifyTrackAsync(spotifyId);
-                ILavaTrack innerTrack = await spotifyTrack.GetInnerTrackAsync();
-                return innerTrack.Uri.AbsoluteUri;
+                SpotifyTrack spotifyTrack = await music.GetSpotifyTrackAsync(spotifyId);
+                return spotifyTrack;
             }
-            return url;
+
+            return null;
         }
 
         private string SanitizeYoutubeUrl(string url)
@@ -137,7 +136,7 @@ namespace Energize.Services.Listeners.Music
             return false;
         }
 
-        private async Task<IUserMessage> SendNonPlayableContent(IGuildUser user, IUserMessage msg, ITextChannel textChan, string url, string error)
+        private async Task<IUserMessage> SendNonPlayableContentAsync(IGuildUser user, IUserMessage msg, ITextChannel textChan, string url, string error)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
@@ -152,9 +151,23 @@ namespace Energize.Services.Listeners.Music
             return await this.MessageSender.Send(textChan, builder.Build());
         }
 
-        private async Task TryPlayUrl(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
+        private async Task<bool> TryPlaySpotifyAsync(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
         {
-            url = await this.SpotifyToYoutubeURLAsync(url);
+            SpotifyTrack track = await this.SpotifyToTrackAsync(music, url);
+            if (track != null)
+            {
+                await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task TryPlayUrlAsync(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
+        {
+            bool played = await this.TryPlaySpotifyAsync(music, textChan, msg, guser, url);
+            if (played) return;
+
             SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
             List<ILavaTrack> tracks = result.Tracks.ToList();
             switch (result.LoadType)
@@ -169,11 +182,11 @@ namespace Energize.Services.Listeners.Music
                         await music.AddPlaylistAsync(guser.VoiceChannel, textChan, result.PlaylistInfo.Name, tracks);
                     break;
                 case LoadType.LoadFailed:
-                    await this.SendNonPlayableContent(guser, msg, textChan, url, "File is corrupted or does not have audio");
+                    await this.SendNonPlayableContentAsync(guser, msg, textChan, url, "File is corrupted or does not have audio");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could add/play track from playable content ({url})");
                     break;
                 case LoadType.NoMatches:
-                    await this.SendNonPlayableContent(guser, msg, textChan, url, "Could not find the track to be added/played");
+                    await this.SendNonPlayableContentAsync(guser, msg, textChan, url, "Could not find the track to be added/played");
                     this.Logger.Nice("music player", ConsoleColor.Yellow, $"Could not find match for playable content ({url})");
                     break;
             }
@@ -258,15 +271,15 @@ namespace Energize.Services.Listeners.Music
             foreach (Embed embed in msg.Embeds)
             {
                 if (this.IsValidURL(embed.Url)) 
-                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Url);
+                    await this.TryPlayUrlAsync(music, textChan, msg, guser, embed.Url);
                 else if(embed.Video.HasValue)
-                    await this.TryPlayUrl(music, textChan, msg, guser, embed.Video.Value.Url);
+                    await this.TryPlayUrlAsync(music, textChan, msg, guser, embed.Video.Value.Url);
             }
 
             foreach(Attachment attachment in msg.Attachments)
             {
                 if (attachment.IsPlayableAttachment()) 
-                    await this.TryPlayUrl(music, textChan, msg, guser, attachment.Url);
+                    await this.TryPlayUrlAsync(music, textChan, msg, guser, attachment.Url);
             }
         }
     }
