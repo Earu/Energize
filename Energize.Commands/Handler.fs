@@ -308,7 +308,7 @@ module CommandHandler =
             else
                 curArg <- sprintf "%s%c" curArg char
 
-            if char.Equals(state.separator) || i.Equals(argInputs.Length - 1) then
+            if (not inArg && char.Equals(state.separator)) || i.Equals(argInputs.Length - 1) then
                 let arg = curArg.Trim()
                 if not (arg |> String.IsNullOrWhiteSpace) then
                     args <- [ arg ] |> List.append args
