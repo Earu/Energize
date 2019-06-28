@@ -183,7 +183,7 @@ module CommandHandler =
                     [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
                 | _ ->
                     let header = "dev message (answer with the bug or feedback commands)"
-                    awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(',', ctx.arguments.[1..])))
+                    awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
                     [ ctx.sendOK None "Message sent successfully" ]
             with ex ->
                 printfn "%s" (ex.ToString())
@@ -295,11 +295,27 @@ module CommandHandler =
 
     let private getCmdArgs (state : CommandHandlerState) (input : string) : string list =
         let offset = (getPrefixLength state input) + (getCmdName state input).Length
-        let args = input.[offset..].TrimStart().Split(state.separator) |> Array.toList
-        if args.[0] |> String.IsNullOrWhiteSpace && args.Length.Equals(1) then
-            []
-        else
-            args |> List.map (fun arg -> arg.Trim())
+        let argInputs = input.[offset..].Trim() |> String.map (fun c -> if c.Equals('\t') || c.Equals('\n') then ' ' else c)
+        
+        //TODO: Convert this to a more F# idiomatic algorithm
+        let mutable args = []
+        let mutable inArg = false
+        let mutable curArg = String.Empty
+        for i in [0..argInputs.Length - 1] do
+            let char = argInputs.[i]
+            if char.Equals('"') then
+                inArg <- not inArg
+            else
+                curArg <- sprintf "%s%c" curArg char
+
+            if char.Equals(state.separator) || i.Equals(argInputs.Length - 1) then
+                let arg = curArg.Trim()
+                if not (arg |> String.IsNullOrWhiteSpace) then
+                    args <- [ arg ] |> List.append args
+                curArg <- String.Empty
+
+        args
+
        
     let private buildCmdContext (state : CommandHandlerState) (cmdName : string) (msg : SocketMessage) (args : string list)
         (isPrivate : bool): CommandContext =
