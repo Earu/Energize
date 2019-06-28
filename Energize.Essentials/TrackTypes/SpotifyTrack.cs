@@ -69,9 +69,7 @@ namespace Energize.Essentials.TrackTypes
             set
             {
                 if (this._innerTrack != null)
-                {
                     this._innerTrack.Position = value;
-                }
             }
             
         }

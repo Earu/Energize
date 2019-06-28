@@ -608,9 +608,8 @@ namespace Energize.Services.Listeners.Music
 
         private async Task<ILavaTrack> SearchSpotifyCallback(FullTrack spotifyResult)
         {
-            string artistName = spotifyResult.Artists.FirstOrDefault()
-                ?.Name + " - " ?? string.Empty;
-            SearchResult searchYouTubeAsync = await this.LavaRestClient.SearchYouTubeAsync($"{artistName}{spotifyResult.Name}");
+            string artistName = spotifyResult.Artists.FirstOrDefault()?.Name + " - " ?? string.Empty;
+            SearchResult searchYouTubeAsync = await this.LavaRestClient.SearchYouTubeAsync($"{artistName} {spotifyResult.Name}");
             return searchYouTubeAsync.Tracks.FirstOrDefault();
         }
 
