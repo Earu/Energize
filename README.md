@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/u0k0pnpvy98xxpph?svg=true)](https://ci.appveyor.com/project/Earu/energize)
+[![pipeline status](https://gitlab.com/Earu/energize/badges/master/pipeline.svg)](https://gitlab.com/Earu/energize/commits/master)
 
 Energize⚡ is a robust **music** / **administration** / **social** bot featuring well-crafted music search *(Youtube, SoundCloud, Twitch, Stream urls)*, user friendly, it proposes a set of useful commands.
 
