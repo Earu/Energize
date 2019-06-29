@@ -62,7 +62,7 @@ namespace Energize.Services.Listeners.Music
                     req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
                 });
 
-                var keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
+                Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
                 if (keys.ContainsKey("access_token"))
                     this.Spotify.AccessToken = keys["access_token"];
             });
@@ -251,10 +251,12 @@ namespace Energize.Services.Listeners.Music
 
             List<ILavaTrack> tracks = trs.ToList();
             if (tracks.Count < 1)
+            {
                 return new List<IUserMessage>
                 {
                     await this.MessageSender.Warning(chan, "music player", "The loaded playlist does not contain any tracks")
                 };
+            }
 
             if (ply.IsPlaying)
             {
@@ -270,8 +272,10 @@ namespace Energize.Services.Listeners.Music
             tracks.RemoveAt(0);
 
             if (tracks.Count > 0)
+            {
                 foreach (ILavaTrack tr in tracks)
                     ply.Queue.Enqueue(tr);
+            }
 
             await ply.Lavalink.PlayAsync(lavaTrack);
             return new List<IUserMessage>
@@ -393,11 +397,11 @@ namespace Energize.Services.Listeners.Music
                 await ply.Lavalink.SeekAsync(total);
         }
 
-        public ServerStats LavalinkStats { get => this.LavaClient.ServerStats; }
+        public ServerStats LavalinkStats => this.LavaClient.ServerStats; 
 
-        public int PlayerCount { get => this.Players.Count; }
+        public int PlayerCount => this.Players.Count; 
 
-        public int PlayingPlayersCount { get => this.Players.Count(kv => kv.Value.IsPlaying); }
+        public int PlayingPlayersCount => this.Players.Count(kv => kv.Value.IsPlaying);
 
         private static async Task<string> GetThumbnailAsync(ILavaTrack track)
         {
@@ -558,7 +562,9 @@ namespace Energize.Services.Listeners.Music
                     failed = true;
             }
             else
+            {
                 failed = true;
+            }
 
             return (failed, video);
         }
@@ -623,10 +629,7 @@ namespace Energize.Services.Listeners.Music
             
             return tracks
                 .Items
-                .Select(spotifyResult =>
-                {
-                    return new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult));
-                });
+                .Select(spotifyResult => new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult)));
         }
 
         private async Task OnTrackFinished(LavaPlayer lavalink, ILavaTrack lavaTrack, TrackEndReason reason)
