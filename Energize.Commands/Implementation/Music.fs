@@ -8,7 +8,6 @@ open Discord
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.AsyncHelper
 open Energize.Essentials
-open Energize.Essentials.TrackTypes
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
