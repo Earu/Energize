@@ -9,25 +9,25 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
-    class RedditPost
+    internal class RedditPost
     {
         [JsonProperty("data")]
         public RedditPostData Data { get; set; }
     }
 
-    class RedditPostData
+    internal class RedditPostData
     {
         [JsonProperty("children")]
         public RedditInnerPostData[] Children { get; set; }
     }
 
-    class RedditInnerPostData
+    internal class RedditInnerPostData
     {
         [JsonProperty("data")]
         public RedditInnerPost Data { get; set; }
     }
 
-    class RedditInnerPost
+    internal class RedditInnerPost
     {
         [JsonProperty("post_hint")]
         public string Type { get; set; }
@@ -60,7 +60,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         public string PermaLink { get; set; }
 
         [JsonProperty("url")]
-        public string URL { get; set; }
+        public string Url { get; set; }
 
         [JsonProperty("subreddit_subscribers")]
         public long SubredditSubscriberCount { get; set; }
@@ -69,7 +69,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         public bool IsVideo { get; set; }
     }
 
-    class RedditPostProvider : BaseProvider
+    internal class RedditPostProvider : BaseProvider
     {
         private readonly Logger Logger;
 
@@ -86,9 +86,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 RedditPost[] posts = JsonPayload.Deserialize<RedditPost[]>(json, this.Logger);
 
                 RedditPost post = posts.FirstOrDefault();
-                if (post == null) continue;
-
-                RedditInnerPost innerPost = post.Data.Children.FirstOrDefault()?.Data;
+                RedditInnerPost innerPost = post?.Data.Children.FirstOrDefault()?.Data;
                 if (innerPost == null) continue;
 
                 string content = innerPost.Content;
@@ -107,17 +105,24 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                     .WithLimitedTitle($"**{innerPost.Title}**");
 
                 if (innerPost.IsVideo)
-                    builder.WithDescription($"Video post, [**open in your browser**]({innerPost.URL}/DASH_720?source=fallback) to see it.");
+                {
+                    builder.WithDescription(
+                        $"Video post, [**open in your browser**]({innerPost.Url}/DASH_720?source=fallback) to see it.");
+                }
                 else
+                {
                     switch (innerPost.Type)
                     {
                         case "image":
-                            builder.WithImageUrl(innerPost.URL);
+                            builder.WithImageUrl(innerPost.Url);
                             break;
                         default:
-                            builder.WithLimitedDescription(string.IsNullOrWhiteSpace(content) ? "Empty post." : content);
+                            builder.WithLimitedDescription(string.IsNullOrWhiteSpace(content)
+                                ? "Empty post."
+                                : content);
                             break;
                     }
+                }
 
                 embeds.Add(builder.Build());
             }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
-    class DiscordMessageProvider : BaseProvider
+    internal class DiscordMessageProvider : BaseProvider
     {
         private readonly DiscordShardedClient DiscordClient;
 
@@ -25,9 +25,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 ulong msgId = ulong.Parse(match.Groups[3].Value);
 
                 SocketGuild guild = this.DiscordClient.GetGuild(guildId);
-                if (guild == null) continue;
-
-                SocketTextChannel textChan = guild.GetTextChannel(channelId);
+                SocketTextChannel textChan = guild?.GetTextChannel(channelId);
                 if (textChan == null) continue;
 
                 IMessage quotedMsg = await textChan.GetMessageAsync(msgId);

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
-    class BaseProvider
+    internal class BaseProvider
     {
         private readonly Regex Regex;
         private readonly string Domain;
@@ -18,11 +18,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         }
 
         public bool IsMatch(string input)
-        {
-            if (!input.Contains(this.Domain)) return false;
-
-            return this.Regex.IsMatch(input);
-        }
+            => input.Contains(this.Domain) && this.Regex.IsMatch(input);
 
         public MatchCollection Matches(string input)
             => this.Regex.Matches(input);

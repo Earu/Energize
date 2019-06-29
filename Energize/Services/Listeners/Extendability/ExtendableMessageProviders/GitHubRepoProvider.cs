@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
-    class GitHubRepo
+    internal class GitHubRepo
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -66,7 +66,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         public string Type { get; set; }
     }
 
-    class GitHubRepoProvider : BaseProvider
+    internal class GitHubRepoProvider : BaseProvider
     {
         private readonly Logger Logger;
 
@@ -82,8 +82,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 string endpoint = $"https://api.github.com/repos/{match.Groups[1]}/{match.Groups[2]}";
                 string json = await HttpClient.GetAsync(endpoint, this.Logger);
                 GitHubRepo repo = JsonPayload.Deserialize<GitHubRepo>(json, this.Logger);
-                if (repo == null) continue;
-                if (repo.Owner == null) continue;
+                if (repo?.Owner == null) continue;
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
