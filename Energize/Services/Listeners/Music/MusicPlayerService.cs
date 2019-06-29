@@ -55,8 +55,7 @@ namespace Energize.Services.Listeners.Music
 
             this.SpotifyAuthTimer = new Timer(async _ =>
             {
-                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty,
-                                                         this.Logger, null, req => 
+                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, req => 
                 {
                     byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
                     req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
@@ -397,6 +396,8 @@ namespace Energize.Services.Listeners.Music
         public ServerStats LavalinkStats { get => this.LavaClient.ServerStats; }
 
         public int PlayerCount { get => this.Players.Count; }
+
+        public int PlayingPlayersCount { get => this.Players.Count(kv => kv.Value.IsPlaying); }
 
         private static async Task<string> GetThumbnailAsync(ILavaTrack track)
         {
@@ -762,7 +763,6 @@ namespace Energize.Services.Listeners.Music
                 BufferSize = 8192,
                 PreservePlayers = true,
                 AutoDisconnect = false,
-                LogSeverity = LogSeverity.Debug,
                 DefaultVolume = 50,
                 InactivityTimeout = TimeSpan.FromMinutes(3),
             };
