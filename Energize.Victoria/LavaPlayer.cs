@@ -17,7 +17,7 @@ namespace Victoria
     public sealed class LavaPlayer
     {
         /// <summary>
-        /// Keeps track of <see cref="PauseAsync"/> & <see cref="ResumeAsync"/>.
+        /// Keeps track of <see cref="PauseAsync"/> and <see cref="ResumeAsync"/>.
         /// </summary>
         public bool IsPaused => this._isPaused;
 
