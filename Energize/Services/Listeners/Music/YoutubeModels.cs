@@ -4,19 +4,19 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Energize.Services.Listeners.Music
 {
-    public partial class YoutubeRelatedVideos
+    public class YoutubeRelatedVideos
     {
         [JsonProperty("items")]
         public YoutubeVideo[] Videos { get; set; }
     }
 
-    public partial class YoutubeVideo
+    public class YoutubeVideo
     {
         [JsonProperty("id")]
-        public YoutubeVideoID Id { get; set; }
+        public YoutubeVideoId Id { get; set; }
     }
 
-    public partial class YoutubeVideoID : IYoutubeVideoID
+    public class YoutubeVideoId : IYoutubeVideoID
     {
         [JsonIgnore]
         [Key]

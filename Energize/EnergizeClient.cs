@@ -104,21 +104,21 @@ namespace Energize
         public MessageSender MessageSender { get; }
         public ServiceManager ServiceManager { get; }
 
-        public string Environment { get => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; }
-        public bool HasToken { get => !string.IsNullOrWhiteSpace(this.Token); }
+        public string Environment => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; 
+        public bool HasToken => !string.IsNullOrWhiteSpace(this.Token); 
 
         private async Task<(bool, int)> UpdateBotWebsites()
         {
             int serverCount = this.DiscordClient.Guilds.Count;
             bool success = true;
-            if (this.IsDevEnv) return (success, serverCount);
+            if (this.IsDevEnv) return (true, serverCount);
          
             try
             {
                 var obj = new { guildCount = serverCount };
                 string json = JsonPayload.Serialize(obj, this.Logger);
                 string endpoint = $"https://discord.bots.gg/api/v1/bots/{Config.Instance.Discord.BotID}/stats";
-                string resp = await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
+                await HttpClient.PostAsync(endpoint, json, this.Logger, null, req => {
                     req.Headers[System.Net.HttpRequestHeader.Authorization] = Config.Instance.Discord.BotsToken;
                     req.ContentType = "application/json";
                 });
@@ -171,9 +171,9 @@ namespace Energize
 
             try
             {
-                await this.DiscordClient.LoginAsync(TokenType.Bot, this.Token, true);
+                await this.DiscordClient.LoginAsync(TokenType.Bot, this.Token);
                 await this.DiscordClient.StartAsync();
-                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this.Token, true);
+                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this.Token);
                 await this.UpdateActivity();
 
                 Timer updateTimer = new Timer(async arg =>
@@ -182,16 +182,16 @@ namespace Energize
                     GC.Collect();
 
                     (bool success, int servercount) = await this.UpdateBotWebsites();
-                    if (success)
-                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, updated server count ({servercount})");
-                    else
-                        this.Logger.Nice("Update", ConsoleColor.Gray, $"Collected {mb}MB of garbage, did NOT update server count, API might be down");
+                    string log = success
+                        ? $"Collected {mb}MB of garbage, updated server count ({servercount})"
+                        : $"Collected {mb}MB of garbage, did NOT update server count, API might be down";
+                    this.Logger.Nice("Update", ConsoleColor.Gray, log);
 
                     await this.UpdateActivity();
                     await this.NotifyCaughtExceptionsAsync();
                 });
 
-                int hour = 1000 * 60 * 60;
+                const int hour = 1000 * 60 * 60;
                 updateTimer.Change(10000, hour);
 
                 await this.ServiceManager.InitializeServicesAsync();

@@ -73,7 +73,7 @@ namespace Energize.Essentials
 
         public static Config Instance { get; } = Initialize();
 
-        private static T DeserializeYAML<T>(string path)
+        private static T DeserializeYaml<T>(string path)
         {
             string yaml = File.ReadAllText(path);
             Deserializer deserializer = new Deserializer();
@@ -91,12 +91,12 @@ namespace Energize.Essentials
 
         private static Config LoadConfig()
 #if DEBUG
-            => DeserializeYAML<Config>("Settings/config_debug.yaml");
+            => DeserializeYaml<Config>("Settings/config_debug.yaml");
 #else
-            => DeserializeYAML<Config>("Settings/config_prod.yaml");
+            => DeserializeYaml<Config>("Settings/config_prod.yaml");
 #endif
 
         private static Blacklist LoadBlacklist()
-            => DeserializeYAML<Blacklist>("Settings/blacklist.yaml");
+            => DeserializeYaml<Blacklist>("Settings/blacklist.yaml");
     }
 }
