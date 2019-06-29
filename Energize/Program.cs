@@ -5,10 +5,10 @@ namespace Energize
 {
     internal class Program
     {
-        private static void Main(string[] args)
-            => MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
+        private static void Main()
+            => MainAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 
-        private static async Task MainAsync(string[] args)
+        private static async Task MainAsync()
         {
             DiscordConfig discord = Config.Instance.Discord;
             EnergizeClient client = new EnergizeClient(discord.Token, discord.Prefix, discord.Separator);

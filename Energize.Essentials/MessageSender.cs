@@ -15,35 +15,30 @@ namespace Energize.Essentials
         public static Color SColorWarning { get; } = new Color(226, 123, 68);
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
 
-        public Logger Logger { get; private set; }
+        public Logger Logger { get; }
 
         private void LogFailedMessage(IMessage msg, Exception ex)
         {
             string log = string.Empty;
-            if (!(msg.Channel is IDMChannel))
-            {
-                IGuildChannel chan = msg.Channel as IGuildChannel;
+            if (msg.Channel is IGuildChannel chan)
                 log += $"({chan.Guild.Name} - #{chan.Name}) {msg.Author.Username}: {ex.Message}";
-            }
             else
-            {
                 log += $"(DM) {msg.Author.Username}: {ex.Message}";
-            }
+
             this.Logger.Nice("MessageSender", ConsoleColor.Red, log);
         }
 
         private void LogFailedMessage(IChannel chan, Exception ex)
         {
             string log = string.Empty;
-            if (!(chan is IDMChannel))
+            if (chan is IGuildChannel guildChan)
             {
-                IGuildChannel c = chan as IGuildChannel;
-                log += $"({c.Guild.Name} - #{c.Name}): {ex.Message}";
+                log += $"({guildChan.Guild.Name} - #{guildChan.Name}): {ex.Message}";
             }
             else
             {
-                IDMChannel c = chan as IDMChannel;
-                log += $"(DM) {c.Recipient}: {ex.Message}";
+                IDMChannel dmChan = (IDMChannel)chan;
+                log += $"(DM) {dmChan.Recipient}: {ex.Message}";
             }
             this.Logger.Nice("MessageSender", ConsoleColor.Red, log);
         }
@@ -82,7 +77,6 @@ namespace Energize.Essentials
             {
                 if (!this.CanSendMessage(msg)) return null;
 
-                string userName = msg.Author.Username;
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithColorType(colorType)
@@ -165,7 +159,7 @@ namespace Energize.Essentials
             {
                 if (!this.CanSendMessage(chan)) return null;
 
-                IMessageChannel c = chan as IMessageChannel;
+                IMessageChannel c = (IMessageChannel)chan;
                 return await c.SendMessageAsync(string.Empty, false, embed);
             }
             catch(Exception ex)
@@ -182,7 +176,7 @@ namespace Energize.Essentials
             {
                 if (!this.CanSendMessage(chan)) return null;
 
-                IMessageChannel c = chan as IMessageChannel;
+                IMessageChannel c = (IMessageChannel)chan;
                 return await c.SendMessageAsync(content);
             }
             catch(Exception ex)

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Energize.Services.Listeners.Music;
 using Energize.Interfaces.Services.Listeners;
 using System;
-using System.Linq;
 
 namespace Energize.Services.Database
 {
@@ -19,9 +18,8 @@ namespace Energize.Services.Database
 
         public DbSet<DiscordUser> Users { get; set; }
         public DbSet<DiscordGuild> Guilds { get; set; }
-        public DbSet<DiscordChannel> Channels { get; set; }
         public DbSet<DiscordUserStats> Stats { get; set; }
-        public DbSet<YoutubeVideoID> SavedVideoIds { get; set; }
+        public DbSet<YoutubeVideoId> SavedVideoIds { get; set; }
 
         public Database(string connectionstring)
         {
@@ -30,9 +28,7 @@ namespace Energize.Services.Database
         }
     
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlite(this.ConnectionString);
-        }
+            => optionsBuilder.UseSqlite(this.ConnectionString);
 
         public void Save()
             => this.SaveChanges(true);
@@ -90,14 +86,18 @@ namespace Energize.Services.Database
 
         public async Task SaveYoutubeVideoIds(IEnumerable<IYoutubeVideoID> ytVideoIds)
         {
-            foreach (YoutubeVideoID videoId in ytVideoIds)
-                this.SavedVideoIds.Add(videoId);
+            foreach (IYoutubeVideoID videoId in ytVideoIds)
+            {
+                if (videoId is YoutubeVideoId id)
+                    this.SavedVideoIds.Add(id);
+            }
+
             await this.SaveChangesAsync(true);
         }
 
         public async Task<IYoutubeVideoID> GetRandomVideoIdAsync()
         {
-            List<YoutubeVideoID> vidIds = await this.SavedVideoIds.ToListAsync();
+            List<YoutubeVideoId> vidIds = await this.SavedVideoIds.ToListAsync();
             return vidIds[this.Rand.Next(0, vidIds.Count)];
         }
     }
@@ -114,19 +114,17 @@ namespace Energize.Services.Database
 
             this.Pool = new List<DatabaseContext>();
             for (uint i = 0; i < 10; i++)
-                this.Pool.Add(new DatabaseContext(this.Create(), this.Logger));
+                this.Pool.Add(new DatabaseContext(Create(), this.Logger));
         }
 
         public async Task<IDatabaseContext> GetContext()
         {
-            for(int i = 0; i < this.Pool.Count; i++)
+            foreach (DatabaseContext ctx in this.Pool)
             {
-                DatabaseContext ctx = this.Pool[i];
-                if(!ctx.IsUsed)
-                {
-                    ctx.IsUsed = true;
-                    return ctx;
-                }
+                if(ctx.IsUsed) continue;
+
+                ctx.IsUsed = true;
+                return ctx;
             }
 
             //Wait a bit so we dont try again too early
@@ -135,11 +133,11 @@ namespace Energize.Services.Database
         }
 
         public IDatabaseContext CreateContext()
-            => new DatabaseContext(this.Create(), this.Logger);
+            => new DatabaseContext(Create(), this.Logger);
 
-        private Database Create()
+        private static Database Create()
         {
-            var context = new Database(Config.Instance.DBConnectionString);
+            Database context = new Database(Config.Instance.DBConnectionString);
             context.Database.EnsureCreated();
 
             return context;
