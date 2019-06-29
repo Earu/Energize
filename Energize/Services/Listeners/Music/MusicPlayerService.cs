@@ -91,11 +91,11 @@ namespace Energize.Services.Listeners.Music
             {
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
-                    .WithDescription("Lost connection to Lavalink node")
+                    .WithDescription("Lavalink lost connection to Discord websocket")
                     .WithField("Error Code", errorCode)
                     .WithField("Reason", reason)
                     .WithField("By Remote", byRemote)
-                    .WithColorType(EmbedColorType.Danger)
+                    .WithColorType(EmbedColorType.Warning)
                     .WithFooter("lavalink error");
 
                 await this.MessageSender.Send(chan, builder.Build());
