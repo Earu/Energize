@@ -48,6 +48,8 @@ namespace Energize.Interfaces.Services.Listeners
 
         int PlayerCount { get; }
 
+        int PlayingPlayersCount { get; }
+
         Task<IUserMessage> SendQueueAsync(IVoiceChannel vc, IMessage msg);
 
         Task<IUserMessage> SendNewTrackAsync(IMessage msg, ILavaTrack lavaTrack);
