@@ -9,6 +9,7 @@ using Energize.Essentials;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Services.Listeners.Music.Spotify.Helpers;
+using Energize.Services.Listeners.Music.Spotify.Models;
 using Energize.Services.Listeners.Music.Spotify.Providers;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Enums;

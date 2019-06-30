@@ -1,4 +1,4 @@
-namespace Energize.Services.Listeners.Music.Spotify
+namespace Energize.Services.Listeners.Music.Spotify.Models
 {
     internal class CollectionOptions
     {

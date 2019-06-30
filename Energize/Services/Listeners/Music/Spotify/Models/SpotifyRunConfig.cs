@@ -3,7 +3,7 @@ using Energize.Services.Listeners.Music.Spotify.Helpers;
 using SpotifyAPI.Web;
 using Victoria;
 
-namespace Energize.Services.Listeners.Music.Spotify
+namespace Energize.Services.Listeners.Music.Spotify.Models
 {
     internal class SpotifyRunConfig
     {

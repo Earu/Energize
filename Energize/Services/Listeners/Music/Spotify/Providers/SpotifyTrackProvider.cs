@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
-using Energize.Essentials;
 using Energize.Essentials.TrackTypes;
-using SpotifyAPI.Web;
-using Victoria;
+using Energize.Services.Listeners.Music.Spotify.Models;
 
 namespace Energize.Services.Listeners.Music.Spotify.Providers
 {
