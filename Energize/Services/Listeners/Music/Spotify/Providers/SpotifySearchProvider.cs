@@ -1,22 +1,18 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
-using SpotifyAPI.Web;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
-using Victoria;
-using Victoria.Entities;
 
-namespace Energize.Services.Listeners.Music.Spotify
+namespace Energize.Services.Listeners.Music.Spotify.Providers
 {
-    internal class SpotifySearchProvider : SpotifyProviderBase
+    internal class SpotifySearchProvider : ISpotifyProvider
     {
-        public SpotifySearchProvider(
-            SpotifyWebAPI api,
-            LavaRestClient lavaRest,
-            bool lazyLoad) : base(api, lavaRest, lazyLoad)
+        public SpotifyRunConfig RunConfig { get; }
+        
+        public SpotifySearchProvider(SpotifyRunConfig runConfig)
         {
+            RunConfig = runConfig;
         }
 
         public async Task<IEnumerable<SpotifyTrack>> SearchAsync(
@@ -24,7 +20,7 @@ namespace Energize.Services.Listeners.Music.Spotify
             SearchType searchType = SearchType.All,
             int maxResults = 100)
         {
-            SearchItem searchResult = await this.Api.SearchItemsAsync(query, SearchType.Track);
+            SearchItem searchResult = await this.RunConfig.Api.SearchItemsAsync(query, SearchType.Track);
             Paging<FullTrack> tracks = searchResult.Tracks;
             if (searchResult.HasError())
                 return new List<SpotifyTrack>();
@@ -37,9 +33,10 @@ namespace Energize.Services.Listeners.Music.Spotify
             List<SpotifyTrack> newTracks = new List<SpotifyTrack>();
             foreach (FullTrack track in tracks.Items)
             {
-                newTracks.Add(await CreateSpotifyTrackAsync(new SpotifyTrackInfo(track)));
+                newTracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(new SpotifyTrackInfo(track)));
             }
             return newTracks;
         }
+
     }
 }
