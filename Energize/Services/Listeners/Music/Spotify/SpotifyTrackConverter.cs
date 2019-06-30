@@ -23,6 +23,50 @@ namespace Energize.Services.Listeners.Music.Spotify
         }
         
         /// <summary>
+                 /// Converts a collection of SpotifyTrackInfos (from the Spotify API) to a collection of SpotifyTrack, in parallel using Map-Reduce.
+                 /// Note: This method returns a Task but it does not use asynchronous method invocation in the iterations, it can only be awaited so it wont have to be waited to
+                 /// </summary>
+                 /// <param name="spotifyTrackInfos">Source SpotifyTrackInfo collection</param>
+                 /// <returns>Task of collection of converted SpotifyTracks</returns>
+                 /// <see cref="SpotifyTrackInfo" />
+                 /// <see cref="SpotifyTrack" />
+                 public async Task<IEnumerable<SpotifyTrack>> CreateSpotifyTracksAsync(IEnumerable<SpotifyTrackInfo> spotifyTrackInfos)
+                 {
+                     List<SpotifyTrackInfo> infosList = spotifyTrackInfos.ToList();
+                     
+                     // Partition (Map)
+                     var parallelBatches =
+                         SplitToBatches(
+                             infosList,
+                             Config.ConcurrentPoolSize,
+                             infosList.Count() / Config.OperationsPerThread); 
+                     
+                     // Reduce (using conversion between SpotifyTrackInfo to SpotifyTrack
+                     return parallelBatches.SelectMany(
+                         dictionary => dictionary.Select(
+                             pair => CreateSpotifyTrackAsync(pair.Value, false)
+                                 .ConfigureAwait(false)
+                                 .GetAwaiter()
+                                 .GetResult()));
+                 }
+         
+                 private static ParallelQuery<IGrouping<int, KeyValuePair<int, T>>> SplitToBatches<T>(
+                     IEnumerable<T> source,
+                     int poolSize,
+                     int batches)
+                 {
+                     ParallelQuery<T> asParallel = source.AsParallel().AsOrdered();
+                     if (poolSize > 0)
+                     {
+                         asParallel = asParallel.WithDegreeOfParallelism(poolSize);
+                     }
+         
+                     return asParallel
+                         .Select((x, i) => new KeyValuePair<int, T>(i, x))
+                         .GroupBy(x => x.Key / batches);
+                 }
+
+        /// <summary>
         /// Converts a SpotifyTrackInfo to a SpotifyTrack, decides by configuration or parameter if it should search for the InnerTrack now, or LazyLoad (search for it later)
         /// </summary>
         /// <param name="trackInfo">Source SpotifyTrackInfo</param>
