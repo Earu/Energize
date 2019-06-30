@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners.Extendability
 {
     [Service("MessageUsability")]
-    class MessageUsabilityService : ServiceImplementationBase
+    public class MessageUsabilityService : ServiceImplementationBase
     {
         private static readonly Emoji EmoteExtend = new Emoji("⏬");
 

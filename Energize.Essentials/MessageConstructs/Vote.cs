@@ -80,7 +80,7 @@ namespace Energize.Essentials.MessageConstructs
             {
                 double perc = this.TotalVotes == 0 ? 0.0 : votes / (double)this.TotalVotes * 100.0;
                 string plural = votes > 1 ? "s" : string.Empty;
-                builder.AddField($"{i++}. {choice}", $"{perc}% ({choice} vote{plural})", true);
+                builder.AddField($"{i++}. {choice}", $"{perc}% ({votes} vote{plural})", true);
             }
                
             builder.WithAuthor(this.Author);
