@@ -57,13 +57,11 @@ namespace Energize.Services.Senders
                     this.Votes.TryRemove(vote.Message.Id, out Vote _);
                 };
 
-                if (this.Votes.TryAdd(vote.Message.Id, vote))
-                {
-                    await AddReactions(vote.Message, vote.ChoiceCount);
-                    return vote.Message;
-                }
-
-                return null;
+                if (!this.Votes.TryAdd(vote.Message.Id, vote))
+                    return null;
+            
+                await AddReactions(vote.Message, vote.ChoiceCount);
+                return vote.Message;
             }
             catch (Exception ex)
             {
