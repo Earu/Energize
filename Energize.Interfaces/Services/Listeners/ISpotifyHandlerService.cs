@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
@@ -15,8 +16,14 @@ namespace Energize.Interfaces.Services.Listeners
             int maxResults = 0);
 
         Task<SpotifyCollection> GetPlaylistAsync(
-            string playlistId,
+            string id,
             int startIndex = 0,
             int maxResults = 0);
+        
+        Task<SpotifyCollection> GetAlbumAsync(string id);
+
+        Task<(string name, Uri uri)> GetArtistAsync(string id);
+        
+        Task<IEnumerable<SpotifyTrack>> GetArtistTopTracksAsync(string id, string country = "US");
     }
 }
