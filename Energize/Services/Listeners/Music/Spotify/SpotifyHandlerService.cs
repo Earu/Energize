@@ -17,6 +17,7 @@ using Victoria;
 
 namespace Energize.Services.Listeners.Music.Spotify
 {
+    /// <inheritdoc cref="ISpotifyHandlerService" />
     [Service("Spotify")]
     public class SpotifyHandlerService : ServiceImplementationBase, ISpotifyHandlerService
     {
@@ -105,24 +106,30 @@ namespace Energize.Services.Listeners.Music.Spotify
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc />
         public Task<SpotifyTrack> GetTrackAsync(string id) => _trackProvider.GetTrackAsync(id);
 
+        /// <inheritdoc />
         public Task<IEnumerable<SpotifyTrack>> SearchAsync(
             string query,
-            SearchType searchType = SearchType.All,
+            SearchType searchType = SearchType.Track,
             int maxResults = 0) => _searchProvider.SearchAsync(query, searchType, maxResults);
 
+        /// <inheritdoc />
         public Task<SpotifyCollection> GetPlaylistAsync(
             string id,
             int startIndex = 0,
             int maxResults = 0) => _playlistProvider.GetPlaylistAsync(id, startIndex, maxResults);
 
+        /// <inheritdoc />
         public Task<SpotifyCollection> GetAlbumAsync(string id)
             => _albumProvider.GetAlbumAsync(id);
 
+        /// <inheritdoc />
         public Task<(string name, Uri uri)> GetArtistAsync(string id)
             => _artistProvider.GetArtistAsync(id);
         
+        /// <inheritdoc />
         public Task<IEnumerable<SpotifyTrack>> GetArtistTopTracksAsync(string id, string country = "US") 
             => _artistProvider.GetArtistTopTracksAsync(id, country);
     }
