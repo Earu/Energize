@@ -41,6 +41,9 @@ namespace Energize.Essentials
     {
         public string ClientID;
         public string ClientSecret;
+        public bool LazyLoad;
+        public int ConcurrentPoolSize;
+        public int OperationsPerThread;
     }
 
     public struct KeysConfig
