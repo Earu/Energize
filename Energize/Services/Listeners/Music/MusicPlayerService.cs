@@ -259,7 +259,7 @@ namespace Energize.Services.Listeners.Music
 
             if (ply.IsPlaying)
             {
-                foreach (LavaTrack track in tracks)
+                foreach (ILavaTrack track in tracks)
                     ply.Queue.Enqueue(track);
 
                 return new List<IUserMessage>
