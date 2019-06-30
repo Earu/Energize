@@ -19,7 +19,7 @@ open System
 [<CommandModule("Music")>]
 module Voice =
     let private ytIdRegex = Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
-    let private spotifyRegex = Regex(@"https?:\/\/open\.spotify\.com\/([A-Za-z]+)\/([^\s\?]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+    let private spotifyRegex = Regex(@"^(spotify:|https?:\/\/open\.spotify\.com\/)([a-z]+)(\/|:)([^:\/\s]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
@@ -74,8 +74,8 @@ module Voice =
             let spotifyMatch = spotifyRegex.Match(url)
             if spotifyMatch.Success then
                 let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
-                let itemType = spotifyMatch.Groups.[1].Value
-                let id = spotifyMatch.Groups.[2].Value
+                let itemType = spotifyMatch.Groups.[2].Value
+                let id = spotifyMatch.Groups.[4].Value
                 match itemType with
                 | "track" ->
                     let track = awaitResult (spotify.GetTrackAsync(id))
@@ -84,6 +84,14 @@ module Voice =
                     let playlist = awaitResult (spotify.GetPlaylistAsync(id))
                     let tracks = List.ofSeq(playlist.Items) |> List.map (fun spotify -> spotify :> ILavaTrack)
                     Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, playlist.Name, tracks)))) // Convert List<T> to T list (C# list to F# list)
+                | "album" ->
+                    let album = awaitResult (spotify.GetAlbumAsync(id))
+                    let tracks = List.ofSeq(album.Items) |> List.map (fun spotify -> spotify :> ILavaTrack)
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, album.Name, tracks)))) // Convert List<T> to T list (C# list to F# list)
+                | "artist" ->
+                    let topSpotifyTracks = awaitResult (spotify.GetArtistTopTracksAsync(id))
+                    let tracks = List.ofSeq(topSpotifyTracks) |> List.map (fun spotify -> spotify :> ILavaTrack)
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, "Artist Top Tracks", tracks))))
                 | _ -> None
             else
                 None
@@ -120,6 +128,7 @@ module Voice =
         match ctx with
         | _ when ctx.message.Attachments.Count > 0 -> playFile ctx
         | _ when ctx.arguments.Length > 0 && HttpClient.IsURL(ctx.input) -> playUrl ctx
+        | _ when ctx.arguments.[0].StartsWith("spotify") -> playUrl ctx
         | _ -> cb ctx
             
     [<CommandConditions(CommandCondition.GuildOnly)>]

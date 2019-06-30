@@ -31,9 +31,9 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
             if (RunConfig.Config.LazyLoad)
             {
                 tracks = new List<SpotifyTrack>();
-                foreach (SpotifyTrackInfo spotifyTrackInfo in infos)
+                foreach (SpotifyTrackInfo info in infos)
                 {
-                    tracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(spotifyTrackInfo));
+                    tracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
                 }
             }
             else
