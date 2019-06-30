@@ -116,14 +116,13 @@ namespace Energize.Services.Senders
         public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
-            string display = data.Any() ? string.Empty : displayCallback(data.First());
+            string display = data.Any() ? displayCallback(data.First()) : string.Empty;
             IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "▶");
-            }
+            if (posted == null) return null;
+            
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
             return posted;
         }
@@ -131,14 +130,13 @@ namespace Energize.Services.Senders
         public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
-            string display = data.Any() ? string.Empty : displayCallback(data.First());
+            string display = data.Any() ? displayCallback(data.First()) : string.Empty;
             IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
-            }
+            if (posted == null) return null;
+            
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
 
             return posted;
         }
