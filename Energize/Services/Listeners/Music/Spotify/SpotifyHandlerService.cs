@@ -8,6 +8,7 @@ using Discord;
 using Energize.Essentials;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
+using Energize.Services.Listeners.Music.Spotify.Providers;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Enums;
 using Victoria;
@@ -20,7 +21,7 @@ namespace Energize.Services.Listeners.Music.Spotify
         private readonly Logger _logger;
         private readonly SpotifyWebAPI _api;
         private readonly LavaRestClient _lavaRest;
-        private readonly bool _lazyLoad;
+        private readonly SpotifyConfig _config;
 
         private readonly Timer _spotifyAuthTimer;
         private readonly SpotifyTrackProvider _trackProvider;
@@ -39,12 +40,13 @@ namespace Energize.Services.Listeners.Music.Spotify
             };
             _lavaRest = GetLavaRestClient();
             // TODO: add configuration entry
-            _lazyLoad = true;
+            _config = Config.Instance.Spotify;
             _spotifyAuthTimer = new Timer(TradeSpotifyToken);
 
-            _trackProvider = new SpotifyTrackProvider(_api, _lavaRest, _lazyLoad);
-            _searchProvider = new SpotifySearchProvider(_api, _lavaRest, _lazyLoad);
-            _playlistProvider = new SpotifyPlaylistProvider(_api, _lavaRest, _lazyLoad);
+            var spotifyRunConfig = new SpotifyRunConfig(_lavaRest, _api, _config, new SpotifyTrackConverter(_lavaRest, _api, _config));
+            _trackProvider = new SpotifyTrackProvider(spotifyRunConfig);
+            _searchProvider = new SpotifySearchProvider(spotifyRunConfig);
+            _playlistProvider = new SpotifyPlaylistProvider(spotifyRunConfig);
         }
 
         private static LavaRestClient GetLavaRestClient()
@@ -72,7 +74,7 @@ namespace Energize.Services.Listeners.Music.Spotify
         {
             void Callback(HttpWebRequest req)
             {
-                byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
+                byte[] credBytes = Encoding.UTF8.GetBytes($"{_config.ClientID}:{_config.ClientSecret}");
                 req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
                 req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             }
@@ -97,23 +99,16 @@ namespace Energize.Services.Listeners.Music.Spotify
             return Task.CompletedTask;
         }
 
-        public Task<SpotifyTrack> GetTrackAsync(string id) 
-            => _trackProvider.GetTrackAsync(id);
+        public Task<SpotifyTrack> GetTrackAsync(string id) => _trackProvider.GetTrackAsync(id);
 
         public Task<IEnumerable<SpotifyTrack>> SearchAsync(
             string query,
             SearchType searchType = SearchType.All,
-            int maxResults = 100)
-        {
-            return _searchProvider.SearchAsync(query, searchType, maxResults);
-        }
-        
+            int maxResults = 100) => _searchProvider.SearchAsync(query, searchType, maxResults);
+
         public Task<SpotifyCollection> GetPlaylistAsync(
             string playlistId,
             int startIndex = 0,
-            int maxResults = 100)
-        {
-            return _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
-        }
+            int maxResults = 100) => _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
     }
 }
