@@ -20,7 +20,7 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
         public async Task<SpotifyCollection> GetPlaylistAsync(
             string playlistId,
             int startIndex = 0,
-            int maxResults = 100)
+            int maxResults = 0)
         {
             var playlist = await RunConfig.Api.GetPlaylistAsync(null, playlistId);
             IEnumerable<SpotifyTrackInfo> infos =

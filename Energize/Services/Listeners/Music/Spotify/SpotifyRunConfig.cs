@@ -1,4 +1,5 @@
 using Energize.Essentials;
+using Energize.Services.Listeners.Music.Spotify.Helpers;
 using SpotifyAPI.Web;
 using Victoria;
 
