@@ -114,6 +114,9 @@ namespace Energize.Essentials
 
         private static string GetConfigFilePath(string configFile)
         {
+#if DEBUG
+            return configFile;
+#else
             var settingsDirectory = Path.Combine(@"\Settings", configFile);
             var assemblyLocation = Assembly.GetEntryAssembly()?.Location;
             if (assemblyLocation == null)
@@ -123,6 +126,7 @@ namespace Energize.Essentials
             var directoryInfo = new DirectoryInfo(assemblyLocation); // Binary location
             var requiredPath = directoryInfo?.Parent?.Parent?.Parent?.Parent?.Parent?.FullName; // Solution location
             return Path.Combine(requiredPath + settingsDirectory); // Combine solution location with Settings location 
+#endif
         }
     }
 }
