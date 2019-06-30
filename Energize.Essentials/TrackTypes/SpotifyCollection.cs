@@ -8,45 +8,82 @@ namespace Energize.Essentials.TrackTypes
     public class SpotifyCollection
     {
         public IEnumerable<SpotifyTrack> Items { get; }
-        
+
         public string[] Images { get; }
-        
-        public List<string> Authors { get; }
-        
+
+        public Dictionary<string, Uri> Authors { get; }
+
         public Dictionary<string, Uri> ExternUrls { get; }
-        
+
         public string Id { get; set; }
-        
+
         public string Name { get; }
 
         public string Type { get; }
-        
+
         public Uri Uri { get; }
 
         public SpotifyCollection(FullPlaylist playlist, IEnumerable<SpotifyTrack> items)
         {
-            this.Items = items;
-            
-            this.Images = playlist.Images.Select(image => image.Url).ToArray();
-            this.Authors = new List<string>
-            {
-                playlist.Owner.DisplayName
-            };
-            this.ExternUrls = new Dictionary<string, Uri>(
-                playlist.ExternalUrls
-                           .Select(pair => new KeyValuePair<string, Uri>(pair.Key, new Uri(pair.Value)))); // Convert value to URI
-            this.Id = playlist.Id;
-            this.Name = playlist.Name;
-            this.Type = playlist.Type;
+            Items = items;
+
+            Images = playlist.Images.Select(image => image.Url)
+                .ToArray();
+
+            Uri ownerUri;
+            PublicProfile playlistOwner = playlist.Owner;
             try
             {
-                this.Uri = this.ExternUrls["spotify"];
+                ownerUri = new Uri(playlistOwner.ExternalUrls["spotify"]);
+            }
+            catch (KeyNotFoundException) // Should never fail
+            {
+                ownerUri = new Uri(playlistOwner.Uri);
+            }
+
+            Authors = new Dictionary<string, Uri>
+            {
+                {playlistOwner.DisplayName, ownerUri}
+            };
+            ExternUrls = new Dictionary<string, Uri>(
+                playlist.ExternalUrls.Select(
+                    pair => new KeyValuePair<string, Uri>(pair.Key, new Uri(pair.Value)))); // Convert value to URI
+            Id = playlist.Id;
+            Name = playlist.Name;
+            Type = playlist.Type;
+            try
+            {
+                Uri = ExternUrls["spotify"];
             }
             catch (KeyNotFoundException) // Should never fail
             {
                 // Convert Spotify URI to a track link (wont link track to playlist or album if it was linked)
-                this.Uri = new Uri(playlist.Uri);
+                Uri = new Uri(playlist.Uri);
             }
         }
+
+//        public SpotifyCollection(FullAlbum album, IEnumerable<SpotifyTrack> items)
+//        {
+//            Items = items;
+//
+//            Images = album.Images.Select(image => image.Url)
+//                .ToArray();
+//            Authors = album.Artists.ToDictionary(
+//                artist =>
+//                {
+//                    Uri ownerUri;
+//                    try
+//                    {
+//                        ownerUri = new Uri(artist.ExternalUrls["spotify"]);
+//                    }
+//                    catch (KeyNotFoundException) // Should never fail
+//                    {
+//                        ownerUri = new Uri(artist.Uri);
+//                    }
+//
+//                    return new KeyValuePair<string, Uri>(artist.Name, ownerUri);
+//                });
+//
+//        }
     }
 }
