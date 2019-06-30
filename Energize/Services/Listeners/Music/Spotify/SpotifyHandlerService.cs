@@ -8,6 +8,7 @@ using Discord;
 using Energize.Essentials;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
+using Energize.Services.Listeners.Music.Spotify.Helpers;
 using Energize.Services.Listeners.Music.Spotify.Providers;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Enums;
@@ -43,7 +44,7 @@ namespace Energize.Services.Listeners.Music.Spotify
             _config = Config.Instance.Spotify;
             _spotifyAuthTimer = new Timer(TradeSpotifyToken);
 
-            var spotifyRunConfig = new SpotifyRunConfig(_lavaRest, _api, _config, new SpotifyTrackConverter(_lavaRest, _api, _config));
+            var spotifyRunConfig = new SpotifyRunConfig(_lavaRest, _api, _config, new SpotifyTrackConverter(_lavaRest, _config));
             _trackProvider = new SpotifyTrackProvider(spotifyRunConfig);
             _searchProvider = new SpotifySearchProvider(spotifyRunConfig);
             _playlistProvider = new SpotifyPlaylistProvider(spotifyRunConfig);
@@ -104,11 +105,11 @@ namespace Energize.Services.Listeners.Music.Spotify
         public Task<IEnumerable<SpotifyTrack>> SearchAsync(
             string query,
             SearchType searchType = SearchType.All,
-            int maxResults = 100) => _searchProvider.SearchAsync(query, searchType, maxResults);
+            int maxResults = 0) => _searchProvider.SearchAsync(query, searchType, maxResults);
 
         public Task<SpotifyCollection> GetPlaylistAsync(
             string playlistId,
             int startIndex = 0,
-            int maxResults = 100) => _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
+            int maxResults = 0) => _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
     }
 }

@@ -12,11 +12,11 @@ namespace Energize.Interfaces.Services.Listeners
         Task<IEnumerable<SpotifyTrack>> SearchAsync(
             string query, 
             SearchType searchType = SearchType.All,
-            int maxResults = 100);
+            int maxResults = 0);
 
         Task<SpotifyCollection> GetPlaylistAsync(
             string playlistId,
             int startIndex = 0,
-            int maxResults = 100);
+            int maxResults = 0);
     }
 }
