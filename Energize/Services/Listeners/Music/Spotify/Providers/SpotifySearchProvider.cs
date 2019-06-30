@@ -16,10 +16,10 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
         {
             RunConfig = runConfig;
         }
-
+        
         public async Task<IEnumerable<SpotifyTrack>> SearchAsync(
             string query,
-            SearchType searchType = SearchType.All,
+            SearchType searchType = SearchType.Track,
             int maxResults = 0)
         {
             SearchItem searchResult = await this.RunConfig.Api.SearchItemsAsync(query, searchType, maxResults);
