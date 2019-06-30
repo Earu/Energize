@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
+using Energize.Services.Listeners.Music.Spotify.Models;
 
 namespace Energize.Services.Listeners.Music.Spotify.Helpers
 {
