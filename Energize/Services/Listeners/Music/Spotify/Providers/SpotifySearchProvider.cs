@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
+using Energize.Services.Listeners.Music.Spotify.Models;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
 

@@ -16,8 +16,6 @@ using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using SpotifyAPI.Web;
-using SpotifyAPI.Web.Enums;
-using SpotifyAPI.Web.Models;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
