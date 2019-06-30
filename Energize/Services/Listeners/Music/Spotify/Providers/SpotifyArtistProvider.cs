@@ -1,32 +1,33 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Energize.Essentials.TrackTypes;
 using Energize.Services.Listeners.Music.Spotify.Models;
-using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
 
 namespace Energize.Services.Listeners.Music.Spotify.Providers
 {
-    internal class SpotifySearchProvider : ISpotifyProvider
+    internal class SpotifyArtistProvider : ISpotifyProvider
     {
         public SpotifyRunConfig RunConfig { get; }
-        
-        public SpotifySearchProvider(SpotifyRunConfig runConfig)
+
+        public SpotifyArtistProvider(SpotifyRunConfig runConfig)
         {
             RunConfig = runConfig;
         }
 
-        public async Task<IEnumerable<SpotifyTrack>> SearchAsync(
-            string query,
-            SearchType searchType = SearchType.All,
-            int maxResults = 0)
+        public async Task<(string name, Uri uri)> GetArtistAsync(string id)
         {
-            SearchItem searchResult = await this.RunConfig.Api.SearchItemsAsync(query, searchType, maxResults);
-            if (searchResult.HasError())
-                return new List<SpotifyTrack>();
+            var artist = await this.RunConfig.Api.GetArtistAsync(id);
+            return (artist.Name, new Uri(artist.Uri));
+        }
 
-            IEnumerable<SpotifyTrackInfo> infos = searchResult.Tracks.Items.Select(track => new SpotifyTrackInfo(track));
+        public async Task<IEnumerable<SpotifyTrack>> GetArtistTopTracksAsync(string id, string country = "US")
+        {
+            SeveralTracks artistsTopTracksAsync = await this.RunConfig.Api.GetArtistsTopTracksAsync(id, country);
+            var infos = artistsTopTracksAsync.Tracks.Select(track => new SpotifyTrackInfo(track));
+
             if (RunConfig.Config.LazyLoad)
             {
                 List<SpotifyTrack> tracks = new List<SpotifyTrack>();
@@ -34,12 +35,11 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
                 {
                     tracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
                 }
-
                 return tracks;
             }
             else
             {
-                return await RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos);
+                return (await RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos));
             }
         }
     }

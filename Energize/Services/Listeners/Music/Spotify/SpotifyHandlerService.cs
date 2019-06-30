@@ -29,6 +29,8 @@ namespace Energize.Services.Listeners.Music.Spotify
         private readonly SpotifyTrackProvider _trackProvider;
         private readonly SpotifySearchProvider _searchProvider;
         private readonly SpotifyPlaylistProvider _playlistProvider;
+        private readonly SpotifyAlbumProvider _albumProvider;
+        private readonly SpotifyArtistProvider _artistProvider;
 
 
         public SpotifyHandlerService(EnergizeClient client)
@@ -49,6 +51,8 @@ namespace Energize.Services.Listeners.Music.Spotify
             _trackProvider = new SpotifyTrackProvider(spotifyRunConfig);
             _searchProvider = new SpotifySearchProvider(spotifyRunConfig);
             _playlistProvider = new SpotifyPlaylistProvider(spotifyRunConfig);
+            _albumProvider = new SpotifyAlbumProvider(spotifyRunConfig);
+            _artistProvider = new SpotifyArtistProvider(spotifyRunConfig);
         }
 
         private static LavaRestClient GetLavaRestClient()
@@ -109,8 +113,17 @@ namespace Energize.Services.Listeners.Music.Spotify
             int maxResults = 0) => _searchProvider.SearchAsync(query, searchType, maxResults);
 
         public Task<SpotifyCollection> GetPlaylistAsync(
-            string playlistId,
+            string id,
             int startIndex = 0,
-            int maxResults = 0) => _playlistProvider.GetPlaylistAsync(playlistId, startIndex, maxResults);
+            int maxResults = 0) => _playlistProvider.GetPlaylistAsync(id, startIndex, maxResults);
+
+        public Task<SpotifyCollection> GetAlbumAsync(string id)
+            => _albumProvider.GetAlbumAsync(id);
+
+        public Task<(string name, Uri uri)> GetArtistAsync(string id)
+            => _artistProvider.GetArtistAsync(id);
+        
+        public Task<IEnumerable<SpotifyTrack>> GetArtistTopTracksAsync(string id, string country = "US") 
+            => _artistProvider.GetArtistTopTracksAsync(id, country);
     }
 }

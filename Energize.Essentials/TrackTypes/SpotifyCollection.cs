@@ -62,28 +62,40 @@ namespace Energize.Essentials.TrackTypes
             }
         }
 
-//        public SpotifyCollection(FullAlbum album, IEnumerable<SpotifyTrack> items)
-//        {
-//            Items = items;
-//
-//            Images = album.Images.Select(image => image.Url)
-//                .ToArray();
-//            Authors = album.Artists.ToDictionary(
-//                artist =>
-//                {
-//                    Uri ownerUri;
-//                    try
-//                    {
-//                        ownerUri = new Uri(artist.ExternalUrls["spotify"]);
-//                    }
-//                    catch (KeyNotFoundException) // Should never fail
-//                    {
-//                        ownerUri = new Uri(artist.Uri);
-//                    }
-//
-//                    return new KeyValuePair<string, Uri>(artist.Name, ownerUri);
-//                });
-//
-//        }
+        public SpotifyCollection(FullAlbum album, IEnumerable<SpotifyTrack> items)
+        {
+            Items = items;
+
+            Images = album.Images.Select(image => image.Url)
+                .ToArray();
+            Authors = album.Artists.ToDictionary(
+                artist => artist.Name,
+                artist =>
+                {
+                    try
+                    {
+                        return new Uri(artist.ExternalUrls["spotify"]);
+                    }
+                    catch (KeyNotFoundException) // Should never fail
+                    {
+                        return new Uri(artist.Uri);
+                    }
+                });
+            ExternUrls = new Dictionary<string, Uri>(
+                album.ExternalUrls.Select(
+                    pair => new KeyValuePair<string, Uri>(pair.Key, new Uri(pair.Value)))); // Convert value to URI
+            Id = album.Id;
+            Name = album.Name;
+            Type = album.Type;
+            try
+            {
+                Uri = ExternUrls["spotify"];
+            }
+            catch (KeyNotFoundException) // Should never fail
+            {
+                // Convert Spotify URI to a track link (wont link track to playlist or album if it was linked)
+                Uri = new Uri(album.Uri);
+            }
+        }
     }
 }
