@@ -19,7 +19,7 @@ open System
 [<CommandModule("Music")>]
 module Voice =
     let private ytIdRegex = Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
-    let private spotifyRegex = Regex(@"^(spotify:|https?:\/\/open\.spotify\.com\/)([a-z]+)(\/|:)([^:\/\s]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+    let private spotifyRegex = Regex(@"^(spotify:|https?:\/\/open\.spotify\.com\/)([a-z]+)(\/|:)([^:\/\s\?]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
@@ -91,7 +91,7 @@ module Voice =
                 | "artist" ->
                     let topSpotifyTracks = awaitResult (spotify.GetArtistTopTracksAsync(id))
                     let tracks = List.ofSeq(topSpotifyTracks) |> List.map (fun spotify -> spotify :> ILavaTrack)
-                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, "Artist Top Tracks", tracks))))
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, "Spotify Artist's Top Tracks", tracks))))
                 | _ -> None
             else
                 None
