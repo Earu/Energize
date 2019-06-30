@@ -179,27 +179,29 @@ namespace Energize.Services.Senders
             ITextChannel textChan = (ITextChannel)chan;
             IMusicPlayerService music = sender.ServiceManager.GetService<IMusicPlayerService>("Music");
 
-            if (paginator.CurrentValue is ILavaTrack track)
+            switch (paginator.CurrentValue)
             {
-                await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
-                await chan.DeleteMessageAsync(paginator.Message);
-            }
-            else if(paginator.CurrentValue is string url)
-            {
-                if (string.IsNullOrWhiteSpace(url)) return;
-
-                SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
-                List<ILavaTrack> tracks = result.Tracks.ToList();
-                if (tracks.Count > 0)
-                {
-                    ILavaTrack tr = tracks[0];
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
+                case ILavaTrack track:
+                    await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                     await chan.DeleteMessageAsync(paginator.Message);
-                }
-                else
-                {
-                    await sender.MessageSender.Warning(chan, "music player", $"Could add the following Url to the queue\n{url}");
-                }
+                    break;
+                case string url:
+                    if (string.IsNullOrWhiteSpace(url)) return;
+
+                    SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
+                    List<ILavaTrack> tracks = result.Tracks.ToList();
+                    if (tracks.Count > 0)
+                    {
+                        ILavaTrack tr = tracks[0];
+                        await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
+                        await chan.DeleteMessageAsync(paginator.Message);
+                    }
+                    else
+                    {
+                        await sender.MessageSender.Warning(chan, "music player", $"Could add the following Url to the queue\n{url}");
+                    }
+
+                    break;
             }
         }
 

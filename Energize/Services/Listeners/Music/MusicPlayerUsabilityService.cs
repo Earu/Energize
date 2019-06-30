@@ -99,19 +99,6 @@ namespace Energize.Services.Listeners.Music
             return null;
         }
 
-        private string SanitizeYoutubeUrl(string url)
-        {
-            if (!url.Contains("youtu")) return url;
-
-            Match match = YtPlaylistRegex.Match(url);
-            if (match.Success)
-            {
-                string ytId = match.Groups[1].Value;
-                return $"https://www.youtube.com/watch?v={ytId}";
-            }
-            return url;
-        }
-
         private static bool HasPlayableVideo(Embed embed)
         {
             if (embed.Type == EmbedType.Video)
@@ -148,7 +135,7 @@ namespace Energize.Services.Listeners.Music
             bool played = await this.TryPlaySpotifyAsync(music, textChan, guser, url);
             if (played) return;
 
-            SearchResult result = await music.LavaRestClient.SearchTracksAsync(this.SanitizeYoutubeUrl(url));
+            SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
             List<ILavaTrack> tracks = result.Tracks.ToList();
             switch (result.LoadType)
             {
