@@ -21,6 +21,9 @@ Octovisor:
 Spotify:
   ClientID: spotify client id
   ClientSecret: spotify client secret
+  LazyLoad: true
+  ConcurrentPoolSize: 0
+  OperationsPerThread: 2
 Keys:
   TwitchKey: twitch api token
   YoutubeKey: youtube api token

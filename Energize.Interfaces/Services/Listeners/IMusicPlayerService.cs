@@ -57,9 +57,5 @@ namespace Energize.Interfaces.Services.Listeners
         Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ILavaTrack lavaTrack);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
-
-        Task<SpotifyTrack> GetSpotifyTrackAsync(string spotifyId);
-
-        Task<IEnumerable<SpotifyTrack>> SearchSpotifyAsync(string search);
     }
 }
