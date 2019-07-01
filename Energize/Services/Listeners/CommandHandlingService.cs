@@ -3,7 +3,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -29,7 +28,7 @@ namespace Energize.Services.Listeners
             this.ServiceManager = client.ServiceManager;
         }
 
-        public Dictionary<string, Commands.Command.Command> RegisteredCommands { get => Commands.CommandHandler.GetRegisteredCommands(null); }
+        public Dictionary<string, Commands.Command.Command> RegisteredCommands => Commands.CommandHandler.GetRegisteredCommands(null); 
 
         public override void Initialize()
             => Commands.CommandHandler.Initialize(this.Client, this.RestClient, this.Logger, this.MessageSender, this.ServiceManager);

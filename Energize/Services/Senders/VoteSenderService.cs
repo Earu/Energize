@@ -31,11 +31,13 @@ namespace Energize.Services.Senders
             this.Votes = new ConcurrentDictionary<ulong, Vote>();
         }
 
-        private async Task AddReactions(IUserMessage msg, int choiceCount)
+        private static async Task AddReactions(IUserMessage msg, int choiceCount)
         {
             if (msg.Channel is SocketGuildChannel chan)
+            {
                 if (!chan.Guild.CurrentUser.GetPermissions(chan).AddReactions)
                     return;
+            }
 
             for(int i = 0; i < choiceCount; i++)
                 await msg.AddReactionAsync(new Emoji($"{i + 1}\u20e3"));
@@ -55,13 +57,11 @@ namespace Energize.Services.Senders
                     this.Votes.TryRemove(vote.Message.Id, out Vote _);
                 };
 
-                if (this.Votes.TryAdd(vote.Message.Id, vote))
-                {
-                    await this.AddReactions(vote.Message, vote.ChoiceCount);
-                    return vote.Message;
-                }
-
-                return null;
+                if (!this.Votes.TryAdd(vote.Message.Id, vote))
+                    return null;
+            
+                await AddReactions(vote.Message, vote.ChoiceCount);
+                return vote.Message;
             }
             catch (Exception ex)
             {
@@ -71,16 +71,16 @@ namespace Energize.Services.Senders
             return null;
         }
 
-        private bool IsValidEmote(SocketReaction reaction)
+        private static bool IsValidEmote(SocketReaction reaction)
         {
-            if (reaction.UserId == Config.Instance.Discord.BotID) return false;
-            if (reaction.Emote?.Name == null) return false;
+            if (reaction.UserId == Config.Instance.Discord.BotID || reaction.Emote?.Name == null)
+                return false;
 
             return Lookup.ContainsKey(reaction.Emote.Name);
         }
 
         private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, SocketReaction reaction)
-            => this.IsValidEmote(reaction) && this.Votes.ContainsKey(cache.Id);
+            => IsValidEmote(reaction) && this.Votes.ContainsKey(cache.Id);
 
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)

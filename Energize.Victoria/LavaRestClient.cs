@@ -63,6 +63,7 @@ namespace Victoria
         /// Searches all sources specified in Lavalink's application.yml.
         /// </summary>
         /// <param name="query">Search query.</param>
+        /// <param name="loadFullPlaylist">Should we load the full playlist?</param>
         /// <returns><see cref="SearchResult"/></returns>
         public async Task<SearchResult> SearchTracksAsync(string query, bool loadFullPlaylist = false)
         {

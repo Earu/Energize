@@ -8,19 +8,19 @@ using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 {
-    class FAArtworkProvider : BaseProvider
+    internal class FaArtworkProvider : BaseProvider
     {
         private readonly Logger Logger;
 
-        public FAArtworkProvider(Logger logger, string domain, string pattern) : base(domain, pattern)
+        public FaArtworkProvider(Logger logger, string domain, string pattern) : base(domain, pattern)
         {
             this.Logger = logger;
         }
 
-        private string Sanitize(string input)
+        private static string Sanitize(string input)
             => input.Replace("&nbsp;", string.Empty).Trim();
 
-        private bool TryGetNodeAt(HtmlNodeCollection collection, int index, out HtmlNode node)
+        private static bool TryGetNodeAt(HtmlNodeCollection collection, int index, out HtmlNode node)
         {
             if (collection.Count >= index + 1)
             {
@@ -32,8 +32,8 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
             return false;
         }
 
-        private string GetNodeValueAt(HtmlNodeCollection collection, int index)
-            => this.TryGetNodeAt(collection, index, out HtmlNode node) ? this.Sanitize(node.InnerText) : "N/A";
+        private static string GetNodeValueAt(HtmlNodeCollection collection, int index)
+            => TryGetNodeAt(collection, index, out HtmlNode node) ? Sanitize(node.InnerText) : "N/A";
 
         public override async Task BuildEmbedsAsync(List<Embed> embeds, IUserMessage msg, SocketReaction reaction)
         {
@@ -51,12 +51,12 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 
                 if (statsNode == null || informationNode == null || avatarNode == null) continue;
 
-                string title = this.GetNodeValueAt(informationNode.ChildNodes, 1);
-                string author = this.GetNodeValueAt(informationNode.ChildNodes, 3);
-                string category = this.GetNodeValueAt(statsNode.ChildNodes, 10);
-                string theme = this.GetNodeValueAt(statsNode.ChildNodes, 14);
-                string species = this.GetNodeValueAt(statsNode.ChildNodes, 18);
-                string gender = this.GetNodeValueAt(statsNode.ChildNodes, 22);
+                string title = GetNodeValueAt(informationNode.ChildNodes, 1);
+                string author = GetNodeValueAt(informationNode.ChildNodes, 3);
+                string category = GetNodeValueAt(statsNode.ChildNodes, 10);
+                string theme = GetNodeValueAt(statsNode.ChildNodes, 14);
+                string species = GetNodeValueAt(statsNode.ChildNodes, 18);
+                string gender = GetNodeValueAt(statsNode.ChildNodes, 22);
                 string authorUrl = $"https://www.furaffinity.net/user/{author.ToLower()}";
 
                 EmbedBuilder builder = new EmbedBuilder();

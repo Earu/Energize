@@ -1,6 +1,5 @@
 ﻿using Discord.WebSocket;
 using Energize.Essentials;
-using Energize.Interfaces.Services;
 using Energize.Services.Listeners;
 using Energize.Services.Transmission.TransmissionModels;
 using Octovisor.Client;
@@ -12,7 +11,7 @@ using System.Threading.Tasks;
 namespace Energize.Services.Transmission
 {
     [Service("Transmission")]
-    public class TransmissionService : ServiceImplementationBase, IServiceImplementation
+    public class TransmissionService : ServiceImplementationBase
     {
         private readonly OctoClient OctoClient;
         private readonly string Prefix;

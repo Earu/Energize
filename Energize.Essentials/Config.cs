@@ -78,7 +78,7 @@ namespace Energize.Essentials
 
         public static Config Instance { get; } = Initialize();
 
-        private static T DeserializeYAML<T>(string path)
+        private static T DeserializeYaml<T>(string path)
         {
             string yaml = File.ReadAllText(path);
             Deserializer deserializer = new Deserializer();

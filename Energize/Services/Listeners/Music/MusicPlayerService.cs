@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
@@ -16,6 +7,17 @@ using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using SpotifyAPI.Web;
+using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -53,15 +55,14 @@ namespace Energize.Services.Listeners.Music
 
             this.SpotifyAuthTimer = new Timer(async _ =>
             {
-                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty,
-                                                         this.Logger, null, req => 
+                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, req => 
                 {
                     byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
                     req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
                     req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
                 });
 
-                var keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
+                Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
                 if (keys.ContainsKey("access_token"))
                     this.Spotify.AccessToken = keys["access_token"];
             });
@@ -90,11 +91,11 @@ namespace Energize.Services.Listeners.Music
             {
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
-                    .WithDescription("Lost connection to Lavalink node")
+                    .WithDescription("Lavalink lost connection to Discord websocket")
                     .WithField("Error Code", errorCode)
                     .WithField("Reason", reason)
                     .WithField("By Remote", byRemote)
-                    .WithColorType(EmbedColorType.Danger)
+                    .WithColorType(EmbedColorType.Warning)
                     .WithFooter("lavalink error");
 
                 await this.MessageSender.Send(chan, builder.Build());
@@ -108,7 +109,7 @@ namespace Energize.Services.Listeners.Music
                 if (ply.TrackPlayer != null)
                 {
                     if (!track.IsStream && !ply.IsPaused)
-                        await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+                        await ply.TrackPlayer.Update(track, ply.Volume, ply.IsPaused, ply.IsLooping);
 
                     ply.Refresh();
                 }
@@ -250,10 +251,12 @@ namespace Energize.Services.Listeners.Music
 
             List<ILavaTrack> tracks = trs.ToList();
             if (tracks.Count < 1)
+            {
                 return new List<IUserMessage>
                 {
                     await this.MessageSender.Warning(chan, "music player", "The loaded playlist does not contain any tracks")
                 };
+            }
 
             if (ply.IsPlaying)
             {
@@ -269,8 +272,10 @@ namespace Energize.Services.Listeners.Music
             tracks.RemoveAt(0);
 
             if (tracks.Count > 0)
+            {
                 foreach (ILavaTrack tr in tracks)
                     ply.Queue.Enqueue(tr);
+            }
 
             await ply.Lavalink.PlayAsync(lavaTrack);
             return new List<IUserMessage>
@@ -314,17 +319,13 @@ namespace Energize.Services.Listeners.Music
         public async Task ShuffleTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply == null) return;
-
-            ply.Queue.Shuffle();
+            ply?.Queue.Shuffle();
         }
 
         public async Task ClearTracksAsync(IVoiceChannel vc, ITextChannel chan)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
-            if (ply == null) return;
-
-            ply.Queue.Clear();
+            ply?.Queue.Clear();
         }
 
         public async Task PauseTrackAsync(IVoiceChannel vc, ITextChannel chan)
@@ -359,14 +360,13 @@ namespace Energize.Services.Listeners.Music
             {
                 await ply.Lavalink.SkipAsync();
                 await this.SendPlayerAsync(ply, ply.CurrentTrack);
-                return;
             }
             else
             {
                 ILavaTrack oldTrack = ply.CurrentTrack;
                 await ply.Lavalink.StopAsync();
                 if (ply.Autoplay)
-                    await this.AddRelatedYTContentAsync(vc, chan, oldTrack);
+                    await this.AddRelatedYtContentAsync(vc, chan, oldTrack);
             }
         }
 
@@ -392,9 +392,11 @@ namespace Energize.Services.Listeners.Music
                 await ply.Lavalink.SeekAsync(total);
         }
 
-        public ServerStats LavalinkStats { get => this.LavaClient.ServerStats; }
+        public ServerStats LavalinkStats => this.LavaClient.ServerStats; 
 
-        public int PlayerCount { get => this.Players.Count; }
+        public int PlayerCount => this.Players.Count; 
+
+        public int PlayingPlayersCount => this.Players.Count(kv => kv.Value.IsPlaying);
 
         private static async Task<string> GetThumbnailAsync(ILavaTrack track)
         {
@@ -498,7 +500,7 @@ namespace Energize.Services.Listeners.Music
                 }
             }).ContinueWith(t =>
             {
-                if (t.IsFaulted)
+                if (t.IsFaulted && t.Exception != null)
                     this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Could not create player reactions: {t.Exception.Message}");
             });
         }
@@ -525,7 +527,7 @@ namespace Energize.Services.Listeners.Music
             return ply.TrackPlayer.Message;
         }
 
-        private async Task<YoutubeVideo> FetchYTRelatedVideoAsync(string videoId)
+        private async Task<YoutubeVideo> FetchYtRelatedVideoAsync(string videoId)
         {
             string endpoint = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&key={Config.Instance.Keys.YoutubeKey}&maxResults=6";
             string json = await HttpClient.GetAsync(endpoint, this.Logger);
@@ -535,32 +537,34 @@ namespace Energize.Services.Listeners.Music
             using (IDatabaseContext ctx = await dbService.GetContext())
                 await ctx.Instance.SaveYoutubeVideoIds(relatedVideos.Videos.Select(vid => vid.Id));
 
-            IEnumerable<YoutubeVideo> vids = relatedVideos.Videos.Where(vid => !vid.Id.VideoID.Equals(videoId));
-            return relatedVideos.Videos[this.Rand.Next(0, relatedVideos.Videos.Length)];
+            List<YoutubeVideo> vids = relatedVideos.Videos.Where(vid => !vid.Id.VideoID.Equals(videoId)).ToList();
+            return vids[this.Rand.Next(0, relatedVideos.Videos.Length)];
         }
 
-        private static readonly Regex YTRegex = new Regex(@"(?!videoseries)[a-zA-Z0-9_-]{11}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex YtRegex = new Regex(@"(?!videoseries)[a-zA-Z0-9_-]{11}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private async Task<(bool, YoutubeVideo)> TryGetVideoAsync(ILavaTrack lavaTrack)
         {
             bool failed = false;
             YoutubeVideo video = null;
             if (lavaTrack.Uri.AbsoluteUri.Contains("youtu"))
             {
-                Match match = YTRegex.Match(lavaTrack.Uri.AbsoluteUri);
+                Match match = YtRegex.Match(lavaTrack.Uri.AbsoluteUri);
                 if (!match.Success)
                     failed = true;
 
-                video = await this.FetchYTRelatedVideoAsync(match.Value);
+                video = await this.FetchYtRelatedVideoAsync(match.Value);
                 if (video == null)
                     failed = true;
             }
             else
+            {
                 failed = true;
+            }
 
             return (failed, video);
         }
 
-        private async Task<string> GetNextTrackVideoURLAsync(bool useDb, YoutubeVideo video)
+        private async Task<string> GetNextTrackVideoUrlAsync(bool useDb, YoutubeVideo video)
         {
             if (!useDb)
                 return $"https://www.youtube.com/watch?v={video.Id.VideoID}";
@@ -569,16 +573,14 @@ namespace Energize.Services.Listeners.Music
             using (IDatabaseContext ctx = await dbService.GetContext())
             {
                 IYoutubeVideoID videoId = await ctx.Instance.GetRandomVideoIdAsync();
-                if (videoId == null) return string.Empty;
-
-                return $"https://www.youtube.com/watch?v={videoId.VideoID.Trim()}";
+                return videoId == null ? string.Empty : $"https://www.youtube.com/watch?v={videoId.VideoID.Trim()}";
             }
         }
 
-        private async Task AddRelatedYTContentAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack oldTrack)
+        private async Task AddRelatedYtContentAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack oldTrack)
         {
             (bool failed, YoutubeVideo video) = await this.TryGetVideoAsync(oldTrack);
-            string videoUrl = await this.GetNextTrackVideoURLAsync(failed, video);
+            string videoUrl = await this.GetNextTrackVideoUrlAsync(failed, video);
             SearchResult res = await this.LavaRestClient.SearchTracksAsync(videoUrl);
             List<ILavaTrack> tracks = res.Tracks.ToList();
             if (tracks.Count == 0) return;
@@ -622,7 +624,7 @@ namespace Energize.Services.Listeners.Music
                 {
                     if (ply.Autoplay && ply.Queue.Count == 0)
                     {
-                        await this.AddRelatedYTContentAsync(ply.VoiceChannel, ply.TextChannel, lavaTrack);
+                        await this.AddRelatedYtContentAsync(ply.VoiceChannel, ply.TextChannel, lavaTrack);
                     }
                     else
                     {
@@ -652,14 +654,14 @@ namespace Energize.Services.Listeners.Music
                 .WithColorType(EmbedColorType.Warning)
                 .WithFooter("music player")
                 .WithDescription("🎶 Could not play track:")
-                .WithField("URL", $"**{lavaTrack.Uri}**")
+                .WithField("Url", $"**{lavaTrack.Uri}**")
                 .WithField("Error", error);
 
             await this.MessageSender.Send(ply.TextChannel, builder.Build());
         }
 
         private delegate Task ReactionCallback(MusicPlayerService music, IEnergizePlayer ply);
-        private readonly static Dictionary<string, ReactionCallback> ReactionCallbacks = new Dictionary<string, ReactionCallback>
+        private static readonly Dictionary<string, ReactionCallback> ReactionCallbacks = new Dictionary<string, ReactionCallback>
         {
             ["⏯"] = async (music, ply) =>
             {
@@ -679,7 +681,7 @@ namespace Energize.Services.Listeners.Music
             }
         };
 
-        private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
+        private static bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (chan is IDMChannel) return false;
             if (reaction.Emote?.Name == null) return false;
@@ -689,22 +691,22 @@ namespace Energize.Services.Listeners.Music
             return ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
-        private bool IsValidTrackPlayer(TrackPlayer trackplayer, ulong msgid)
-            => trackplayer != null && trackplayer.Message != null && trackplayer.Message.Id == msgid;
+        private static bool IsValidTrackPlayer(TrackPlayer trackPlayer, ulong msgId)
+            => trackPlayer?.Message != null && trackPlayer.Message.Id == msgId;
 
         private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (!this.IsValidReaction(chan, reaction)) return;
+            if (!IsValidReaction(chan, reaction)) return;
 
             IGuildUser guser = (IGuildUser)reaction.User.Value;
             if (!this.Players.TryGetValue(guser.GuildId, out IEnergizePlayer ply) || guser.VoiceChannel == null) return;
-            if (!this.IsValidTrackPlayer(ply.TrackPlayer, cache.Id)) return;
+            if (!IsValidTrackPlayer(ply.TrackPlayer, cache.Id)) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, ply);
             if (ply.CurrentRadio != null)
                 await ply.TrackPlayer.Update(ply.CurrentRadio, ply.Volume, ply.IsPaused, ply.IsLooping);
             else
-                await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping, true);
+                await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping);
         }
 
         [Event("ReactionAdded")]
@@ -732,7 +734,6 @@ namespace Energize.Services.Listeners.Music
                 BufferSize = 8192,
                 PreservePlayers = true,
                 AutoDisconnect = false,
-                LogSeverity = LogSeverity.Debug,
                 DefaultVolume = 50,
                 InactivityTimeout = TimeSpan.FromMinutes(3),
             };
@@ -741,7 +742,7 @@ namespace Energize.Services.Listeners.Music
             await this.LavaClient.StartAsync(this.Client, config);
         }
 
-        private SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
+        private static SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {
             SocketVoiceChannel vc = oldState.VoiceChannel ?? newState.VoiceChannel;
             SocketGuildUser botUser = vc.Guild.CurrentUser;
@@ -781,7 +782,7 @@ namespace Energize.Services.Listeners.Music
         [Event("UserVoiceStateUpdated")] 
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {
-            SocketVoiceChannel vc = this.GetVoiceChannel(user, oldState, newState);
+            SocketVoiceChannel vc = GetVoiceChannel(user, oldState, newState);
             if (vc == null) return;
             if (!this.Players.TryGetValue(vc.Guild.Id, out IEnergizePlayer ply)) return;
 
@@ -806,16 +807,15 @@ namespace Energize.Services.Listeners.Music
             int count = 0;
             foreach(SocketGuild guild in client.Guilds)
             {
-                if (this.Players.TryGetValue(guild.Id, out IEnergizePlayer ply))
-                {
-                    count++;
-                    if (ply.VoiceChannel != null)
-                    {
-                        await this.DisconnectAsync(ply.VoiceChannel);
-                        if (ply.TextChannel != null)
-                            await this.MessageSender.Warning(ply.TextChannel, "music player", "There was a problem with Discord, disconnecting...");
-                    }
-                }
+                if (!this.Players.TryGetValue(guild.Id, out IEnergizePlayer ply))
+                    continue;
+
+                count++;
+                if (ply.VoiceChannel == null) continue;
+                
+                await this.DisconnectAsync(ply.VoiceChannel);
+                if (ply.TextChannel != null)
+                    await this.MessageSender.Warning(ply.TextChannel, "music player", "There was a problem with Discord, disconnecting...");
             }
 
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");

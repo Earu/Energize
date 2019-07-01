@@ -72,9 +72,9 @@ namespace Energize.Services
             return false;
         }
 
-        private IServiceImplementation Instanciate(EnergizeClient client, Type type)
+        private static IServiceImplementation Instanciate(EnergizeClient client, Type type)
         {
-            if (type.GetConstructor(new Type[] { typeof(EnergizeClient) }) != null)
+            if (type.GetConstructor(new [] { typeof(EnergizeClient) }) != null)
                 return (IServiceImplementation)Activator.CreateInstance(type, client);
             else
                 return (IServiceImplementation)Activator.CreateInstance(type);
@@ -88,7 +88,7 @@ namespace Energize.Services
 
         private void ContinueWithHandler(Task task)
         {
-            if (!task.IsFaulted) return;
+            if (!task.IsFaulted || task.Exception == null) return;
 
             Exception ex = task.Exception.InnerException;
             this.Logger.Danger(ex);
@@ -101,33 +101,32 @@ namespace Energize.Services
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)
         {
             MethodInfo eventHandler = type.GetMethods().FirstOrDefault(methodInfo => this.IsEventHandler(methodInfo, eventInfo));
-            if (eventHandler != null)
-            {
-                ParameterExpression[] parameters = Array.ConvertAll(eventHandler.GetParameters(),
-                    param => Expression.Parameter(param.ParameterType));
-                Delegate dlg = Expression.Lambda(
-                    eventInfo.EventHandlerType,
+            if (eventHandler == null) return;
+            
+            ParameterExpression[] parameters = Array.ConvertAll(eventHandler.GetParameters(),
+                param => Expression.Parameter(param.ParameterType));
+            Delegate dlg = Expression.Lambda(
+                eventInfo.EventHandlerType,
+                Expression.Call(
                     Expression.Call(
-                        Expression.Call(
-                            Expression.Constant(instance),
-                            eventHandler,
-                            parameters
-                        ),
-                        typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
-                        Expression.Constant((Action<Task>)this.ContinueWithHandler)
+                        Expression.Constant(instance),
+                        eventHandler,
+                        parameters
                     ),
-                    parameters
-                ).Compile();
+                    typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
+                    Expression.Constant((Action<Task>)this.ContinueWithHandler)
+                ),
+                parameters
+            ).Compile();
 
-                eventInfo.AddEventHandler(client, dlg);
-            }
+            eventInfo.AddEventHandler(client, dlg);
         }
 
         internal void InitializeServices()
         {
             foreach (Type type in this.ServiceTypes)
             {
-                IServiceImplementation instance = this.Instanciate(this.Client, type);
+                IServiceImplementation instance = Instanciate(this.Client, type);
                 this.RegisterService(type, instance);
 
                 foreach (EventInfo eventInfo in DiscordClientEvents)
@@ -136,9 +135,8 @@ namespace Energize.Services
 
             try
             {
-                foreach (KeyValuePair<string, IService> service in this.Services)
-                    if (service.Value.Instance != null)
-                        service.Value.Instance.Initialize();
+                foreach ((string _, IService service) in this.Services)
+                    service.Instance?.Initialize();
             }
             catch(Exception ex)
             {
@@ -150,9 +148,11 @@ namespace Energize.Services
         {
             try
             {
-                foreach (KeyValuePair<string, IService> service in this.Services)
-                    if (service.Value.Instance != null)
-                        await service.Value.Instance.InitializeAsync();
+                foreach ((string _, IService service) in this.Services)
+                {
+                    if (service.Instance != null)
+                        await service.Instance.InitializeAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -164,8 +164,8 @@ namespace Energize.Services
         {
             if(this.Services.ContainsKey(name))
                 return (T)this.Services[name].Instance;
-            else
-                return default;
+
+            return default;
         }
     }
 }

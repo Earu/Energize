@@ -82,7 +82,7 @@ namespace Victoria
         /// <summary>
         /// Gets the provider name for an url (example: google.com -> google)
         /// </summary>
-        /// <param name="url">The url to get the provider from</param>
+        /// <param name="uri">The url to get the provider from</param>
         /// <returns>The provider name</returns>
         public static string GetProvider(this Uri uri)
         {
