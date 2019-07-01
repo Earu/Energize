@@ -27,7 +27,7 @@ namespace Energize.Services.Listeners.Extendability
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
 
-            this.InviteRegex = new Regex(@"discord\.gg\/.+\s?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            this.InviteRegex = new Regex(@"discord(app\.com\/invite|\.gg)\/[A-Za-z0-9]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             this.ExtendableMessageProviders = new List<BaseProvider>
             {
                 new DiscordMessageProvider(client.DiscordClient, "discordapp", @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
