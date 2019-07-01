@@ -600,31 +600,6 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        public async Task<SpotifyTrack> GetSpotifyTrackAsync(string spotifyId)
-        {
-            FullTrack spotifyResult = await this.Spotify.GetTrackAsync(spotifyId);
-            return new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult));
-        }
-
-        private async Task<ILavaTrack> SearchSpotifyCallback(FullTrack spotifyResult)
-        {
-            string artistName = spotifyResult.Artists.FirstOrDefault()?.Name ?? " - ";
-            SearchResult searchYouTubeAsync = await this.LavaRestClient.SearchYouTubeAsync($"{artistName} {spotifyResult.Name}");
-            return searchYouTubeAsync.Tracks.FirstOrDefault();
-        }
-
-        public async Task<IEnumerable<SpotifyTrack>> SearchSpotifyAsync(string search)
-        {
-            SearchItem searchResult = await this.Spotify.SearchItemsAsync(search, SearchType.Track);
-            Paging<FullTrack> tracks = searchResult.Tracks;
-            if (searchResult.HasError())
-                return new List<SpotifyTrack>();
-            
-            return tracks
-                .Items
-                .Select(spotifyResult => new SpotifyTrack(new SpotifyTrackInfo(spotifyResult), () => this.SearchSpotifyCallback(spotifyResult)));
-        }
-
         private async Task OnTrackFinished(LavaPlayer lavalink, ILavaTrack lavaTrack, TrackEndReason reason)
         {
             if (!reason.ShouldPlayNext()) return;
