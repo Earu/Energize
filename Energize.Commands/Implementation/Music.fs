@@ -8,6 +8,9 @@ open Discord
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.AsyncHelper
 open Energize.Essentials
+open Energize.Essentials.TrackTypes
+open Energize.Interfaces.Services.Listeners
+open Energize.Interfaces.Services.Listeners
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
@@ -16,7 +19,7 @@ open System
 [<CommandModule("Music")>]
 module Voice =
     let private ytIdRegex = Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
-    let private spotifyRegex = Regex(@"https?:\/\/open\.spotify\.com\/track\/([^\/\s]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+    let private spotifyRegex = Regex(@"^(spotify:|https?:\/\/open\.spotify\.com\/)([a-z]+)(\/|:)([^:\/\s\?]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
@@ -65,35 +68,44 @@ module Voice =
         )
     }
 
-    let private sanitizeYtUrl (url : string) =
-        if url.Contains("youtu") then
-            let ytMatch = ytIdRegex.Match(url)
-            if ytMatch.Success then
-                let ytIdentifier = ytMatch.Groups.[1].Value
-                sprintf "https://www.youtube.com/watch?v=%s" ytIdentifier
-            else
-                url
-        else
-            url
-
-    let private spotifyToYtUrl (ctx : CommandContext) (url : string) =
+    let private handleSpotifyUrl (music: IMusicPlayerService) (ctx : CommandContext) (vc : IVoiceChannel)  (url : string) =
+        let textChan = ctx.message.Channel :?> ITextChannel
         if url.Contains("spotify") then
             let spotifyMatch = spotifyRegex.Match(url)
             if spotifyMatch.Success then
-                let id = spotifyMatch.Groups.[1].Value
-                let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-                let track = awaitResult (music.GetSpotifyTrackAsync(id))
-                track.Uri.AbsoluteUri
+                let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
+                let itemType = spotifyMatch.Groups.[2].Value
+                let id = spotifyMatch.Groups.[4].Value
+                match itemType with
+                | "track" ->
+                    let track = awaitResult (spotify.GetTrackAsync(id))
+                    Some ([awaitResult (music.AddTrackAsync(vc, textChan, track))])
+                | "playlist" ->
+                    let playlist = awaitResult (spotify.GetPlaylistAsync(id))
+                    let tracks = List.ofSeq(playlist.Items) |> List.map (fun spotify -> spotify :> ILavaTrack)
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, playlist.Name, tracks)))) // Convert List<T> to T list (C# list to F# list)
+                | "album" ->
+                    let album = awaitResult (spotify.GetAlbumAsync(id))
+                    let tracks = List.ofSeq(album.Items) |> List.map (fun spotify -> spotify :> ILavaTrack)
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, album.Name, tracks)))) // Convert List<T> to T list (C# list to F# list)
+                | "artist" ->
+                    let topSpotifyTracks = awaitResult (spotify.GetArtistTopTracksAsync(id))
+                    let tracks = List.ofSeq(topSpotifyTracks) |> List.map (fun spotify -> spotify :> ILavaTrack)
+                    Some (List.ofSeq(awaitResult (music.AddPlaylistAsync(vc, textChan, "Spotify Artist's Top Tracks", tracks))))
+                | _ -> None
             else
-                url
+                None
         else
-            url
+            None
 
     let private playUrl (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let input = (spotifyToYtUrl ctx ctx.input) |> sanitizeYtUrl
-            let res = awaitResult (music.LavaRestClient.SearchTracksAsync(input))
-            handleSearchResult music ctx res vc false
+            let input = handleSpotifyUrl music ctx vc ctx.input
+            match input with
+            | Some spotifyResult -> spotifyResult
+            | _ ->
+                let res = awaitResult (music.LavaRestClient.SearchTracksAsync(ctx.input))
+                handleSearchResult music ctx res vc false
         )
     }
 
@@ -115,7 +127,8 @@ module Voice =
     let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) =
         match ctx with
         | _ when ctx.message.Attachments.Count > 0 -> playFile ctx
-        | _ when ctx.arguments.Length > 0 && HttpClient.IsUrl(ctx.input) -> playUrl ctx
+        | _ when ctx.arguments.Length > 0 && HttpClient.IsURL(ctx.input) -> playUrl ctx
+        | _ when ctx.arguments.[0].StartsWith("spotify") -> playUrl ctx
         | _ -> cb ctx
             
     [<CommandConditions(CommandCondition.GuildOnly)>]
@@ -322,8 +335,8 @@ module Voice =
     [<Command("spotify", "Searches spotify for a song", "spotify <search>")>]
     let spotify (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
-            let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-            let songItems = awaitResult (music.SearchSpotifyAsync(ctx.input)) |> Seq.toList
+            let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
+            let songItems = awaitResult (spotify.SearchAsync(ctx.input)) |> Seq.toList
             let len = songItems.Length
             return
                 if len > 0 then
