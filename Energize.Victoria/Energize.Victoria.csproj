@@ -27,6 +27,10 @@
         </PackageReleaseNotes>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+      <NoWarn>1701;1702;1591</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1" />
         <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Threading.Tasks.Extensions" Version="4.6.0-preview.18571.3" />

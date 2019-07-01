@@ -16,7 +16,7 @@ namespace Energize.Services.Eval
         public async Task<(int, string)> Eval(string code, object ctx)
         {
             if (code[code.Length - 1] != ';')
-                code = code + ";";
+                code += ";";
 
             string[] imports = {
                 "System",
@@ -48,7 +48,7 @@ namespace Energize.Services.Eval
             try
             {
                 ScriptState state = await CSharpScript.RunAsync(code, options, ctx);
-                if (state != null && state.ReturnValue != null)
+                if (state?.ReturnValue != null)
                 {
                     string ret = state.ReturnValue.ToString();
                     if (!string.IsNullOrWhiteSpace(ret))

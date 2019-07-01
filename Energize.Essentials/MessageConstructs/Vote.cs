@@ -8,43 +8,40 @@ namespace Energize.Essentials.MessageConstructs
 {
     public class Vote
     {
-        private readonly IUser _Author;
-        private readonly string _Description;
-        private readonly Dictionary<string, int> _Choices;
-        private readonly List<string> _ChoiceIndexes;
-        private readonly Dictionary<ulong, int> _VoterIds;
-        private readonly Timer _Timer;
-        private readonly DateTime _EndTime;
+        private readonly IUser Author;
+        private readonly string Description;
+        private readonly Dictionary<string, int> Choices;
+        private readonly List<string> ChoiceIndexes;
+        private readonly Dictionary<ulong, int> VoterIds;
 
-        private bool _IsFinished;
-        private int _TotalVotes;
+        private bool IsFinished;
+        private int TotalVotes;
 
         public event Action<string> VoteFinished;
 
         public Vote(IUser author, string desc, List<string> choices)
         {
-            this._TotalVotes = 0;
-            this._Author = author;
-            this._Description = desc;
-            this._Choices = new Dictionary<string, int>();
+            this.TotalVotes = 0;
+            this.Author = author;
+            this.Description = desc;
+            this.Choices = new Dictionary<string, int>();
 
             foreach (string choice in choices)
-                this._Choices.Add(choice, 0);
+                this.Choices.Add(choice, 0);
 
-            this._ChoiceIndexes = choices;
-            this._VoterIds = new Dictionary<ulong, int>();
-            this._IsFinished = false;
-            this._EndTime = DateTime.Now.AddMinutes(5.0);
+            this.ChoiceIndexes = choices;
+            this.VoterIds = new Dictionary<ulong, int>();
+            this.IsFinished = false;
 
             this.UpdateEmbed();
 
-            this._Timer = new Timer(300000) // 5mins 
+            Timer timer = new Timer(300000) // 5mins 
             {
                 AutoReset = false,
                 Enabled = true,
             };
 
-            this._Timer.Elapsed += async (sender, args) =>
+            timer.Elapsed += async (sender, args) =>
             {
                 await this.EndVote();
                 this.VoteFinished?.Invoke(this.GetResult());
@@ -53,49 +50,48 @@ namespace Energize.Essentials.MessageConstructs
 
         public IUserMessage Message { get; set; }
         public Embed VoteEmbed { get; private set; }
-        public int ChoiceCount { get => this._ChoiceIndexes.Count; }
+        public int ChoiceCount => this.ChoiceIndexes.Count;
 
         private string GetResult()
         {
             string res = string.Empty;
             int min = 0;
-            foreach(KeyValuePair<string, int> choice in this._Choices)
+            foreach((string choice, int votes) in this.Choices)
             {
-                if(choice.Value > min)
-                {
-                    min = choice.Value;
-                    res = choice.Key;
-                }
+                if (votes <= min) continue;
+                
+                min = votes;
+                res = choice;
             }
 
             return res;
         }
 
         private bool IsValidIndex(int choiceindex)
-            => choiceindex >= 0 && choiceindex < this._ChoiceIndexes.Count;
+            => choiceindex >= 0 && choiceindex < this.ChoiceIndexes.Count;
 
         private void UpdateEmbed()
         {
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(this._IsFinished ? new Color(0, 175, 220) : MessageSender.SColorGood);
-            builder.AddField("Vote", this._Description, false);
+            builder.WithColor(this.IsFinished ? new Color(0, 175, 220) : MessageSender.SColorGood);
+            builder.AddField("Vote", this.Description);
             int i = 1;
-            foreach (KeyValuePair<string, int> kv in this._Choices)
+            foreach ((string choice, int votes) in this.Choices)
             {
-                double perc = this._TotalVotes == 0 ? 0.0 : kv.Value / (double)this._TotalVotes * 100.0;
-                string plural = kv.Value > 1 ? "s" : string.Empty;
-                builder.AddField($"{i++}. {kv.Key}", $"{perc}% ({kv.Value} vote{plural})", true);
+                double perc = this.TotalVotes == 0 ? 0.0 : votes / (double)this.TotalVotes * 100.0;
+                string plural = votes > 1 ? "s" : string.Empty;
+                builder.AddField($"{i++}. {choice}", $"{perc}% ({votes} vote{plural})", true);
             }
                
-            builder.WithAuthor(this._Author);
-            builder.WithFooter(this._IsFinished ? "Vote results" : "Valid for 5 minutes");
+            builder.WithAuthor(this.Author);
+            builder.WithFooter(this.IsFinished ? "Vote results" : "Valid for 5 minutes");
 
             this.VoteEmbed = builder.Build();
         }
 
         private async Task EndVote()
         {
-            this._IsFinished = true;
+            this.IsFinished = true;
             await this.Update();
         }
 
@@ -108,28 +104,28 @@ namespace Energize.Essentials.MessageConstructs
 
         public async Task AddVote(IUser voter, int choiceindex)
         {
-            if (voter.IsBot || voter.IsWebhook || this._IsFinished) return;
-            if (this._VoterIds.ContainsKey(voter.Id)) return;
+            if (voter.IsBot || voter.IsWebhook || this.IsFinished) return;
+            if (this.VoterIds.ContainsKey(voter.Id)) return;
             if (this.IsValidIndex(choiceindex))
             {
-                string choice = this._ChoiceIndexes[choiceindex];
-                this._Choices[choice]++;
-                this._VoterIds.Add(voter.Id, choiceindex);
-                this._TotalVotes++;
+                string choice = this.ChoiceIndexes[choiceindex];
+                this.Choices[choice]++;
+                this.VoterIds.Add(voter.Id, choiceindex);
+                this.TotalVotes++;
                 await this.Update();
             }
         }
 
         public async Task RemoveVote(IUser voter, int choiceindex)
         {
-            if (voter.IsBot || voter.IsWebhook || this._IsFinished) return;
-            if (!this._VoterIds.ContainsKey(voter.Id)) return;
-            if (this.IsValidIndex(choiceindex) && this._VoterIds[voter.Id] == choiceindex)
+            if (voter.IsBot || voter.IsWebhook || this.IsFinished) return;
+            if (!this.VoterIds.ContainsKey(voter.Id)) return;
+            if (this.IsValidIndex(choiceindex) && this.VoterIds[voter.Id] == choiceindex)
             {
-                string choice = this._ChoiceIndexes[choiceindex];
-                this._Choices[choice]--;
-                this._VoterIds.Remove(voter.Id);
-                this._TotalVotes--;
+                string choice = this.ChoiceIndexes[choiceindex];
+                this.Choices[choice]--;
+                this.VoterIds.Remove(voter.Id);
+                this.TotalVotes--;
                 await this.Update();
             }
         }

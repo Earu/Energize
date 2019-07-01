@@ -9,7 +9,7 @@ namespace Energize.Essentials
 {
     public class HttpClient
     {
-        private static readonly string UserAgent = "Energize Discord(Earu's Bot)";
+        private const string UserAgent = "Energize Discord(Earu's Bot)";
 
         private static async Task<string> InternalRequest(string method, string url, string body, Logger logger, string userAgent, Action<HttpWebRequest> callback = null)
         {
@@ -47,7 +47,7 @@ namespace Energize.Essentials
                         logger.Danger(ex.Message);
                         break;
                     default:
-                        logger.Nice("HTTP", ConsoleColor.Red, $"Unknown error [ {url} ]\n{ex.ToString()}");
+                        logger.Nice("HTTP", ConsoleColor.Red, $"Unknown error [ {url} ]\n{ex}");
                         break;
                 }
             }
@@ -65,12 +65,9 @@ namespace Energize.Essentials
         public static async Task<string> GetAsync(string url, Logger logger, string userAgent = null, Action<HttpWebRequest> callback = null)
             => await InternalRequest("GET", url, null, logger, userAgent, callback);
 
-        private static readonly Regex URLRegex = new Regex(@"^(?:https?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static bool IsURL(string input)
-        {
-            if (!input.StartsWith("http")) return false;
+        private static readonly Regex UrlRegex = new Regex(@"^(?:https?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            return URLRegex.IsMatch(input);
-        }
+        public static bool IsUrl(string input)
+            => input.StartsWith("http") && UrlRegex.IsMatch(input);
     }
 }

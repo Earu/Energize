@@ -18,6 +18,7 @@ module UserHelper =
             | Some user -> Some (user :> IUser)
             | None -> None
 
+
     let private handleMe (ctx : CommandContext) _ : IUser option =
         Some ctx.message.Author
 
@@ -123,7 +124,15 @@ module UserHelper =
             try
                 let id = uint64 input
                 match ctx.client.GetUser(id) with
-                | null -> None
+                | null -> 
+                    if not ctx.isPrivate then
+                        let guildChan = ctx.message.Channel :?> IGuildChannel
+                        let user = awaitResult (guildChan.Guild.GetUserAsync(id, CacheMode.AllowDownload))
+                        match user with
+                        | null -> None
+                        | _ -> Some (user :> IUser)
+                    else
+                        None
                 | user -> Some (user :> IUser)
             with _ -> None
         | false -> None

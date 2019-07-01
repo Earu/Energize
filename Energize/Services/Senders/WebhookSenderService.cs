@@ -20,22 +20,20 @@ namespace Energize.Services.Senders
             this.Logger = client.Logger;
         }
 
-        private bool CanUseWebhooks(IChannel chan)
+        private static bool CanUseWebhooks(IChannel chan)
         {
-            if (chan is SocketGuildChannel guildChannel)
-            {
-                SocketGuildUser botUser = guildChannel.Guild.CurrentUser;
-                return botUser.GetPermissions(guildChannel).ManageWebhooks;
-            }
+            if (!(chan is SocketGuildChannel guildChannel))
+                return false;
 
-            return false;
+            SocketGuildUser botUser = guildChannel.Guild.CurrentUser;
+            return botUser.GetPermissions(guildChannel).ManageWebhooks;
         }
 
         private async Task<DiscordWebhookClient> CreateWebhook(string name, ITextChannel chan)
         {
             try
             {
-                if (!this.CanUseWebhooks(chan)) return null;
+                if (!CanUseWebhooks(chan)) return null;
 
                 IWebhook webhook = await chan.CreateWebhookAsync(name);
                 return new DiscordWebhookClient(webhook);
@@ -51,7 +49,7 @@ namespace Energize.Services.Senders
         {
             try
             {
-                if (!this.CanUseWebhooks(chan)) return null;
+                if (!CanUseWebhooks(chan)) return null;
 
                 IReadOnlyCollection<IWebhook> webhooks = await chan.GetWebhooksAsync();
                 IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == name);
@@ -116,7 +114,7 @@ namespace Energize.Services.Senders
 
             try
             {
-                return await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarUrl);
+                return await webhook.SendMessageAsync(string.Empty, false, new [] { embed }, username, avatarUrl);
             }
             catch (Exception ex)
             {
@@ -132,7 +130,7 @@ namespace Energize.Services.Senders
 
             try
             {
-                return await webhook.SendMessageAsync(string.Empty, false, new Embed[] { embed }, username, avatarUrl);
+                return await webhook.SendMessageAsync(string.Empty, false, new [] { embed }, username, avatarUrl);
             }
             catch (Exception ex)
             {

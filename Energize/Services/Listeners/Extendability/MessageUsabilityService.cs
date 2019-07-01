@@ -12,46 +12,38 @@ using System.Threading.Tasks;
 namespace Energize.Services.Listeners.Extendability
 {
     [Service("MessageUsability")]
-    class MessageUsabilityService : ServiceImplementationBase
+    public class MessageUsabilityService : ServiceImplementationBase
     {
         private static readonly Emoji EmoteExtend = new Emoji("⏬");
 
-        private readonly DiscordShardedClient DiscordClient;
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
-        private readonly Logger Logger;
 
         private readonly Regex InviteRegex;
         private readonly List<BaseProvider> ExtendableMessageProviders;
 
         public MessageUsabilityService(EnergizeClient client)
         {
-            this.DiscordClient = client.DiscordClient;
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
-            this.Logger = client.Logger;
 
             this.InviteRegex = new Regex(@"discord\.gg\/.+\s?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             this.ExtendableMessageProviders = new List<BaseProvider>
             {
-                new DiscordMessageProvider(this.DiscordClient, "discordapp", @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
-                new RedditPostProvider(this.Logger, "reddit", @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
-                new GitHubRepoProvider(this.Logger, "github", @"https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+)"),
-                new FAArtworkProvider(this.Logger, "furaffinity", @"https?:\/\/www\.furaffinity\.net\/view\/[0-9]+"),
+                new DiscordMessageProvider(client.DiscordClient, "discordapp", @"https:\/\/discordapp.com\/channels\/([0-9]+)\/([0-9]+)\/([0-9]+)"),
+                new RedditPostProvider(client.Logger, "reddit", @"https?:\/\/www\.reddit\.com\/r\/([A-Za-z0-9]+)\/comments\/.{6}\/"),
+                new GitHubRepoProvider(client.Logger, "github", @"https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+)"),
+                new FaArtworkProvider(client.Logger, "furaffinity", @"https?:\/\/www\.furaffinity\.net\/view\/[0-9]+"),
             };
         }
 
-        private bool HasInviteURL(IMessage msg)
-        {
-            if (!msg.Content.Contains("discord.gg")) return false;
+        private bool HasInviteUrl(IMessage msg)
+            => msg.Content.Contains("discord.gg") && this.InviteRegex.IsMatch(msg.Content);
 
-            return this.InviteRegex.IsMatch(msg.Content);
-        }
-
-        private bool HasSupportedURL(IMessage msg)  
+        private bool HasSupportedUrl(IMessage msg)  
             => this.ExtendableMessageProviders.Any(provider => provider.IsMatch(msg.Content));
 
-        private async Task HandleInviteURLsAsync(SocketMessage msg)
+        private async Task HandleInviteUrlsAsync(SocketMessage msg)
         {
             SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
             IDatabaseService db = this.ServiceManager.GetService<IDatabaseService>("Database");
@@ -73,7 +65,7 @@ namespace Energize.Services.Listeners.Extendability
             }
         }
 
-        private async Task HandleSupportedURLsAsync(SocketMessage msg)
+        private static async Task HandleSupportedUrlsAsync(SocketMessage msg)
         {
             SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
             SocketGuildUser botUser = chan.Guild.CurrentUser;
@@ -84,7 +76,7 @@ namespace Energize.Services.Listeners.Extendability
             }
         }
 
-        private bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
+        private static bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (reaction.Emote?.Name == null) return false;
             if (!reaction.Emote.Name.Equals(EmoteExtend.Name)) return false;
@@ -98,7 +90,7 @@ namespace Energize.Services.Listeners.Extendability
         private bool IsValidMessage(IUserMessage msg)
         {
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
-            if (!this.HasSupportedURL(msg)) return false;
+            if (!this.HasSupportedUrl(msg)) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
             if (!msg.Reactions.ContainsKey(EmoteExtend) || (msg.Reactions.ContainsKey(EmoteExtend) && !msg.Reactions[EmoteExtend].IsMe)) return false;
@@ -111,17 +103,17 @@ namespace Energize.Services.Listeners.Extendability
         {
             if (msg.Channel is IDMChannel || msg.Author.Id == Config.Instance.Discord.BotID) return;
 
-            if (this.HasInviteURL(msg))
-                await this.HandleInviteURLsAsync(msg);
-            else if (this.HasSupportedURL(msg))
-                await this.HandleSupportedURLsAsync(msg);
+            if (this.HasInviteUrl(msg))
+                await this.HandleInviteUrlsAsync(msg);
+            else if (this.HasSupportedUrl(msg))
+                await HandleSupportedUrlsAsync(msg);
         }
 
 
         [Event("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
-            if (!this.IsValidReaction(chan, reaction)) return;
+            if (!IsValidReaction(chan, reaction)) return;
             IUserMessage msg = await cache.GetOrDownloadAsync();
             if (!this.IsValidMessage(msg)) return;
             SocketGuildChannel reactionChan = (SocketGuildChannel)chan;

@@ -12,8 +12,8 @@ namespace Energize.Essentials.TrackTypes
     /// </summary>
     public class SpotifyTrack : IAsyncLazyLoadTrack
     {
-        private readonly Func<Task<ILavaTrack>> _innerTrackCallback;
-        private ILavaTrack _innerTrack;
+        private readonly Func<Task<ILavaTrack>> InnerTrackCallback;
+        private ILavaTrack InnerTrack;
 
         public SpotifyTrackInfo SpotifyInfo { get; }
 
@@ -25,7 +25,7 @@ namespace Energize.Essentials.TrackTypes
         public SpotifyTrack(SpotifyTrackInfo spotifyInfo, ILavaTrack innerTrack)
         {
             this.SpotifyInfo = spotifyInfo;
-            this._innerTrack = innerTrack;
+            this.InnerTrack = innerTrack;
         }
 
         /// <summary>
@@ -36,54 +36,52 @@ namespace Energize.Essentials.TrackTypes
         public SpotifyTrack(SpotifyTrackInfo spotifyInfo, Func<Task<ILavaTrack>> innerTrackCallback)
         {
             this.SpotifyInfo = spotifyInfo;
-            this._innerTrackCallback = innerTrackCallback;
+            this.InnerTrackCallback = innerTrackCallback;
         }
 
         public async Task<ILavaTrack> GetInnerTrackAsync()
         {
-            if (this._innerTrack != null)
+            if (this.InnerTrack != null)
             {
-                return this._innerTrack;
+                return this.InnerTrack;
             }
 
-            ILavaTrack track = await this._innerTrackCallback();
-            this._innerTrack = track;
+            ILavaTrack track = await this.InnerTrackCallback();
+            this.InnerTrack = track;
             return track;
         }
 
         public string Hash { get; set; }
         
-        public string Id => this.SpotifyInfo.Id ?? this._innerTrack?.Id;
+        public string Id => this.SpotifyInfo.Id ?? this.InnerTrack?.Id;
         
-        public bool IsSeekable => this._innerTrack?.IsSeekable ?? true;
+        public bool IsSeekable => this.InnerTrack?.IsSeekable ?? true;
 
         public string Author => this.SpotifyInfo.Artists[0]
-            .Name ?? this._innerTrack?.Author ;
+            .Name ?? this.InnerTrack?.Author ;
 
-        public bool IsStream => this._innerTrack?.IsStream ?? false;
+        public bool IsStream => this.InnerTrack?.IsStream ?? false;
         
         public TimeSpan Position
         {
             get =>
-                this._innerTrack?.Position ?? TimeSpan.Zero;
+                this.InnerTrack?.Position ?? TimeSpan.Zero;
             set
             {
-                if (this._innerTrack != null)
-                {
-                    this._innerTrack.Position = value;
-                }
+                if (this.InnerTrack != null)
+                    this.InnerTrack.Position = value;
             }
             
         }
 
-        public TimeSpan Length => this._innerTrack?.Length ?? TimeSpan.Zero;
+        public TimeSpan Length => this.InnerTrack?.Length ?? TimeSpan.Zero;
 
-        public string Title => this.SpotifyInfo.Name ?? this._innerTrack?.Title;
+        public string Title => this.SpotifyInfo.Name ?? this.InnerTrack?.Title;
 
-        public Uri Uri => this.SpotifyInfo.Uri ?? this._innerTrack?.Uri;
+        public Uri Uri => this.SpotifyInfo.Uri ?? this.InnerTrack?.Uri;
 
         public string Provider => "spotify";
 
-        public void ResetPosition() => this._innerTrack?.ResetPosition();
+        public void ResetPosition() => this.InnerTrack?.ResetPosition();
     }
 }

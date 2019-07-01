@@ -19,7 +19,7 @@ namespace Energize.Services.Listeners.Music
 
         private readonly double TimeToLive;
 
-        private Timer TTLTimer;
+        private Timer TtlTimer;
 
         internal EnergizePlayer(LavaPlayer ply)
         {
@@ -32,7 +32,7 @@ namespace Energize.Services.Listeners.Music
             this.TrackPlayer = null;
             this.CurrentRadio = null;
             this.TimeToLive = 3 * 60 * 1000;
-            this.TTLTimer = null;
+            this.TtlTimer = null;
             this.Refresh();
         }
 
@@ -47,35 +47,35 @@ namespace Energize.Services.Listeners.Music
         public TrackPlayer TrackPlayer { get; set; }
         public RadioTrack CurrentRadio { get; set; }
 
-        public LavaQueue<IQueueObject> Queue { get => this.Lavalink.Queue; }
-        public bool IsPlaying { get => this.Lavalink.IsPlaying; }
-        public bool IsPaused { get => this.Lavalink.IsPaused; }
-        public ILavaTrack CurrentTrack { get => this.Lavalink?.CurrentTrack; }
-        public IVoiceChannel VoiceChannel { get => this.Lavalink?.VoiceChannel; }
-        public ITextChannel TextChannel { get => this.Lavalink?.TextChannel; }
-        public int Volume { get => this.Lavalink == null ? 100 : this.Lavalink.CurrentVolume; }
+        public LavaQueue<IQueueObject> Queue => this.Lavalink.Queue; 
+        public bool IsPlaying => this.Lavalink.IsPlaying; 
+        public bool IsPaused => this.Lavalink.IsPaused; 
+        public ILavaTrack CurrentTrack => this.Lavalink?.CurrentTrack; 
+        public IVoiceChannel VoiceChannel => this.Lavalink?.VoiceChannel; 
+        public ITextChannel TextChannel => this.Lavalink?.TextChannel; 
+        public int Volume => this.Lavalink?.CurrentVolume ?? 100; 
 
         public void Refresh()
         {
-            if (this.TTLTimer != null)
+            if (this.TtlTimer != null)
             {
-                this.TTLTimer.Stop();
-                this.TTLTimer.Close();
-                this.TTLTimer = null;
+                this.TtlTimer.Stop();
+                this.TtlTimer.Close();
+                this.TtlTimer = null;
             }
 
-            this.TTLTimer = new Timer(this.TimeToLive)
+            this.TtlTimer = new Timer(this.TimeToLive)
             {
                 AutoReset = false
             };
 
-            this.TTLTimer.Elapsed += (_, __) =>
+            this.TtlTimer.Elapsed += (_, __) =>
             {
                 if (!this.Disconnected)
                     this.BecameInactive?.Invoke();
             };
 
-            this.TTLTimer.Start();
+            this.TtlTimer.Start();
         }
     }
 }

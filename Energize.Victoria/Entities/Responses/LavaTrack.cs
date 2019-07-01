@@ -25,8 +25,7 @@ namespace Victoria.Entities
         public TimeSpan Position
         {
             get => new TimeSpan(this.TrackPosition);
-            set =>
-                this.TrackPosition = value.Ticks;
+            set => this.TrackPosition = value.Ticks;
         }
 
         [JsonProperty("position")]
