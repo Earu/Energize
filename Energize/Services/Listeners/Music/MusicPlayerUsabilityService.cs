@@ -84,19 +84,17 @@ namespace Energize.Services.Listeners.Music
             return true;
         }
 
-        private Task<SpotifyTrack> SpotifyToTrackAsync(IMusicPlayerService music, string url)
+        private Task<SpotifyTrack> SpotifyToTrackAsync(string url)
         {
             if (!url.Contains("spotify")) return null;
 
             Match match = SpotifyRegex.Match(url);
-            if (match.Success)
-            {
-                string spotifyId = match.Groups[1].Value;
-                ISpotifyHandlerService spotify = this.ServiceManager.GetService<ISpotifyHandlerService>("Spotify");
-                return spotify.GetTrackAsync(spotifyId);
-            }
-
-            return null;
+            if (!match.Success)
+                return null;
+            
+            string spotifyId = match.Groups[1].Value;
+            ISpotifyHandlerService spotify = this.ServiceManager.GetService<ISpotifyHandlerService>("Spotify");
+            return spotify.GetTrackAsync(spotifyId);
         }
 
         private static bool HasPlayableVideo(Embed embed)
@@ -123,7 +121,7 @@ namespace Energize.Services.Listeners.Music
 
         private async Task<bool> TryPlaySpotifyAsync(IMusicPlayerService music, ITextChannel textChan, IGuildUser guser, string url)
         {
-            SpotifyTrack track = await this.SpotifyToTrackAsync(music, url);
+            SpotifyTrack track = await this.SpotifyToTrackAsync(url);
             if (track == null) return false;
             
             await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
