@@ -9,10 +9,7 @@ namespace Energize.Services.Listeners.Music.Spotify.Helpers
 {
     internal class SpotifyCollectionHandler
     {
-        public static async Task<IEnumerable<SpotifyTrackInfo>> GetAllSpotifyInfosAsync(
-            IEnumerable<SpotifyTrackInfo> sourceTracks,
-            string id,
-            CollectionOptions options,
+        public static async Task<IEnumerable<SpotifyTrackInfo>> GetAllSpotifyInfosAsync(IEnumerable<SpotifyTrackInfo> sourceTracks, string id, CollectionOptions options, 
             Func<string, CollectionOptions, Task<IEnumerable<SpotifyTrackInfo>>> collectionGetter)
         {
             List<SpotifyTrackInfo> tracksList = sourceTracks.ToList();

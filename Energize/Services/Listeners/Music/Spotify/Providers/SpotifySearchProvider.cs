@@ -14,33 +14,28 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
         
         public SpotifySearchProvider(SpotifyRunConfig runConfig)
         {
-            RunConfig = runConfig;
+            this.RunConfig = runConfig;
         }
         
-        public async Task<IEnumerable<SpotifyTrack>> SearchAsync(
-            string query,
-            SearchType searchType = SearchType.Track,
-            int maxResults = 0)
+        public async Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType = SearchType.Track, int maxResults = 0)
         {
             SearchItem searchResult = await this.RunConfig.Api.SearchItemsAsync(query, searchType, maxResults);
             if (searchResult.HasError())
                 return new List<SpotifyTrack>();
 
             IEnumerable<SpotifyTrackInfo> infos = searchResult.Tracks.Items.Select(track => new SpotifyTrackInfo(track));
-            if (RunConfig.Config.LazyLoad)
+            if (this.RunConfig.Config.LazyLoad)
             {
                 List<SpotifyTrack> tracks = new List<SpotifyTrack>();
                 foreach (SpotifyTrackInfo info in infos)
                 {
-                    tracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
+                    tracks.Add(await this.RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
                 }
 
                 return tracks;
             }
-            else
-            {
-                return await RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos);
-            }
+
+            return await this.RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos);
         }
     }
 }

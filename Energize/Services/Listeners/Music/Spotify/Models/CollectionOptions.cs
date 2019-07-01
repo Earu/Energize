@@ -10,9 +10,9 @@ namespace Energize.Services.Listeners.Music.Spotify.Models
 
         public CollectionOptions(int total, int startIndex, int maxResults)
         {
-            Total = total;
-            StartIndex = startIndex;
-            MaxResults = maxResults;
+            this.Total = total;
+            this.StartIndex = startIndex;
+            this.MaxResults = maxResults;
         }
     }
 }

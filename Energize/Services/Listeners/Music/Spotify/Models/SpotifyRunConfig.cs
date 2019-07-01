@@ -15,16 +15,12 @@ namespace Energize.Services.Listeners.Music.Spotify.Models
 
         public SpotifyTrackConverter TrackConverter { get; set; }
 
-        public SpotifyRunConfig(
-            LavaRestClient lavaRest,
-            SpotifyWebAPI api,
-            SpotifyConfig config,
-            SpotifyTrackConverter trackConverter)
+        public SpotifyRunConfig(LavaRestClient lavaRest, SpotifyWebAPI api, SpotifyConfig config, SpotifyTrackConverter trackConverter)
         {
-            LavaRest = lavaRest;
-            Api = api;
-            Config = config;
-            TrackConverter = trackConverter;
+            this.LavaRest = lavaRest;
+            this.Api = api;
+            this.Config = config;
+            this.TrackConverter = trackConverter;
         }
     }
 }

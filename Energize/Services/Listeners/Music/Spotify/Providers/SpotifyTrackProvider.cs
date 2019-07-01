@@ -10,12 +10,12 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
 
         public SpotifyTrackProvider(SpotifyRunConfig runConfig)
         {
-            RunConfig = runConfig;
+            this.RunConfig = runConfig;
         }
 
         public async Task<SpotifyTrack> GetTrackAsync(string id)
         {
-            var trackInfo = new SpotifyTrackInfo(await this.RunConfig.Api.GetTrackAsync(id));
+            SpotifyTrackInfo trackInfo = new SpotifyTrackInfo(await this.RunConfig.Api.GetTrackAsync(id));
             return await this.RunConfig.TrackConverter.CreateSpotifyTrackAsync(trackInfo);
         }
     }
