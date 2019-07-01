@@ -21,50 +21,50 @@ namespace Energize.Services.Listeners.Music.Spotify
     [Service("Spotify")]
     public class SpotifyHandlerService : ServiceImplementationBase, ISpotifyHandlerService
     {
-        private readonly Logger _logger;
-        private readonly SpotifyWebAPI _api;
-        private readonly LavaRestClient _lavaRest;
-        private readonly SpotifyConfig _config;
+        private readonly Logger Logger;
+        private readonly SpotifyWebAPI Api;
+        private readonly LavaRestClient LavaRest;
+        private readonly SpotifyConfig Config;
 
-        private readonly Timer _spotifyAuthTimer;
-        private readonly SpotifyTrackProvider _trackProvider;
-        private readonly SpotifySearchProvider _searchProvider;
-        private readonly SpotifyPlaylistProvider _playlistProvider;
-        private readonly SpotifyAlbumProvider _albumProvider;
-        private readonly SpotifyArtistProvider _artistProvider;
+        private readonly Timer SpotifyAuthTimer;
+        private readonly SpotifyTrackProvider TrackProvider;
+        private readonly SpotifySearchProvider SearchProvider;
+        private readonly SpotifyPlaylistProvider PlaylistProvider;
+        private readonly SpotifyAlbumProvider AlbumProvider;
+        private readonly SpotifyArtistProvider ArtistProvider;
 
 
         public SpotifyHandlerService(EnergizeClient client)
         {
-            _logger = client.Logger;
-            _api = new SpotifyWebAPI
+            this.Logger = client.Logger;
+            this.Api = new SpotifyWebAPI
             {
                 TokenType = "Bearer",
                 UseAuth = true,
                 UseAutoRetry = true
             };
-            _lavaRest = GetLavaRestClient();
+            this.LavaRest = GetLavaRestClient();
             // TODO: add configuration entry
-            _config = Config.Instance.Spotify;
-            _spotifyAuthTimer = new Timer(TradeSpotifyToken);
+            this.Config = Essentials.Config.Instance.Spotify;
+            this.SpotifyAuthTimer = new Timer(this.TradeSpotifyToken);
 
-            var spotifyRunConfig = new SpotifyRunConfig(_lavaRest, _api, _config, new SpotifyTrackConverter(_lavaRest, _config));
-            _trackProvider = new SpotifyTrackProvider(spotifyRunConfig);
-            _searchProvider = new SpotifySearchProvider(spotifyRunConfig);
-            _playlistProvider = new SpotifyPlaylistProvider(spotifyRunConfig);
-            _albumProvider = new SpotifyAlbumProvider(spotifyRunConfig);
-            _artistProvider = new SpotifyArtistProvider(spotifyRunConfig);
+            SpotifyRunConfig spotifyRunConfig = new SpotifyRunConfig(this.LavaRest, this.Api, this.Config, new SpotifyTrackConverter(this.LavaRest, this.Config));
+            this.TrackProvider = new SpotifyTrackProvider(spotifyRunConfig);
+            this.SearchProvider = new SpotifySearchProvider(spotifyRunConfig);
+            this.PlaylistProvider = new SpotifyPlaylistProvider(spotifyRunConfig);
+            this.AlbumProvider = new SpotifyAlbumProvider(spotifyRunConfig);
+            this.ArtistProvider = new SpotifyArtistProvider(spotifyRunConfig);
         }
 
         private static LavaRestClient GetLavaRestClient()
         {
-            var config = new Configuration
+            Configuration config = new Configuration
             {
                 ReconnectInterval = TimeSpan.FromSeconds(15),
                 ReconnectAttempts = 3,
-                Host = Config.Instance.Lavalink.Host,
-                Port = Config.Instance.Lavalink.Port,
-                Password = Config.Instance.Lavalink.Password,
+                Host = Essentials.Config.Instance.Lavalink.Host,
+                Port = Essentials.Config.Instance.Lavalink.Port,
+                Password = Essentials.Config.Instance.Lavalink.Password,
                 SelfDeaf = false,
                 BufferSize = 8192,
                 PreservePlayers = true,
@@ -81,56 +81,47 @@ namespace Energize.Services.Listeners.Music.Spotify
         {
             void Callback(HttpWebRequest req)
             {
-                byte[] credBytes = Encoding.UTF8.GetBytes($"{_config.ClientID}:{_config.ClientSecret}");
+                byte[] credBytes = Encoding.UTF8.GetBytes($"{this.Config.ClientID}:{this.Config.ClientSecret}");
                 req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
                 req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             }
 
-            string json = await HttpClient.PostAsync(
-                "https://accounts.spotify.com/api/token?grant_type=client_credentials",
-                string.Empty,
-                _logger,
-                null,
-                Callback);
-
-            Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, _logger);
+            string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, Callback);
+            Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
             if (keys.ContainsKey("access_token"))
             {
-                _api.AccessToken = keys["access_token"];
+                this.Api.AccessToken = keys["access_token"];
             }
         }
 
         public override Task InitializeAsync()
         {
-            _spotifyAuthTimer.Change(0, 3600 * 1000);
+            this.SpotifyAuthTimer.Change(0, 3600 * 1000);
             return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public Task<SpotifyTrack> GetTrackAsync(string id) => _trackProvider.GetTrackAsync(id);
+        public Task<SpotifyTrack> GetTrackAsync(string id) 
+            => this.TrackProvider.GetTrackAsync(id);
 
         /// <inheritdoc />
-        public Task<IEnumerable<SpotifyTrack>> SearchAsync(
-            string query,
-            SearchType searchType = SearchType.Track,
-            int maxResults = 0) => _searchProvider.SearchAsync(query, searchType, maxResults);
+        public Task<IEnumerable<SpotifyTrack>> SearchAsync(string query, SearchType searchType = SearchType.Track, int maxResults = 0) 
+            => this.SearchProvider.SearchAsync(query, searchType, maxResults);
 
         /// <inheritdoc />
-        public Task<SpotifyCollection> GetPlaylistAsync(
-            string id,
-            int startIndex = 0,
-            int maxResults = 0) => _playlistProvider.GetPlaylistAsync(id, startIndex, maxResults);
+        public Task<SpotifyCollection> GetPlaylistAsync(string id, int startIndex = 0, int maxResults = 0) 
+            => this.PlaylistProvider.GetPlaylistAsync(id, startIndex, maxResults);
 
         /// <inheritdoc />
         public Task<SpotifyCollection> GetAlbumAsync(string id)
-            => _albumProvider.GetAlbumAsync(id);
+            => this.AlbumProvider.GetAlbumAsync(id);
 
         /// <inheritdoc />
         public Task<(string name, Uri uri)> GetArtistAsync(string id)
-            => _artistProvider.GetArtistAsync(id);
+            => this.ArtistProvider.GetArtistAsync(id);
         
         /// <inheritdoc />
         public Task<IEnumerable<SpotifyTrack>> GetArtistTopTracksAsync(string id, string country = "US") 
-            => _artistProvider.GetArtistTopTracksAsync(id, country);
+            => this.ArtistProvider.GetArtistTopTracksAsync(id, country);
     }
 }

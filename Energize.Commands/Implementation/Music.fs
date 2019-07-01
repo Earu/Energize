@@ -127,7 +127,7 @@ module Voice =
     let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) =
         match ctx with
         | _ when ctx.message.Attachments.Count > 0 -> playFile ctx
-        | _ when ctx.arguments.Length > 0 && HttpClient.IsURL(ctx.input) -> playUrl ctx
+        | _ when ctx.arguments.Length > 0 && HttpClient.IsUrl(ctx.input) -> playUrl ctx
         | _ when ctx.arguments.[0].StartsWith("spotify") -> playUrl ctx
         | _ -> cb ctx
             

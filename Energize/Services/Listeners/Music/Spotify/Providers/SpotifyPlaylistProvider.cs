@@ -14,61 +14,46 @@ namespace Energize.Services.Listeners.Music.Spotify.Providers
 
         public SpotifyPlaylistProvider(SpotifyRunConfig runConfig)
         {
-            RunConfig = runConfig;
+            this.RunConfig = runConfig;
         }
 
         public async Task<SpotifyCollection> GetPlaylistAsync(string id, int startIndex = 0, int maxResults = 0)
         {
-            (FullPlaylist playlist, IEnumerable<SpotifyTrackInfo> infos) =
-                await GetSpotifyInfos(id, startIndex, maxResults);
+            (FullPlaylist playlist, IEnumerable<SpotifyTrackInfo> infos) = await this.GetSpotifyInfos(id, startIndex, maxResults);
 
-            return new SpotifyCollection(playlist, await GetTracks(infos));
+            return new SpotifyCollection(playlist, await this.GetTracks(infos));
         }
 
         private async Task<List<SpotifyTrack>> GetTracks(IEnumerable<SpotifyTrackInfo> infos)
         {
             List<SpotifyTrack> tracks;
-            if (RunConfig.Config.LazyLoad)
+            if (this.RunConfig.Config.LazyLoad)
             {
                 tracks = new List<SpotifyTrack>();
                 foreach (SpotifyTrackInfo info in infos)
-                {
-                    tracks.Add(await RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
-                }
+                    tracks.Add(await this.RunConfig.TrackConverter.CreateSpotifyTrackAsync(info, true));
             }
             else
             {
-                IEnumerable<SpotifyTrack> spotifyTracksAsync = await RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos);
+                IEnumerable<SpotifyTrack> spotifyTracksAsync = await this.RunConfig.TrackConverter.CreateSpotifyTracksAsync(infos);
                 tracks = spotifyTracksAsync.ToList();
             }
 
             return tracks;
         }
 
-        private async Task<(FullPlaylist playlist, IEnumerable<SpotifyTrackInfo> infos)> GetSpotifyInfos(
-            string id,
-            int startIndex,
-            int maxResults)
+        private async Task<(FullPlaylist playlist, IEnumerable<SpotifyTrackInfo> infos)> GetSpotifyInfos(string id, int startIndex, int maxResults)
         {
-            FullPlaylist playlist = await RunConfig.Api.GetPlaylistAsync(null, id);
+            FullPlaylist playlist = await this.RunConfig.Api.GetPlaylistAsync(null, id);
 
-            IEnumerable<SpotifyTrackInfo> sourceTracks =
-                playlist.Tracks.Items.Select(playlistTrack => new SpotifyTrackInfo(playlistTrack.Track));
-            IEnumerable<SpotifyTrackInfo> infos = await SpotifyCollectionHandler.GetAllSpotifyInfosAsync(
-                sourceTracks,
-                id,
-                new CollectionOptions(playlist.Tracks.Total, startIndex, maxResults),
-                CollectionGetter);
+            IEnumerable<SpotifyTrackInfo> sourceTracks = playlist.Tracks.Items.Select(playlistTrack => new SpotifyTrackInfo(playlistTrack.Track));
+            IEnumerable<SpotifyTrackInfo> infos = await SpotifyCollectionHandler.GetAllSpotifyInfosAsync(sourceTracks, id, new CollectionOptions(playlist.Tracks.Total, startIndex, maxResults), this.CollectionGetter);
             return (playlist, infos);
         }
 
         private async Task<IEnumerable<SpotifyTrackInfo>> CollectionGetter(string id, CollectionOptions options)
         {
-            Paging<PlaylistTrack> tracks = await RunConfig.Api.GetPlaylistTracksAsync(
-                null,
-                id,
-                limit: options.MaxResults,
-                offset: options.StartIndex);
+            Paging<PlaylistTrack> tracks = await this.RunConfig.Api.GetPlaylistTracksAsync(null, id, limit: options.MaxResults, offset: options.StartIndex);
             return tracks.Items.Select(playlistTrack => new SpotifyTrackInfo(playlistTrack.Track));
         }
     }

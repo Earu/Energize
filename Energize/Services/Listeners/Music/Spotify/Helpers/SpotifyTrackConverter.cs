@@ -10,13 +10,13 @@ namespace Energize.Services.Listeners.Music.Spotify.Helpers
 {
     internal class SpotifyTrackConverter
     {
-        private readonly SpotifyConfig _config;
-        private readonly LavaRestClient _lavaRest;
+        private readonly SpotifyConfig Config;
+        private readonly LavaRestClient LavaRest;
 
         public SpotifyTrackConverter(LavaRestClient lavaRest, SpotifyConfig config)
         {
-            _lavaRest = lavaRest;
-            _config = config;
+            this.LavaRest = lavaRest;
+            this.Config = config;
         }
 
         /// <summary>
@@ -29,40 +29,31 @@ namespace Energize.Services.Listeners.Music.Spotify.Helpers
         /// <returns>Task of collection of converted SpotifyTracks</returns>
         /// <see cref="SpotifyTrackInfo" />
         /// <see cref="SpotifyTrack" />
-        public async Task<IEnumerable<SpotifyTrack>> CreateSpotifyTracksAsync(
-            IEnumerable<SpotifyTrackInfo> spotifyTrackInfos)
+        public async Task<IEnumerable<SpotifyTrack>> CreateSpotifyTracksAsync(IEnumerable<SpotifyTrackInfo> spotifyTrackInfos)
         {
             List<SpotifyTrackInfo> infosList = spotifyTrackInfos.ToList();
 
             // Partition (Map)
-            int batches = _config.OperationsPerThread > 0 ? _config.OperationsPerThread : 1;
-            ParallelQuery<IGrouping<int, KeyValuePair<int, SpotifyTrackInfo>>> parallelBatches = SplitToBatches(
-                infosList,
-                _config.ConcurrentPoolSize,
-                batches);
+            int batches = this.Config.OperationsPerThread > 0 ? this.Config.OperationsPerThread : 1;
+            ParallelQuery<IGrouping<int, KeyValuePair<int, SpotifyTrackInfo>>> parallelBatches = SplitToBatches(infosList, this.Config.ConcurrentPoolSize, batches);
 
             // Reduce (using conversion between SpotifyTrackInfo to SpotifyTrack
             return parallelBatches.SelectMany(
                 dictionary => dictionary.Select(
-                    pair => CreateSpotifyTrackAsync(pair.Value, false)
+                    pair => this.CreateSpotifyTrackAsync(pair.Value, false)
                         .ConfigureAwait(false)
                         .GetAwaiter()
                         .GetResult()));
         }
 
-        private static ParallelQuery<IGrouping<int, KeyValuePair<int, T>>> SplitToBatches<T>(
-            IEnumerable<T> source,
-            int poolSize,
-            int batches)
+        private static ParallelQuery<IGrouping<int, KeyValuePair<int, T>>> SplitToBatches<T>(IEnumerable<T> source, int poolSize, int batches)
         {
-            ParallelQuery<T> asParallel = source.AsParallel()
-                .AsOrdered();
+            ParallelQuery<T> asParallel = source.AsParallel().AsOrdered();
             if (poolSize > 0)
-            {
                 asParallel = asParallel.WithDegreeOfParallelism(poolSize);
-            }
 
-            return asParallel.Select((x, i) => new KeyValuePair<int, T>(i, x))
+            return asParallel
+                .Select((x, i) => new KeyValuePair<int, T>(i, x))
                 .GroupBy(x => x.Key / batches);
         }
 
@@ -75,16 +66,16 @@ namespace Energize.Services.Listeners.Music.Spotify.Helpers
         /// <returns>Converted SpotifyTrack</returns>
         public async Task<SpotifyTrack> CreateSpotifyTrackAsync(SpotifyTrackInfo trackInfo, bool? lazyLoad = null)
         {
-            bool isLazyLoad = lazyLoad ?? _config.LazyLoad;
+            bool isLazyLoad = lazyLoad ?? this.Config.LazyLoad;
             return isLazyLoad
-                ? new SpotifyTrack(trackInfo, () => SearchSpotify(trackInfo))
-                : new SpotifyTrack(trackInfo, await SearchSpotify(trackInfo));
+                ? new SpotifyTrack(trackInfo, () => this.SearchSpotify(trackInfo))
+                : new SpotifyTrack(trackInfo, await this.SearchSpotify(trackInfo));
         }
 
         private async Task<ILavaTrack> SearchSpotify(SpotifyTrackInfo spotifyResult)
         {
             string artistName = $"{spotifyResult.Artists.FirstOrDefault()?.Name} - ";
-            SearchResult searchResult = await _lavaRest.SearchYouTubeAsync($"{artistName}{spotifyResult.Name}");
+            SearchResult searchResult = await this.LavaRest.SearchYouTubeAsync($"{artistName}{spotifyResult.Name}");
             return searchResult.Tracks.FirstOrDefault();
         }
     }

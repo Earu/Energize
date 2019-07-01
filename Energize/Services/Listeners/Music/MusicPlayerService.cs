@@ -6,15 +6,10 @@ using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
-using SpotifyAPI.Web;
-using SpotifyAPI.Web.Enums;
-using SpotifyAPI.Web.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,8 +28,6 @@ namespace Energize.Services.Listeners.Music
         private readonly MessageSender MessageSender;
         private readonly ServiceManager ServiceManager;
         private readonly ConcurrentDictionary<ulong, IEnergizePlayer> Players;
-        private readonly SpotifyWebAPI Spotify;
-        private readonly Timer SpotifyAuthTimer;
         private readonly Random Rand;
 
         public MusicPlayerService(EnergizeClient client)
@@ -46,26 +39,6 @@ namespace Energize.Services.Listeners.Music
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
             this.LavaClient = new LavaShardClient();
-            this.Spotify = new SpotifyWebAPI
-            {
-                TokenType = "Bearer",
-                UseAuth = true,
-                UseAutoRetry = true
-            };
-
-            this.SpotifyAuthTimer = new Timer(async _ =>
-            {
-                string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, req => 
-                {
-                    byte[] credBytes = Encoding.UTF8.GetBytes($"{Config.Instance.Spotify.ClientID}:{Config.Instance.Spotify.ClientSecret}");
-                    req.Headers[HttpRequestHeader.Authorization] = $"Basic {Convert.ToBase64String(credBytes)}";
-                    req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-                });
-
-                Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
-                if (keys.ContainsKey("access_token"))
-                    this.Spotify.AccessToken = keys["access_token"];
-            });
 
             this.Rand = new Random();
 
@@ -75,12 +48,6 @@ namespace Energize.Services.Listeners.Music
             this.LavaClient.Log += async logMsg => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
             this.LavaClient.OnSocketClosed += this.OnSocketClosed;
-        }
-
-        public override Task InitializeAsync()
-        {
-            this.SpotifyAuthTimer.Change(0, 3600 * 1000);
-            return Task.CompletedTask;
         }
 
         private async Task OnSocketClosed(int errorCode, string reason, bool byRemote)
@@ -453,7 +420,7 @@ namespace Energize.Services.Listeners.Music
             EmbedBuilder builder = new EmbedBuilder();
             if (msg != null)
                 builder.WithAuthorNickname(msg);
-            string desc = "🎶 Added the following track to the queue:";
+            const string desc = "🎶 Added the following track to the queue:";
             if (!string.IsNullOrWhiteSpace(thumbnailUrl))
                 builder.WithThumbnailUrl(thumbnailUrl);
             return builder
