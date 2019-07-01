@@ -35,10 +35,11 @@ namespace Energize.Services.Listeners.Music.Spotify.Helpers
             List<SpotifyTrackInfo> infosList = spotifyTrackInfos.ToList();
 
             // Partition (Map)
+            int batches = _config.OperationsPerThread > 0 ? _config.OperationsPerThread : 1;
             ParallelQuery<IGrouping<int, KeyValuePair<int, SpotifyTrackInfo>>> parallelBatches = SplitToBatches(
                 infosList,
                 _config.ConcurrentPoolSize,
-                _config.OperationsPerThread);
+                batches);
 
             // Reduce (using conversion between SpotifyTrackInfo to SpotifyTrack
             return parallelBatches.SelectMany(
