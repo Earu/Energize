@@ -10,7 +10,7 @@ namespace Energize.Services
             this.Instance = inst;
         }
 
-        public IServiceImplementation Instance { get; private set; }
-        public string Name { get; private set; }
+        public IServiceImplementation Instance { get; }
+        public string Name { get; }
     }
 }

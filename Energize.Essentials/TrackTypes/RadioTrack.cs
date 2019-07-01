@@ -7,23 +7,19 @@ namespace Energize.Essentials.TrackTypes
     {
         public RadioTrack(ILavaTrack innerTrack)
         {
-            foreach ((string key, string value) in StaticData.Instance.RadioSources)
-                if (value.Equals(innerTrack.Uri.AbsoluteUri))
-                    this.Genre = key;
-
             this.Genre = "unknown";
             this.InnerTrack = innerTrack;
-        }
 
-        public RadioTrack(string genre, ILavaTrack innerTrack)
-        {
-            this.Genre = genre;
-            this.InnerTrack = innerTrack;
+            foreach ((string key, string value) in StaticData.Instance.RadioSources)
+            {
+                if (value.Equals(innerTrack.Uri.AbsoluteUri))
+                    this.Genre = key;
+            }
         }
 
         public string Genre { get; }
         public ILavaTrack InnerTrack { get; }
-        public string StreamURL => this.InnerTrack.Uri.AbsoluteUri;
+        public string StreamUrl => this.InnerTrack.Uri.AbsoluteUri;
         public string Id => this.InnerTrack.Id;
     }
 }

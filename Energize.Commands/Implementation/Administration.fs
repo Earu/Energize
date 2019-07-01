@@ -17,7 +17,7 @@ module Administration =
     [<CommandParameters(2)>]
     [<CommandPermissions(ChannelPermission.ManageRoles)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
-    [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid>,<0|1>")>]
+    [<Command("op", "Makes a user able or unable to use admin commands", "op <user|userid> <0|1>")>]
     let op (ctx : CommandContext) = async {
         return 
             match findUser ctx ctx.arguments.[0] true with
@@ -98,7 +98,7 @@ module Administration =
     [<CommandParameters(2)>]
     [<CommandPermissions(ChannelPermission.ManageMessages)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
-    [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype>,<amounttoremove>,<extra>")>]
+    [<Command("clear", "Clear a specified amount of messages in the current channel", "clear <cleartype> <amounttoremove> <extra>")>]
     let clear (ctx : CommandContext) = async {
         let cb = clearTypes |> List.tryFind (fun (_type, _) -> _type.Equals(ctx.arguments.[0])) 
         return

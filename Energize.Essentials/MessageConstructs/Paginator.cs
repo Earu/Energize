@@ -7,44 +7,44 @@ namespace Energize.Essentials.MessageConstructs
 {
     public class Paginator<T> where T : class
     {
-        private readonly List<T> _Data;
-        private readonly Func<T, string> _DisplayCallback;
-        private readonly Action<T, EmbedBuilder> _DisplayEmbedCallback;
-        private DateTime _TimeToLive;
-        private Embed _Embed;
+        private readonly List<T> Data;
+        private readonly Func<T, string> DisplayCallback;
+        private readonly Action<T, EmbedBuilder> DisplayEmbedCallback;
+        private DateTime TimeToLive;
+        private Embed Embed;
 
         public Paginator(ulong userid, IEnumerable<T> data, Func<T, string> displaycallback, Embed embed=null)
         {
-            this._Data = new List<T>(data);
-            this._DisplayCallback = displaycallback;
-            this._DisplayEmbedCallback = null;
+            this.Data = new List<T>(data);
+            this.DisplayCallback = displaycallback;
+            this.DisplayEmbedCallback = null;
             this.CurrentIndex = 0;
-            this._TimeToLive = DateTime.Now.AddMinutes(5);
-            this._Embed = embed;
-            this.UserID = userid;
+            this.TimeToLive = DateTime.Now.AddMinutes(5);
+            this.Embed = embed;
+            this.UserId = userid;
         }
 
         public Paginator(ulong userid, IEnumerable<T> data, Action<T, EmbedBuilder> displaycallback, Embed embed=null)
         {
-            this._Data = new List<T>(data);
-            this._DisplayCallback = null;
-            this._DisplayEmbedCallback = displaycallback;
+            this.Data = new List<T>(data);
+            this.DisplayCallback = null;
+            this.DisplayEmbedCallback = displaycallback;
             this.CurrentIndex = 0;
-            this._TimeToLive = DateTime.Now.AddMinutes(5);
-            this._Embed = embed;
-            this.UserID = userid;
+            this.TimeToLive = DateTime.Now.AddMinutes(5);
+            this.Embed = embed;
+            this.UserId = userid;
         }
 
         public IUserMessage Message { get; set; }
-        public bool IsExpired { get => this._TimeToLive < DateTime.Now; }
+        public bool IsExpired => this.TimeToLive < DateTime.Now; 
         public int CurrentIndex { get; private set; }
-        public T CurrentValue { get => this._Data[this.CurrentIndex]; }
-        public ulong UserID { get; private set; }
+        public T CurrentValue => this.Data[this.CurrentIndex];
+        public ulong UserId { get; }
 
         public async Task Next()
         {
             int temp = this.CurrentIndex + 1;
-            if (temp >= this._Data.Count)
+            if (temp >= this.Data.Count)
                 temp = 0;
             this.CurrentIndex = temp;
             await this.Update();
@@ -54,77 +54,79 @@ namespace Energize.Essentials.MessageConstructs
         {
             int temp = this.CurrentIndex - 1;
             if (temp < 0)
-                temp = this._Data.Count - 1;
+                temp = this.Data.Count - 1;
             this.CurrentIndex = temp;
             await this.Update();
         }
 
         public Paginator<object> ToObject()
         {
-            if (this._DisplayCallback != null)
+            if (this.DisplayCallback != null)
             {
-                return new Paginator<object>(this.UserID, this._Data, obj => this._DisplayCallback((T)obj))
+                return new Paginator<object>(this.UserId, this.Data, obj => this.DisplayCallback((T)obj))
                 {
                     Message = this.Message,
-                    _Embed = this._Embed,
+                    Embed = this.Embed,
                 };
             }
             else
             {
-                return new Paginator<object>(this.UserID, this._Data, (obj, builder) => this._DisplayEmbedCallback((T)obj, builder))
+                return new Paginator<object>(this.UserId, this.Data, (obj, builder) => this.DisplayEmbedCallback((T)obj, builder))
                 {
                     Message = this.Message,
-                    _Embed = this._Embed,
+                    Embed = this.Embed,
                 };
             }
         }
 
         private void Refresh()
-            => this._TimeToLive = DateTime.Now.AddMinutes(5);
+            => this.TimeToLive = DateTime.Now.AddMinutes(5);
 
         private async Task Update()
         {  
             if (this.Message == null) return;
-            string display = this._DisplayCallback?.Invoke(this._Data[this.CurrentIndex]);
+            string display = this.DisplayCallback?.Invoke(this.Data[this.CurrentIndex]);
             await this.Message.ModifyAsync(prop =>
             {
-                if (this._Embed != null)
+                if (this.Embed != null)
                 {
-                    Embed oldembed = this._Embed;
+                    Embed oldEmbed = this.Embed;
                     EmbedBuilder builder = new EmbedBuilder();
                     builder
-                        .WithColor(oldembed.Color.Value)
-                        .WithLimitedTitle(oldembed.Title)
+                        .WithLimitedTitle(oldEmbed.Title)
                         .WithLimitedDescription(display);
 
-                    if (oldembed.Timestamp.HasValue)
-                        builder.WithTimestamp(oldembed.Timestamp.Value);
+                    if (oldEmbed.Color.HasValue)
+                        builder.WithColor(oldEmbed.Color.Value);
 
-                    if(oldembed.Author.HasValue)
+                    if (oldEmbed.Timestamp.HasValue)
+                        builder.WithTimestamp(oldEmbed.Timestamp.Value);
+
+                    if(oldEmbed.Author.HasValue)
                     {
-                        EmbedAuthor oldauthor = oldembed.Author.Value;
-                        EmbedAuthorBuilder authorbuilder = new EmbedAuthorBuilder();
-                        authorbuilder
-                            .WithIconUrl(oldauthor.IconUrl)
-                            .WithName(oldauthor.Name)
-                            .WithUrl(oldauthor.Url);
-                        builder.WithAuthor(authorbuilder);
+                        EmbedAuthor oldAuthor = oldEmbed.Author.Value;
+                        EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
+                        authorBuilder
+                            .WithIconUrl(oldAuthor.IconUrl)
+                            .WithName(oldAuthor.Name)
+                            .WithUrl(oldAuthor.Url);
+                        builder.WithAuthor(authorBuilder);
                     }
 
-                    if (oldembed.Footer.HasValue)
+                    if (oldEmbed.Footer.HasValue)
                     {
-                        EmbedFooter oldfooter = oldembed.Footer.Value;
-                        EmbedFooterBuilder footerbuilder = new EmbedFooterBuilder();
-                        footerbuilder
-                            .WithText(oldfooter.Text)
-                            .WithIconUrl(oldfooter.IconUrl);
-                        builder.WithFooter(footerbuilder);
+                        EmbedFooter oldFooter = oldEmbed.Footer.Value;
+                        EmbedFooterBuilder footerBuilder = new EmbedFooterBuilder();
+                        footerBuilder
+                            .WithText(oldFooter.Text)
+                            .WithIconUrl(oldFooter.IconUrl);
+                        builder.WithFooter(footerBuilder);
                     }
 
-                    this._DisplayEmbedCallback?.Invoke(this._Data[this.CurrentIndex], builder);
+                    this.DisplayEmbedCallback?.Invoke(this.Data[this.CurrentIndex], builder);
 
-                    this._Embed = builder.Build();
-                    prop.Embed = this._Embed;
+                    this.Embed = builder.Build();
+                    prop.Embed = this.Embed;
                 }
                 else
                 {

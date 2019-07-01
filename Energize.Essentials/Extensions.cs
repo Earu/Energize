@@ -35,20 +35,16 @@ namespace Energize.Essentials
         }
 
         public static EmbedBuilder WithLimitedTitle(this EmbedBuilder builder, string title)
-        {
-            if (string.IsNullOrWhiteSpace(title))
-                return builder;
-            else
-                return builder.WithTitle(title.Length > 256 ?  $"{title.Substring(0,253)}..." : title);
-        }
+            => string.IsNullOrWhiteSpace(title)
+                ? builder
+                : builder.WithTitle(title.Length > 256 ? $"{title.Substring(0, 253)}..." : title);
 
         public static EmbedBuilder WithLimitedDescription(this EmbedBuilder builder, string description)
-        {
-            if (string.IsNullOrWhiteSpace(description))
-                return builder;
-            else
-                return builder.WithDescription(description.Length > 2048 ? $"{description.Substring(0, 2045)}..." : description);
-        }
+            => string.IsNullOrWhiteSpace(description)
+                ? builder
+                : builder.WithDescription(description.Length > 2048
+                    ? $"{description.Substring(0, 2045)}..."
+                    : description);
 
         public static EmbedBuilder WithAuthorNickname(this EmbedBuilder builder, IMessage msg)
             => builder.WithAuthorNickname(msg.Author);
@@ -80,47 +76,46 @@ namespace Energize.Essentials
                 case EmbedColorType.Danger:
                     return builder.WithColor(MessageSender.SColorDanger);
                 case EmbedColorType.Normal:
+                    return builder.WithColor(MessageSender.SColorNormal);
                 default:
                     return builder.WithColor(MessageSender.SColorNormal);
             }
         }
 
         private static readonly string[] ValidExtensions = new string[] { "mp3", "mp4", "ogg", "wav", "webm", "mov" };
-        private static readonly Regex URLExtensionRegex = new Regex(@"https?:\/\/[^\s\/]+\/[^\s\.]+\.([A-Za-z0-9]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex UrlExtensionRegex = new Regex(@"https?:\/\/[^\s\/]+\/[^\s\.]+\.([A-Za-z0-9]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static bool IsPlayableURL(this string url)
+        public static bool IsPlayableUrl(this string url)
         {
-            if (HttpClient.IsURL(url))
+            if (HttpClient.IsUrl(url))
             {
                 if (!url.StartsWith("http")) return false;
 
-                Match match = URLExtensionRegex.Match(url);
+                Match match = UrlExtensionRegex.Match(url);
                 if (!match.Success) return false;
 
                 string extension = match.Groups[1].Value;
                 return ValidExtensions.Any(ext => ext.Equals(extension));
             }
-            else
-            {
-                FileInfo fileInfo = new FileInfo(url);
-                if (string.IsNullOrWhiteSpace(fileInfo.Extension) || fileInfo.Extension.Length < 2) return false; // 2 = ".|xxxx" 
-                return ValidExtensions.Any(ext => ext.Equals(fileInfo.Extension.Substring(1)));
-            }
+
+            FileInfo fileInfo = new FileInfo(url);
+            if (string.IsNullOrWhiteSpace(fileInfo.Extension) || fileInfo.Extension.Length < 2) return false; // 2 = ".|xxxx" 
+            return ValidExtensions.Any(ext => ext.Equals(fileInfo.Extension.Substring(1)));
         }
 
-        public static bool IsPlayableAttachment(this Attachment attachment)
-            => attachment.Filename.IsPlayableURL();
+        public static bool IsPlayableAttachment(this IAttachment attachment)
+            => attachment.Filename.IsPlayableUrl();
 
         public static bool FuzzyMatch(this string stringToSearch, string pattern, out int outScore)
         {
             // Score consts
-            int adjacencyBonus = 5; // bonus for adjacent matches
-            int separatorBonus = 10; // bonus if match occurs after a separator
-            int camelBonus = 10;     // bonus if match is uppercase and prev is lower
+            const int adjacencyBonus = 5; // bonus for adjacent matches
+            const int separatorBonus = 10; // bonus if match occurs after a separator
+            const int camelBonus = 10;     // bonus if match is uppercase and prev is lower
 
-            int leadingLetterPenalty = -3;    // penalty applied for every letter in stringToSearch before the first match
-            int maxLeadingLetterPenalty = -9; // maximum penalty for leading letters
-            int unmatchedLetterPenalty = -1;  // penalty for every letter that doesn't matter
+            const int leadingLetterPenalty = -3;    // penalty applied for every letter in stringToSearch before the first match
+            const int maxLeadingLetterPenalty = -9; // maximum penalty for leading letters
+            const int unmatchedLetterPenalty = -1;  // penalty for every letter that doesn't matter
 
             // Loop variables
             int score = 0;

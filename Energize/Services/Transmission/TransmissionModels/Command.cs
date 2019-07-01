@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Discord;
 using Newtonsoft.Json;
 
 namespace Energize.Services.Transmission.TransmissionModels

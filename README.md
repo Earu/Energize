@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/u0k0pnpvy98xxpph?svg=true)](https://ci.appveyor.com/project/Earu/energize)
+[![pipeline status](https://gitlab.com/Earu/energize/badges/master/pipeline.svg)](https://gitlab.com/Earu/energize/commits/master)
 
 Energize⚡ is a robust **music** / **administration** / **social** bot featuring well-crafted music search *(Youtube, SoundCloud, Twitch, Stream urls)*, user friendly, it proposes a set of useful commands.
 
@@ -8,7 +8,7 @@ Energize⚡ is a robust **music** / **administration** / **social** bot featurin
 Join our support server to learn more about Energize: https://discord.gg/RXZtBr5
 
 ### Structure
-Almost everything in Energize is a service, services are implemented under the **Energize** project under [Services](https://github.com/Earu/Energize/tree/master/Energize/Services). Because the command service is in F# it has its own project (**Energize.Commands**), and because it needed to interface with other projects **Energize.Interfaces** was born, it contains interfaces for services. **Energize.Essentials** contains essential classes used in the other projects; see it as a toolbox. Finally **Energize.Web** is the [upcoming (WIP) online documentation and graphic interface to interact with Energize](http://energize.earu.io/docs).
+Almost everything in Energize is a service, services are implemented under the **Energize** project under [Services](https://github.com/Earu/Energize/tree/master/Energize/Services). Because the command service is in F# it has its own project (**Energize.Commands**), and because it needed to interface with other projects **Energize.Interfaces** was born, it contains interfaces for services. Finally **Energize.Essentials** contains essential classes used in the other projects; see it as a toolbox. 
 
 ### Where are the commands ?
 You can find them [here](https://github.com/Earu/Energize/tree/master/Energize.Commands/Implementation).
@@ -23,7 +23,6 @@ If you are lost in how to use Energize, or how to make it work, feel free to ope
 If you are willing to contribute to Energize, here are a few things that needs to be done to stay consistent with the rest of the code:
 - C# projects have: local variables in *camelCase*, methods, properties and fields in *PascalCase*.
 - F# projects have: methods available for the whole solution in *PascalCase*, the rest is *camelCased*.
-- JavaScript files use the typical JavaScript conventions, except that class files names are in *PascalCase*
 - If you create a new service do **not** create interfaces in Energize.Interfaces unless they are used in other projects.
 - The bot purpose is focused on the music, administration and social areas, try to keep this in mind if you want to add new commands.
 - Try to use the *interfaces* proposed by Discord.NET and other packages as much as possible in your method signatures.

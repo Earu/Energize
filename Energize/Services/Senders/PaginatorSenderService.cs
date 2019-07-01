@@ -34,9 +34,11 @@ namespace Energize.Services.Senders
             Timer timer = new Timer(_ =>
             {
                 List<ulong> toRemove = new List<ulong>();
-                foreach(var paginator in this.Paginators)
-                    if (paginator.Value.IsExpired)
-                        toRemove.Add(paginator.Key);
+                foreach ((ulong id, Paginator<object> paginator) in this.Paginators)
+                {
+                    if (paginator.IsExpired)
+                        toRemove.Add(id);
+                }
 
                 foreach (ulong msgId in toRemove)
                     this.Paginators.TryRemove(msgId, out Paginator<object> _);
@@ -52,20 +54,24 @@ namespace Energize.Services.Senders
             Task.Run(async () =>
             {
                 if (msg.Channel is SocketGuildChannel chan)
+                {
                     if (!chan.Guild.CurrentUser.GetPermissions(chan).AddReactions)
                         return;
+                }
+
                 foreach (string unicode in unicodeStrings)
                     await msg.AddReactionAsync(new Emoji(unicode));
             }).ContinueWith(t =>
             {
-                if (t.IsFaulted)
+                if (t.IsFaulted && t.Exception != null)
                     this.Logger.Nice("Paginator", ConsoleColor.Yellow, $"Could not create reactions: {t.Exception.Message}");
             });
         }
 
         public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
-            string display = data.Count() == 0 ? string.Empty : displayCallback(data.First());
+            T first = data.FirstOrDefault();
+            string display = first == default(T) ? string.Empty : displayCallback(first);
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithAuthorNickname(msg)
@@ -75,12 +81,11 @@ namespace Energize.Services.Senders
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback, embed);
             IUserMessage posted = await this.MessageSender.Send(msg, embed);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "▶");
-            }
+            if (posted == null) return null;
+
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
             return posted;
         }
@@ -92,17 +97,18 @@ namespace Energize.Services.Senders
                 .WithAuthorNickname(msg)
                 .WithColorType(EmbedColorType.Good)
                 .WithFooter(head);
-            if (data.Count() > 0)
-                displayCallback(data.First(), builder);
+
+            T first = data.FirstOrDefault();
+            if (first != default(T))
+                displayCallback(first, builder);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback, embed);
             IUserMessage posted = await this.MessageSender.Send(msg, embed);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "▶");
-            }
+            if (posted == null) return null;
+
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
             return posted;
         }
@@ -110,14 +116,13 @@ namespace Energize.Services.Senders
         public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
-            string display = data.Count() == 0 ? string.Empty : displayCallback(data.First());
+            string display = data.Any() ? displayCallback(data.First()) : string.Empty;
             IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "▶");
-            }
+            if (posted == null) return null;
+            
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "▶");
 
             return posted;
         }
@@ -125,14 +130,13 @@ namespace Energize.Services.Senders
         public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
-            string display = data.Count() == 0 ? string.Empty : displayCallback(data.First());
+            string display = data.Any() ? displayCallback(data.First()) : string.Empty;
             IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
-            if (posted != null)
-            {
-                paginator.Message = posted;
-                if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
-                    this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
-            }
+            if (posted == null) return null;
+            
+            paginator.Message = posted;
+            if (this.Paginators.TryAdd(posted.Id, paginator.ToObject()))
+                this.AddReactions(posted, "◀", "⏹", "⏯", "▶");
 
             return posted;
         }
@@ -161,7 +165,7 @@ namespace Energize.Services.Senders
         {
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
             if (!this.Paginators.TryGetValue(cache.Value.Id, out Paginator<object> paginator)) return;
-            if (paginator.UserID != reaction.UserId) return;
+            if (paginator.UserId != reaction.UserId) return;
 
             await ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);
         }
@@ -175,27 +179,29 @@ namespace Energize.Services.Senders
             ITextChannel textChan = (ITextChannel)chan;
             IMusicPlayerService music = sender.ServiceManager.GetService<IMusicPlayerService>("Music");
 
-            if (paginator.CurrentValue is ILavaTrack track)
+            switch (paginator.CurrentValue)
             {
-                await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
-                await chan.DeleteMessageAsync(paginator.Message);
-            }
-            else if(paginator.CurrentValue is string url)
-            {
-                if (string.IsNullOrWhiteSpace(url)) return;
-
-                SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
-                List<ILavaTrack> tracks = result.Tracks.ToList();
-                if (tracks.Count > 0)
-                {
-                    ILavaTrack tr = tracks[0];
-                    await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
+                case ILavaTrack track:
+                    await music.AddTrackAsync(guser.VoiceChannel, textChan, track);
                     await chan.DeleteMessageAsync(paginator.Message);
-                }
-                else
-                {
-                    await sender.MessageSender.Warning(chan, "music player", $"Could add the following URL to the queue\n{url}");
-                }
+                    break;
+                case string url:
+                    if (string.IsNullOrWhiteSpace(url)) return;
+
+                    SearchResult result = await music.LavaRestClient.SearchTracksAsync(url);
+                    List<ILavaTrack> tracks = result.Tracks.ToList();
+                    if (tracks.Count > 0)
+                    {
+                        ILavaTrack tr = tracks[0];
+                        await music.AddTrackAsync(guser.VoiceChannel, textChan, tr);
+                        await chan.DeleteMessageAsync(paginator.Message);
+                    }
+                    else
+                    {
+                        await sender.MessageSender.Warning(chan, "music player", $"Could add the following Url to the queue\n{url}");
+                    }
+
+                    break;
             }
         }
 
