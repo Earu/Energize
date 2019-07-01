@@ -94,37 +94,13 @@ namespace Energize.Essentials
         }
 
         private static Config LoadConfig()
-        {
 #if DEBUG
-            const string configFile = "config_debug.yaml";
+            => DeserializeYaml<Config>("Settings/config_debug.yaml");
 #else
-            string configFile = "config_prod.yaml"
+            => DeserializeYaml<Config>("Settings/config_prod.yaml");
 #endif
-            string path = GetConfigFilePath(configFile);
-            return DeserializeYaml<Config>(path ?? @"\Settings" + configFile);
-        }
 
         private static Blacklist LoadBlacklist()
-        {
-            const string configFile = "blacklist.yaml";
-            string path = GetConfigFilePath(configFile);
-            return DeserializeYaml<Blacklist>(path ?? @"\Settings" + configFile);
-        }
-
-        private static string GetConfigFilePath(string configFile)
-        {
-#if DEBUG
-            string settingsDirectory = Path.Combine(@"\Settings", configFile);
-            string assemblyLocation = Assembly.GetEntryAssembly()?.Location;
-            if (assemblyLocation == null)
-                return configFile;
-
-            DirectoryInfo directoryInfo = new DirectoryInfo(assemblyLocation); // Binary location
-            string requiredPath = directoryInfo?.Parent?.Parent?.Parent?.Parent?.Parent?.FullName; // Solution location
-            return Path.Combine(requiredPath + settingsDirectory); // Combine solution location with Settings location
-#else
-            return configFile;
-#endif
-        }
+            => DeserializeYaml<Blacklist>("Settings/blacklist.yaml");
     }
 }
