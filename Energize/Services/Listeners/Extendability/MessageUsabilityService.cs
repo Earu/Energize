@@ -38,7 +38,7 @@ namespace Energize.Services.Listeners.Extendability
         }
 
         private bool HasInviteUrl(IMessage msg)
-            => msg.Content.Contains("discord.gg") && this.InviteRegex.IsMatch(msg.Content);
+            => msg.Content.Contains("discord") && this.InviteRegex.IsMatch(msg.Content);
 
         private bool HasSupportedUrl(IMessage msg)  
             => this.ExtendableMessageProviders.Any(provider => provider.IsMatch(msg.Content));
