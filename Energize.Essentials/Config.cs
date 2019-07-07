@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
 namespace Energize.Essentials
@@ -75,7 +76,19 @@ namespace Energize.Essentials
         public URIConfig URIs;
         public string DBConnectionString;
 
+#if DEBUG
+        private const string ConfigPath = "Settings/config_debug.yaml";
+#else
+        private const string ConfigPath = "Settings/config_prod.yaml";
+#endif
         public static Config Instance { get; } = Initialize();
+
+        public async Task SaveAsync()
+        {
+            Serializer serializer = new Serializer();
+            string yaml = serializer.Serialize(this);
+            await File.WriteAllTextAsync(ConfigPath, yaml);
+        }
 
         private static T DeserializeYaml<T>(string path)
         {
@@ -88,17 +101,10 @@ namespace Energize.Essentials
 
         private static Config Initialize()
         {
-            Config config = LoadConfig();
+            Config config = DeserializeYaml<Config>(ConfigPath);
             config.Discord.Blacklist = LoadBlacklist();
             return config;
         }
-
-        private static Config LoadConfig()
-#if DEBUG
-            => DeserializeYaml<Config>("Settings/config_debug.yaml");
-#else
-            => DeserializeYaml<Config>("Settings/config_prod.yaml");
-#endif
 
         private static Blacklist LoadBlacklist()
             => DeserializeYaml<Blacklist>("Settings/blacklist.yaml");

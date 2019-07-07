@@ -89,12 +89,12 @@ namespace Energize.Services.Listeners.Music
 
         public LavaRestClient LavaRestClient { get; private set; }
 
-        private bool SanitizeCheck(IVoiceChannel vc, ITextChannel chan)
+        private static bool SanitizeCheck(IVoiceChannel vc, ITextChannel chan)
             => vc != null && chan != null;
 
         public async Task<IEnergizePlayer> ConnectAsync(IVoiceChannel vc, ITextChannel chan)
         {
-            if (!this.SanitizeCheck(vc, chan)) return null;
+            if (!SanitizeCheck(vc, chan)) return null;
 
             try
             {
@@ -174,12 +174,11 @@ namespace Energize.Services.Listeners.Music
             int count = this.Players.Count;
             foreach ((ulong _, IEnergizePlayer ply) in this.Players)
             {
-                if (ply.VoiceChannel != null)
-                {
-                    await this.DisconnectAsync(ply.VoiceChannel);
-                    if (ply.TextChannel != null)
-                        await this.MessageSender.Warning(ply.TextChannel, "music player", warnMsg);
-                }
+                if (ply.VoiceChannel == null) continue;
+
+                await this.DisconnectAsync(ply.VoiceChannel);
+                if (ply.TextChannel != null)
+                    await this.MessageSender.Warning(ply.TextChannel, "music player", warnMsg);
             }
 
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
@@ -676,19 +675,13 @@ namespace Energize.Services.Listeners.Music
                 await ply.TrackPlayer.Update(ply.CurrentTrack, ply.Volume, ply.IsPaused, ply.IsLooping);
         }
 
-        [Event("ReactionAdded")]
-        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
-
-        [Event("ReactionRemoved")]
-        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
-
-        private volatile int CurrentShardCount;
-        [Event("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient _)
+        public async Task StartAsync(string host = null)
         {
-            if (this.Client.Shards.Count != ++this.CurrentShardCount) return;
+            if (host != null && Config.Instance.Lavalink.Host != null)
+            {
+                Config.Instance.Lavalink.Host = host;
+                await Config.Instance.SaveAsync();
+            }
 
             Configuration config = new Configuration
             {
@@ -707,6 +700,22 @@ namespace Energize.Services.Listeners.Music
 
             this.LavaRestClient = new LavaRestClient(config);
             await this.LavaClient.StartAsync(this.Client, config);
+        }
+
+        [Event("ReactionAdded")]
+        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+            => await this.OnReaction(cache, chan, reaction);
+
+        [Event("ReactionRemoved")]
+        public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+            => await this.OnReaction(cache, chan, reaction);
+
+        private volatile int CurrentShardCount;
+        [Event("ShardReady")]
+        public async Task OnShardReady(DiscordSocketClient _)
+        {
+            if (this.Client.Shards.Count != ++this.CurrentShardCount) return;
+            await this.StartAsync();
         }
 
         private static SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
