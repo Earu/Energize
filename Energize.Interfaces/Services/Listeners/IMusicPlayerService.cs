@@ -57,5 +57,7 @@ namespace Energize.Interfaces.Services.Listeners
         Task<IUserMessage> SendNewTrackAsync(ITextChannel chan, ILavaTrack lavaTrack);
 
         Task<IUserMessage> SendPlayerAsync(IEnergizePlayer ply, IQueueObject obj = null, IChannel chan = null);
+
+        Task StartAsync(string host = null);
     }
 }

@@ -7,6 +7,7 @@ using Octovisor.Messages;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Energize.Interfaces.Services.Listeners;
 
 namespace Energize.Services.Transmission
 {
@@ -68,6 +69,15 @@ namespace Energize.Services.Transmission
                         ServerCount = this.DiscordClient.Guilds.Count,
                         UserCount = this.DiscordClient.Guilds.Sum(guild => guild.Users.Count),
                     };
+                });
+
+                this.OctoClient.OnTransmission<string>("reconnect", (proc, publicIp) =>
+                {
+                    if (string.IsNullOrWhiteSpace(publicIp) || proc.Name != "Watchdog") return;
+                    this.Logger.Nice("IPC", ConsoleColor.Yellow, $"Remote nodes re-connected with IP: {publicIp}");
+                    IMusicPlayerService music = this.ServiceManager.GetService<IMusicPlayerService>("Music");
+                    music.DisconnectAllPlayersAsync("Network issues detected, disconnecting to prevent further bugs");
+                    music.StartAsync(publicIp);
                 });
             }
             catch (Exception ex)
