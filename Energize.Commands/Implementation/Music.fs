@@ -8,13 +8,11 @@ open Discord
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.AsyncHelper
 open Energize.Essentials
-open Energize.Essentials.TrackTypes
-open Energize.Interfaces.Services.Listeners
-open Energize.Interfaces.Services.Listeners
 open Victoria.Entities
 open Energize.Interfaces.Services.Senders
 open System.Web
 open System
+open SpotifyAPI.Web.Enums
 
 [<CommandModule("Music")>]
 module Voice =
@@ -336,7 +334,7 @@ module Voice =
     let spotify (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
             let spotify = ctx.serviceManager.GetService<ISpotifyHandlerService>("Spotify")
-            let songItems = awaitResult (spotify.SearchAsync(ctx.input)) |> Seq.toList
+            let songItems = awaitResult (spotify.SearchAsync(ctx.input, SearchType.Track, 20)) |> Seq.toList
             let len = songItems.Length
             return
                 if len > 0 then
