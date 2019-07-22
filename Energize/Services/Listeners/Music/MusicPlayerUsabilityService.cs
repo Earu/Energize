@@ -130,6 +130,7 @@ namespace Energize.Services.Listeners.Music
 
         private async Task TryPlayUrlAsync(IMusicPlayerService music, ITextChannel textChan, IUserMessage msg, IGuildUser guser, string url)
         {
+            if (string.IsNullOrWhiteSpace(url)) return; // can be null or empty apparently
             bool played = await this.TryPlaySpotifyAsync(music, textChan, guser, url);
             if (played) return;
 
