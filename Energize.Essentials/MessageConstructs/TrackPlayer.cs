@@ -30,8 +30,8 @@ namespace Energize.Essentials.MessageConstructs
             }
             else
             {
-                double perc = (double)track.Position.Ticks / track.Length.Ticks * 100;
-                int circlepos = (int)Math.Ceiling(25.0 / 100.0 * perc);
+                double perc = (double)track.Position.Ticks / track.Length.Ticks * 100.0;
+                int circlepos = Math.Clamp((int)Math.Ceiling(25.0 / 100.0 * perc), 0, 25); //Make sure its clamped
                 if (circlepos > 0)
                     line = new string('─', circlepos - 1) + "⚪" + new string('─', 25 - circlepos);
                 else
