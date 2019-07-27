@@ -33,6 +33,9 @@ module Command =
         inherit Attribute()
         member val permissions : ChannelPermission list = perms |> Array.toList
 
+    type MaintenanceFreeCommand() =
+        inherit Attribute()
+
     type CommandCallback = 
         delegate of CommandContext -> Async<IUserMessage list>
 
@@ -47,5 +50,6 @@ module Command =
             parameters : int
             permissions : ChannelPermission list
             conditions : CommandCondition list
+            maintenanceFree : bool
         }
 

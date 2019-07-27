@@ -82,7 +82,7 @@ namespace Energize.Services.Senders
         private bool IsValidReaction(Cacheable<IUserMessage, ulong> cache, SocketReaction reaction)
             => IsValidEmote(reaction) && this.Votes.ContainsKey(cache.Id);
 
-        [Event("ReactionAdded")]
+        [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
         {
             if (!this.IsValidReaction(cache, reaction)) return;
@@ -91,7 +91,7 @@ namespace Energize.Services.Senders
             await this.Votes[cache.Id].AddVote(reaction.User.Value, index);
         }
 
-        [Event("ReactionRemoved")]
+        [DiscordEvent("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel _, SocketReaction reaction)
         {
             if (!this.IsValidReaction(cache, reaction)) return;

@@ -162,7 +162,7 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        [Event("MessageReceived")]
+        [DiscordEvent("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
             if (!this.IsValidMessage(msg)) return;
@@ -186,7 +186,7 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        [Event("MessageUpdated")]
+        [DiscordEvent("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> _, SocketMessage msg, ISocketMessageChannel __)
         {
             if (!this.IsValidMessage(msg)) return;
@@ -219,11 +219,11 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        [Event("ReactionAdded")]
+        [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
-        [Event("ReactionRemoved")]
+        [DiscordEvent("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 

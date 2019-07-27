@@ -136,7 +136,10 @@ namespace Energize
 
         private async Task UpdateActivity()
         {
-            StreamingGame game = new StreamingGame($"{this.Prefix}help | {this.Prefix}info | {this.Prefix}docs", Config.Instance.URIs.TwitchURL);
+            StreamingGame game = Config.Instance.Maintenance
+                ? new StreamingGame("maintenance", Config.Instance.URIs.TwitchURL)
+                : new StreamingGame($"{this.Prefix}help | {this.Prefix}info | {this.Prefix}docs",
+                    Config.Instance.URIs.TwitchURL);
             await this.DiscordClient.SetActivityAsync(game);
         }
 

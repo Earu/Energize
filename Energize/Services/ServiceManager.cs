@@ -21,10 +21,10 @@ namespace Energize.Services
             this.Line = line;
         }
 
-        public Exception Error { get; private set; }
-        public string FileName { get; private set; }
-        public string MethodName { get; private set; }
-        public int Line { get; private set; }
+        public Exception Error { get; }
+        public string FileName { get; }
+        public string MethodName { get; }
+        public int Line { get; }
     }
 
     public class ServiceManager : IServiceManager
@@ -32,7 +32,7 @@ namespace Energize.Services
         private static readonly string Namespace = typeof(ServiceManager).Namespace;
         private static readonly Type DiscordShardedClientType = typeof(DiscordShardedClient);
         private static readonly Type ServiceAttributeType = typeof(ServiceAttribute);
-        private static readonly Type EventAttributeType = typeof(EventAttribute);
+        private static readonly Type EventAttributeType = typeof(DiscordEventAttribute);
         private static readonly EventInfo[] DiscordClientEvents = DiscordShardedClientType.GetEvents();
 
         private readonly Dictionary<string, IService> Services;
@@ -44,7 +44,7 @@ namespace Energize.Services
         public ServiceManager(EnergizeClient client)
         {
             this.Services = new Dictionary<string, IService>();
-            this.ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(this.IsService);
+            this.ServiceTypes = Assembly.GetExecutingAssembly().GetTypes().Where(IsService);
             this.Client = client;
             this.Logger = client.Logger;
             this.CaughtExceptions = new List<EventHandlerException>();
@@ -58,17 +58,18 @@ namespace Energize.Services
             return exs;
         }
 
-        private bool IsService(Type type)
+        private static bool IsService(Type type)
             => type.FullName.StartsWith(Namespace) && Attribute.IsDefined(type, ServiceAttributeType);
 
-        private bool IsEventHandler(MethodInfo methodInfo, EventInfo eventInfo)
+        private static bool TryGetEventHandler(MethodInfo methodInfo, EventInfo eventInfo, out DiscordEventAttribute atr)
         {
             if (Attribute.IsDefined(methodInfo, EventAttributeType))
             {
-                EventAttribute atr = methodInfo.GetCustomAttribute<EventAttribute>();
-                return atr.Name.Equals(eventInfo.Name);
+                atr = methodInfo.GetCustomAttribute<DiscordEventAttribute>();
+                return true;
             }
 
+            atr = null;
             return false;
         }
 
@@ -76,8 +77,8 @@ namespace Energize.Services
         {
             if (type.GetConstructor(new [] { typeof(EnergizeClient) }) != null)
                 return (IServiceImplementation)Activator.CreateInstance(type, client);
-            else
-                return (IServiceImplementation)Activator.CreateInstance(type);
+
+            return (IServiceImplementation)Activator.CreateInstance(type);
         }
 
         private void RegisterService(Type type, IServiceImplementation instance)
@@ -100,21 +101,45 @@ namespace Energize.Services
 
         private void RegisterDiscordHandler(DiscordShardedClient client, EventInfo eventInfo, Type type, IServiceImplementation instance)
         {
-            MethodInfo eventHandler = type.GetMethods().FirstOrDefault(methodInfo => this.IsEventHandler(methodInfo, eventInfo));
+            bool maintenanceImpl = false;
+            MethodInfo eventHandler = type.GetMethods().FirstOrDefault(methodInfo =>
+            {
+                if (TryGetEventHandler(methodInfo, eventInfo, out DiscordEventAttribute atr) && atr.Name.Equals(eventInfo.Name))
+                {
+                    maintenanceImpl = atr.MaintenanceImplementation;
+                    return true;
+                }
+
+                return false;
+            });
+
             if (eventHandler == null) return;
-            
+
             ParameterExpression[] parameters = Array.ConvertAll(eventHandler.GetParameters(),
                 param => Expression.Parameter(param.ParameterType));
             Delegate dlg = Expression.Lambda(
                 eventInfo.EventHandlerType,
-                Expression.Call(
-                    Expression.Call(
-                        Expression.Constant(instance),
-                        eventHandler,
-                        parameters
+                Expression.Condition(
+                    Expression.And(
+                        Expression.Field(
+                                Expression.Property(null, typeof(Config).GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)),
+                                typeof(Config).GetField("Maintenance", BindingFlags.Public | BindingFlags.Instance)
+                            ),
+                        Expression.Constant(!maintenanceImpl)
                     ),
-                    typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
-                    Expression.Constant((Action<Task>)this.ContinueWithHandler)
+                    Expression.Constant(Task.CompletedTask, typeof(Task)),
+                    Expression.Convert(
+                        Expression.Call(
+                            Expression.Call(
+                                Expression.Constant(instance),
+                                eventHandler,
+                                parameters
+                            ),
+                            typeof(Task).GetMethod("ContinueWith", new[] { typeof(Action<Task>) }),
+                            Expression.Constant((Action<Task>)this.ContinueWithHandler)
+                        ),
+                        typeof(Task)
+                    )
                 ),
                 parameters
             ).Compile();
