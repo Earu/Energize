@@ -109,14 +109,35 @@ module CommandHandler =
                 ))) ]
     }
 
+    [<MaintenanceFreeCommand>]
+    [<CommandConditions(CommandCondition.DevOnly)>]
+    [<Command("maintenance", "Triggers or stops a maintenance on the bot", "maintenance <nothing>")>]
+    let maintenance (ctx : CommandContext) = async {
+        return
+            if Config.Instance.Maintenance then
+                Config.Instance.Maintenance <- false
+                let prefix = Config.Instance.Discord.Prefix
+                let game = StreamingGame(sprintf "%shelp | %sinfo | %sdocs" prefix prefix prefix, Config.Instance.URIs.TwitchURL)
+                await (ctx.client.SetActivityAsync(game))
+                ctx.logger.Warning("STOPPED MAINTENANCE\n\n")
+                [ ctx.sendWarn None "Stopped the on-going maintenance" ]
+            else
+                Config.Instance.Maintenance <- true
+                let game = StreamingGame("maintenance", Config.Instance.URIs.TwitchURL)
+                await (ctx.client.SetActivityAsync(game))
+                ctx.logger.Warning("STARTED MAINTENANCE\n\n")
+                [ ctx.sendWarn None "Triggered a maintenance" ]
+    }
+
     let private enableCmd (state : CommandHandlerState) (cmdName : string) (enabled : bool) = 
         match state.commands |> Map.tryFind cmdName with
         | Some cmd -> cmd.isEnabled <- enabled
         | None -> ()
     
+    [<MaintenanceFreeCommand>]
     [<CommandParameters(2)>]
     [<CommandConditions(CommandCondition.DevOnly)>]
-    [<Command("enable", "Enables or disables a command", "enable <cmd> <value>")>]
+    [<Command("enable", "Enables or disables a command", "enable <cmd>")>]
     let enable (ctx : CommandContext) = async {
         let cmdName = ctx.arguments.[0].Trim()
         let value = int (ctx.arguments.[1].Trim())
@@ -135,6 +156,7 @@ module CommandHandler =
             | None -> []
     }
 
+    [<MaintenanceFreeCommand>]
     [<CommandParameters(1)>]
     [<Command("feedback", "Send feedback to the owner (suggestion, bug, etc...)", "feedback <sentence>")>]
     let feedback (ctx : CommandContext) = async {
@@ -167,10 +189,12 @@ module CommandHandler =
         return [ ctx.sendOK None "Successfully sent your feedback" ]
     }
 
+    [<MaintenanceFreeCommand>]
     [<CommandParameters(1)>]
     [<Command("bug", "Report a bug to the developer","bug <sentence>")>]
     let bug (ctx : CommandContext) = feedback ctx
 
+    [<MaintenanceFreeCommand>]
     [<CommandParameters(2)>]
     [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("sendmsg", "Send a message to a specified channnel", "sendmsg <channelid> <sentence>")>]
@@ -196,9 +220,11 @@ module CommandHandler =
         let paramAtr = callback.Method.GetCustomAttributes<CommandParametersAttribute>() |> Seq.tryHead
         let permsAtr = callback.Method.GetCustomAttributes<CommandPermissionsAttribute>() |> Seq.tryHead
         let condsAtr = callback.Method.GetCustomAttributes<CommandConditionsAttribute>() |> Seq.tryHead
+        let maintAtr = callback.Method.GetCustomAttributes<MaintenanceFreeCommand>() |> Seq.tryHead
         let paramCount = match paramAtr with Some atr -> atr.parameters | None -> 0
         let permissions = match permsAtr with Some atr -> atr.permissions | None -> []
         let conditions = match condsAtr with Some atr -> atr.conditions | None -> []
+        let maintFree = match maintAtr with Some atr -> true | None -> false
 
         let cmd : Command =
             {
@@ -211,6 +237,7 @@ module CommandHandler =
                 parameters = paramCount
                 permissions = permissions
                 conditions = conditions
+                maintenanceFree = maintFree
             }
 
         registerCmd state cmd
@@ -479,6 +506,7 @@ module CommandHandler =
         let hasPermissions, missingPerms = hasPermissions msg cmd
         let hasConditions, missingConds = hasConditions msg cmd
         match cmd with
+        | cmd when Config.Instance.Maintenance && not cmd.maintenanceFree -> () //discard
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
             let warnMsg = awaitResult (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 

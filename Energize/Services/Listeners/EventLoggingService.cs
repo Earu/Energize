@@ -27,11 +27,11 @@ namespace Energize.Services.Listeners
         /*public bool AreLogsEnabled(SocketGuild guild)
             => guild.Roles.Any(x => x.Name == "EnergizeLogs");*/
 
-        [Event("ShardReady")]
+        [DiscordEvent("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient clientShard)
             => this.Log.Nice("Shard", ConsoleColor.Magenta, $"Shard {clientShard.ShardId} ready || Online on {clientShard.Guilds.Count} guilds");
 
-        [Event("ShardDisconnected")]
+        [DiscordEvent("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception e, DiscordSocketClient clientShard)
         {
             this.Log.LogTo("dnet_ws_closes.log", e.ToString());
@@ -40,11 +40,11 @@ namespace Energize.Services.Listeners
             this.Log.Nice("Shard", ConsoleColor.Red, $"Shard {clientShard.ShardId} disconnected || Offline for {clientShard.Guilds.Count} guilds");
         }
 
-        [Event("JoinedGuild")]
+        [DiscordEvent("JoinedGuild")]
         public async Task OnJoinedGuild(SocketGuild guild)
             => this.Log.Nice("Guild", ConsoleColor.Magenta, $"Joined {guild.Name} || ID => [ {guild.Id} ]");
 
-        [Event("LeftGuild")]
+        [DiscordEvent("LeftGuild")]
         public async Task OnLeftGuild(SocketGuild guild)
             => this.Log.Nice("Guild", ConsoleColor.Red, $"Left {guild.Name} || ID => [ {guild.Id} ]");
     }
