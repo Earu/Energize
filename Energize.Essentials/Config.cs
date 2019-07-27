@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
@@ -76,6 +75,9 @@ namespace Energize.Essentials
         public URIConfig URIs;
         public string DBConnectionString;
 
+        [YamlIgnore]
+        public bool Maintenance;
+
 #if DEBUG
         private const string ConfigPath = "Settings/config_debug.yaml";
 #else
@@ -103,6 +105,7 @@ namespace Energize.Essentials
         {
             Config config = DeserializeYaml<Config>(ConfigPath);
             config.Discord.Blacklist = LoadBlacklist();
+            config.Maintenance = false;
             return config;
         }
 

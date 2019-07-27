@@ -702,16 +702,16 @@ namespace Energize.Services.Listeners.Music
             await this.LavaClient.StartAsync(this.Client, config);
         }
 
-        [Event("ReactionAdded")]
+        [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
-        [Event("ReactionRemoved")]
+        [DiscordEvent("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
         private volatile int CurrentShardCount;
-        [Event("ShardReady")]
+        [DiscordEvent("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
         {
             if (this.Client.Shards.Count != ++this.CurrentShardCount) return;
@@ -755,7 +755,7 @@ namespace Energize.Services.Listeners.Music
             await this.DisconnectAsync(vc);
         }
 
-        [Event("UserVoiceStateUpdated")] 
+        [DiscordEvent("UserVoiceStateUpdated")] 
         public async Task OnVoiceStateUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {
             SocketVoiceChannel vc = GetVoiceChannel(user, oldState, newState);
@@ -777,7 +777,7 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        [Event("ShardDisconnected")]
+        [DiscordEvent("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception _, DiscordSocketClient client)
         {
             int count = 0;

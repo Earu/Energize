@@ -51,7 +51,7 @@ namespace Energize.Services.Listeners
             return false;
         }
 
-        [Event("ShardReady")]
+        [DiscordEvent("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
         {
             if (!File.Exists("restartlog.txt")) return;
@@ -67,15 +67,15 @@ namespace Energize.Services.Listeners
             File.Delete("restartlog.txt");
         }
 
-        [Event("MessageReceived")]
+        [DiscordEvent("MessageReceived", true)]
         public async Task OnMessageReceived(SocketMessage msg)
             => Commands.CommandHandler.HandleMessageReceived(msg);
 
-        [Event("MessageDeleted")]
+        [DiscordEvent("MessageDeleted", true)]
         public async Task OnMessageDeleted(Cacheable<IMessage, ulong> cache, ISocketMessageChannel chan)
             => Commands.CommandHandler.HandleMessageDeleted(cache, chan);
 
-        [Event("MessageUpdated")]
+        [DiscordEvent("MessageUpdated", true)]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
         {
             IMessage oldMsg = await cache.GetOrDownloadAsync();

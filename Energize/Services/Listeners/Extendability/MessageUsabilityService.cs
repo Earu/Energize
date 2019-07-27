@@ -98,7 +98,7 @@ namespace Energize.Services.Listeners.Extendability
             return true;
         }
 
-        [Event("MessageReceived")]
+        [DiscordEvent("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
             if (msg.Channel is IDMChannel || msg.Author.Id == Config.Instance.Discord.BotID) return;
@@ -110,7 +110,7 @@ namespace Energize.Services.Listeners.Extendability
         }
 
 
-        [Event("ReactionAdded")]
+        [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!IsValidReaction(chan, reaction)) return;
