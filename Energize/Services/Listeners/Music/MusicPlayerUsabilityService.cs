@@ -84,7 +84,7 @@ namespace Energize.Services.Listeners.Music
             return true;
         }
 
-        private Task<SpotifyTrack> SpotifyToTrackAsync(string url)
+        private async Task<SpotifyTrack> SpotifyToTrackAsync(string url)
         {
             if (!url.Contains("spotify")) return null;
 
@@ -94,7 +94,7 @@ namespace Energize.Services.Listeners.Music
             
             string spotifyId = match.Groups[1].Value;
             ISpotifyHandlerService spotify = this.ServiceManager.GetService<ISpotifyHandlerService>("Spotify");
-            return spotify.GetTrackAsync(spotifyId);
+            return await spotify.GetTrackAsync(spotifyId);
         }
 
         private static bool HasPlayableVideo(Embed embed)
