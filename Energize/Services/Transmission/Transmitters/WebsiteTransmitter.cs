@@ -1,4 +1,7 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.Rest;
+using Discord.WebSocket;
+using Energize.Essentials;
 using Energize.Services.Listeners;
 using Energize.Services.Transmission.TransmissionModels;
 using Octovisor.Client;
@@ -13,12 +16,17 @@ namespace Energize.Services.Transmission.Transmitters
     {
         private readonly ServiceManager ServiceManager;
         private readonly DiscordShardedClient DiscordClient;
+        private readonly DiscordRestClient DiscordRestClient;
         private readonly string Prefix;
+        private readonly MessageSender MessageSender;
 
         internal WebsiteTransmitter(EnergizeClient client, OctoClient octoClient) : base(client, octoClient)
         {
             this.ServiceManager = client.ServiceManager;
             this.DiscordClient = client.DiscordClient;
+            this.DiscordRestClient = client.DiscordRestClient;
+            this.Prefix = client.Prefix;
+            this.MessageSender = client.MessageSender;
         }
 
         internal override void Initialize()
@@ -26,6 +34,7 @@ namespace Energize.Services.Transmission.Transmitters
             this.Client.OnTransmission<object, CommandInformation>("commands", this.OnCommandsRequested);
             this.Client.OnTransmission<object, BotInformation>("info", this.OnInformationRequested);
             this.Client.OnTransmission("update", this.OnUpdateRequested);
+            this.Client.OnTransmission<DiscordBotsVote>("upvote", this.OnDiscordBotsUpvote);
         }
 
         private CommandInformation OnCommandsRequested(RemoteProcess proc, object _)
@@ -57,12 +66,47 @@ namespace Energize.Services.Transmission.Transmitters
             this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Update requested from \'{proc}\'");
 
             string path = Directory.GetCurrentDirectory();
-            Process.Start(new ProcessStartInfo
+            string gitUrl = "https://github.com/Energizers/Energize.git";
+
+            if (!Directory.Exists(path + "/.git"))
             {
-                FileName = "git",
-                Arguments = "pull https://github.com/Energizers/Energize.git",
-                WorkingDirectory = path,
-            });
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"clone {gitUrl}",
+                    WorkingDirectory = path,
+                });
+            }
+            else
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"pull {gitUrl}",
+                    WorkingDirectory = path,
+                });
+            }
+        }
+
+        private async void OnDiscordBotsUpvote(RemoteProcess proc, DiscordBotsVote vote)
+        {
+            if (vote.BotId != Config.Instance.Discord.BotID) return;
+
+            string multiplier = vote.IsWeekend ? "(x2)" : string.Empty;
+            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"💎 New upvote {multiplier} by {vote.UserId}");
+
+            SocketChannel chan = this.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
+            if (chan != null)
+            {
+                RestUser user = await this.DiscordRestClient.GetUserAsync(vote.UserId);
+                EmbedBuilder builder = new EmbedBuilder();
+                builder
+                    .WithColor(new Color(165, 28, 21))
+                    .WithDescription($"New upvote {multiplier}")
+                    .WithField("User", user == null ? $"Unknown ({vote.UserId})" : user.ToString());
+
+                await this.MessageSender.Send(chan, builder.Build());
+            }
         }
     }
 }
