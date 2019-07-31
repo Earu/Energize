@@ -93,7 +93,7 @@ namespace Energize.Services.Transmission.Transmitters
             if (vote.BotId != Config.Instance.Discord.BotID) return;
 
             string multiplier = vote.IsWeekend ? "(x2)" : string.Empty;
-            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"💎 New upvote {multiplier} by {vote.UserId}");
+            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"New upvote {multiplier} by {vote.UserId}");
 
             SocketChannel chan = this.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
             if (chan != null)
@@ -102,7 +102,7 @@ namespace Energize.Services.Transmission.Transmitters
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithColor(new Color(165, 28, 21))
-                    .WithDescription($"New upvote {multiplier}")
+                    .WithDescription($"💎 New upvote {multiplier}")
                     .WithField("User", user == null ? $"Unknown ({vote.UserId})" : user.ToString());
 
                 await this.MessageSender.Send(chan, builder.Build());
