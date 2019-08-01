@@ -82,8 +82,8 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         {
             foreach (Match match in this.Matches(msg.Content))
             {
-                string json = await HttpClient.GetAsync($"{match.Value}.json", this.Logger);
-                RedditPost[] posts = JsonPayload.Deserialize<RedditPost[]>(json, this.Logger);
+                string json = await HttpHelper.GetAsync($"{match.Value}.json", this.Logger);
+                if (!JsonHelper.TryDeserialize(json, this.Logger, out RedditPost[] posts)) continue;
 
                 RedditPost post = posts.FirstOrDefault();
                 RedditInnerPost innerPost = post?.Data.Children.FirstOrDefault()?.Data;

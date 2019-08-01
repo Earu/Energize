@@ -28,22 +28,25 @@ module Nsfw =
     [<Command("e621", "Searches e621", "e621 <tag|search>")>]
     let e621 (ctx : CommandContext) = async {
         let endpoint = "https://e621.net/post/index.json?tags=" + WebUtility.UrlEncode(ctx.input)
-        let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
-        let e621Objs = JsonPayload.Deserialize<E621Obj list>(json, ctx.logger)
+        let json = awaitResult (HttpHelper.GetAsync(endpoint, ctx.logger))
+        let mutable e621Objs = []
         return 
-            if e621Objs |> List.isEmpty then
-                [ ctx.sendWarn None "Nothing was found" ]
+            if JsonHelper.TryDeserialize<E621Obj list>(json, ctx.logger, &e621Objs) then
+                if e621Objs |> List.isEmpty then
+                    [ ctx.sendWarn None "Nothing was found" ]
+                else
+                    let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                    [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
+                        buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
+                    ))) ]
             else
-                let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
-                    buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
-                ))) ]
+                [ ctx.sendWarn None "There was a problem processing the result" ]
     }
 
     let private getDApiResult (ctx : CommandContext) (uri : string) = 
         let endpoint = 
             sprintf "http://%s/index.php?page=dapi&s=post&q=index&tags=%s" uri (WebUtility.UrlEncode(ctx.input))
-        let xml = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
+        let xml = awaitResult (HttpHelper.GetAsync(endpoint, ctx.logger))
         if String.IsNullOrWhiteSpace xml then
             None
         else
