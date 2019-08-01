@@ -125,7 +125,7 @@ module Voice =
     let private tryPlay (ctx : CommandContext) (cb : CommandContext -> Async<IUserMessage list>) =
         match ctx with
         | _ when ctx.message.Attachments.Count > 0 -> playFile ctx
-        | _ when ctx.arguments.Length > 0 && HttpClient.IsUrl(ctx.input) -> playUrl ctx
+        | _ when ctx.arguments.Length > 0 && HttpHelper.IsUrl(ctx.input) -> playUrl ctx
         | _ when ctx.arguments.[0].StartsWith("spotify") -> playUrl ctx
         | _ -> cb ctx
             
@@ -311,22 +311,25 @@ module Voice =
     let twitch (ctx : CommandContext) = 
         tryPlay ctx (fun ctx -> async {
             let search = HttpUtility.HtmlEncode(ctx.input)
-            let json = awaitResult (HttpClient.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
+            let json = awaitResult (HttpHelper.GetAsync("https://api.twitch.tv/kraken/search/streams?query=" + search, ctx.logger, null, fun req ->
                 req.Accept <- "application/vnd.twitchtv.v5+json"
                 req.Headers.["Client-ID"] <- Config.Instance.Keys.TwitchKey
             ))
-            let twitchObj = JsonPayload.Deserialize<TwitchObj>(json, ctx.logger)
-            let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
-            let len = streamUrls.Length
+            let mutable twitchObj = { streams = [] } 
             return
-                if len > 0 then
-                    let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                    [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
-                        let page = streamUrls |> List.tryFindIndex (fun url -> url.Equals(streamUrl))
-                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
-                    )) ]
+                if JsonHelper.TryDeserialize<TwitchObj>(json, ctx.logger, &twitchObj) then
+                    let streamUrls = twitchObj.streams |> Seq.map (fun stream -> stream.channel.url) |> Seq.toList
+                    let len = streamUrls.Length
+                    if len > 0 then
+                        let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
+                        [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
+                            let page = streamUrls |> List.tryFindIndex (fun url -> url.Equals(streamUrl))
+                            sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                        )) ]
+                    else
+                        [ ctx.sendWarn None "Could not find any streams" ]
                 else
-                    [ ctx.sendWarn None "Could not find any streams" ]
+                    [ ctx.sendWarn None "There was a problem processing the results" ]
         })
 
     [<CommandParameters(1)>]

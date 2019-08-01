@@ -3,32 +3,35 @@ using System;
 
 namespace Energize.Essentials
 {
-    public class JsonPayload
+    public class JsonHelper
     {
-        public static T Deserialize<T>(string json, Logger logger)
+        public static bool TryDeserialize<T>(string json, Logger logger, out T value)
         {
             try
             {
-                T obj = JsonConvert.DeserializeObject<T>(json);
-                return obj;
+                value = JsonConvert.DeserializeObject<T>(json);
+                return true;
             }
             catch (Exception ex)
             {
                 logger.Nice("JSON", ConsoleColor.Red, ex.Message);
-                return default(T);
+                value = default;
+                return false;
             }
         }
 
-        public static string Serialize(object obj, Logger logger)
+        public static bool TrySerialize(object obj, Logger logger, out string json)
         {
             try
             {
-                return JsonConvert.SerializeObject(obj);
+                json = JsonConvert.SerializeObject(obj);
+                return true;
             }
             catch (Exception ex)
             {
                 logger.Nice("JSON", ConsoleColor.Red, ex.Message);
-                return string.Empty;
+                json = string.Empty;
+                return false;
             }
         }
 

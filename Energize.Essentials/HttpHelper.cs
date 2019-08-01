@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Energize.Essentials
 {
-    public class HttpClient
+    public class HttpHelper
     {
         private const string UserAgent = "Energize Discord(Earu's Bot)";
 

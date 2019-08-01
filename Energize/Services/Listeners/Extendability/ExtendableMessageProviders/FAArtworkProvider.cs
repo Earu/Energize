@@ -39,7 +39,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
         {
             foreach(Match match in this.Matches(msg.Content))
             {
-                string html = await HttpClient.GetAsync(match.Value, this.Logger);
+                string html = await HttpHelper.GetAsync(match.Value, this.Logger);
                 if (string.IsNullOrWhiteSpace(html)) continue;
 
                 HtmlDocument doc = new HtmlDocument();

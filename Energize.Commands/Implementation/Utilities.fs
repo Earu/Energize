@@ -193,10 +193,10 @@ module Util =
     [<Command("lastchanges", "Gets the last changes published on GitHub", "lastchanges <nothing>")>]
     let lastChanges (ctx : CommandContext) = async {
         let endpoint = "https://api.github.com/repos/Earu/Energize/commits"
-        let json = awaitResult (HttpClient.GetAsync(endpoint, ctx.logger))
-        let commits = JsonPayload.Deserialize<Commit list>(json, ctx.logger)
+        let json = awaitResult (HttpHelper.GetAsync(endpoint, ctx.logger))
+        let mutable commits = []
         return 
-            if not (commits.Equals(null)) && commits |> List.length > 0 then
+            if JsonHelper.TryDeserialize<Commit list>(json, ctx.logger, &commits) then
                 match commits |> List.tryHead with
                 | Some entry ->
                     [ ctx.sendOK None (sprintf "```\n%s\n```" entry.commit.message) ]

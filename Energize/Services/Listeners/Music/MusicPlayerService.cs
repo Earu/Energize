@@ -496,8 +496,8 @@ namespace Energize.Services.Listeners.Music
         private async Task<YoutubeVideo> FetchYtRelatedVideoAsync(string videoId)
         {
             string endpoint = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&key={Config.Instance.Keys.YoutubeKey}&maxResults=6";
-            string json = await HttpClient.GetAsync(endpoint, this.Logger);
-            YoutubeRelatedVideos relatedVideos = JsonPayload.Deserialize<YoutubeRelatedVideos>(json, this.Logger);
+            string json = await HttpHelper.GetAsync(endpoint, this.Logger);
+            if (!JsonHelper.TryDeserialize(json, this.Logger, out YoutubeRelatedVideos relatedVideos)) return null;
             if (relatedVideos == null || relatedVideos.Videos.Length == 0) return null;
             IDatabaseService dbService = this.ServiceManager.GetService<IDatabaseService>("Database");
             using (IDatabaseContext ctx = await dbService.GetContext())
