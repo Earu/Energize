@@ -87,7 +87,7 @@ namespace Energize.Essentials
 
         public static bool IsPlayableUrl(this string url)
         {
-            if (HttpClient.IsUrl(url))
+            if (HttpHelper.IsUrl(url))
             {
                 if (!url.StartsWith("http")) return false;
 

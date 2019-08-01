@@ -80,8 +80,8 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
             foreach(Match match in this.Matches(msg.Content))
             {
                 string endpoint = $"https://api.github.com/repos/{match.Groups[1]}/{match.Groups[2]}";
-                string json = await HttpClient.GetAsync(endpoint, this.Logger);
-                GitHubRepo repo = JsonPayload.Deserialize<GitHubRepo>(json, this.Logger);
+                string json = await HttpHelper.GetAsync(endpoint, this.Logger);
+                if (!JsonHelper.TryDeserialize(json, this.Logger, out GitHubRepo repo)) continue;
                 if (repo?.Owner == null) continue;
 
                 EmbedBuilder builder = new EmbedBuilder();

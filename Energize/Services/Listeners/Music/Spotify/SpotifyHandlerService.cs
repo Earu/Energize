@@ -86,12 +86,9 @@ namespace Energize.Services.Listeners.Music.Spotify
                 req.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
             }
 
-            string json = await HttpClient.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, Callback);
-            Dictionary<string, string> keys = JsonPayload.Deserialize<Dictionary<string, string>>(json, this.Logger);
-            if (keys.ContainsKey("access_token"))
-            {
+            string json = await HttpHelper.PostAsync("https://accounts.spotify.com/api/token?grant_type=client_credentials", string.Empty, this.Logger, null, Callback);
+            if (JsonHelper.TryDeserialize(json, this.Logger, out Dictionary<string, string> keys) && keys.ContainsKey("access_token"))
                 this.Api.AccessToken = keys["access_token"];
-            }
         }
 
         public override Task InitializeAsync()
