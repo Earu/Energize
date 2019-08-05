@@ -32,7 +32,7 @@ module Nsfw =
         let mutable e621Objs = []
         return 
             if JsonHelper.TryDeserialize<E621Obj list>(json, ctx.logger, &e621Objs) then
-                if e621Objs |> List.isEmpty then
+                if e621Objs.IsEmpty then
                     [ ctx.sendWarn None "Nothing was found" ]
                 else
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
