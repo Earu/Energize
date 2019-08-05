@@ -89,8 +89,6 @@ namespace Energize.Essentials
         {
             if (HttpHelper.IsUrl(url))
             {
-                if (!url.StartsWith("http")) return false;
-
                 Match match = UrlExtensionRegex.Match(url);
                 if (!match.Success) return false;
 

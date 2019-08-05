@@ -17,6 +17,7 @@ open Energize.Interfaces.Services
 open System.Diagnostics
 open Energize.Interfaces.Services.Senders
 open System.Collections.Generic
+open Energize.Interfaces.Services.Listeners
 
 [<CommandModule("Core")>]
 module CommandHandler =
@@ -125,6 +126,8 @@ module CommandHandler =
                 Config.Instance.Maintenance <- true
                 let game = StreamingGame("maintenance", Config.Instance.URIs.TwitchURL)
                 await (ctx.client.SetActivityAsync(game))
+                let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+                await (music.DisconnectAllPlayersAsync("A maintenance started, disconnecting"))
                 ctx.logger.Warning("STARTED MAINTENANCE\n\n")
                 [ ctx.sendWarn None "Triggered a maintenance" ]
     }

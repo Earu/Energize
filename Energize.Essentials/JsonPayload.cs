@@ -9,6 +9,12 @@ namespace Energize.Essentials
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    value = default;
+                    return false;
+                }
+
                 value = JsonConvert.DeserializeObject<T>(json);
                 return true;
             }
