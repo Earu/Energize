@@ -65,9 +65,9 @@ namespace Energize.Essentials
         public static async Task<string> GetAsync(string url, Logger logger, string userAgent = null, Action<HttpWebRequest> callback = null)
             => await InternalRequest("GET", url, null, logger, userAgent, callback);
 
-        private static readonly Regex UrlRegex = new Regex(@"^(?:https?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex UrlRegex = new Regex(@"^(https?:\/\/)(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public static bool IsUrl(string input)
-            => input.StartsWith("http") && UrlRegex.IsMatch(input);
+            => UrlRegex.IsMatch(input);
     }
 }
