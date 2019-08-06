@@ -54,8 +54,9 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Looping", looping)
                 .WithFooter("music player");
 
-            if (track.Uri.AbsoluteUri.Length < 1000)
-                builder.WithDescription($"🎶 Now playing the **[following track]({track.Uri})**");
+            string url = track.Uri.AbsoluteUri;
+            if (url.Length < 1000)
+                builder.WithDescription($"🎶 Now playing the **[following track]({url})**");
             else
                 builder.WithDescription("🎶 Now playing the following track");
 
