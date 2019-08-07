@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBotsList.Api;
@@ -23,6 +24,7 @@ namespace Energize
 #endif
         private readonly string Token;
         private readonly AuthDiscordBotListApi DiscordBotList;
+        private readonly Timer UpdateTimer;
 
         public EnergizeClient(string token, string prefix, char separator)
         {
@@ -42,6 +44,7 @@ namespace Energize
             });
             this.DiscordRestClient = new DiscordRestClient();
             this.ServiceManager = new ServiceManager(this);
+            this.UpdateTimer = new Timer(this.OnUpdateTimer);
 
             if (this.HasToken)
             {
@@ -107,7 +110,7 @@ namespace Energize
         public string Environment => this.IsDevEnv ? "DEVELOPMENT" : "PRODUCTION"; 
         public bool HasToken => !string.IsNullOrWhiteSpace(this.Token); 
 
-        private async Task<(bool, int)> UpdateBotWebsites()
+        private async Task<(bool, int)> UpdateBotWebsitesAsync()
         {
             int serverCount = this.DiscordClient.Guilds.Count;
             bool success = true;
@@ -136,7 +139,7 @@ namespace Energize
             return (success, serverCount);
         }
 
-        private async Task UpdateActivity()
+        private async Task UpdateActivityAsync()
         {
             StreamingGame game = Config.Instance.Maintenance
                 ? new StreamingGame("maintenance", Config.Instance.URIs.TwitchURL)
@@ -170,34 +173,62 @@ namespace Energize
             }
         }
 
+        private async void OnUpdateTimer(object _)
+        {
+            long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
+            GC.Collect();
+
+            (bool success, int servercount) = await this.UpdateBotWebsitesAsync();
+            string log = success
+                ? $"Collected {mb}MB of garbage, updated server count ({servercount})"
+                : $"Collected {mb}MB of garbage, did NOT update server count, API might be down";
+            this.Logger.Nice("Update", ConsoleColor.Gray, log);
+
+            await this.UpdateActivityAsync();
+            await this.NotifyCaughtExceptionsAsync();
+        }
+
+        private async Task TryLoginAsync(Func<TokenType, string, bool, Task> loginFunc, TokenType tokenType, string token, int delay = 30, int times = 0)
+        {
+            await loginFunc(tokenType, token, true).ContinueWith(async t =>
+            {
+                if (!t.IsFaulted) return;
+                
+                await Task.Delay(delay * 1000);
+
+                if (times > 3)
+                {
+                    if (t.Exception?.InnerException != null)
+                        this.Logger.Danger(t.Exception.InnerException);
+                    else
+                        this.Logger.Danger("Failed to login to discord");
+                }
+                else
+                {
+                    delay *= 2;
+                    times += 1;
+                    this.Logger.Warning($"Failed to login to discord, attempt {times}: {t.Exception}");
+                    await this.TryLoginAsync(loginFunc, tokenType, token, delay, times);
+                }
+            });
+        }
+
         public async Task InitializeAsync()
         {
             if (!this.HasToken) return;
 
             try
             {
-                await this.DiscordClient.LoginAsync(TokenType.Bot, this.Token);
+                await this.TryLoginAsync(this.DiscordClient.LoginAsync, TokenType.Bot, this.Token);
+                await this.TryLoginAsync(this.DiscordRestClient.LoginAsync, TokenType.Bot, this.Token);
+                if (this.DiscordClient.LoginState != LoginState.LoggedIn || this.DiscordRestClient.LoginState != LoginState.LoggedIn)
+                    return;
+
                 await this.DiscordClient.StartAsync();
-                await this.DiscordRestClient.LoginAsync(TokenType.Bot, this.Token);
-                await this.UpdateActivity();
-
-                Timer updateTimer = new Timer(async arg =>
-                {
-                    long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
-                    GC.Collect();
-
-                    (bool success, int servercount) = await this.UpdateBotWebsites();
-                    string log = success
-                        ? $"Collected {mb}MB of garbage, updated server count ({servercount})"
-                        : $"Collected {mb}MB of garbage, did NOT update server count, API might be down";
-                    this.Logger.Nice("Update", ConsoleColor.Gray, log);
-
-                    await this.UpdateActivity();
-                    await this.NotifyCaughtExceptionsAsync();
-                });
+                await this.UpdateActivityAsync();
 
                 const int hour = 1000 * 60 * 60;
-                updateTimer.Change(10000, hour);
+                this.UpdateTimer.Change(10000, hour);
 
                 await this.ServiceManager.InitializeServicesAsync();
             }
