@@ -1,4 +1,5 @@
-﻿using Energize.Services.Scheduling.Jobs;
+﻿using Discord.WebSocket;
+using Energize.Services.Scheduling.Jobs;
 using Quartz;
 using System;
 using System.Threading.Tasks;
@@ -9,11 +10,13 @@ namespace Energize.Services.Scheduling
     {
         private readonly Essentials.Logger Logger;
         private readonly ServiceManager ServiceManager;
+        private readonly DiscordShardedClient DiscordClient;
 
         public JobScheduler(EnergizeClient client)
         {
             this.Logger = client.Logger;
             this.ServiceManager = client.ServiceManager;
+            this.DiscordClient = client.DiscordClient;
         }
 
         public async Task ScheduleWeeklyUpdateAsync(IScheduler scheduler)
@@ -21,7 +24,7 @@ namespace Energize.Services.Scheduling
             JobDataMap dataMap = new JobDataMap
             {
                 { "ServiceManager", this.ServiceManager },
-                { "Logger", this.Logger }
+                { "DiscordClient", this.DiscordClient },
             };
 
             IJobDetail job = JobBuilder.Create<WeeklyUpdateJob>()
