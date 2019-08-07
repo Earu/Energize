@@ -61,9 +61,12 @@ namespace Energize.Services.Transmission.Transmitters
             };
         }
 
-        private void OnUpdateRequested(RemoteProcess proc)
+        private async void OnUpdateRequested(RemoteProcess proc)
         {
             this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Update requested from \'{proc}\'");
+            SocketChannel updateChan = this.DiscordClient.GetChannel(Config.Instance.Discord.UpdateChannelID);
+            if (updateChan != null)
+                await this.MessageSender.Normal(updateChan, "update", "Fetched latest changes");
 
             string path = Directory.GetCurrentDirectory();
             string gitUrl = "https://github.com/Energizers/Energize.git";
