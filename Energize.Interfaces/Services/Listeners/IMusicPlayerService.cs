@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Discord;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord;
-using Energize.Essentials.TrackTypes;
 using Victoria;
 using Victoria.Entities;
 using Victoria.Queue;
@@ -16,7 +15,7 @@ namespace Energize.Interfaces.Services.Listeners
 
         Task DisconnectAsync(IVoiceChannel vc);
 
-        Task DisconnectAllPlayersAsync(string warnMsg);
+        Task DisconnectAllPlayersAsync(string warnMsg, bool isRestart = false);
 
         Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack);
         

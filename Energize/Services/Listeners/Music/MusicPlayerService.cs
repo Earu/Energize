@@ -4,6 +4,7 @@ using Energize.Essentials;
 using Energize.Essentials.MessageConstructs;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Database;
+using Energize.Interfaces.Services.Development;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
 using System;
@@ -169,16 +170,23 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        public async Task DisconnectAllPlayersAsync(string warnMsg)
+        public async Task DisconnectAllPlayersAsync(string warnMsg, bool isRestart = false)
         {
             int count = this.Players.Count;
+            IRestartService restart = this.ServiceManager.GetService<IRestartService>("Restart");
             foreach ((ulong _, IEnergizePlayer ply) in this.Players)
             {
                 if (ply.VoiceChannel == null) continue;
 
                 await this.DisconnectAsync(ply.VoiceChannel);
                 if (ply.TextChannel != null)
-                    await this.MessageSender.Warning(ply.TextChannel, "music player", warnMsg);
+                {
+                    if (isRestart)
+                        await restart.WarnChannelAsync(ply.TextChannel, warnMsg);
+                    else
+                        await this.MessageSender.Warning(ply.TextChannel, "music player", warnMsg);
+                }
+                    
             }
 
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");

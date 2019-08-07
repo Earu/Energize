@@ -1,11 +1,11 @@
-﻿using Energize.Interfaces.Services.Eval;
+﻿using Energize.Interfaces.Services.Development;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Energize.Services.Eval
+namespace Energize.Services.Development
 {
     //0 -> bad
     //1 -> ok
