@@ -11,7 +11,7 @@ open System.Threading.Tasks
 open System.Text
 open Microsoft.Data.Sqlite
 open System.IO
-open Energize.Interfaces.Services.Eval
+open Energize.Interfaces.Services.Development
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.UserHelper
 open Discord.WebSocket
@@ -100,11 +100,11 @@ module Util =
     [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {
+        let restart = ctx.serviceManager.GetService<IRestartService>("Restart")
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        music.DisconnectAllPlayersAsync("Bot is restarting, disconnecting").Wait()
-        File.WriteAllText("restartlog.txt", ctx.message.Channel.Id.ToString())
-        ctx.sendWarn None "Restarting..." |> ignore
-        Process.GetCurrentProcess().Kill()
+        await (music.DisconnectAllPlayersAsync("Bot is restarting, disconnecting", true))
+        await (restart.WarnChannelAsync(ctx.message.Channel, "Restarting..."))
+        await (restart.RestartAsync())
         return []
     }
 

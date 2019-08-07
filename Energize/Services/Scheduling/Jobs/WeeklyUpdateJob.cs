@@ -1,8 +1,8 @@
-﻿using System.Diagnostics;
-using System.Threading.Tasks;
-using Energize.Interfaces.Services;
+﻿using Energize.Interfaces.Services;
+using Energize.Interfaces.Services.Development;
 using Energize.Interfaces.Services.Listeners;
 using Quartz;
+using System.Threading.Tasks;
 
 namespace Energize.Services.Scheduling.Jobs
 {
@@ -13,8 +13,9 @@ namespace Energize.Services.Scheduling.Jobs
             JobDataMap dataMap = context.JobDetail.JobDataMap;
             IServiceManager serviceManager = (IServiceManager)dataMap["ServiceManager"];
             IMusicPlayerService music = serviceManager.GetService<IMusicPlayerService>("Music");
-            await music.DisconnectAllPlayersAsync("Weekly update on-going, disconnecting");
-            Process.GetCurrentProcess().Kill();
+            IRestartService restart = serviceManager.GetService<IRestartService>("Restart");
+            await music.DisconnectAllPlayersAsync("Weekly update on-going, disconnecting", true);
+            await restart.RestartAsync();
         }
     }
 }
