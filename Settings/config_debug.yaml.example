@@ -7,6 +7,7 @@ Discord:
   OwnerID: '0000000000000000'
   FeedbackChannelID: '0000000000000000'
   BugReportChannelID: '0000000000000000'
+  UpdateChannelID: '0000000000000000'
   BotListToken: dbl token
   BotsToken: bots org token
 Lavalink:
