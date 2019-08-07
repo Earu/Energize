@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -49,22 +48,6 @@ namespace Energize.Services.Listeners
             }
 
             return false;
-        }
-
-        [DiscordEvent("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient _)
-        {
-            if (!File.Exists("restartlog.txt")) return;
-
-            string content = File.ReadAllText("restartlog.txt");
-            if (ulong.TryParse(content, out ulong id))
-            {
-                SocketChannel chan = this.Client.GetChannel(id);
-                if (chan != null)
-                    await this.MessageSender.Good(chan, "Restart", "Done restarting.");
-            }
-
-            File.Delete("restartlog.txt");
         }
 
         [DiscordEvent("MessageReceived", true)]
