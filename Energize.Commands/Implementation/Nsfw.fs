@@ -13,12 +13,13 @@ open System.Net
 [<CommandModule("NSFW")>]
 module Nsfw =
     let private buildNsfwEmbed (builder : EmbedBuilder) (ctx : CommandContext) (pic : string) (url : string) = 
+        let uri = Uri(url)
         builder
             .WithAuthorNickname(ctx.message)
             .WithColorType(EmbedColorType.Good)
             .WithImageUrl(pic)
             .WithFooter(ctx.commandName)
-            .WithTitle(sprintf "**CHECK ON %s**" (ctx.commandName.ToUpper()))
+            .WithTitle(sprintf "**CHECK ON %s**" (uri.Host.ToUpper()))
             .WithUrl(url)
             |> ignore
 
@@ -105,3 +106,67 @@ module Nsfw =
     [<Command("gelb", "Searches gelbooru", "gelb <tags|search>")>]
     let gelb (ctx : CommandContext) =
         callDApiCmd ctx "gelbooru.com"
+
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
+    [<CommandParameters(1)>]
+    [<Command("xbooru", "Searches xbooru", "xbooru <tags|search>")>]
+    let xbooru (ctx : CommandContext) =
+        callDApiCmd ctx "xbooru.com"
+
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
+    [<CommandParameters(1)>]
+    [<Command("realb", "Searches realbooru", "realb <tags|search>")>]
+    let realb (ctx : CommandContext) =
+        callDApiCmd ctx "realbooru.com"
+
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
+    [<CommandParameters(1)>]
+    [<Command("safeb", "Searches safebooru", "safeb <tags|search>")>]
+    let safeb (ctx : CommandContext) =
+        callDApiCmd ctx "safebooru.org"
+
+    let private nlTags = [ 
+        "femdom"; "tickle"; "ngif"; "erofeet"; "meow"; "erok"; "les"; "hololewd"; "lewdk"; "keta";
+        "feetg"; "eroyuri"; "kiss"; "kuni"; "tits"; "pussy"; "lewdkemo"; "lewd"; "cum"; "spank";
+        "smallboobs"; "fox_girl"; "boobs"; "kemonomimi"; "solog"; "bj"; "yuri"; "trap"; "anal";
+        "blowjob"; "holoero"; "neko"; "gasm"; "hentai"; "futanari"; "ero"; "solo"; "waifu"; "pwankg";
+        "eron"; "erokemo"; "classic";
+    ]
+    type NLObj = { url : string }
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
+    [<Command("nl", "Searches nekos.life with a tag", "nl <tag|nothing>")>]
+    let nl (ctx : CommandContext) = async {
+        let tag = if ctx.arguments.IsEmpty then "classic" else ctx.arguments.[0]
+        return 
+            if nlTags |> List.contains tag then
+                let json = awaitResult (HttpHelper.GetAsync(sprintf "https://nekos.life/api/v2/img/%s" tag, ctx.logger))
+                let mutable result = { url = String.Empty }
+                if JsonHelper.TryDeserialize(json, ctx.logger, &result) then
+                    let builder = EmbedBuilder()
+                    buildNsfwEmbed builder ctx result.url result.url
+                    [ ctx.sendEmbed (builder.Build()) ]
+                else
+                    [ ctx.sendWarn None "There was a problem processing the result" ]
+            else
+                let tagList = String.Join(',', nlTags |> List.map (fun t -> sprintf "`%s`" t))
+                [ ctx.sendWarn None (sprintf "Valid tags are: %s" tagList) ]
+    }
+
+    type ObuttsObj = { preview : string }
+    [<CommandConditions(CommandCondition.NsfwOnly)>]
+    [<Command("ass", "Gets a random ass picture", "ass <nothing>")>]
+    let ass (ctx : CommandContext) = async {
+        let json = awaitResult (HttpHelper.GetAsync("http://api.obutts.ru/butts/0/1/random", ctx.logger))
+        let mutable results : ObuttsObj list = []
+        return 
+            if JsonHelper.TryDeserialize(json, ctx.logger, &results) then
+                if not results.IsEmpty then
+                    let builder = EmbedBuilder()
+                    let picUrl = sprintf "http://media.obutts.ru/%s" results.[0].preview
+                    buildNsfwEmbed builder ctx picUrl picUrl
+                    [ ctx.sendEmbed (builder.Build()) ]
+                else
+                    [ ctx.sendWarn None "Nothing was found" ]
+            else
+                [ ctx.sendWarn None "There was a problem processing the result" ]
+    }
