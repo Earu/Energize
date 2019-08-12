@@ -11,7 +11,7 @@ namespace Energize.Essentials
             => this.Logger = logger;
 
         public static Color SColorGood { get; } = new Color(30, 30, 30);
-        public static Color SColorNormal { get; } = new Color(200, 200, 200);
+        public static Color SColorNormal { get; } = new Color(79, 84, 92);
         public static Color SColorWarning { get; } = new Color(226, 123, 68);
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
 

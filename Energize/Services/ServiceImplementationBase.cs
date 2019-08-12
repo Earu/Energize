@@ -9,5 +9,11 @@ namespace Energize.Services
 
         public virtual Task InitializeAsync()
             => Task.CompletedTask;
+
+        /// <summary>
+        /// Called when all shards are ready
+        /// </summary>
+        public virtual Task OnReadyAsync()
+            => Task.CompletedTask;
     }
 }
