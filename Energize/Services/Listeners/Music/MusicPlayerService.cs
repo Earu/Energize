@@ -23,7 +23,7 @@ namespace Energize.Services.Listeners.Music
     [Service("Music")]
     public class MusicPlayerService : ServiceImplementationBase, IMusicPlayerService
     {
-        private readonly DiscordShardedClient Client;
+        private readonly DiscordShardedClient DiscordClient;
         private readonly LavaShardClient LavaClient;
         private readonly Logger Logger;
         private readonly MessageSender MessageSender;
@@ -35,7 +35,7 @@ namespace Energize.Services.Listeners.Music
         {
             this.Players = new ConcurrentDictionary<ulong, IEnergizePlayer>();
 
-            this.Client = client.DiscordClient;
+            this.DiscordClient = client.DiscordClient;
             this.Logger = client.Logger;
             this.MessageSender = client.MessageSender;
             this.ServiceManager = client.ServiceManager;
@@ -54,7 +54,7 @@ namespace Energize.Services.Listeners.Music
         private async Task OnSocketClosed(int errorCode, string reason, bool byRemote)
         {
             await this.DisconnectAllPlayersAsync("Music streaming is unavailable at the moment, disconnecting");
-            SocketChannel chan = this.Client.GetChannel(Config.Instance.Discord.BugReportChannelID);
+            SocketChannel chan = this.DiscordClient.GetChannel(Config.Instance.Discord.BugReportChannelID);
             if (chan != null)
             {
                 EmbedBuilder builder = new EmbedBuilder();
@@ -707,7 +707,7 @@ namespace Energize.Services.Listeners.Music
             };
 
             this.LavaRestClient = new LavaRestClient(config);
-            await this.LavaClient.StartAsync(this.Client, config);
+            await this.LavaClient.StartAsync(this.DiscordClient, config);
         }
 
         [DiscordEvent("ReactionAdded")]
@@ -722,7 +722,7 @@ namespace Energize.Services.Listeners.Music
         [DiscordEvent("ShardReady")]
         public async Task OnShardReady(DiscordSocketClient _)
         {
-            if (this.Client.Shards.Count != ++this.CurrentShardCount) return;
+            if (this.DiscordClient.Shards.Count != ++this.CurrentShardCount) return;
             await this.StartAsync();
         }
 
