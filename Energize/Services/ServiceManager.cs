@@ -185,6 +185,22 @@ namespace Energize.Services
             }
         }
 
+        internal async Task OnReadyAsync()
+        {
+            try
+            {
+                foreach ((string _, IService service) in this.Services)
+                {
+                    if (service.Instance != null)
+                        await service.Instance.OnReadyAsync();
+                }
+            }
+            catch(Exception ex)
+            {
+                this.Logger.Danger(ex);
+            }
+        }
+
         public T GetService<T>(string name) where T : IServiceImplementation
         {
             if(this.Services.ContainsKey(name))

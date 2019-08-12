@@ -718,13 +718,8 @@ namespace Energize.Services.Listeners.Music
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
             => await this.OnReaction(cache, chan, reaction);
 
-        private volatile int CurrentShardCount;
-        [DiscordEvent("ShardReady")]
-        public async Task OnShardReady(DiscordSocketClient _)
-        {
-            if (this.DiscordClient.Shards.Count != ++this.CurrentShardCount) return;
-            await this.StartAsync();
-        }
+        public override Task OnReadyAsync() 
+            => this.StartAsync();
 
         private static SocketVoiceChannel GetVoiceChannel(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {

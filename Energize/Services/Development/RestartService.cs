@@ -59,12 +59,8 @@ namespace Energize.Services.Development
             Process.GetCurrentProcess().Kill();
         }
 
-        private volatile int CurrentShardCount;
-
-        [DiscordEvent("ShardReady")]
-        public async Task OnReadyAsync(DiscordSocketClient _)
+        public override async Task OnReadyAsync()
         {
-            if (this.DiscordClient.Shards.Count != ++this.CurrentShardCount) return;
             if (!File.Exists(this.LogPath)) return;
 
             string[] lines = await File.ReadAllLinesAsync(this.LogPath);

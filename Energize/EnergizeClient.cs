@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using DiscordBotsList.Api;
@@ -55,6 +54,7 @@ namespace Energize
                 };
 
                 this.DiscordClient.Log += async log => this.Logger.LogTo("dnet_socket.log", log.Message);
+                this.DiscordClient.ShardReady += this.OnShardReady;
                 this.DiscordRestClient.Log += async log => this.Logger.LogTo("dnet_rest.log", log.Message);
 
                 this.DiscordBotList = new AuthDiscordBotListApi(Config.Instance.Discord.BotID, Config.Instance.Discord.BotListToken);
@@ -76,6 +76,13 @@ namespace Energize
             {
                 this.Logger.Warning("No token was used! You NEED a token to connect to Discord!");
             }
+        }
+
+        private volatile int CurrentShardCount;
+        private async Task OnShardReady(DiscordSocketClient _)
+        {
+            if (this.DiscordClient.Shards.Count != ++this.CurrentShardCount) return;
+            await this.ServiceManager.OnReadyAsync();
         }
 
         private void DisplayAsciiArt()

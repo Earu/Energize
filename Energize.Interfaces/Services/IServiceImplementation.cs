@@ -7,5 +7,7 @@ namespace Energize.Interfaces.Services
         void Initialize();
 
         Task InitializeAsync();
+
+        Task OnReadyAsync();
     }
 }
