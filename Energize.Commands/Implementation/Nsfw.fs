@@ -126,7 +126,7 @@ module Nsfw =
         callDApiCmd ctx "safebooru.org"
 
     let private nlTags = [ 
-        "femdom"; "tickle"; "ngif"; "erofeet"; "meow"; "erok"; "les"; "hololewd"; "lewdk"; "keta";
+        "femdom"; "tickle"; "ngif"; "erofeet"; "erok"; "les"; "hololewd"; "lewdk"; "keta";
         "feetg"; "eroyuri"; "kiss"; "kuni"; "tits"; "pussy"; "lewdkemo"; "lewd"; "cum"; "spank";
         "smallboobs"; "fox_girl"; "boobs"; "kemonomimi"; "solog"; "bj"; "yuri"; "trap"; "anal";
         "blowjob"; "holoero"; "neko"; "gasm"; "hentai"; "futanari"; "ero"; "solo"; "waifu"; "pwankg";
