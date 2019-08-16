@@ -46,6 +46,15 @@ namespace Energize.Essentials
         public int OperationsPerThread;
     }
 
+    public struct MailConfig
+    {
+        public string ServerAddress;
+        public int ServerPort;
+        public string MailAddress;
+        public string MailPassword;
+        public string DevMailAddress;
+    }
+
     public struct KeysConfig
     {
         public string TwitchKey;
@@ -72,6 +81,7 @@ namespace Energize.Essentials
         public LavalinkConfig Lavalink;
         public OctovisorConfig Octovisor;
         public SpotifyConfig Spotify;
+        public MailConfig Mail;
         public KeysConfig Keys;
         public URIConfig URIs;
         public string DBConnectionString;
