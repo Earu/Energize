@@ -5,7 +5,6 @@ using Energize.Essentials;
 using Energize.Services.Listeners;
 using Energize.Services.Transmission.TransmissionModels;
 using Octovisor.Client;
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -39,7 +38,7 @@ namespace Energize.Services.Transmission.Transmitters
 
         private CommandInformation OnCommandsRequested(RemoteProcess proc, object _)
         {
-            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Sent command information to process \'{proc}\'");
+            this.Log($"Sent command information to process \'{proc}\'");
 
             CommandHandlingService commandService = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             return new CommandInformation
@@ -52,7 +51,7 @@ namespace Energize.Services.Transmission.Transmitters
 
         private BotInformation OnInformationRequested(RemoteProcess proc, object _)
         {
-            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Sent bot information to process \'{proc}\'");
+            this.Log($"Sent bot information to process \'{proc}\'");
 
             return new BotInformation
             {
@@ -63,7 +62,7 @@ namespace Energize.Services.Transmission.Transmitters
 
         private async void OnUpdateRequested(RemoteProcess proc)
         {
-            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"Update requested from \'{proc}\'");
+            this.Log($"Update requested from \'{proc}\'");
             SocketChannel updateChan = this.DiscordClient.GetChannel(Config.Instance.Discord.UpdateChannelID);
             if (updateChan != null)
                 await this.MessageSender.Normal(updateChan, "update", "Fetched latest changes");
@@ -94,9 +93,10 @@ namespace Energize.Services.Transmission.Transmitters
         private async void OnDiscordBotsUpvote(RemoteProcess proc, DiscordBotsVote vote)
         {
             if (vote.BotId != Config.Instance.Discord.BotID) return;
+            if (vote.UserId == Config.Instance.Discord.OwnerID) return;
 
             string multiplier = vote.IsWeekend ? "(x2)" : string.Empty;
-            this.Logger.Nice("IPC", ConsoleColor.Magenta, $"New upvote {multiplier} by {vote.UserId}");
+            this.Log($"New upvote {multiplier} by {vote.UserId}");
 
             SocketChannel chan = this.DiscordClient.GetChannel(Config.Instance.Discord.FeedbackChannelID);
             if (chan != null)

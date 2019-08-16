@@ -15,5 +15,8 @@ namespace Energize.Services.Transmission.Transmitters
         }
 
         internal virtual void Initialize() { }
+
+        protected void Log(string message)
+            => this.Logger.LogTo("ipc.log", message);
     }
 }
