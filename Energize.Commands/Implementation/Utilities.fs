@@ -97,6 +97,20 @@ module Util =
             | (_, out) -> [ ctx.sendWarn None out ]
     }
 
+    [<CommandParameters(3)>]
+    [<CommandConditions(CommandCondition.DevOnly)>]
+    [<Command("mail", "Sends a mail to the given mail address with the given content and subject", "mail <mailaddress> <subject> <content>")>]
+    let mail (ctx : CommandContext) = async {
+        let mail = ctx.serviceManager.GetService<IMailingService>("Mail")
+        let adr = ctx.arguments.[0]
+        return
+            try
+                await (mail.SendMailAsync(adr, ctx.arguments.[1], ctx.arguments.[2]))
+                [ ctx.sendOK None (sprintf "Sent a mail to `%s` successfully" adr) ]
+            with ex ->
+                [ ctx.sendWarn None (sprintf "Could not send a mail to `%s`: %s" adr ex.Message)]
+    }
+
     [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {

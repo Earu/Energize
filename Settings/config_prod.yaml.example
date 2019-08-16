@@ -1,32 +1,39 @@
 ---
 Discord:
-  Token: discord dev token
+  Token: discord_dev_token
   BotID: '0000000000000000'
   Prefix: x
   Separator: ","
   OwnerID: '0000000000000000'
   FeedbackChannelID: '0000000000000000'
   BugReportChannelID: '0000000000000000'
-  BotListToken: dbl token
-  BotsToken: bots org token
+  UpdateChannelID: '0000000000000000'
+  BotListToken: dbl_token
+  BotsToken: bots_org_token
 Lavalink:
   Host: google.com
   Port: 0000
-  Password: coolpassword
+  Password: cool_password
 Octovisor:
   Address: google.com
   Port: 0000
   Token: coolpassword
   ProcessName: Energize
 Spotify:
-  ClientID: spotify client id
-  ClientSecret: spotify client secret
+  ClientID: spotify_client_id
+  ClientSecret: spotify_client_secret
   LazyLoad: true
   ConcurrentPoolSize: 0
   OperationsPerThread: 2
+Mail:
+  ServerAddress: smtp.gmail.com
+  ServerPort: 587
+  MailAddress: your_bot_mail_here
+  MailPassword: password_here
+  DevMailAddress: your_mail_here
 Keys:
-  TwitchKey: twitch api token
-  YoutubeKey: youtube api token
+  TwitchKey: twitch_api_token
+  YoutubeKey: youtube_api_token
 URIs:
   TwitchURL: https://www.twitch.tv/earuio
   GitHubURL: https://github.com/Earu/Energize

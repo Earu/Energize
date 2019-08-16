@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using DiscordBotsList.Api;
 using DiscordBotsList.Api.Objects;
 using Energize.Essentials;
+using Energize.Interfaces.Services.Development;
 using Energize.Services;
 using System;
 using System.Collections.Generic;
@@ -195,9 +196,8 @@ namespace Energize
             await this.NotifyCaughtExceptionsAsync();
         }
 
-        private async Task TryLoginAsync(Func<TokenType, string, bool, Task> loginFunc, TokenType tokenType, string token, int delay = 30, int times = 0)
-        {
-            await loginFunc(tokenType, token, true).ContinueWith(async t =>
+        private Task TryLoginAsync(Func<TokenType, string, bool, Task> loginFunc, TokenType tokenType, string token, int delay = 30, int times = 0)
+            => loginFunc(tokenType, token, true).ContinueWith(async t =>
             {
                 if (!t.IsFaulted) return;
                 
@@ -218,7 +218,6 @@ namespace Energize
                     await this.TryLoginAsync(loginFunc, tokenType, token, delay, times);
                 }
             });
-        }
 
         public async Task InitializeAsync()
         {
