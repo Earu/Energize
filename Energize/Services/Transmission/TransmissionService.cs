@@ -31,7 +31,7 @@ namespace Energize.Services.Transmission
             this.OctoClient.Log += log =>
             {
                 if (log.Severity == LogSeverity.Info)
-                    this.Logger.Nice("Octovisor", ConsoleColor.Magenta, log.Content);
+                    this.Logger.Nice("Octo", ConsoleColor.Magenta, log.Content);
             };
 
             this.Transmitters = new List<BaseTransmitter>
@@ -50,7 +50,7 @@ namespace Energize.Services.Transmission
             }
             catch (Exception ex)
             {
-                this.Logger.Nice("Octovisor", ConsoleColor.Red, ex.Message);
+                this.Logger.Nice("Octo", ConsoleColor.Red, ex.Message);
             }
         }
     }
