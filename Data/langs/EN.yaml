@@ -31,34 +31,15 @@ CROSS_POSTS: 'Cross-posts'
 LOCKED: 'Locked'
 SUBSCRIBERS: 'Subscribers'
 REDDIT_VIDEO_POST: 'Video post, [**open in your browser**](%s/DASH_720?source=fallback) to see it.'
-MUSIC_STREAMING_UNAVAILABLE: 'Music streaming is unavailable at the moment, disconnecting'
-MUSIC_PLAYER: 'music player'
-MUSIC_PLAYLIST_EMPTY: 'The loaded playlist does not contain any tracks'
-MUSIC_ADDED_PLAYLIST: '🎶 Added `%d` tracks from `%s`'
-MUSIC_TRACK_QUEUE: 'track queue'
-MUSIC_TRACK_QUEUE_CURRENT: '🎶 Track `#%d` out of `%d` in the queue'
 TITLE: 'Title'
 LENGTH: 'Length'
 STREAM: 'Stream'
-MUSIC_TRACK_QUEUE_EMPTY: 'The track queue is empty'
-MUSIC_ADDED_TRACK: '🎶 Added the following track to the queue:'
-MUSIC_AUTOPLAY_NEXT_FAIL: 'Failed to get/load the next autoplay track'
-MUSIC_SOUNDCLOUD_PRIVATE: 'It is likely that this track is not usable outside of SoundCloud.'
-MUSIC_TRACK_STUCK: 'The track got stuck.'
-MUSIC_CANT_PLAY_TRACK: '🎶 Could not play track:'
-MUSIC_DISCORD_ISSUE: 'There was a problem with Discord, disconnecting...'
 URL: 'Url'
 ERROR: 'Error'
-MUSIC_CANT_ADD_PLAY_TRACK: '🎶 Could not play/add track:'
 POSTED_BY: 'Posted By'
-MUSIC_FILE_CORRUPTED: 'File is corrupted or does not have audio'
-MUSIC_CANT_FIND_TRACK: 'Could not find the track to be added/played'
-MUSIC_UNKNOWN_ERROR: 'Unkown error'
-MUSIC_WEEKLY_UPDATE: 'Weekly update on-going, disconnecting'
+TIP: 'Tip'
 UPDATING: 'Updating to the latest changes...'
-MUSIC_NETWORK_ISSUES: 'Network issues detected, disconnecting to prevent further bugs'
 NETWORK_ERRORS: 'network errors'
-MUSIC_LAVALINK_RECONNECTED: 'Reconnected to lavalink remote server'
 NEW_UPVOTE: '💎 New upvote %s'
 USER: 'User'
 UNKNOWN_USER: 'Unknown (%d)'
@@ -66,10 +47,133 @@ USAGE: 'Usage'
 HELP: 'Help'
 BAD_USAGE: 'bad usage [ %s ]'
 USAGE_HELP: 'help [ %s ]'
-CMD_HELP_HELP: 'This command'
-CMD_HELP_CANT_FIND_AND_SUGGESTIONS: 'Could not find any command named `%s`, did you mean one of the following:\n%s\n\nFind out more at **%s**, or join our server **%s**'
-CMD_HELP_CANT_FIND: 'Could not find any command named `%s`, find out more at **%s**, or join our server **%s**'
 DOCUMENTATION: 'Documentation'
 SUPPORT_SERVER: 'Support Server'
-TIP: 'Tip'
+CHANNEL_ID: 'Channel ID'
+BUG_REPORT: 'Bug Report'
+CMD: 'Command'
+ARGS: 'Arguments'
+CASE_ID: 'Case ID'
+TIMEOUT: 'timeout'
+HELP_MSG: "Hey there %s, looking for something? Use `%s` or `%s`, visit the online documentation or join our server!\n%s\n%s"
+
+MUSIC_STREAMING_UNAVAILABLE: 'Music streaming is unavailable at the moment, disconnecting'
+MUSIC_PLAYER: 'music player'
+MUSIC_PLAYLIST_EMPTY: 'The loaded playlist does not contain any tracks'
+MUSIC_ADDED_PLAYLIST: '🎶 Added `%d` tracks from `%s`'
+MUSIC_TRACK_QUEUE: 'track queue'
+MUSIC_TRACK_QUEUE_CURRENT: '🎶 Track `#%d` out of `%d` in the queue'
+MUSIC_TRACK_QUEUE_EMPTY: 'The track queue is empty'
+MUSIC_ADDED_TRACK: '🎶 Added the following track to the queue:'
+MUSIC_AUTOPLAY_NEXT_FAIL: 'Failed to get/load the next autoplay track'
+MUSIC_SOUNDCLOUD_PRIVATE: 'It is likely that this track is not usable outside of SoundCloud.'
+MUSIC_TRACK_STUCK: 'The track got stuck.'
+MUSIC_CANT_PLAY_TRACK: '🎶 Could not play track:'
+MUSIC_DISCORD_ISSUE: 'There was a problem with Discord, disconnecting...'
+MUSIC_CANT_ADD_PLAY_TRACK: '🎶 Could not play/add track:'
+MUSIC_FILE_CORRUPTED: 'File is corrupted or does not have audio'
+MUSIC_CANT_FIND_TRACK: 'Could not find the track to be added/played'
+MUSIC_UNKNOWN_ERROR: 'Unkown error'
+MUSIC_WEEKLY_UPDATE: 'Weekly update on-going, disconnecting'
+MUSIC_LAVALINK_RECONNECTED: 'Reconnected to lavalink remote server'
+MUSIC_NETWORK_ISSUES: 'Network issues detected, disconnecting to prevent further bugs'
+MUSIC_MAINTENANCE: 'A maintenance started, disconnecting'
+
+CMD_BUG_REPORT: 'Something went wrong when using `%s` a report has been sent.\nIf you wish to contact the developer use the `bug` or `feedback` commands, do not forget to mention your case id!'
+CMD_BUG_REPORT_HEADER: '@File: %s | Method: %s | Line: %d'
+CMD_TIMEOUT: 'Your command `%s` is timing out!'
+CMD_DISABLED: 'disabled command'
+CMD_DISABLED_MSG: 'This is a disabled feature for now'
+CMD_MISSING_PERMISSIONS: 'missing permissions'
+CMD_MISSING_PERMISSIONS_MSG: "Missing the following permissions:\n%s"
+CMD_UNMET_CONDITIONS: 'unmet conditions'
+CMD_UNMET_CONDITIONS_MSG: "The following conditions were not met:\n%s"
+
+CMD_HELP_HELP: 'This command'
+CMD_HELP_CANT_FIND_AND_SUGGESTIONS: "Could not find any command named `%s`, did you mean one of the following:\n%s\n\nFind out more at **%s**, or join our server **%s**"
+CMD_HELP_CANT_FIND: 'Could not find any command named `%s`, find out more at **%s**, or join our server **%s**'
+
 CMD_MAINTENANCE_HELP: 'Triggers or stops a maintenance on the bot'
+CMD_MAINTENANCE_START: 'Triggered a maintenance'
+CMD_MAINTENANCE_STOP: 'Stopped the on-going maintenance'
+
+CMD_ENABLE_HELP: 'Enables or disables a command'
+CMD_ENABLE_DISABLE: 'Successfully disabled command `%s`'
+CMD_ENABLE_ENABLE: 'Successfully enabled command `%s`'
+CMD_ENABLE_CANT_FIND: 'Could not find any command named `%s`'
+
+CMD_FEEDBACK_HELP: 'Sends feedback to the owner (suggestion, bug, etc...)'
+CMD_FEEDBACK_SUCCESS: 'Successfully sent your feedback'
+
+CMD_BUG_HELP: 'Reports a bug to the developer'
+
+CMD_SENDMSG_HELP: 'Sends a message to a specified channnel'
+CMD_SENDMSG_CANT_FIND_CHANNEL: 'Could not find a channel for the specified ID'
+CMD_SENDMSG_HEADER: 'dev message (answer with the bug or feedback commands)'
+CMD_SENDMSG_SUCCESS: 'Message sent successfully'
+CMD_SENDMSG_WRONG_ARG: 'Expected a channel ID'
+
+CMD_MUSIC_NO_VC: 'Not in a voice channel'
+CMD_MUSIC_CANT_LOAD_TRACK: 'Could not load the specified track'
+CMD_MUSIC_CANT_FIND_MATCHES: 'Could not find any matches for the specified track'
+CMD_MUSIC_SPOTIFY_ARTIST_TRACKS: "Spotify Artist's Top Tracks"
+CMD_MUSIC_UNSUPPORTED_FORMAT: 'The given file format is not supported'
+CMD_MUSIC_UNREADABLE_FILE: 'Could not read the given file'
+CMD_MUSIC_NO_TRACKS: 'Could not find any tracks'
+CMD_MUSIC_NO_STREAMS: 'Could not find any streams'
+CMD_MUSIC_PAGE_RESULT: "%s #%d out of %d results for `%s`\n%s"
+
+CMD_JOIN_HELP: 'Joins your voice channel'
+CMD_JOIN_SUCCESS: "Joining %s's voice channel"
+
+CMD_LEAVE_HELP: 'Leaves your voice channel'
+CMD_LEAVE_SUCCESS: "Joining %s's voice channel"
+
+CMD_PLAY_HELP: 'Plays a track/stream from youtube, from a link or from a file'
+CMD_PLAY_WRONG_ARG: 'Expected a song name, a link (url) or a file'
+
+CMD_PLAYING_HELP: 'Shows the track currently playing'
+CMD_PLAYING_NOTHING_PLAYING: 'Nothing is playing'
+
+CMD_EMPTY_HELP: 'Empties the track queue'
+CMD_EMPTY_SUCCESS: 'Emptied the track queue'
+
+CMD_PAUSE_HELP: 'Pauses the current track/stream'
+CMD_PAUSE_SUCCESS: 'Paused the current track'
+
+CMD_RESUME_HELP: 'Resumes the current track/stream'
+CMD_RESUME_SUCCESS: 'Resumed the current track'
+
+CMD_SKIP_HELP: 'Skips the current track/stream'
+CMD_SKIP_SUCCESS: 'Skipped the current track'
+
+CMD_STOP_HELP: 'Stops the current track and empties the queue'
+CMD_STOP_SUCCESS: 'Stopped the music player'
+
+CMD_LOOP_HELP: 'Loops or unloop the current track/stream'
+CMD_LOOP_ON: 'Looping the current track'
+CMD_LOOP_OFF: 'Stopped looping the current track'
+
+CMD_AUTOPLAY_HELP: 'Sets the music player in youtube autoplay mode'
+CMD_AUTOPLAY_ON: 'Autoplay enabled'
+CMD_AUTOPLAY_OFF: 'Autoplay disabled'
+
+CMD_SHUFFLE_HELP: 'Shuffles the track queue'
+CMD_SHUFFLE_SUCCESS: 'Shuffled the track queue'
+
+CMD_VOL_HELP: 'Sets the audio volume'
+CMD_VOL_SUCCESS: 'Setting the volume to %d'
+CMD_VOL_WRONG_ARG: 'Incorrect volume, expecting a number'
+
+CMD_SEEK_HELP: 'Forwards the currently playing track by the amount of seconds specified'
+CMD_SEEK_SUCCESS: 'Forwarding the current track by %ds'
+CMD_SEEK_WRONG_ARG: 'Incorrect amount of seconds, expecting a number'
+
+CMD_QUEUE_HELP: 'Displays the current track queue'
+CMD_YT_HELP: 'Searches youtube for a video'
+CMD_SC_HELP: 'Searches soundcloud for a song'
+CMD_TWITCH_HELP: 'Searches twitch for a stream'
+CMD_SPOTIFY_HELP: 'Searches spotify for a song'
+
+CMD_RADIO_HELP: 'Plays a radio stream of the specified genre'
+CMD_RADIO_UNKNOWN_GENRE: "Currently available radio genres are:\n%s"
