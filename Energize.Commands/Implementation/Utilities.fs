@@ -113,6 +113,7 @@ module Util =
     }
 
     type CodeTabObj = { language : string; files : int; linesOfCode : int; comments : int }
+    [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("codestats", "Gets code stats about Energize repository", "codestats <nothing>")>]
     let codeStats (ctx : CommandContext) = async {
         let json = awaitResult (HttpHelper.GetAsync("https://api.codetabs.com/v1/loc?github=Energizers/Energize", ctx.logger))
