@@ -6,9 +6,9 @@ namespace Energize.Essentials
 {
     public class StaticData
     {
-        public Dictionary<string, string[]> SocialActions;
-        public List<string> Tips;
-        public Dictionary<string, string> RadioSources;
+        public Dictionary<string, string[]> SocialActions { get; set; }
+        public List<string> Tips { get; set; }
+        public Dictionary<string, string> RadioSources { get; set; }
 
         public string AsciiArt = @" ______ _   _ ______ _____   _____ _____ ____________
 |  ____| \ | |  ____|  __ \ / ____|_   _|___  /  ____|

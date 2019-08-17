@@ -198,7 +198,7 @@ namespace Energize.Services.Senders
                     }
                     else
                     {
-                        await sender.MessageSender.Warning(chan, "music player", $"Could add the following Url to the queue\n{url}");
+                        await sender.MessageSender.Warning(chan, "music player", $"Could not add the following Url to the queue\n{url}");
                     }
 
                     break;

@@ -9,6 +9,7 @@ open System.Xml
 open System
 open Energize.Interfaces.Services.Senders
 open System.Net
+open Energize.Essentials.Helpers
 
 [<CommandModule("NSFW")>]
 module Nsfw =
