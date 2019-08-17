@@ -78,7 +78,7 @@ module Voice =
                 match itemType with
                 | "track" ->
                     let track = awaitResult (spotify.GetTrackAsync(id))
-                    Some ([awaitResult (music.AddTrackAsync(vc, textChan, track))])
+                    Some ([ awaitResult (music.AddTrackAsync(vc, textChan, track)) ])
                 | "playlist" ->
                     let playlist = awaitResult (spotify.GetPlaylistAsync(id))
                     let tracks = List.ofSeq(playlist.Items) |> List.map (fun spotify -> spotify :> ILavaTrack)
@@ -357,7 +357,7 @@ module Voice =
         |> Map.ofSeq
 
     [<CommandParameters(1)>]
-    [<Command("radio", "Adds a radio stream of the specified genre to the track queue", "radio <genre>")>]
+    [<Command("radio", "Plays a radio stream of the specified genre", "radio <genre>")>]
     let radio (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
             let genre = ctx.arguments.[0].ToLower().Trim()
