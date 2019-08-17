@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Energize.Essentials;
+using Energize.Essentials.Helpers;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Services.Listeners.Music.Spotify.Helpers;

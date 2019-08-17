@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Energize.Essentials
+namespace Energize.Essentials.Helpers
 {
     public class JsonHelper
     {

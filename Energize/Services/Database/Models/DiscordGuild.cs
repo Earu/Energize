@@ -11,6 +11,7 @@ namespace Energize.Services.Database.Models
         public bool ShouldDeleteInvites { get; set; }
         public bool HasHallOfShames { get; set; }
         public ulong HallOfShameID { get; set; }
+        public string Language { get; set; }
 
         public DiscordGuild() { }
 
@@ -20,6 +21,7 @@ namespace Energize.Services.Database.Models
             this.ShouldDeleteInvites = false;
             this.HasHallOfShames = false;
             this.HallOfShameID = 0;
+            this.Language = "EN";
         }
     }
 }

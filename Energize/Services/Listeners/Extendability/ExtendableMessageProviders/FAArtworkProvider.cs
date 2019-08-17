@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
+using Energize.Essentials.Helpers;
 using HtmlAgilityPack;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

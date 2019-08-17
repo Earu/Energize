@@ -121,9 +121,9 @@ namespace Energize.Services
                 eventInfo.EventHandlerType,
                 Expression.Condition(
                     Expression.And(
-                        Expression.Field(
+                        Expression.Property(
                                 Expression.Property(null, typeof(Config).GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)),
-                                typeof(Config).GetField("Maintenance", BindingFlags.Public | BindingFlags.Instance)
+                                typeof(Config).GetProperty("Maintenance", BindingFlags.Public | BindingFlags.Instance)
                             ),
                         Expression.Constant(!maintenanceImpl)
                     ),

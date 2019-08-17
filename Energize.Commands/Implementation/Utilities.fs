@@ -16,6 +16,7 @@ open Energize.Interfaces.Services.Listeners
 open Energize.Commands.UserHelper
 open Discord.WebSocket
 open Energize.Commands.ImageUrlProvider
+open Energize.Essentials.Helpers
 
 [<CommandModule("Utilities")>]
 module Util =
