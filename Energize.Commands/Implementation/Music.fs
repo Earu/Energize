@@ -13,6 +13,7 @@ open Energize.Interfaces.Services.Senders
 open System.Web
 open System
 open SpotifyAPI.Web.Enums
+open Energize.Essentials.Helpers
 
 [<CommandModule("Music")>]
 module Voice =

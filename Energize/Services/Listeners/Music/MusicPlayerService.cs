@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
+using Energize.Essentials.Helpers;
 using Energize.Essentials.MessageConstructs;
 using Energize.Essentials.TrackTypes;
 using Energize.Interfaces.Services.Database;

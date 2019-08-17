@@ -1,93 +1,95 @@
-﻿using System.Collections.Generic;
+﻿using Energize.Essentials.Helpers;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
 namespace Energize.Essentials
 {
-    public struct DiscordConfig
+    public class DiscordConfig
     {
-        public string Token;
-        public ulong BotID;
-        public string Prefix;
-        public char Separator;
-        public ulong OwnerID;
-        public ulong FeedbackChannelID;
-        public ulong BugReportChannelID;
-        public ulong UpdateChannelID;
-        public string BotListToken;
-        public string BotsToken;
+        public string Token { get; set; }
+        public ulong BotID { get; set; }
+        public string Prefix { get; set; }
+        public char Separator { get; set; }
+        public ulong OwnerID { get; set; }
+        public ulong FeedbackChannelID { get; set; }
+        public ulong BugReportChannelID { get; set; }
+        public ulong UpdateChannelID { get; set; }
+        public string BotListToken { get; set; }
+        public string BotsToken { get; set; }
 
         [YamlIgnore]
         public Blacklist Blacklist { get; set; }
     }
 
-    public struct LavalinkConfig
+    public class LavalinkConfig
     {
-        public string Host;
-        public int Port;
-        public string Password;
+        public string Host { get; set; }
+        public int Port { get; set; }
+        public string Password { get; set; }
     }
 
-    public struct OctovisorConfig
+    public class OctovisorConfig
     {
-        public string Address;
-        public int Port;
-        public string Token;
-        public string ProcessName;
+        public string Address { get; set; }
+        public int Port { get; set; }
+        public string Token { get; set; }
+        public string ProcessName { get; set; }
     }
 
-    public struct SpotifyConfig
+    public class SpotifyConfig
     {
-        public string ClientID;
-        public string ClientSecret;
-        public bool LazyLoad;
-        public int ConcurrentPoolSize;
-        public int OperationsPerThread;
+        public string ClientID { get; set; }
+        public string ClientSecret { get; set; }
+        public bool LazyLoad { get; set; }
+        public int ConcurrentPoolSize { get; set; }
+        public int OperationsPerThread { get; set; }
     }
 
-    public struct MailConfig
+    public class MailConfig
     {
-        public string ServerAddress;
-        public int ServerPort;
-        public string MailAddress;
-        public string MailPassword;
-        public string DevMailAddress;
+        public string ServerAddress { get; set; }
+        public int ServerPort { get; set; }
+        public string MailAddress { get; set; }
+        public string MailPassword { get; set; }
+        public string DevMailAddress { get; set; }
     }
 
-    public struct KeysConfig
+    public class KeysConfig
     {
-        public string TwitchKey;
-        public string YoutubeKey;
+        public string TwitchKey { get; set; }
+        public string YoutubeKey { get; set; }
     }
 
-    public struct URIConfig
+    public class URIConfig
     {
-        public string TwitchURL;
-        public string GitHubURL;
-        public string InviteURL;
-        public string WebsiteURL;
-        public string DiscordURL;
+        public string TwitchURL { get; set; }
+        public string GitHubURL { get; set; }
+        public string InviteURL { get; set; }
+        public string WebsiteURL { get; set; }
+        public string DiscordURL { get; set; }
     }
 
-    public struct Blacklist
+    public class Blacklist
     {
-        public List<ulong> IDs;
+        public List<ulong> IDs { get; set; }
     }
 
     public class Config
     {
-        public DiscordConfig Discord;
-        public LavalinkConfig Lavalink;
-        public OctovisorConfig Octovisor;
-        public SpotifyConfig Spotify;
-        public MailConfig Mail;
-        public KeysConfig Keys;
-        public URIConfig URIs;
-        public string DBConnectionString;
+        public DiscordConfig Discord { get; set; }
+        public LavalinkConfig Lavalink { get; set; }
+        public OctovisorConfig Octovisor { get; set; }
+        public SpotifyConfig Spotify { get; set; }
+        public MailConfig Mail { get; set; }
+        public KeysConfig Keys { get; set; }
+        public URIConfig URIs { get; set; }
+        public string DBConnectionString { get; set; }
 
         [YamlIgnore]
-        public bool Maintenance;
+        public bool Maintenance { get; set; }
 
 #if DEBUG
         private const string ConfigPath = "Settings/config_debug.yaml";
@@ -98,18 +100,20 @@ namespace Energize.Essentials
 
         public async Task SaveAsync()
         {
-            Serializer serializer = new Serializer();
-            string yaml = serializer.Serialize(this);
-            await File.WriteAllTextAsync(ConfigPath, yaml);
+            if (YamlHelper.TrySerialize(this, out string yaml))
+                await File.WriteAllTextAsync(ConfigPath, yaml);
         }
 
         private static T DeserializeYaml<T>(string path)
         {
-            string yaml = File.ReadAllText(path);
-            Deserializer deserializer = new Deserializer();
-            T obj = deserializer.Deserialize<T>(yaml);
+            if (File.Exists(path))
+            {
+                string yaml = File.ReadAllText(path);
+                if (YamlHelper.TryDeserialize(yaml, out T value))
+                    return value;
+            }
 
-            return obj;
+            throw new SerializationException($"Could not deserialize yaml file: \'{path}\'");
         }
 
         private static Config Initialize()

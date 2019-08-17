@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Energize.Essentials.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -103,6 +104,12 @@ namespace Energize.Essentials
 
         public static bool IsPlayableAttachment(this IAttachment attachment)
             => attachment.Filename.IsPlayableUrl();
+
+        public static string Translate(this string input, string countryCode = "EN", params object[] values)
+        {
+            input = LanguageData.Instance.GetPhrase(input, countryCode);
+            return values.Length > 0 ? string.Format(input, values) : input;
+        }
 
         public static bool FuzzyMatch(this string stringToSearch, string pattern, out int outScore)
         {
