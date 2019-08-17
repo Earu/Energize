@@ -112,6 +112,35 @@ module Util =
                 [ ctx.sendWarn None (sprintf "Could not send a mail to `%s`: %s" adr ex.Message)]
     }
 
+    type CodeTabObj = { language : string; files : int; linesOfCode : int; comments : int }
+    [<Command("codestats", "Gets code stats about Energize repository", "codestats <nothing>")>]
+    let codeStats (ctx : CommandContext) = async {
+        let json = awaitResult (HttpHelper.GetAsync("https://api.codetabs.com/v1/loc?github=Energizers/Energize", ctx.logger))
+        let mutable results : CodeTabObj list = [] 
+        return
+            if (JsonHelper.TryDeserialize(json, ctx.logger, &results)) then
+                match results |> List.tryFind (fun obj -> obj.language.Equals("Total")) with
+                | Some result ->
+                    let fields = [
+                        ctx.embedField "Files" result.files true
+                        ctx.embedField "Comments" result.comments true
+                        ctx.embedField "Lines of Code" result.linesOfCode true
+                    ]
+
+                    let builder = EmbedBuilder()
+                    builder
+                        .WithFields(fields)
+                        .WithAuthorNickname(ctx.message)
+                        .WithColorType(EmbedColorType.Good)
+                        .WithFooter(ctx.commandName)
+                        |> ignore
+                    [ ctx.sendEmbed (builder.Build())]
+                | None -> 
+                    [ ctx.sendWarn None "There was a problem processing the result" ]
+            else
+                [ ctx.sendWarn None "There was a problem processing the result" ]
+    }
+
     [<CommandConditions(CommandCondition.DevOnly)>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {
