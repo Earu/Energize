@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Energize.Essentials
@@ -125,20 +124,5 @@ namespace Energize.Essentials
 
         public void Notify(string msg)
             => Console.WriteLine($"\n\t---------\\\\\\\\ {msg} ////---------\n");
-
-        public static void Debug(string msg)
-        {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("Debug");
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(" >> ");
-            Console.WriteLine(msg);
-        }
-
-        public static void Debug(List<string> msgs)
-        {
-            foreach (string msg in msgs)
-                Debug(msg);
-        }
     }
 }
