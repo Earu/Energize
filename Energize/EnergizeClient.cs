@@ -183,17 +183,24 @@ namespace Energize
 
         private async void OnUpdateTimer(object _)
         {
-            long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
-            GC.Collect();
+            try
+            {
+                long mb = Process.GetCurrentProcess().WorkingSet64 / 1024L / 1024L; //b to mb
+                GC.Collect();
 
-            (bool success, int servercount) = await this.UpdateBotWebsitesAsync();
-            string log = success
-                ? $"Collected {mb}MB of garbage, updated server count ({servercount})"
-                : $"Collected {mb}MB of garbage, did NOT update server count, API might be down";
-            this.Logger.Nice("Update", ConsoleColor.Gray, log);
+                (bool success, int servercount) = await this.UpdateBotWebsitesAsync();
+                string log = success
+                    ? $"Collected {mb}MB of garbage, updated server count ({servercount})"
+                    : $"Collected {mb}MB of garbage, did NOT update server count, API might be down";
+                this.Logger.Nice("Update", ConsoleColor.Gray, log);
 
-            await this.UpdateActivityAsync();
-            await this.NotifyCaughtExceptionsAsync();
+                await this.UpdateActivityAsync();
+                await this.NotifyCaughtExceptionsAsync();
+            }
+            catch(Exception ex)
+            {
+                this.Logger.Danger(ex);
+            }
         }
 
         private Task TryLoginAsync(Func<TokenType, string, bool, Task> loginFunc, TokenType tokenType, string token, int delay = 30, int times = 0)
