@@ -60,10 +60,6 @@ namespace Energize.Services.Listeners
 
         [DiscordEvent("MessageUpdated", true)]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> cache, SocketMessage msg, ISocketMessageChannel chan)
-        {
-            IMessage oldMsg = await cache.GetOrDownloadAsync();
-            if (oldMsg != null && !oldMsg.Content.Equals(msg.Content))
-                Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
-        }
+            => Commands.CommandHandler.HandleMessageUpdated(cache, msg, chan);
     }
 }
