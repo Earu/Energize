@@ -599,9 +599,23 @@ module CommandHandler =
         | Some _ -> ()
         | None -> printfn "COMMAND HANDLER WAS NOT INITIALIZED ??!"
 
-    let HandleMessageUpdated _ (msg : SocketMessage) _ =
+    let private canMsgUpdate (cache : Cacheable<IMessage, uint64>) (msg : SocketMessage) (chan : ISocketMessageChannel) =
+        match chan with
+        | :? SocketGuildChannel as guildChan ->
+            let botUser = guildChan.Guild.CurrentUser
+            if botUser.GetPermissions(guildChan).Has(ChannelPermission.ReadMessageHistory) then
+                let oldMsg = awaitResult (cache.GetOrDownloadAsync())
+                match oldMsg with
+                | null -> false
+                | _ when not (oldMsg.Content.Equals(msg.Content)) -> true
+                | _ -> false
+            else
+                false
+        | _ -> true
+
+    let HandleMessageUpdated (cache : Cacheable<IMessage, uint64>) (msg : SocketMessage) (chan : ISocketMessageChannel) =
         match handlerState with
-        | Some _ when not (isBlacklisted msg.Author.Id) ->
+        | Some _ when not (isBlacklisted msg.Author.Id) && canMsgUpdate cache msg chan ->
             let diff = DateTime.Now.ToUniversalTime() - msg.Timestamp.DateTime
             if diff.TotalHours < 1.0 then
                 deleteCmdMsgs msg.Id
