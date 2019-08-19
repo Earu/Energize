@@ -27,7 +27,8 @@ namespace Energize.Services.Listeners
             this.ServiceManager = client.ServiceManager;
         }
 
-        public Dictionary<string, Commands.Command.Command> RegisteredCommands => Commands.CommandHandler.GetRegisteredCommands(null); 
+        public Dictionary<string, Commands.Command.Command> RegisteredCommands 
+            => Commands.CommandHandler.GetRegisteredCommands(null); 
 
         public override void Initialize()
             => Commands.CommandHandler.Initialize(this.Client, this.RestClient, this.Logger, this.MessageSender, this.ServiceManager);
