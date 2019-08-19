@@ -10,7 +10,6 @@ open Discord
 open System.Threading.Tasks
 open System.Text
 open Microsoft.Data.Sqlite
-open System.IO
 open Energize.Interfaces.Services.Development
 open Energize.Interfaces.Services.Listeners
 open Energize.Commands.UserHelper
@@ -48,7 +47,7 @@ module Util =
     let timeOut (ctx : CommandContext) = async {
         let duration = int ctx.input
         await (Task.Delay(duration * 1000))
-        return [ ctx.sendOK (Some "Time Out") (sprintf "Timed out during `%d`s" duration) ]
+        return [ ctx.sendOK (Some "timeout") (sprintf "Timed out during `%d`s" duration) ]
     }
 
     [<CommandParameters(1)>]

@@ -78,6 +78,7 @@ MUSIC_WEEKLY_UPDATE: 'Weekly update on-going, disconnecting'
 MUSIC_LAVALINK_RECONNECTED: 'Reconnected to lavalink remote server'
 MUSIC_NETWORK_ISSUES: 'Network issues detected, disconnecting to prevent further bugs'
 MUSIC_MAINTENANCE: 'A maintenance started, disconnecting'
+MUSIC_RESTART: 'Bot is restarting, disconnecting'
 
 CMD_BUG_REPORT: 'Something went wrong when using `%s` a report has been sent.\nIf you wish to contact the developer use the `bug` or `feedback` commands, do not forget to mention your case id!'
 CMD_BUG_REPORT_HEADER: '@File: %s | Method: %s | Line: %d'
@@ -177,3 +178,132 @@ CMD_SPOTIFY_HELP: 'Searches spotify for a song'
 
 CMD_RADIO_HELP: 'Plays a radio stream of the specified genre'
 CMD_RADIO_UNKNOWN_GENRE: "Currently available radio genres are:\n%s"
+
+CMD_OP_HELP: 'Makes a user able or unable to use admin commands'
+CMD_OP_PROMOTE: 'User %s was succesfully promoted'
+CMD_OP_DEMOTE: 'User %s was succesfully demoted'
+CMD_OP_WRONG_ARG: 'Incorrect value as second argument (Needs to be 0 or 1)'
+CMD_OP_NO_RESULT: 'Could not find any user for your input'
+
+CMD_ISOP_HELP: 'Shows if a user is an admin'
+CMD_ISOP_SUCCESS: '%s is %san administrator'
+CMD_ISOP_NO_RESULT: 'Could not find any user for your input'
+
+CMD_ADMIN_CLEAR: 'Cleared %d messages among %d checked messages'
+CMD_ADMIN_USER_CLEAR_BAD_ARG: 'Expected a username as 3rd argument'
+CMD_ADMIN_CLEAR_NO_RESULT: 'No user could be found for your input'
+
+CMD_CLEAR_HELP: 'Clear a specified amount of messages in the current channel'
+CMD_CLEAR_UNKNOWN_TYPE: "Unknown clear type, available types are:\n%s"
+
+CMD_DELINVS_HELP: 'Deletes messages containing discord invites (toggleable)'
+CMD_DELINVS_ON: 'Invite links will now be automatically deleted'
+CMD_DELINVS_OFF: 'Invite links will now be permitted'
+
+CMD_NSFW_CHECK_ON: '**CHECK ON %s**'
+CMD_NSFW_NO_RESULT: 'Nothing was found'
+
+CMD_E621_HELP: 'Searches e621'
+CMD_E621_NO_RESULT: 'Nothing was found'
+CMD_E621_RESULT_ERROR: 'There was a problem processing the result'
+
+CMD_FURB_HELP: 'Searches furrybooru'
+CMD_R34_HELP: 'Searches r34'
+CMD_GELB_HELP: 'Searches gelbooru'
+CMD_XBOORU_HELP: 'Searches xbooru'
+CMD_REALB_HELP: 'Searches realbooru'
+CMD_SAFEB_HELP: 'Searches safebooru'
+
+CMD_NL_HELP: 'Searches nekos.life with a tag'
+CMD_NL_RESULT_ERROR: 'There was a problem processing the result'
+CMD_NL_UNKNOWN_TAG: 'Valid tags are: %s'
+
+CMD_ASS_HELP: 'Gets a random ass picture'
+CMD_ASS_NO_RESULT: 'Nothing was found'
+CMD_ASS_RESULT_ERROR: 'There was a problem processing the result'
+
+CMD_ACT_HELP: 'Social interaction with up to 3 users'
+CMD_ACT_NO_RESULT: 'Could not find any user(s) to interact with for your input'
+CMD_ACT_UNKNOWN_ACTION: "Actions available are:\n`%s`"
+
+CMD_SOMEONE_HELP: 'Mentions a random user of the server and adds your text afterward'
+CMD_SOMEONE_RESULT_ERROR: 'There was a problem getting a random user'
+
+CMD_LOVE_HELP: 'Gets how compatible two users are'
+CMD_LOVE_1: 'Ouch! Not gonna work it seems!'
+CMD_LOVE_2: 'Good friends!'
+CMD_LOVE_3: 'Friends ... with benefits?'
+CMD_LOVE_4: 'A good couple!'
+CMD_LOVE_5: 'Deeply matching souls.'
+CMD_LOVE_6: 'The ultimate couple.'
+CMD_LOVE_NO_RESULT: 'Could not find any user(s) for your input'
+
+CMD_SETDESC_HELP: 'Sets your description'
+CMD_SETDESC_SUCCESS: 'Description successfully changed'
+
+CMD_DESC_HELP: 'Gets a user description'
+CMD_DESC_SUCCESS: '%s description is: `%s`'
+CMD_DESC_NO_RESULT: 'Could not find any user for your input'
+
+CMD_VOTE_HELP: 'Creates a 5 minutes vote with up to 9 choices'
+
+CMD_FAME_HELP: 'Adds a message to the hall of fames'
+CMD_FAME_NO_RESULT: 'Could not find any message for your input'
+CMD_FAME_WRONG_ARG: 'This command is expecting a number (message id)'
+CMD_FAME_ERROR: 'There was an error when posting the message into hall of fames'
+CMD_FAME_SUCCESS: 'Message successfully added to hall of fames'
+
+CMD_PING_HELP: 'Pings the bot'
+CMD_PING_SUCCESS: "⏰ Discord: %dms\n🕐 Bot: %dms"
+
+CMD_MEM_HELP: 'Gets the current memory usage'
+CMD_MEM_SUCCESS: 'Currently using %dMB of memory'
+
+CMD_UPTIME_HELP: 'Gets the current uptime'
+CMD_UPTIME_SUCCESS: 'The current instance has been up for '
+
+CMD_TO_HELP: 'Timing out test'
+CMD_TO_SUCCESS: 'Timed out during `%d`s'
+
+CMD_SQL_HELP: 'Runs an sql statement in the database'
+CMD_SQL_NO_DATA: 'No data was gathered for the specified statement'
+
+CMD_ERR_HELP: 'Throws an error for testing'
+CMD_EV_HELP: 'Evals a C# string'
+
+CMD_MAIL_HELP: 'Sends a mail to the given mail address with the given content and subject'
+CMD_MAIL_SUCCESS: 'Sent a mail to `%s` successfully'
+CMD_MAIL_FAILURE: 'Could not send a mail to `%s`: %s'
+
+CMD_CODESTATS_HELP: 'Gets code stats about Energize repository'
+CMD_CODESTATS_RESULT_ERROR: 'There was a problem processing the result'
+
+CMD_RESTART_HELP: 'Restarts the bot'
+CMD_RESTART_SUCCESS: 'Restarting...'
+
+CMD_LAVALINK_HELP: 'Gets the lavalink server stats'
+CMD_LAVALINK_NO_STATS: 'Stats not available yet'
+
+CMD_AVATAR_HELP: 'Gets the avatar of a user'
+CMD_AVATAR_NO_RESULT: 'Could not find any user for your input'
+
+CMD_ICON_HELP: 'Gets the avatar of the guild'
+
+CMD_E_HELP: 'Gets the picture of a guild emoji'
+CMD_E_WRONG_ARG: 'A guild emoji is expected as parameter'
+
+CMD_LASTCHANGES_HELP: 'Gets the last changes published on GitHub'
+CMD_LASTCHANGES_NO_RESULT: 'Could not find any commits'
+CMD_LASTCHANGES_RESULT_ERROR: 'There was a problem fetching last changes'
+
+CMD_SNIPE_HELP: 'Snipes the last deleted message in the channel'
+CMD_SNIPE_FROM: 'message sniped from '
+CMD_SNIPE_NO_RESULT: 'There was nothing to snipe'
+
+CMD_SERVER_HELP: 'Gets information about the server'
+CMD_INFO_HELP: 'Gets information about the bot'
+CMD_DOCS_HELP: 'Gets the documentation link'
+CMD_INVITE_HELP: 'Gets the bot invite links'
+
+CMD_USER_HELP: 'Gets information about a specific user'
+CMD_USER_NO_RESULT: 'No user could be found for your input'
