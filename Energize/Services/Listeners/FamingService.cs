@@ -115,8 +115,8 @@ namespace Energize.Services.Listeners
         private static bool IsValidReaction(ISocketMessageChannel chan, SocketReaction reaction, ulong authorId)
         {
             if (reaction.Emote?.Name == null) return false;
-            if (!reaction.Emote.Name.Equals(StarEmote.Name) && !reaction.Emote.Name.Equals(Star2Emote)) return false;
-            if (reaction.UserId == Config.Instance.Discord.BotID /*|| reaction.UserId == authorId*/) return false;
+            if (!reaction.Emote.Name.Equals(StarEmote.Name) && !reaction.Emote.Name.Equals(Star2Emote.Name)) return false;
+            if (reaction.UserId == Config.Instance.Discord.BotID || reaction.UserId == authorId) return false;
             if (!(chan is IGuildChannel) || reaction.User.GetValueOrDefault() == null) return false;
             if (reaction.User.Value.IsBot || reaction.User.Value.IsWebhook) return false;
 
