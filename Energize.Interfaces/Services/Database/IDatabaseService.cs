@@ -4,7 +4,7 @@ namespace Energize.Interfaces.Services.Database
 {
     public interface IDatabaseService : IServiceImplementation
     {
-        Task<IDatabaseContext> GetContext();
+        Task<IDatabaseContext> GetContextAsync();
 
         IDatabaseContext CreateContext();
     }

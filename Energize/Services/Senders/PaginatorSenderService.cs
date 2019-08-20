@@ -68,7 +68,7 @@ namespace Energize.Services.Senders
             });
         }
 
-        public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
+        public async Task<IUserMessage> SendPaginatorAsync<T>(IMessage msg, string head, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             T first = data.FirstOrDefault();
             string display = first == default(T) ? string.Empty : displayCallback(first);
@@ -80,7 +80,7 @@ namespace Energize.Services.Senders
                 .WithFooter(head);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback, embed);
-            IUserMessage posted = await this.MessageSender.Send(msg, embed);
+            IUserMessage posted = await this.MessageSender.SendAsync(msg, embed);
             if (posted == null) return null;
 
             paginator.Message = posted;
@@ -90,7 +90,7 @@ namespace Energize.Services.Senders
             return posted;
         }
 
-        public async Task<IUserMessage> SendPaginator<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displayCallback) where T : class
+        public async Task<IUserMessage> SendPaginatorAsync<T>(IMessage msg, string head, IEnumerable<T> data, Action<T, EmbedBuilder> displayCallback) where T : class
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
@@ -103,7 +103,7 @@ namespace Energize.Services.Senders
                 displayCallback(first, builder);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback, embed);
-            IUserMessage posted = await this.MessageSender.Send(msg, embed);
+            IUserMessage posted = await this.MessageSender.SendAsync(msg, embed);
             if (posted == null) return null;
 
             paginator.Message = posted;
@@ -113,11 +113,11 @@ namespace Energize.Services.Senders
             return posted;
         }
 
-        public async Task<IUserMessage> SendPaginatorRaw<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
+        public async Task<IUserMessage> SendPaginatorRawAsync<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
             string display = data.Any() ? displayCallback(data.First()) : string.Empty;
-            IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
+            IUserMessage posted = await this.MessageSender.SendRawAsync(msg, display);
             if (posted == null) return null;
             
             paginator.Message = posted;
@@ -127,11 +127,11 @@ namespace Energize.Services.Senders
             return posted;
         }
 
-        public async Task<IUserMessage> SendPlayerPaginator<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
+        public async Task<IUserMessage> SendPlayerPaginatorAsync<T>(IMessage msg, IEnumerable<T> data, Func<T, string> displayCallback) where T : class
         {
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback);
             string display = data.Any() ? displayCallback(data.First()) : string.Empty;
-            IUserMessage posted = await this.MessageSender.SendRaw(msg, display);
+            IUserMessage posted = await this.MessageSender.SendRawAsync(msg, display);
             if (posted == null) return null;
             
             paginator.Message = posted;
@@ -151,7 +151,7 @@ namespace Energize.Services.Senders
                 if (sender.Paginators.TryRemove(cache.Value.Id, out Paginator<object> _))
                     await chan.DeleteMessageAsync(paginator.Message);
             },
-            ["⏯"] = OnPlayReaction
+            ["⏯"] = OnPlayReactionAsync
         };
 
         private bool IsValidEmote(SocketReaction reaction)
@@ -161,7 +161,7 @@ namespace Energize.Services.Senders
             return ReactionCallbacks.ContainsKey(reaction.Emote.Name);
         }
 
-        private async Task OnReaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        private async Task OnReactionAsync(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!cache.HasValue || !this.IsValidEmote(reaction)) return;
             if (!this.Paginators.TryGetValue(cache.Value.Id, out Paginator<object> paginator)) return;
@@ -170,7 +170,7 @@ namespace Energize.Services.Senders
             await ReactionCallbacks[reaction.Emote.Name](this, paginator, cache, chan, reaction);
         }
 
-        private static async Task OnPlayReaction(PaginatorSenderService sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        private static async Task OnPlayReactionAsync(PaginatorSenderService sender, Paginator<object> paginator, Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!(chan is IGuildChannel) || reaction.User.Value == null) return;
             IGuildUser guser = (IGuildUser)reaction.User.Value;
@@ -198,7 +198,7 @@ namespace Energize.Services.Senders
                     }
                     else
                     {
-                        await sender.MessageSender.Warning(chan, "music player", $"Could not add the following Url to the queue\n{url}");
+                        await sender.MessageSender.SendWarningAsync(chan, "music player", $"Could not add the following Url to the queue\n{url}");
                     }
 
                     break;
@@ -207,10 +207,10 @@ namespace Energize.Services.Senders
 
         [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
+            => await this.OnReactionAsync(cache, chan, reaction);
 
         [DiscordEvent("ReactionRemoved")]
         public async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
-            => await this.OnReaction(cache, chan, reaction);
+            => await this.OnReactionAsync(cache, chan, reaction);
     }
 }

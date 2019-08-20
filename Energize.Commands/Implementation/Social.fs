@@ -12,6 +12,7 @@ open Energize.Interfaces.Services.Senders
 open Discord.WebSocket
 open Energize.Commands
 open Discord.Rest
+open Energize.Interfaces.Services.Listeners
 
 [<CommandModule("Social")>]
 module Social =
@@ -19,9 +20,9 @@ module Social =
 
     let registerAction (ctx : CommandContext) (users : IUser list) (action : string) =
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-        let dbctx = awaitResult (db.GetContext())
+        let dbctx = awaitResult (db.GetContextAsync())
         for user in users do
-            let dbuser = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
+            let dbuser = awaitResult (dbctx.Instance.GetOrCreateUserStatsAsync(user.Id))
             match action with
             | "hug" -> dbuser.HuggedCount <- dbuser.HuggedCount + 1UL
             | "kiss" -> dbuser.KissedCount <- dbuser.KissedCount + 1UL
@@ -110,8 +111,8 @@ module Social =
     [<Command("setdesc", "Sets your description", "setdesc <description>")>]
     let setDesc (ctx : CommandContext) = async {
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-        let dbctx = awaitResult (db.GetContext())
-        let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(ctx.message.Author.Id))
+        let dbctx = awaitResult (db.GetContextAsync())
+        let dbuser = awaitResult (dbctx.Instance.GetOrCreateUserAsync(ctx.message.Author.Id))
         dbuser.Description <- ctx.input
         dbctx.Dispose()
         return [ ctx.sendOK None "Description successfully changed" ]
@@ -124,8 +125,8 @@ module Social =
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
                 let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-                let dbctx = awaitResult (db.GetContext())
-                let dbuser = awaitResult (dbctx.Instance.GetOrCreateUser(user.Id))
+                let dbctx = awaitResult (db.GetContextAsync())
+                let dbuser = awaitResult (dbctx.Instance.GetOrCreateUserAsync(user.Id))
                 dbctx.Dispose()
                 [ ctx.sendOK None (sprintf "%s description is: `%s`" user.Mention dbuser.Description) ]
             | None ->
@@ -139,8 +140,8 @@ module Social =
             match findUser ctx ctx.arguments.[0] true with
             | Some user ->
                 let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-                let dbctx = awaitResult (db.GetContext())
-                let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStats(user.Id))
+                let dbctx = awaitResult (db.GetContextAsync())
+                let dbstats = awaitResult (dbctx.Instance.GetOrCreateUserStatsAsync(user.Id))
                 let builder = EmbedBuilder()
                 let fields = [
                    ctx.embedField "Hugs" dbstats.HuggedCount true
@@ -175,80 +176,29 @@ module Social =
     let vote (ctx : CommandContext) = async {
         let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
         let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
-        return [ awaitResult (votes.SendVote(ctx.message, ctx.arguments.[0], choices)) ]
+        return [ awaitResult (votes.SendVoteAsync(ctx.message, ctx.arguments.[0], choices)) ]
     }
 
-    let private createHOFChannel (ctx : CommandContext) =
-        let name = "⭐hall-of-fames"
-        let desc = sprintf "Where %s will post unique messages" (ctx.client.CurrentUser.ToString())
-        let guser = ctx.message.Author :?> SocketGuildUser
-        let created = awaitResult (guser.Guild.CreateTextChannelAsync(name))
-        let everyoneperms = OverwritePermissions(mentionEveryone = PermValue.Deny, sendMessages = PermValue.Deny, sendTTSMessages = PermValue.Deny)
-        let botperms = OverwritePermissions(sendMessages = PermValue.Allow, addReactions = PermValue.Allow)
-        await (created.AddPermissionOverwriteAsync(guser.Guild.EveryoneRole, everyoneperms))
-        await (created.AddPermissionOverwriteAsync(ctx.client.CurrentUser, botperms))
-        await (created.ModifyAsync(Action<TextChannelProperties>(fun prop -> prop.Topic <- Optional(desc))))
-        created :> ITextChannel
-
-    let private getOrCreateHOFChannel (ctx : CommandContext) =
-        let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-        let dbctx = awaitResult (db.GetContext())
-        let guild = (ctx.message.Author :?> SocketGuildUser).Guild :> IGuild
-        let dbguild = awaitResult (dbctx.Instance.GetOrCreateGuild(guild.Id))
-        let chan =
-            if dbguild.HasHallOfShames then
-                Some ((awaitResult (guild.GetChannelAsync(dbguild.HallOfShameID))) :?> ITextChannel)
-            else
-                let c = createHOFChannel ctx
-                dbguild.HallOfShameID <- c.Id
-                dbguild.HasHallOfShames <- true
-                Some c
-
-        dbctx.Dispose()
-        chan
-
-    let private trySendFameMsg (ctx : CommandContext) (chan : ITextChannel option) (msg : IMessage) =
-        let builder = EmbedBuilder()
-        builder
-            .WithAuthor(msg.Author)
-            .WithLimitedDescription(msg.Content)
-            .WithFooter("#" + msg.Channel.Name)
-            .WithTimestamp(msg.CreatedAt)
-            .WithColorType(EmbedColorType.Normal)
-            |> ignore
-        match ImageUrlProvider.getLastImgUrl msg with
-        | Some url -> builder.WithImageUrl(url) |> ignore
-        | None -> ()
-
-        match chan.Value with
-        | :? SocketChannel as chan ->
-            Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
-        | :? RestChannel as chan ->
-            Some (awaitResult (ctx.messageSender.Send(chan, builder.Build())))
-        | _ -> None
-
-    [<CommandParameters(1)>]
-    [<CommandPermissions(ChannelPermission.ManageChannels)>]
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
-    [<Command("fame", "Adds a message to the hall of fames", "fame <messageid>")>]
+    [<Command("fame", "Toggles on or off the starboard", "fame <nothing>")>]
     let fame (ctx : CommandContext) = async {
-        let chan = getOrCreateHOFChannel ctx
-        let msgId = ref 0UL
-        return
-            if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
-                let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
-                match msg |> Option.ofObj with
-                | None ->
-                    [ ctx.sendWarn None "Could not find any message for your input" ]
-                | Some msg ->
-                    match trySendFameMsg ctx chan msg with
-                    | None ->
-                        [ ctx.sendWarn None "There was an error when posting the message into hall of fames" ]
-                    | Some posted ->
-                        match posted |> Option.ofObj with
-                        | None -> ()
-                        | Some posted -> await (posted.AddReactionAsync(Emoji("🌟")))
-                        [ ctx.sendOK None "Message successfully added to hall of fames" ]
+        let fame = ctx.serviceManager.GetService<IFamingService>("Fame")
+        let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
+        let dbctx = awaitResult (db.GetContextAsync())
+        let guild = (ctx.message.Channel :?> IGuildChannel).Guild
+        let dbGuild = awaitResult (dbctx.Instance.GetOrCreateGuildAsync(guild.Id))
+        let msgs =
+            if dbGuild.HasHallOfShames then
+                await (fame.RemoveFameChannelAsync(dbGuild, ctx.message))
+                [ ctx.sendOK None "Successfully disabled and removed the fame channel" ]
             else
-                [ ctx.sendWarn None "This command is expecting a number (message id)" ]
+                let chan = awaitResult (fame.CreateAndSaveFameChannelAsync(dbGuild, ctx.message))
+                match chan |> Option.ofObj with
+                | None -> 
+                    [ ctx.sendWarn None "There was a problem creating the fame channel" ]
+                | Some _ -> 
+                    [ ctx.sendOK None "Successfully enabled and created the fame channel" ]
+        dbctx.Dispose()
+
+        return msgs
     }

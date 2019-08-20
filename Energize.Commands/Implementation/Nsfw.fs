@@ -38,7 +38,7 @@ module Nsfw =
                     [ ctx.sendWarn None "Nothing was found" ]
                 else
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                    [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
+                    [ awaitResult (paginator.SendPaginatorAsync(ctx.message, ctx.commandName, e621Objs, Action<E621Obj, EmbedBuilder>(fun obj builder ->
                         buildNsfwEmbed builder ctx obj.sample_url (sprintf "https://e621.net/post/show/%s/" obj.id)
                     ))) ]
             else
@@ -83,7 +83,7 @@ module Nsfw =
             match result with
             | Some results ->
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, results, Action<(string * string), EmbedBuilder>(fun (url, page) builder ->
+                [ awaitResult (paginator.SendPaginatorAsync(ctx.message, ctx.commandName, results, Action<(string * string), EmbedBuilder>(fun (url, page) builder ->
                      buildNsfwEmbed builder ctx url page
                 ))) ]
             | None ->

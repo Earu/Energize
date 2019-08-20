@@ -7,13 +7,13 @@ namespace Energize.Interfaces.Services.Database
 {
     public interface IDatabase
     {
-        Task<IDiscordGuild> GetOrCreateGuild(ulong id);
+        Task<IDiscordGuild> GetOrCreateGuildAsync(ulong id);
 
-        Task<IDiscordUserStats> GetOrCreateUserStats(ulong id);
+        Task<IDiscordUserStats> GetOrCreateUserStatsAsync(ulong id);
 
-        Task<IDiscordUser> GetOrCreateUser(ulong id);
+        Task<IDiscordUser> GetOrCreateUserAsync(ulong id);
 
-        Task SaveYoutubeVideoIds(IEnumerable<IYoutubeVideoID> ytVideoIds);
+        Task SaveYoutubeVideoIdsAsync(IEnumerable<IYoutubeVideoID> ytVideoIds);
 
         Task<IYoutubeVideoID> GetRandomVideoIdAsync();
 

@@ -177,7 +177,7 @@ namespace Energize
                     .WithColorType(EmbedColorType.Warning)
                     .WithFooter("event handler error");
 
-                await this.MessageSender.Send(chan, builder.Build());
+                await this.MessageSender.SendAsync(chan, builder.Build());
             }
         }
 

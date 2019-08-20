@@ -44,7 +44,7 @@ namespace Energize.Services.Development
             if (!this.IsIdListed(chan.Id))
                 this.ChannelIds.Add(chan.Id);
 
-            await this.MessageSender.Warning(chan, "restart", message);
+            await this.MessageSender.SendWarningAsync(chan, "restart", message);
         }
 
         public async Task RestartAsync()
@@ -77,7 +77,7 @@ namespace Energize.Services.Development
                 this.Logger.Nice("Restart", ConsoleColor.Yellow, $"Warning channel \'{id}\' that restart is finished");
                 SocketChannel chan = this.DiscordClient.GetChannel(id);
                 if (chan != null)
-                    await this.MessageSender.Good(chan, "restart", "Done restarting");
+                    await this.MessageSender.SendGoodAsync(chan, "restart", "Done restarting");
             }
         }
     }
