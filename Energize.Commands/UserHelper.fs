@@ -81,18 +81,17 @@ module UserHelper =
             | false -> None 
         (identifier, arg)
 
-    // welcome to the null hole
     let private matchesName (user : IGuildUser) (input : string) : bool =
-        match user with
-        | null -> false
-        | user ->
+        match user |> Option.ofObj with
+        | None -> false
+        | Some user ->
             let name = 
-                match user.Nickname with
-                | null -> 
-                    match user.Username with
-                    | null -> String.Empty 
-                    | _ -> user.Username
-                | _ -> user.Nickname
+                match user.Nickname |> Option.ofObj with
+                | None -> 
+                    match user.Username |> Option.ofObj with
+                    | None -> String.Empty 
+                    | Some name -> name
+                | Some name -> name
             name.ToLower().Contains(input.ToLower())
 
     let private findUserByMention (ctx : CommandContext) (input : string) : IUser option =
@@ -123,17 +122,16 @@ module UserHelper =
         | true ->
             try
                 let id = uint64 input
-                match ctx.client.GetUser(id) with
-                | null -> 
+                match ctx.client.GetUser(id) |> Option.ofObj with
+                | None -> 
                     if not ctx.isPrivate then
                         let guildChan = ctx.message.Channel :?> IGuildChannel
-                        let user = awaitResult (guildChan.Guild.GetUserAsync(id, CacheMode.AllowDownload))
-                        match user with
-                        | null -> None
-                        | _ -> Some (user :> IUser)
+                        match awaitResult (guildChan.Guild.GetUserAsync(id, CacheMode.AllowDownload)) |> Option.ofObj with
+                        | None -> None
+                        | Some user -> Some (user :> IUser)
                     else
                         None
-                | user -> Some (user :> IUser)
+                | Some user -> Some (user :> IUser)
             with _ -> None
         | false -> None
 

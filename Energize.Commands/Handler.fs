@@ -1,8 +1,7 @@
-﻿namespace Energize.Commands
+namespace Energize.Commands
 
 open Command
 open Discord.WebSocket
-open ImageUrlProvider
 open System.Text.RegularExpressions
 open Discord
 open Cache
@@ -205,10 +204,10 @@ module CommandHandler =
         return
             try
                 let chan = ctx.client.GetChannel(uint64 ctx.arguments.[0])
-                match chan with
-                | null -> 
+                match chan |> Option.ofObj with
+                | None -> 
                     [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
-                | _ ->
+                | Some chan ->
                     let header = "dev message (answer with the bug or feedback commands)"
                     awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
                     [ ctx.sendOK None "Message sent successfully" ]
@@ -295,18 +294,18 @@ module CommandHandler =
         | None ->
             let cache = 
                 {
+                    lastImageUrl = None
                     lastMessage = None
                     lastDeletedMessage = None
-                    lastImageUrl = None
                 }
             let newCaches = state.caches |> Map.add id cache
             handlerState <- Some { state with caches = newCaches }
             cache
 
     let private startsWithBotMention (state : CommandHandlerState) (input : string) : bool =
-        match state.client.CurrentUser with
-        | null -> false
-        | _ -> Regex.IsMatch(input,"^<@!?" + state.client.CurrentUser.Id.ToString() + ">")
+        match state.client.CurrentUser |> Option.ofObj with
+        | None -> false
+        | Some user -> Regex.IsMatch(input,"^<@!?" + user.Id.ToString() + ">")
 
     let private getPrefixLength (state : CommandHandlerState) (input : string) : int =
         if startsWithBotMention state input then
@@ -375,14 +374,15 @@ module CommandHandler =
     let private registerCmdCacheEntry (msgId : uint64) (msgs : IUserMessage list) =
         match handlerState with
         | Some state ->
+            let filterMsg msg = match msg with null -> false | _ -> true 
             let newCommandCache = 
-                let cache = (msgId, msgs |> List.filter (fun msg -> match msg with null -> false | _ -> true)) :: state.commandCache
+                let cache = (msgId, msgs |> List.filter filterMsg) :: state.commandCache
                 if cache.Length > 50 then cache.[..50] else cache
             handlerState <- Some { state with commandCache = newCommandCache }
         | None -> ()
     
     let private reportCmdError (state : CommandHandlerState) (ex : exn) (msg : SocketMessage) (cmd : Command) (input : string) =
-        let realEx = match ex.InnerException with null -> ex | exIn -> exIn
+        let realEx = match ex.InnerException |> Option.ofObj with None -> ex | Some exIn -> exIn
         state.logger.Warning(realEx.ToString())
         
         let caseId = Guid.NewGuid()
@@ -409,9 +409,9 @@ module CommandHandler =
             .WithFooter(source)
             .WithColorType(EmbedColorType.Warning)
             |> ignore
-        match state.client.GetChannel(Config.Instance.Discord.BugReportChannelID) with
-        | null -> ()
-        | c ->
+        match state.client.GetChannel(Config.Instance.Discord.BugReportChannelID) |> Option.ofObj with
+        | None -> ()
+        | Some c ->
             let chan = c :> IChannel :?> ITextChannel
             awaitIgnore (state.messageSender.Send(chan, builder.Build())) 
 
@@ -533,7 +533,7 @@ module CommandHandler =
             match state.commandCache |> List.tryFind (fun (id, _) -> cmdMsgId.Equals(id)) with
             | Some (id, msgs) -> 
                 try
-                    seq { for msg in msgs -> match msg with null -> Task.CompletedTask | _ -> msg.DeleteAsync() } 
+                    seq { for msg in msgs -> match msg |> Option.ofObj with None -> Task.CompletedTask | Some msg -> msg.DeleteAsync() } 
                     |> Task.WhenAll 
                     |> await
                 with _ -> ()
@@ -585,7 +585,7 @@ module CommandHandler =
         match handlerState with
         | Some state when not (isBlacklisted msg.Author.Id) ->
             updateChannelCache msg (fun oldCache -> 
-                let lastUrl = match getLastImgUrl msg with Some url -> Some url | None -> oldCache.lastImageUrl
+                let lastUrl = match ImageUrlProvider.getLastImgUrl msg with Some url -> Some url | None -> oldCache.lastImageUrl
                 let lastMsg = if msg.Author.IsBot then oldCache.lastMessage else Some msg
                 { oldCache with lastImageUrl = lastUrl; lastMessage = lastMsg }
             )
@@ -604,10 +604,9 @@ module CommandHandler =
         | :? SocketGuildChannel as guildChan ->
             let botUser = guildChan.Guild.CurrentUser
             if botUser.GetPermissions(guildChan).Has(ChannelPermission.ReadMessageHistory) then
-                let oldMsg = awaitResult (cache.GetOrDownloadAsync())
-                match oldMsg with
-                | null -> false
-                | _ when not (oldMsg.Content.Equals(msg.Content)) -> true
+                match awaitResult (cache.GetOrDownloadAsync()) |> Option.ofObj with
+                | None -> false
+                | Some oldMsg when not (oldMsg.Content.Equals(msg.Content)) -> true
                 | _ -> false
             else
                 false
@@ -632,9 +631,9 @@ module CommandHandler =
     let GetRegisteredCommands (name : string) =
         match handlerState with
         | Some state -> 
-            match name with
-            | null -> state.commands |> toDictionary
-            | _ -> 
+            match name |> Option.ofObj with
+            | None -> state.commands |> toDictionary
+            | Some name -> 
                 match state.commands |> Map.tryFind name with
                 | Some cmd -> (Map.add name cmd Map.empty) |> toDictionary
                 | None -> Map.empty |> toDictionary

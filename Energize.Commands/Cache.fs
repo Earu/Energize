@@ -1,4 +1,4 @@
-﻿namespace Energize.Commands
+namespace Energize.Commands
 
 module Cache =
     open Discord.WebSocket
