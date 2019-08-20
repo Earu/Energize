@@ -65,7 +65,7 @@ namespace Energize.Services.Transmission.Transmitters
             this.Log($"Update requested from \'{proc}\'");
             SocketChannel updateChan = this.DiscordClient.GetChannel(Config.Instance.Discord.UpdateChannelID);
             if (updateChan != null)
-                await this.MessageSender.Normal(updateChan, "update", "Fetched latest changes");
+                await this.MessageSender.SendNormalAsync(updateChan, "update", "Fetched latest changes");
 
             string path = Directory.GetCurrentDirectory();
             string gitUrl = "https://github.com/Energizers/Energize.git";
@@ -108,7 +108,7 @@ namespace Energize.Services.Transmission.Transmitters
                     .WithDescription($"💎 New upvote {multiplier}")
                     .WithField("User", user == null ? $"Unknown ({vote.UserId})" : user.ToString());
 
-                await this.MessageSender.Send(chan, builder.Build());
+                await this.MessageSender.SendAsync(chan, builder.Build());
             }
         }
     }

@@ -116,7 +116,7 @@ namespace Energize.Services.Listeners.Music
                 .WithField("Posted By", msg.Author.Mention)
                 .WithField("Error", error);
 
-            await this.MessageSender.Send(textChan, builder.Build());
+            await this.MessageSender.SendAsync(textChan, builder.Build());
         }
 
         private async Task<bool> TryPlaySpotifyAsync(IMusicPlayerService music, ITextChannel textChan, IGuildUser guser, string url)

@@ -5,7 +5,9 @@ using Energize.Essentials;
 using Energize.Interfaces.Services.Senders;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Senders
@@ -14,10 +16,12 @@ namespace Energize.Services.Senders
     public class WebhookSenderService : ServiceImplementationBase, IWebhookSenderService
     {
         private readonly Logger Logger;
+        private readonly HttpClient HttpClient;
 
         public WebhookSenderService(EnergizeClient client)
         {
             this.Logger = client.Logger;
+            this.HttpClient = new HttpClient();
         }
 
         private static bool CanUseWebhooks(IChannel chan)
@@ -29,7 +33,7 @@ namespace Energize.Services.Senders
             return botUser.GetPermissions(guildChannel).ManageWebhooks;
         }
 
-        private async Task<DiscordWebhookClient> CreateWebhook(string name, ITextChannel chan)
+        private async Task<DiscordWebhookClient> CreateWebhookAsync(string name, ITextChannel chan)
         {
             try
             {
@@ -45,7 +49,7 @@ namespace Energize.Services.Senders
             }
         }
 
-        private async Task<DiscordWebhookClient> GetOrCreateWebhook(string name, ITextChannel chan)
+        private async Task<DiscordWebhookClient> GetOrCreateWebhookAsync(string name, ITextChannel chan)
         {
             try
             {
@@ -53,7 +57,7 @@ namespace Energize.Services.Senders
 
                 IReadOnlyCollection<IWebhook> webhooks = await chan.GetWebhooksAsync();
                 IWebhook webhook = webhooks.FirstOrDefault(x => x.Name == name);
-                return webhook == null ? await this.CreateWebhook(name, chan) : new DiscordWebhookClient(webhook);
+                return webhook == null ? await this.CreateWebhookAsync(name, chan) : new DiscordWebhookClient(webhook);
             }
             catch (Exception ex)
             {
@@ -62,7 +66,7 @@ namespace Energize.Services.Senders
             }  
         }
 
-        private async Task<DiscordWebhookClient> TryGetWebhook(IChannel chan)
+        private async Task<DiscordWebhookClient> TryGetWebhookAsync(IChannel chan)
         {
             if (chan is IDMChannel) return null;
 
@@ -71,71 +75,108 @@ namespace Energize.Services.Senders
             if (!botUser.GetPermissions(guildChan).ManageWebhooks)
                 return null;
 
-            return await this.GetOrCreateWebhook(botUser.Username, (ITextChannel)guildChan);
+            return await this.GetOrCreateWebhookAsync(botUser.Username, (ITextChannel)guildChan);
         }
 
-        public async Task<ulong> SendRaw(IMessage msg, string content, string username, string avatarUrl)
+        public async Task<ulong> SendRawAsync(IMessage msg, string content, string username, string avatarUrl)
         {
-            DiscordWebhookClient webhook = await this.TryGetWebhook(msg.Channel);
-            if (webhook == null) return 0;
-
-            try
+            using (DiscordWebhookClient webhook = await this.TryGetWebhookAsync(msg.Channel))
             {
-                return await webhook.SendMessageAsync(content, false, null, username, avatarUrl);
-            }
-            catch (Exception ex)
-            {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+                if (webhook == null) return 0;
 
-                return 0;
-            }
-        }
+                try
+                {
+                    return await webhook.SendMessageAsync(content, false, null, username, avatarUrl);
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
 
-        public async Task<ulong> SendRaw(ITextChannel chan, string content, string username, string avatarUrl)
-        {
-            DiscordWebhookClient webhook = await this.TryGetWebhook(chan);
-            if (webhook == null) return 0;
-
-            try
-            {
-                return await webhook.SendMessageAsync(content, false, null, username, avatarUrl);
-            }
-            catch (Exception ex)
-            {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
-                return 0;
+                    return 0;
+                }
             }
         }
 
-        public async Task<ulong> SendEmbed(IMessage msg, Embed embed, string username, string avatarUrl)
+        public async Task<ulong> SendRawAsync(ITextChannel chan, string content, string username, string avatarUrl)
         {
-            DiscordWebhookClient webhook = await this.TryGetWebhook(msg.Channel);
-            if (webhook == null) return 0;
+            using (DiscordWebhookClient webhook = await this.TryGetWebhookAsync(chan))
+            {
+                if (webhook == null) return 0;
 
-            try
-            {
-                return await webhook.SendMessageAsync(string.Empty, false, new [] { embed }, username, avatarUrl);
-            }
-            catch (Exception ex)
-            {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
-                return 0;
+                try
+                {
+                    return await webhook.SendMessageAsync(content, false, null, username, avatarUrl);
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+                    return 0;
+                }
             }
         }
 
-        public async Task<ulong> SendEmbed(ITextChannel chan, Embed embed, string username, string avatarUrl)
+        public async Task<ulong> SendEmbedAsync(IMessage msg, Embed embed, string username, string avatarUrl)
         {
-            DiscordWebhookClient webhook = await this.TryGetWebhook(chan);
-            if (webhook == null) return 0;
+            using (DiscordWebhookClient webhook = await this.TryGetWebhookAsync(msg.Channel))
+            {
+                if (webhook == null) return 0;
 
-            try
-            {
-                return await webhook.SendMessageAsync(string.Empty, false, new [] { embed }, username, avatarUrl);
+                try
+                {
+                    return await webhook.SendMessageAsync(string.Empty, false, new[] { embed }, username, avatarUrl);
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+                    return 0;
+                }
             }
-            catch (Exception ex)
+
+        }
+
+        public async Task<ulong> SendEmbedAsync(ITextChannel chan, Embed embed, string username, string avatarUrl)
+        {
+            using (DiscordWebhookClient webhook = await this.TryGetWebhookAsync(chan))
             {
-                this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
-                return 0;
+                if (webhook == null) return 0;
+
+                try
+                {
+                    return await webhook.SendMessageAsync(string.Empty, false, new[] { embed }, username, avatarUrl);
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+                    return 0;
+                }
+            }
+        }
+
+        public async Task<ulong> RepostMessageAsync(ITextChannel chan, IMessage msg, Embed embed = null)
+        {
+            using (DiscordWebhookClient webhook = await this.TryGetWebhookAsync(chan))
+            {
+                if (webhook == null) return 0;
+
+                try
+                {
+                    Embed[] embeds = embed == null ? null : new[] { embed };
+                    if (msg.Attachments.Count > 0)
+                    {
+                        IAttachment attachment = msg.Attachments.First();
+                        using (Stream stream = await this.HttpClient.GetStreamAsync(attachment.ProxyUrl))
+                            return await webhook.SendFileAsync(stream, attachment.Filename, msg.Content, false, embeds, msg.Author.Username, msg.Author.GetAvatarUrl());
+                    }
+                    else
+                    {
+                        return await webhook.SendMessageAsync(msg.Content, false, embeds, msg.Author.Username, msg.Author.GetAvatarUrl());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Nice("Webhook", ConsoleColor.Red, $"Could not send a message: {ex.Message}");
+                    return 0;
+                }
             }
         }
     }

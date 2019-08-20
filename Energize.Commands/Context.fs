@@ -45,21 +45,21 @@ module Context =
 
         member this.sendOK (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
-            awaitResult (this.messageSender.Good(this.message, header, properOutput input))
+            awaitResult (this.messageSender.SendGoodAsync(this.message, header, properOutput input))
 
         member this.sendWarn (head : string option) (input : string) =
             let header = match head with Some h -> h | None -> this.commandName
-            awaitResult (this.messageSender.Warning(this.message, header, properOutput input))
+            awaitResult (this.messageSender.SendWarningAsync(this.message, header, properOutput input))
 
         member this.sendBad (head : string option) (input : string) = 
             let header = match head with Some h -> h | None -> this.commandName
-            awaitResult (this.messageSender.Danger(this.message, header, properOutput input))
+            awaitResult (this.messageSender.SendDangerAsync(this.message, header, properOutput input))
 
         member this.sendRaw (input : string) =
-            awaitResult (this.messageSender.SendRaw(this.message, properOutput input))
+            awaitResult (this.messageSender.SendRawAsync(this.message, properOutput input))
 
         member this.sendEmbed (embed : Embed) =
-            awaitResult (this.messageSender.Send(this.message, embed))
+            awaitResult (this.messageSender.SendAsync(this.message, embed))
 
         member _this.embedField (name: string) (value : obj) (isinline : bool) =
             let display = 

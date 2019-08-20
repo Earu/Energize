@@ -95,7 +95,7 @@ module CommandHandler =
                     |> Seq.groupBy (fun (_, cmd) -> cmd.moduleName) 
                     |> Seq.filter (fun (name, _) -> not (name.Equals("Deprecated"))) 
                     |> Seq.sortBy (fun (name, _) -> name)
-                [ awaitResult (paginator.SendPaginator(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
+                [ awaitResult (paginator.SendPaginatorAsync(ctx.message, ctx.commandName, commands, Action<string * seq<string * Command>, EmbedBuilder>(fun (moduleName, cmds) builder ->
                     let cmdsDisplay = 
                         cmds |> Seq.map (fun (cmdName, _) -> sprintf "`%s`" cmdName)
                     let tip = StaticData.Instance.Tips.[ctx.random.Next(0, StaticData.Instance.Tips.Count)]
@@ -184,7 +184,7 @@ module CommandHandler =
 
         match chan :> IChannel with
         | :? ITextChannel as textChan ->
-            awaitIgnore (sender.SendEmbed(textChan, builder.Build(), name, avatar))
+            awaitIgnore (sender.SendEmbedAsync(textChan, builder.Build(), name, avatar))
         | _ ->
             ctx.logger.Warning("Feedback channel wasnt a text channel?!")
 
@@ -209,7 +209,7 @@ module CommandHandler =
                     [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
                 | Some chan ->
                     let header = "dev message (answer with the bug or feedback commands)"
-                    awaitIgnore (ctx.messageSender.Normal(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
+                    awaitIgnore (ctx.messageSender.SendNormalAsync(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
                     [ ctx.sendOK None "Message sent successfully" ]
             with ex ->
                 printfn "%s" (ex.ToString())
@@ -389,7 +389,7 @@ module CommandHandler =
         let err = 
             (sprintf "Something went wrong when using `%s` a report has been sent.\n" cmd.name)
             + "If you wish to contact the developer use the `bug` or `feedback` commands, don't forget to mention your case id!" 
-        let msgs = [ awaitResult (state.messageSender.Warning(msg, sprintf "command error | case id: %s" (caseId.ToString()), err)) ]
+        let msgs = [ awaitResult (state.messageSender.SendWarningAsync(msg, sprintf "command error | case id: %s" (caseId.ToString()), err)) ]
         registerCmdCacheEntry msg.Id msgs
         
         let args = input.Trim()
@@ -413,7 +413,7 @@ module CommandHandler =
         | None -> ()
         | Some c ->
             let chan = c :> IChannel :?> ITextChannel
-            awaitIgnore (state.messageSender.Send(chan, builder.Build())) 
+            awaitIgnore (state.messageSender.SendAsync(chan, builder.Build())) 
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (ctx : CommandContext) : Task<Task> =
         async {
@@ -427,7 +427,7 @@ module CommandHandler =
             if not tcallback.IsCompleted then
                 let tres = awaitResult (Task.WhenAny(tcallback, Task.Delay(10000)))
                 if not tcallback.IsCompleted then
-                    awaitResult (state.messageSender.Warning(msg, "time out", sprintf "Your command `%s` is timing out!" cmd.name)) |> ignore
+                    awaitResult (state.messageSender.SendWarningAsync(msg, "time out", sprintf "Your command `%s` is timing out!" cmd.name)) |> ignore
                     state.logger.Nice("Commands", ConsoleColor.Yellow, sprintf "Time out of command <%s>" cmd.name)
                 return tres
             else
@@ -449,7 +449,7 @@ module CommandHandler =
         ctx.logger.Nice(head, color, where + cmdLog + args)
 
     let private runCmd (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (input : string) (isPrivate : bool) =
-        await (state.messageSender.TriggerTyping(msg.Channel))
+        await (state.messageSender.TriggerTypingAsync(msg.Channel))
         let args = getCmdArgs state input
         let ctx = buildCmdContext state cmd.name msg args isPrivate
         if args.Length >= cmd.parameters then
@@ -512,17 +512,17 @@ module CommandHandler =
         | cmd when Config.Instance.Maintenance && not cmd.maintenanceFree -> () //discard
         | cmd when not (cmd.isEnabled) ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a disabled command <%s>" author cmd.name)
-            let warnMsg = awaitResult (state.messageSender.Warning(msg, "disabled command", "This is a disabled feature for now")) 
+            let warnMsg = awaitResult (state.messageSender.SendWarningAsync(msg, "disabled command", "This is a disabled feature for now")) 
             registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd when not hasPermissions ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with missing permissions <%s>" author cmd.name)
             let permDisplay = String.Join(", ", missingPerms |> List.map (fun perm -> sprintf "`%s`" (perm.ToString())))
-            let warnMsg = awaitResult (state.messageSender.Warning(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
+            let warnMsg = awaitResult (state.messageSender.SendWarningAsync(msg, "missing permissions", sprintf "Missing the following permissions:\n%s" permDisplay))
             registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd when not hasConditions ->
             state.logger.Nice("Commands", ConsoleColor.Red, sprintf "%s tried to use a command with unmet conditions <%s>" author cmd.name)
             let condDisplay = String.Join(", ", missingConds |> List.map (fun cond -> sprintf "`%s`" (cond.ToString())))
-            let warnMsg = awaitResult (state.messageSender.Warning(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
+            let warnMsg = awaitResult (state.messageSender.SendWarningAsync(msg, "unmet conditions", sprintf "The following conditions were not met:\n%s" condDisplay))
             registerCmdCacheEntry msg.Id [ warnMsg ]
         | cmd ->
             runCmd state msg cmd input (Context.isPrivate msg)
@@ -577,7 +577,7 @@ module CommandHandler =
             let helper =
                 sprintf "Hey there %s, looking for something? Use `%s` or `%s`, visit the online documentation or join our server!\n%s\n%s" 
                     msg.Author.Mention (showCmd "help") (showCmd "info") Config.Instance.URIs.WebsiteURL Config.Instance.URIs.DiscordURL
-            let helpMsg = awaitResult (state.messageSender.SendRaw(msg, helper))
+            let helpMsg = awaitResult (state.messageSender.SendRawAsync(msg, helper))
             registerCmdCacheEntry msg.Id [ helpMsg ]
         | None -> ()
 

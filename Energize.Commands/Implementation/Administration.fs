@@ -118,8 +118,8 @@ module Administration =
     let delInvs (ctx : CommandContext) = async {
         let guser = ctx.message.Author :?> SocketGuildUser
         let db = ctx.serviceManager.GetService<IDatabaseService>("Database")
-        let dbctx = awaitResult (db.GetContext())
-        let dbguild = awaitResult (dbctx.Instance.GetOrCreateGuild(guser.Guild.Id))
+        let dbctx = awaitResult (db.GetContextAsync())
+        let dbguild = awaitResult (dbctx.Instance.GetOrCreateGuildAsync(guser.Guild.Id))
         dbguild.ShouldDeleteInvites <- not dbguild.ShouldDeleteInvites
         dbctx.Dispose()
 

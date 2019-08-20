@@ -276,7 +276,7 @@ module Voice =
         return 
             if len > 0 then
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                [ awaitResult (paginator.SendPlayerPaginator(ctx.message, result.Tracks, fun track ->
+                [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, result.Tracks, fun track ->
                     let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
                     sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
                 )) ]
@@ -322,7 +322,7 @@ module Voice =
                     let len = streamUrls.Length
                     if len > 0 then
                         let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                        [ awaitResult (paginator.SendPlayerPaginator(ctx.message, streamUrls, fun streamUrl ->
+                        [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, streamUrls, fun streamUrl ->
                             let page = streamUrls |> List.tryFindIndex (fun url -> url.Equals(streamUrl))
                             sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
                         )) ]
@@ -342,7 +342,7 @@ module Voice =
             return
                 if len > 0 then
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
-                    [ awaitResult (paginator.SendPlayerPaginator(ctx.message, songItems, fun songItem ->
+                    [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, songItems, fun songItem ->
                         let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
                         sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.Uri.AbsoluteUri 
                     )) ]

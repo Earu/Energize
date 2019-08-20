@@ -4,6 +4,6 @@ namespace Energize.Interfaces.Services.Development
 {
     public interface ICSharpEvaluationService : IServiceImplementation
     {
-        Task<(int, string)> Eval(string code, object ctx);
+        Task<(int, string)> EvalAsync(string code, object ctx);
     }
 }
