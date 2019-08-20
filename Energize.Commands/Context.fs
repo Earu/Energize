@@ -63,7 +63,7 @@ module Context =
 
         member _this.embedField (name: string) (value : obj) (isinline : bool) =
             let display = 
-                let str = match value with null -> String.Empty | _ -> value.ToString()
+                let str = match value |> Option.ofObj with None -> String.Empty | Some value -> value.ToString()
                 if str.Length > 1024 then str.Substring(0,1021) + "..." else str
             let field = EmbedFieldBuilder()
             field

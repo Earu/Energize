@@ -23,9 +23,9 @@ module Voice =
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         let guser = ctx.message.Author :?> IGuildUser
-        match guser.VoiceChannel with
-        | null -> [ ctx.sendWarn None "Not in a voice channel" ]
-        | vc -> cb music vc guser
+        match guser.VoiceChannel |> Option.ofObj with
+        | None -> [ ctx.sendWarn None "Not in a voice channel" ]
+        | Some vc -> cb music vc guser
 
     let private handleSearchResult (music : IMusicPlayerService) (ctx : CommandContext) (res : SearchResult) (vc : IVoiceChannel) (isRadio : bool) =
         match res.LoadType with
@@ -150,10 +150,9 @@ module Voice =
             let textChan = ctx.message.Channel :?> ITextChannel
             let ply = awaitResult (music.ConnectAsync(vc, textChan))
             let msg = awaitResult (music.SendPlayerAsync(ply, null, ctx.message.Channel))
-            match msg with
-            | null -> 
-                [ ctx.sendOK None "Nothing is playing" ]
-            | _ -> [ msg ]
+            match msg |> Option.ofObj with
+            | Some _ -> [ ctx.sendOK None "Nothing is playing" ]
+            | None -> [ msg ]
         )
     }
 

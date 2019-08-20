@@ -156,15 +156,15 @@ module Util =
     let lavalink (ctx : CommandContext) = async {
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
         return
-            match music.LavalinkStats with
-            | null -> [ ctx.sendWarn None "Stats not available yet" ]
-            | stats ->
+            match music.LavalinkStats |> Option.ofObj with
+            | None -> [ ctx.sendWarn None "Stats not available yet" ]
+            | Some stats ->
                 let builder = EmbedBuilder()
                 let uptime = sprintf "%dd%dh%dm" stats.Uptime.Days stats.Uptime.Hours stats.Uptime.Minutes
                 let fields = [
-                    ctx.embedField "CPU Load" (sprintf "%.2f%s" (match stats.Cpu with null -> 0.0 | _ -> stats.Cpu.LavalinkLoad * 100.0) "%") true
-                    ctx.embedField "Frames" (match stats.Frames with null -> 0 | _ -> stats.Frames.Sent) true
-                    ctx.embedField "Memory (MB)" (match stats.Memory with null -> 0L | _ -> stats.Memory.Used / 1024L / 1024L) true
+                    ctx.embedField "CPU Load" (sprintf "%.2f%s" (match stats.Cpu |> Option.ofObj with None -> 0.0 | Some cpu -> cpu.LavalinkLoad * 100.0) "%") true
+                    ctx.embedField "Frames" (match stats.Frames |> Option.ofObj with None -> 0 | Some frames -> frames.Sent) true
+                    ctx.embedField "Memory (MB)" (match stats.Memory |> Option.ofObj with None -> 0L | Some mem -> mem.Used / 1024L / 1024L) true
                     ctx.embedField "Music Players" (sprintf "Energize: `%d`\nLavalink: `%d`" music.PlayerCount stats.PlayerCount) true
                     ctx.embedField "Playing Players" (sprintf "Energize: `%d`\nLavalink: `%d`" music.PlayingPlayersCount stats.PlayingPlayers) true
                     ctx.embedField "Uptime" uptime true
@@ -290,7 +290,7 @@ module Util =
         
         let fields = [
             ctx.embedField "ID" guild.Id true
-            ctx.embedField "Owner" (match owner with null -> "Unknown" | _ -> owner.Mention) true
+            ctx.embedField "Owner" (match owner |> Option.ofObj with None -> "Unknown" | Some owner -> owner.Mention) true
             ctx.embedField "Members" guild.MemberCount true
             ctx.embedField "Region" region true
             ctx.embedField "Creation Date" createdAt true
@@ -317,7 +317,10 @@ module Util =
         let github = Config.Instance.URIs.GitHubURL
         let docs = Config.Instance.URIs.WebsiteURL
         let discord = Config.Instance.URIs.DiscordURL
-        let owner = match ctx.client.GetUser(Config.Instance.Discord.OwnerID) with null -> ctx.client.CurrentUser :> SocketUser | o -> o
+        let owner = 
+            match ctx.client.GetUser(Config.Instance.Discord.OwnerID) |> Option.ofObj with
+            | None -> ctx.client.CurrentUser :> SocketUser 
+            | Some owner -> owner
         let usercount = ctx.client.Guilds |> Seq.map (fun g -> g.Users.Count) |> Seq.sum
         let fields = [
             ctx.embedField "Name" ctx.client.CurrentUser true
@@ -384,7 +387,7 @@ module Util =
                     let joinedTime = if time.Length >= 7 then time.Remove(time.Length - 7) else time
                     let roleNames = guser.RoleIds |> Seq.map (fun id -> guser.Guild.GetRole(id).Name) |> Seq.toList
                     let leftRoles = match (roleNames |> Seq.length) - max with n when n < 0 -> 0 | n -> n
-                    let nick = match guser.Nickname with null -> " - " | name -> name
+                    let nick = match guser.Nickname |> Option.ofObj with None -> " - " | Some name -> name
                     let moreNames = if leftRoles > 0 then (sprintf " and %d more..." leftRoles) else String.Empty
                     let clampRoles = (if max >= roleNames.Length then roleNames.Length - 1 else max)
                     let userNames = (String.Join(", ", roleNames.[..clampRoles])) + moreNames
