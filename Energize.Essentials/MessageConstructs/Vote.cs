@@ -73,7 +73,7 @@ namespace Energize.Essentials.MessageConstructs
         private void UpdateEmbed()
         {
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithColor(this.IsFinished ? new Color(0, 175, 220) : MessageSender.SColorGood);
+            builder.WithColor(this.IsFinished ? MessageSender.SColorSpecial : MessageSender.SColorGood);
             builder.AddField("Vote", this.Description);
             int i = 1;
             foreach ((string choice, int votes) in this.Choices)
@@ -84,7 +84,7 @@ namespace Energize.Essentials.MessageConstructs
             }
                
             builder.WithAuthor(this.Author);
-            builder.WithFooter(this.IsFinished ? "Vote results" : "Valid for 5 minutes");
+            builder.WithFooter(this.IsFinished ? "vote is over" : "valid for 5 minutes");
 
             this.VoteEmbed = builder.Build();
         }

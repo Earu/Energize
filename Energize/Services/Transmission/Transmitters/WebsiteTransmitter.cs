@@ -104,7 +104,7 @@ namespace Energize.Services.Transmission.Transmitters
                 RestUser user = await this.DiscordRestClient.GetUserAsync(vote.UserId);
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
-                    .WithColor(new Color(165, 28, 21))
+                    .WithColorType(EmbedColorType.Special)
                     .WithDescription($"💎 New upvote {multiplier}")
                     .WithField("User", user == null ? $"Unknown ({vote.UserId})" : user.ToString());
 

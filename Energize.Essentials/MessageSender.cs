@@ -14,6 +14,7 @@ namespace Energize.Essentials
         public static Color SColorNormal { get; } = new Color(79, 84, 92);
         public static Color SColorWarning { get; } = new Color(226, 123, 68);
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
+        public static Color SColorSpecial { get; } = new Color(165, 28, 21);
 
         public Logger Logger { get; }
 
