@@ -237,18 +237,17 @@ module Social =
         return
             if UInt64.TryParse(ctx.arguments.[0], msgId) && chan.IsSome then
                 let msg = awaitResult (ctx.message.Channel.GetMessageAsync(msgId.Value))
-                match msg with
-                | null ->
+                match msg |> Option.ofObj with
+                | None ->
                     [ ctx.sendWarn None "Could not find any message for your input" ]
-                | m ->
-                    match trySendFameMsg ctx chan m with
+                | Some msg ->
+                    match trySendFameMsg ctx chan msg with
                     | None ->
                         [ ctx.sendWarn None "There was an error when posting the message into hall of fames" ]
                     | Some posted ->
-                        match posted with
-                        | null -> ()
-                        | posted -> await (posted.AddReactionAsync(Emoji("🌟")))
-
+                        match posted |> Option.ofObj with
+                        | None -> ()
+                        | Some posted -> await (posted.AddReactionAsync(Emoji("🌟")))
                         [ ctx.sendOK None "Message successfully added to hall of fames" ]
             else
                 [ ctx.sendWarn None "This command is expecting a number (message id)" ]
