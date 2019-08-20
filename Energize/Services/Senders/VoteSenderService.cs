@@ -43,16 +43,16 @@ namespace Energize.Services.Senders
                 await msg.AddReactionAsync(new Emoji($"{i + 1}\u20e3"));
         }
 
-        public async Task<IUserMessage> SendVote(IMessage msg, string description, IEnumerable<string> choices)
+        public async Task<IUserMessage> SendVoteAsync(IMessage msg, string description, IEnumerable<string> choices)
         {
             try
             {
                 Vote vote = new Vote(msg.Author, description, choices.ToList());
-                vote.Message = await this.MessageSender.Send(msg, vote.VoteEmbed);
+                vote.Message = await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
                 vote.VoteFinished += async result =>
                 {
                     await vote.Message.DeleteAsync();
-                    await this.MessageSender.Send(msg, vote.VoteEmbed);
+                    await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
                     
                     this.Votes.TryRemove(vote.Message.Id, out Vote _);
                 };

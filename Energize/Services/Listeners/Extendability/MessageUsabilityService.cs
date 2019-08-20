@@ -47,20 +47,20 @@ namespace Energize.Services.Listeners.Extendability
         {
             SocketGuildChannel chan = (SocketGuildChannel)msg.Channel;
             IDatabaseService db = this.ServiceManager.GetService<IDatabaseService>("Database");
-            using (IDatabaseContext ctx = await db.GetContext())
+            using (IDatabaseContext ctx = await db.GetContextAsync())
             {
-                IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuild(chan.Guild.Id);
+                IDiscordGuild dbguild = await ctx.Instance.GetOrCreateGuildAsync(chan.Guild.Id);
                 if (!dbguild.ShouldDeleteInvites) return;
 
                 SocketGuildUser botUser = chan.Guild.CurrentUser;
                 if (botUser.GetPermissions(chan).ManageMessages)
                 {
                     await msg.DeleteAsync();
-                    await this.MessageSender.Warning(msg, "invite checker", "Your message was removed.");
+                    await this.MessageSender.SendWarningAsync(msg, "invite checker", "Your message was removed.");
                 }
                 else
                 {
-                    await this.MessageSender.Warning(msg, "invite checker", "Found an invite, but could not delete it, missing permission: ManageMessages");
+                    await this.MessageSender.SendWarningAsync(msg, "invite checker", "Found an invite, but could not delete it, missing permission: ManageMessages");
                 }
             }
         }
@@ -99,7 +99,7 @@ namespace Energize.Services.Listeners.Extendability
         }
 
         [DiscordEvent("MessageReceived")]
-        public async Task OnMessageReceived(SocketMessage msg)
+        public async Task OnMessageReceivedAsync(SocketMessage msg)
         {
             if (msg.Channel is IDMChannel || msg.Author.Id == Config.Instance.Discord.BotID) return;
 
@@ -111,7 +111,7 @@ namespace Energize.Services.Listeners.Extendability
 
 
         [DiscordEvent("ReactionAdded")]
-        public async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
+        public async Task OnReactionAddedAsync(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!IsValidReaction(chan, reaction)) return;
             IUserMessage msg = await cache.GetOrDownloadAsync();
@@ -126,7 +126,7 @@ namespace Energize.Services.Listeners.Extendability
                 await provider.BuildEmbedsAsync(embeds, msg, reaction);
 
             foreach (Embed embed in embeds)
-                await this.MessageSender.Send(chan, embed);
+                await this.MessageSender.SendAsync(chan, embed);
 
             await msg.RemoveReactionAsync(EmoteExtend, botUser);
         }

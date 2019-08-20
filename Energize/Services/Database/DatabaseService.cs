@@ -33,7 +33,7 @@ namespace Energize.Services.Database
         public void Save()
             => this.SaveChanges(true);
 
-        public async Task<IDiscordUser> GetOrCreateUser(ulong id)
+        public async Task<IDiscordUser> GetOrCreateUserAsync(ulong id)
         {
             DiscordUser user = await this.Users.FirstOrDefaultAsync(x => x.ID == id);
             if (user != null)
@@ -50,7 +50,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task<IDiscordUserStats> GetOrCreateUserStats(ulong id)
+        public async Task<IDiscordUserStats> GetOrCreateUserStatsAsync(ulong id)
         {
             DiscordUserStats stats = await this.Stats.FirstOrDefaultAsync(x => x.ID == id);
             if(stats != null)
@@ -67,7 +67,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task<IDiscordGuild> GetOrCreateGuild(ulong id)
+        public async Task<IDiscordGuild> GetOrCreateGuildAsync(ulong id)
         {
             DiscordGuild guild = await this.Guilds.FirstOrDefaultAsync(x => x.ID == id);
             if(guild != null)
@@ -84,7 +84,7 @@ namespace Energize.Services.Database
             }
         }
 
-        public async Task SaveYoutubeVideoIds(IEnumerable<IYoutubeVideoID> ytVideoIds)
+        public async Task SaveYoutubeVideoIdsAsync(IEnumerable<IYoutubeVideoID> ytVideoIds)
         {
             foreach (IYoutubeVideoID videoId in ytVideoIds)
             {
@@ -117,7 +117,7 @@ namespace Energize.Services.Database
                 this.Pool.Add(new DatabaseContext(Create(), this.Logger));
         }
 
-        public async Task<IDatabaseContext> GetContext()
+        public async Task<IDatabaseContext> GetContextAsync()
         {
             foreach (DatabaseContext ctx in this.Pool)
             {
@@ -129,7 +129,7 @@ namespace Energize.Services.Database
 
             //Wait a bit so we dont try again too early
             await Task.Delay(100);
-            return await this.GetContext();
+            return await this.GetContextAsync();
         }
 
         public IDatabaseContext CreateContext()

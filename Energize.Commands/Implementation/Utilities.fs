@@ -89,7 +89,7 @@ module Util =
     [<Command("ev", "Evals a C# string", "ev <csharpstring>")>]
     let eval (ctx : CommandContext) = async {
         let evaluator = ctx.serviceManager.GetService<ICSharpEvaluationService>("Evaluator")
-        let res = awaitResult (evaluator.Eval(ctx.input, ctx))
+        let res = awaitResult (evaluator.EvalAsync(ctx.input, ctx))
         return
             match res.ToTuple() with
             | (0, out) -> [ ctx.sendBad None out ]

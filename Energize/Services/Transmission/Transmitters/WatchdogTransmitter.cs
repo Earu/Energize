@@ -32,7 +32,7 @@ namespace Energize.Services.Transmission.Transmitters
 
             SocketChannel bugChan = this.DiscordClient.GetChannel(Config.Instance.Discord.BugReportChannelID);
             if (bugChan != null)
-                await this.MessageSender.Warning(bugChan, "network errors", "Reconnected to lavalink remote server");
+                await this.MessageSender.SendWarningAsync(bugChan, "network errors", "Reconnected to lavalink remote server");
         }
     }
 }
