@@ -14,6 +14,7 @@ namespace Energize.Essentials
         Warning = 1,
         Danger = 2,
         Normal = 3,
+        Special = 4,
     }
 
     public static class Extensions
@@ -78,6 +79,8 @@ namespace Energize.Essentials
                     return builder.WithColor(MessageSender.SColorDanger);
                 case EmbedColorType.Normal:
                     return builder.WithColor(MessageSender.SColorNormal);
+                case EmbedColorType.Special:
+                    return builder.WithColor(MessageSender.SColorSpecial);
                 default:
                     return builder.WithColor(MessageSender.SColorNormal);
             }
