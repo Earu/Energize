@@ -389,9 +389,10 @@ module CommandHandler =
         let err = 
             (sprintf "Something went wrong when using `%s` a report has been sent.\n" cmd.name)
             + "If you wish to contact the developer use the `bug` or `feedback` commands, don't forget to mention your case id!" 
-        let msgs = [ awaitResult (state.messageSender.SendWarningAsync(msg, sprintf "command error | case id: %s" (caseId.ToString()), err)) ]
+        let msgs = [ awaitResult (state.messageSender.SendWarningAsync(msg, sprintf "command error | case id: %s" (caseId.ToString()), err, ThumbnailType.Error)) ]
         registerCmdCacheEntry msg.Id msgs
         
+#if !DEBUG 
         let args = input.Trim()
         let argDisplay = if String.IsNullOrWhiteSpace args then "none" else args
         let frame = StackTrace(realEx, true).GetFrame(0)
@@ -414,6 +415,7 @@ module CommandHandler =
         | Some c ->
             let chan = c :> IChannel :?> ITextChannel
             awaitIgnore (state.messageSender.SendAsync(chan, builder.Build())) 
+#endif
 
     let private handleTimeOut (state : CommandHandlerState) (msg : SocketMessage) (cmd : Command) (ctx : CommandContext) : Task<Task> =
         async {
