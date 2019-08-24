@@ -11,12 +11,12 @@ namespace Energize.Essentials
     public enum ThumbnailType
     {
         None,
-        Error,
-        Warning,
+        //Error,
+        //Warning,
         Music,
         Radio,
         Update,
-        NoResult,
+        //NoResult,
     }
 
     public class MessageSender
