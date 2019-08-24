@@ -65,48 +65,51 @@ namespace Energize.Essentials
             return true;
         }
 
-        public async Task TriggerTypingAsync(ISocketMessageChannel chan)
+        public async Task TriggerTypingAsync(IChannel c)
         {
             try
             {
+                IMessageChannel chan = c as IMessageChannel;
                 if (!this.CanSendMessage(chan)) return;
 
                 await chan.TriggerTypingAsync();
             }
             catch(Exception ex)
             {
-                this.LogFailedMessage(chan, ex);
+                this.LogFailedMessage(c, ex);
             }
         }
 
         private bool TryGetThumbnail(ThumbnailType thumbnailType, out string fileName, out string filePath)
         {
-            switch (thumbnailType)
+            if (thumbnailType == ThumbnailType.None)
             {
-                /*case ThumbnailType.Error:
-                    fileName = "error.png";
-                    filePath = $"volta/{fileName}";
-                    return true;*/
-                case ThumbnailType.None:
-                default:
-                    fileName = null;
-                    filePath = null;
-                    return false;
+                fileName = null;
+                filePath = null;
+                return false;
             }
+
+            fileName = $"{thumbnailType.ToString().ToUpper()}.png";
+            filePath = $"volta/{fileName}";
+            return true;
         }
 
-        public async Task<IUserMessage> SendAsync(ISocketMessageChannel chan, string header = "", string content = "", EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None)
+        public async Task<IUserMessage> SendAsync(IChannel c, string header, string content, EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None, IMessage msg = null)
         {
             try
             {
-                if (!this.CanSendMessage(chan)) return null;
                 if (string.IsNullOrWhiteSpace(content)) return null;
+                IMessageChannel chan = c as IMessageChannel;
+                if (!this.CanSendMessage(chan)) return null;
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithColorType(colorType)
                     .WithLimitedDescription(content)
                     .WithFooter(header);
+
+                if (msg != null)
+                    builder.WithAuthorNickname(msg);
 
                 if (this.TryGetThumbnail(thumbnailType, out string fileName, out string filePath))
                 {
@@ -118,47 +121,65 @@ namespace Energize.Essentials
             }
             catch(Exception ex)
             {
-                this.LogFailedMessage(chan, ex);
+                this.LogFailedMessage(c, ex);
             }
 
             return null;
         }
 
-        public async Task<IUserMessage> SendAsync(IMessage msg, string header = "", string content = "", EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None)
-            => await this.SendAsync(msg.Channel as ISocketMessageChannel, header, content, colorType, thumbnailType);
+        public async Task<IUserMessage> SendAsync(IMessage msg, string header, string content, EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None)
+            => await this.SendAsync(msg.Channel, header, content, colorType, thumbnailType, msg);
 
-        public async Task<IUserMessage> SendAsync(IChannel chan, Embed embed = null)
+        public async Task<IUserMessage> SendAsync(IChannel chan, Embed embed, ThumbnailType thumbType = ThumbnailType.None)
+        {
+            EmbedBuilder builder = embed.ToEmbedBuilder();
+            return await this.SendAsync(chan, builder, thumbType);
+        }
+
+        public async Task<IUserMessage> SendAsync(IChannel c, EmbedBuilder builder, ThumbnailType thumbType = ThumbnailType.None)
         {
             try
             {
+                if (builder == null) return null;
+                IMessageChannel chan = c as IMessageChannel;
                 if (!this.CanSendMessage(chan)) return null;
 
-                IMessageChannel c = (IMessageChannel)chan;
-                return await c.SendMessageAsync(string.Empty, false, embed);
+                if (this.TryGetThumbnail(thumbType, out string fileName, out string filePath))
+                {
+                    builder.WithThumbnailUrl($"attachment://{fileName}");
+                    return await chan.SendFileAsync(filePath, string.Empty, false, builder.Build());
+                }
+
+                return await chan.SendMessageAsync(string.Empty, false, builder.Build());
             }
             catch(Exception ex)
             {
-                this.LogFailedMessage(chan, ex);
+                this.LogFailedMessage(c, ex);
             }
 
             return null;
         }
 
-        public async Task<IUserMessage> SendAsync(IMessage msg, Embed embed = null)
-            => await this.SendAsync(msg.Channel, embed);
+        public async Task<IUserMessage> SendAsync(IMessage msg, EmbedBuilder builder, ThumbnailType thumbType = ThumbnailType.None)
+            => await this.SendAsync(msg.Channel, builder, thumbType);
 
-        public async Task<IUserMessage> SendRawAsync(IChannel chan, string content)
+        public async Task<IUserMessage> SendAsync(IMessage msg, Embed embed, ThumbnailType thumbType = ThumbnailType.None)
+        {
+            EmbedBuilder builder = embed.ToEmbedBuilder();
+            return await this.SendAsync(msg, builder, thumbType);
+        }
+
+        public async Task<IUserMessage> SendRawAsync(IChannel c, string content)
         {
             try
             {
+                IMessageChannel chan = c as IMessageChannel;
                 if (!this.CanSendMessage(chan)) return null;
-
-                IMessageChannel c = (IMessageChannel)chan;
-                return await c.SendMessageAsync(content);
+                return await chan.SendMessageAsync(content);
             }
             catch(Exception ex)
             {
-                this.LogFailedMessage(chan, ex);
+                this.LogFailedMessage(c, ex);
             }
 
             return null;
@@ -167,27 +188,28 @@ namespace Energize.Essentials
         public async Task<IUserMessage> SendRawAsync(IMessage msg, string content)
             => await this.SendRawAsync(msg.Channel, content);
 
-        public async Task<IUserMessage> RepostMessageAsync(IChannel chan, IMessage msg, Embed embed = null)
+        public async Task<IUserMessage> RepostMessageAsync(IChannel c, IMessage msg, Embed embed = null)
         {
             try
             {
+                if (msg == null) return null;
+                IMessageChannel chan = c as IMessageChannel;
                 if (!this.CanSendMessage(chan)) return null;
 
-                IMessageChannel c = (IMessageChannel)chan;
                 if (msg.Attachments.Count > 0)
                 {
                     IAttachment attachment = msg.Attachments.First();
                     using (Stream stream = await this.HttpClient.GetStreamAsync(attachment.ProxyUrl))
-                        return await c.SendFileAsync(stream, attachment.Filename, msg.Content, embed: embed);
+                        return await chan.SendFileAsync(stream, attachment.Filename, msg.Content, embed: embed);
                 }
                 else
                 {
-                    return await c.SendMessageAsync(msg.Content, embed: embed);
+                    return await chan.SendMessageAsync(msg.Content, embed: embed);
                 }
             }
             catch (Exception ex)
             {
-                this.LogFailedMessage(chan, ex);
+                this.LogFailedMessage(c, ex);
             }
 
             return null;
@@ -197,24 +219,24 @@ namespace Energize.Essentials
             => await this.SendAsync(msg, header, content, EmbedColorType.Normal, thumbType);
 
         public async Task<IUserMessage> SendNormalAsync(IChannel chan, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(chan as ISocketMessageChannel, header, content, EmbedColorType.Normal, thumbType);
+            => await this.SendAsync(chan, header, content, EmbedColorType.Normal, thumbType);
 
         public async Task<IUserMessage> SendWarningAsync(IMessage msg, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
             => await this.SendAsync(msg, header, content, EmbedColorType.Warning, thumbType);
 
         public async Task<IUserMessage> SendWarningAsync(IChannel chan, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(chan as ISocketMessageChannel, header, content, EmbedColorType.Warning, thumbType);
+            => await this.SendAsync(chan, header, content, EmbedColorType.Warning, thumbType);
 
         public async Task<IUserMessage> SendDangerAsync(IMessage msg, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
             => await this.SendAsync(msg, header, content, EmbedColorType.Danger, thumbType);
 
         public async Task<IUserMessage> SendDangerAsync(IChannel chan, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(chan as ISocketMessageChannel, header, content, EmbedColorType.Danger, thumbType);
+            => await this.SendAsync(chan, header, content, EmbedColorType.Danger, thumbType);
 
         public async Task<IUserMessage> SendGoodAsync(IMessage msg, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
             => await this.SendAsync(msg, header, content, EmbedColorType.Good, thumbType);
 
         public async Task<IUserMessage> SendGoodAsync(IChannel chan, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(chan as ISocketMessageChannel, header, content, EmbedColorType.Good, thumbType);
+            => await this.SendAsync(chan, header, content, EmbedColorType.Good, thumbType);
     }
 }
