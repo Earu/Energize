@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Energize.Essentials;
 using Energize.Interfaces.Services.Development;
