@@ -389,7 +389,7 @@ module CommandHandler =
         let err = 
             (sprintf "Something went wrong when using `%s` a report has been sent.\n" cmd.name)
             + "If you wish to contact the developer use the `bug` or `feedback` commands, don't forget to mention your case id!" 
-        let msgs = [ awaitResult (state.messageSender.SendWarningAsync(msg, sprintf "command error | case id: %s" (caseId.ToString()), err, ThumbnailType.Error)) ]
+        let msgs = [ awaitResult (state.messageSender.SendWarningAsync(msg, sprintf "command error | case id: %s" (caseId.ToString()), err)) ]
         registerCmdCacheEntry msg.Id msgs
         
 #if !DEBUG 

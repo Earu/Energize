@@ -67,7 +67,7 @@ namespace Energize.Services.Listeners.Music
                     .WithColorType(EmbedColorType.Warning)
                     .WithFooter("lavalink error");
 
-                await this.MessageSender.SendAsync(chan, builder.Build());
+                await this.MessageSender.SendAsync(chan, builder);
             }
         }
 
@@ -146,8 +146,11 @@ namespace Energize.Services.Listeners.Music
 
             try
             {
+                if (this.Players.TryGetValue(vc.GuildId, out IEnergizePlayer ply))
+                    await this.StopTrackAsync(ply.VoiceChannel, ply.TextChannel);
+
                 await this.LavaClient.DisconnectAsync(vc);
-                if (this.Players.TryRemove(vc.GuildId, out IEnergizePlayer ply))
+                if (this.Players.TryRemove(vc.GuildId, out ply))
                 {
                     this.Logger.Nice("MusicPlayer", ConsoleColor.Magenta, $"Disconnected from VC in guild <{vc.Guild}>");
                     ply.Disconnected = true;
@@ -497,8 +500,9 @@ namespace Energize.Services.Listeners.Music
 
             if (obj == null) return null;
 
-            ply.TrackPlayer.Message = await this.MessageSender.SendAsync(chan ?? ply.TextChannel, ply.TrackPlayer.Embed);
-            this.AddPlayerReactions(ply.TrackPlayer.Message, obj is RadioTrack);
+            bool isRadio = obj is RadioTrack;
+            ply.TrackPlayer.Message = await this.MessageSender.SendAsync(chan ?? ply.TextChannel, ply.TrackPlayer.Embed, isRadio ? ThumbnailType.Radio : ThumbnailType.Music);
+            this.AddPlayerReactions(ply.TrackPlayer.Message, isRadio);
             return ply.TrackPlayer.Message;
         }
 

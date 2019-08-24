@@ -65,7 +65,7 @@ namespace Energize.Services.Transmission.Transmitters
             this.Log($"Update requested from \'{proc}\'");
             SocketChannel updateChan = this.DiscordClient.GetChannel(Config.Instance.Discord.UpdateChannelID);
             if (updateChan != null)
-                await this.MessageSender.SendNormalAsync(updateChan, "update", "Fetched latest changes");
+                await this.MessageSender.SendNormalAsync(updateChan, "update", "Fetched latest changes", ThumbnailType.Update);
 
             string path = Directory.GetCurrentDirectory();
             string gitUrl = "https://github.com/Energizers/Energize.git";
