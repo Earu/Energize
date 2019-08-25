@@ -10,11 +10,10 @@ namespace Energize.Essentials
 {
     public enum EmbedColorType
     {
-        Good = 0,
-        Warning = 1,
-        Danger = 2,
-        Normal = 3,
-        Special = 4,
+        Good,
+        Warning,
+        Danger,
+        Special,
     }
 
     public static class Extensions
@@ -71,18 +70,15 @@ namespace Energize.Essentials
         {
             switch(colorType)
             {
-                case EmbedColorType.Good:
-                    return builder.WithColor(MessageSender.SColorGood);
                 case EmbedColorType.Warning:
                     return builder.WithColor(MessageSender.SColorWarning);
                 case EmbedColorType.Danger:
                     return builder.WithColor(MessageSender.SColorDanger);
-                case EmbedColorType.Normal:
-                    return builder.WithColor(MessageSender.SColorNormal);
                 case EmbedColorType.Special:
                     return builder.WithColor(MessageSender.SColorSpecial);
+                case EmbedColorType.Good:
                 default:
-                    return builder.WithColor(MessageSender.SColorNormal);
+                    return builder;
             }
         }
 

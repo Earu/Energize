@@ -209,7 +209,7 @@ module CommandHandler =
                     [ ctx.sendWarn None "Could not find a channel for the specified ID" ]
                 | Some chan ->
                     let header = "dev message (answer with the bug or feedback commands)"
-                    awaitIgnore (ctx.messageSender.SendNormalAsync(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
+                    awaitIgnore (ctx.messageSender.SendGoodAsync(chan, header, String.Join(Config.Instance.Discord.Separator, ctx.arguments.[1..])))
                     [ ctx.sendOK None "Message sent successfully" ]
             with ex ->
                 printfn "%s" (ex.ToString())

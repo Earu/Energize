@@ -76,7 +76,6 @@ namespace Energize.Services.Senders
             builder
                 .WithAuthorNickname(msg)
                 .WithLimitedDescription(display)
-                .WithColorType(EmbedColorType.Good)
                 .WithFooter(head);
             Embed embed = builder.Build();
             Paginator<T> paginator = new Paginator<T>(msg.Author.Id, data, displayCallback, embed);
@@ -95,7 +94,6 @@ namespace Energize.Services.Senders
             EmbedBuilder builder = new EmbedBuilder();
             builder
                 .WithAuthorNickname(msg)
-                .WithColorType(EmbedColorType.Good)
                 .WithFooter(head);
 
             T first = data.FirstOrDefault();
