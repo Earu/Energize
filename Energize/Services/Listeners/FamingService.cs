@@ -99,6 +99,8 @@ namespace Energize.Services.Listeners
         private async Task SendFameMessageAsync(IMessage msg)
         {
             ITextChannel chan = await this.GetOrCreateFameChannelAsync(msg);
+            if (chan == null) return;
+
             IGuildUser guildUser = await chan.Guild.GetCurrentUserAsync();
             if (guildUser.GetPermissions(chan).Has(ChannelPermission.ManageWebhooks | ChannelPermission.SendMessages | ChannelPermission.AddReactions))
             {
