@@ -29,8 +29,6 @@ namespace Energize.Essentials
             this.HttpClient = new HttpClient();
         }
 
-        public static Color SColorGood { get; } = new Color(30, 30, 30);
-        public static Color SColorNormal { get; } = new Color(79, 84, 92);
         public static Color SColorWarning { get; } = new Color(226, 123, 68);
         public static Color SColorDanger { get; } = new Color(226, 68, 68);
         public static Color SColorSpecial { get; } = new Color(165, 28, 21);
@@ -94,7 +92,7 @@ namespace Energize.Essentials
             return true;
         }
 
-        public async Task<IUserMessage> SendAsync(IChannel c, string header, string content, EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None, IMessage msg = null)
+        public async Task<IUserMessage> SendAsync(IChannel c, string header, string content, EmbedColorType colorType = EmbedColorType.Good, ThumbnailType thumbnailType = ThumbnailType.None, IMessage msg = null)
         {
             try
             {
@@ -127,12 +125,15 @@ namespace Energize.Essentials
             return null;
         }
 
-        public async Task<IUserMessage> SendAsync(IMessage msg, string header, string content, EmbedColorType colorType = EmbedColorType.Normal, ThumbnailType thumbnailType = ThumbnailType.None)
+        public async Task<IUserMessage> SendAsync(IMessage msg, string header, string content, EmbedColorType colorType = EmbedColorType.Good, ThumbnailType thumbnailType = ThumbnailType.None)
             => await this.SendAsync(msg.Channel, header, content, colorType, thumbnailType, msg);
 
         public async Task<IUserMessage> SendAsync(IChannel chan, Embed embed, ThumbnailType thumbType = ThumbnailType.None)
         {
             EmbedBuilder builder = embed.ToEmbedBuilder();
+            if (!embed.Color.HasValue)
+                builder.Color = null;
+
             return await this.SendAsync(chan, builder, thumbType);
         }
 
@@ -166,6 +167,9 @@ namespace Energize.Essentials
         public async Task<IUserMessage> SendAsync(IMessage msg, Embed embed, ThumbnailType thumbType = ThumbnailType.None)
         {
             EmbedBuilder builder = embed.ToEmbedBuilder();
+            if (!embed.Color.HasValue)
+                builder.Color = null;
+
             return await this.SendAsync(msg, builder, thumbType);
         }
 
@@ -214,12 +218,6 @@ namespace Energize.Essentials
 
             return null;
         }
-
-        public async Task<IUserMessage> SendNormalAsync(IMessage msg, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(msg, header, content, EmbedColorType.Normal, thumbType);
-
-        public async Task<IUserMessage> SendNormalAsync(IChannel chan, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
-            => await this.SendAsync(chan, header, content, EmbedColorType.Normal, thumbType);
 
         public async Task<IUserMessage> SendWarningAsync(IMessage msg, string header, string content, ThumbnailType thumbType = ThumbnailType.None)
             => await this.SendAsync(msg, header, content, EmbedColorType.Warning, thumbType);

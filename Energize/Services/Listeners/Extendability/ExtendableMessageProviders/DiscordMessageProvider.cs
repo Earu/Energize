@@ -34,7 +34,6 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithAuthorNickname(quotedMsg)
-                    .WithColorType(EmbedColorType.Good)
                     .WithLimitedDescription(string.IsNullOrWhiteSpace(quotedMsg.Content) ? "Empty message." : quotedMsg.Content)
                     .WithTimestamp(quotedMsg.Timestamp)
                     .WithField("Quoted by", $"{reaction.User.Value.Mention} from [**#{quotedMsg.Channel.Name}**]({match.Value})", false);

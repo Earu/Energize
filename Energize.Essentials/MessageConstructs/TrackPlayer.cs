@@ -45,7 +45,6 @@ namespace Energize.Essentials.MessageConstructs
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithColorType(EmbedColorType.Good)
                 .WithTitle(track.Title)
                 .WithField("Author", track.Author)
                 .WithField("Stream", track.IsStream)
@@ -70,7 +69,6 @@ namespace Energize.Essentials.MessageConstructs
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithColorType(EmbedColorType.Good)
                 .WithDescription("📻 Playing radio")
                 .WithField("Genre", radio.Genre)
                 .WithField("Raw Stream", $"**{radio.StreamUrl}**")

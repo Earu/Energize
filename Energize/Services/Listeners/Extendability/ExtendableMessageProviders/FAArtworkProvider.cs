@@ -63,7 +63,6 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithAuthorNickname(msg)
-                    .WithColorType(EmbedColorType.Good)
                     .WithTitle($"**{title}**")
                     .WithUrl(match.Value)
                     .WithField("Author", author)
