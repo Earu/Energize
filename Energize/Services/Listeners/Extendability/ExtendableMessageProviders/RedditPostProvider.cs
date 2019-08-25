@@ -94,7 +94,6 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
                     .WithAuthorNickname(msg)
-                    .WithColorType(EmbedColorType.Good)
                     .WithField("SubReddit", $"r/{innerPost.SubReddit}/", false)
                     .WithField("Author", innerPost.Author)
                     .WithField("Upvote Percentage", $"{innerPost.UpvoteRatio * 100}%")

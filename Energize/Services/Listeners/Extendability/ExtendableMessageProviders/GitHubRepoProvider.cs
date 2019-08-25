@@ -87,7 +87,6 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder
-                    .WithColorType(EmbedColorType.Good)
                     .WithField("Owner", $"{repo.Owner.Login} ({repo.Owner.Type})")
                     .WithField("Stars", repo.StargazersCount)
                     .WithField("Forks", repo.ForksCount)

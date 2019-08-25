@@ -436,7 +436,6 @@ namespace Energize.Services.Listeners.Music
                 builder.WithThumbnailUrl(thumbnailUrl);
             return builder
                 .WithDescription(desc)
-                .WithColorType(EmbedColorType.Good)
                 .WithFooter("music player")
                 .WithField("Title", lavaTrack.Title)
                 .WithField("Author", lavaTrack.Author)
