@@ -87,7 +87,7 @@ namespace Energize.Essentials
                 return false;
             }
 
-            fileName = $"{thumbnailType.ToString().ToUpper()}.png";
+            fileName = $"{thumbnailType.ToString().ToLower()}.png";
             filePath = $"volta/{fileName}";
             return true;
         }

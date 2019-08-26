@@ -51,7 +51,7 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Volume", $"{volume}%")
                 .WithField("Paused", paused)
                 .WithField("Looping", looping)
-                .WithThumbnailUrl("attachment://MUSIC.png")
+                .WithThumbnailUrl("attachment://music.png")
                 .WithFooter("music player");
 
             string url = track.Uri.AbsoluteUri;
@@ -74,7 +74,7 @@ namespace Energize.Essentials.MessageConstructs
                 .WithField("Raw Stream", $"**{radio.StreamUrl}**")
                 .WithField("Volume", $"{volume}%")
                 .WithField("Paused", paused)
-                .WithThumbnailUrl("attachment://RADIO.png")
+                .WithThumbnailUrl("attachment://radio.png")
                 .WithFooter("music player");
 
             return builder.Build();
