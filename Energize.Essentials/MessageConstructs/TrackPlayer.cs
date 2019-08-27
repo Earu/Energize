@@ -9,9 +9,13 @@ namespace Energize.Essentials.MessageConstructs
 {
     public class TrackPlayer
     {
+
+        private DateTime LastUpdate;
+
         public TrackPlayer(ulong guildid)
         {
             this.GuildID = guildid;
+            this.LastUpdate = DateTime.MinValue;
         }
 
         public IUserMessage Message { get; set; }
@@ -135,6 +139,13 @@ namespace Energize.Essentials.MessageConstructs
             if (this.Message == null) return;
 
             this.Embed = this.BuildEmbed(track, volume, paused, looping);
+            if ((DateTime.Now - this.LastUpdate).TotalSeconds < 2)
+            {
+                this.LastUpdate = DateTime.Now;
+                return;
+            }
+
+            this.LastUpdate = DateTime.Now;
             await this.Message.ModifyAsync(prop => prop.Embed = this.Embed);
         }
     }
