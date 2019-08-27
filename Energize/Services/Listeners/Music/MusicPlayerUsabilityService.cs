@@ -74,12 +74,15 @@ namespace Energize.Services.Listeners.Music
             return true;
         }
 
-        private bool IsValidMessage(IMessage msg)
+        private bool IsValidMessage(IMessage m, bool checkReactions = true)
         {
+            if (!(m is IUserMessage msg)) return false;
             if (msg.Author.IsBot || msg.Author.IsWebhook) return false;
             if (msg.Embeds.Count < 1 && msg.Attachments.Count < 1) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
+            if (checkReactions && ((msg.Reactions.TryGetValue(Emote, out ReactionMetadata data) && !data.IsMe) || !msg.Reactions.ContainsKey(Emote)))
+                return false;
 
             return true;
         }
@@ -168,7 +171,7 @@ namespace Energize.Services.Listeners.Music
         [DiscordEvent("MessageReceived")]
         public async Task OnMessageReceived(SocketMessage msg)
         {
-            if (!this.IsValidMessage(msg)) return;
+            if (!this.IsValidMessage(msg, false)) return;
 
             if(msg.Embeds.Any(embed => IsValidUrl(embed.Url) || HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {
@@ -192,7 +195,7 @@ namespace Energize.Services.Listeners.Music
         [DiscordEvent("MessageUpdated")]
         public async Task OnMessageUpdated(Cacheable<IMessage, ulong> _, SocketMessage msg, ISocketMessageChannel __)
         {
-            if (!this.IsValidMessage(msg)) return;
+            if (!this.IsValidMessage(msg, false)) return;
 
             if (msg.Embeds.Any(embed => IsValidUrl(embed.Url) || HasPlayableVideo(embed)) || msg.Attachments.Any(attachment => attachment.IsPlayableAttachment()))
             {

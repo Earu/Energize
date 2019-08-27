@@ -93,7 +93,8 @@ namespace Energize.Services.Listeners.Extendability
             if (!this.HasSupportedUrl(msg)) return false;
             CommandHandlingService commands = this.ServiceManager.GetService<CommandHandlingService>("Commands");
             if (commands.IsCommandMessage(msg)) return false;
-            if (!msg.Reactions.ContainsKey(EmoteExtend) || (msg.Reactions.ContainsKey(EmoteExtend) && !msg.Reactions[EmoteExtend].IsMe)) return false;
+            if (!msg.Reactions.ContainsKey(EmoteExtend) || (msg.Reactions.TryGetValue(EmoteExtend, out ReactionMetadata data) && !data.IsMe))
+                return false;
 
             return true;
         }
