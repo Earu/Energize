@@ -359,7 +359,7 @@ module Voice =
     [<Command("radio", "Plays a radio stream of the specified genre", "radio <genre>")>]
     let radio (ctx : CommandContext) = async {
         return musicAction ctx (fun music vc _ ->
-            let genre = ctx.arguments.[0].ToLower().Trim()
+            let genre = ctx.input.Trim()
             let radios = toMap StaticData.Instance.RadioSources |> Map.toList
             let radioOpt = radios |> List.tryFind (fun (radioGenre, _) -> genre.Equals(radioGenre))
             match radioOpt with
