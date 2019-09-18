@@ -47,7 +47,7 @@ namespace Victoria
         public LavaQueue<IQueueObject> Queue { get; private set; }
 
         /// <summary>
-        /// Last time when Lavalink sent an updated.
+        /// Last time when Lavalink sent an update.
         /// </summary>
         public DateTimeOffset LastUpdate { get; internal set; }
 
@@ -82,6 +82,7 @@ namespace Victoria
         {
             this.IsPlaying = true;
             this.CurrentTrack = track;
+            this.LastUpdate = DateTimeOffset.Now;
             if (!noReplace)
                 Volatile.Write(ref this._isPaused, false);
             string trackHash = await GetTrackHash(track);
@@ -191,9 +192,10 @@ namespace Victoria
             if (!this.IsPlaying)
                 throw new InvalidOperationException(INVALID_OP);
 
-            if (position > this.CurrentTrack.Length)
-                throw new ArgumentOutOfRangeException($"{nameof(position)} is greater than current track's length.");
+            if (position > this.CurrentTrack.Length || position <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException($"{nameof(position)} is out of acceptable range.");
 
+            this.CurrentTrack.Position = position;
             var payload = new SeekPayload(this.VoiceChannel.GuildId, position);
             return this._socketHelper.SendPayloadAsync(payload);
         }
