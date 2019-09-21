@@ -92,6 +92,7 @@
     "folk": "http://ice1.somafm.com/folkfwd-128-mp3",
     "celtic": "http://ice1.somafm.com/thistle-128-mp3",
     "deep house": "http://ice1.somafm.com/beatblender-128-mp3",
-    "jungle train": "http://stream6.jungletrain.net:8000/"
+    "jungle train": "http://stream6.jungletrain.net:8000/",
+    "opm": "http://usa5.fastcast4u.com:16224/stream"
   }
 }
