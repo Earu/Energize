@@ -215,7 +215,7 @@ namespace Victoria
                 if (player.CurrentTrack != null && player.IsPlaying && !player.IsPaused)
                 {
                     TimeSpan pos;
-                    if (player.CurrentTrack.Position.Equals(TimeSpan.Zero))
+                    if (player.CurrentTrack.Position == TimeSpan.Zero)
                     {
                         TimeSpan diff = (now - player.LastUpdate);
                         pos = player.CurrentTrack.Position.Add(diff);
@@ -225,7 +225,10 @@ namespace Victoria
                         pos = player.CurrentTrack.Position.Add(TimeSpan.FromSeconds(1));
                     }
 
-                    pos = pos >= player.CurrentTrack.Length ? player.CurrentTrack.Length : pos;
+                    if (player.CurrentTrack.IsStream)
+                        pos = TimeSpan.Zero;
+                    else
+                        pos = pos >= player.CurrentTrack.Length ? player.CurrentTrack.Length : pos;
 
                     player.CurrentTrack.Position = pos;
                     player.LastUpdate = now;
@@ -236,7 +239,7 @@ namespace Victoria
                         this.OnPlayerUpdated?.Invoke(player, player.CurrentTrack, pos);
                     }
 
-                    if (pos.Equals(player.CurrentTrack.Length))
+                    if (!player.CurrentTrack.IsStream && pos >= player.CurrentTrack.Length)
                         this.OnTrackFinished?.Invoke(player, player.CurrentTrack, TrackEndReason.Finished);
                 }
             }

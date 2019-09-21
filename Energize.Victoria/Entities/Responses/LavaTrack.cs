@@ -48,10 +48,7 @@ namespace Victoria.Entities
         public Uri Uri { get; internal set; }
 
         [JsonIgnore]
-        public string Provider
-        {
-            get => this.Uri.GetProvider();
-        }
+        public string Provider => this.Uri.GetProvider();
 
         /// <summary>
         /// 
