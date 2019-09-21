@@ -1,7 +1,7 @@
 [![Gitlab pipeline status](https://img.shields.io/gitlab/pipeline/Earu/energize?style=flat-square)](https://gitlab.com/Earu/energize/commits/master)
 [![Discord](https://img.shields.io/discord/589801569592147969?style=flat-square)](https://discord.gg/RXZtBr5)
 # **Energize**
-<img src="https://dl.dropboxusercontent.com/s/8k0lwukl9n1shki/energize_logo.png" height="200px"><img src="https://dl.dropboxusercontent.com/s/ks0rct3thvy3syl/volta_classic_cleaned_short.png" height="200px">
+<img src="https://dl.dropboxusercontent.com/s/8k0lwukl9n1shki/energize_logo.png" height="200px">
 
 [![Discord Bots](https://discordbots.org/api/widget/status/360116713829695489.svg?noavatar=true)](https://discordbots.org/bot/360116713829695489)
 [![Discord Bots](https://discordbots.org/api/widget/servers/360116713829695489.svg?noavatar=true)](https://discordbots.org/bot/360116713829695489)
