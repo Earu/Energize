@@ -142,6 +142,7 @@ module Util =
     }
 
     [<CommandConditions(CommandCondition.DevOnly)>]
+    [<MaintenanceFreeCommand>]
     [<Command("restart", "Restarts the bot", "restart <nothing>")>]
     let restart (ctx : CommandContext) : Async<IUserMessage list> = async {
         let restart = ctx.serviceManager.GetService<IRestartService>("Restart")
