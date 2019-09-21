@@ -51,10 +51,19 @@ namespace Energize.Services.Senders
                 vote.Message = await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
                 vote.VoteFinished += async result =>
                 {
-                    await vote.Message.DeleteAsync();
-                    await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
-                    
-                    this.Votes.TryRemove(vote.Message.Id, out Vote _);
+                    try
+                    {
+                        await vote.Message.DeleteAsync();
+                    }
+                    catch(Exception ex)
+                    {
+                        this.Logger.Nice("Vote", ConsoleColor.Yellow, $"Could not delete a vote message: {ex.Message}");
+                    }
+                    finally
+                    {
+                        await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
+                        this.Votes.TryRemove(vote.Message.Id, out Vote _);
+                    }
                 };
 
                 if (!this.Votes.TryAdd(vote.Message.Id, vote))

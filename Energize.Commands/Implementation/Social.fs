@@ -175,8 +175,12 @@ module Social =
     [<Command("vote","Creates a 5 minutes vote with up to 9 choices","vote <description> <choice> <choice> <choice|nothing> ...")>]
     let vote (ctx : CommandContext) = async {
         let votes = ctx.serviceManager.GetService<IVoteSenderService>("Votes")
-        let choices = if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]
-        return [ awaitResult (votes.SendVoteAsync(ctx.message, ctx.arguments.[0], choices)) ]
+        let choices = (if ctx.arguments.Length > 10 then ctx.arguments.[1..8] else ctx.arguments.[1..]) |> List.distinct
+        return 
+            if choices.Length > 1 then
+                [ awaitResult (votes.SendVoteAsync(ctx.message, ctx.arguments.[0], choices)) ]
+            else
+                [ ctx.sendWarn None "Not enough **unique** choices to create a vote" ]
     }
 
     [<CommandConditions(CommandCondition.AdminOnly, CommandCondition.GuildOnly)>]
