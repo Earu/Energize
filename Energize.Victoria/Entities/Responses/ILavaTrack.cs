@@ -20,6 +20,8 @@ namespace Victoria.Entities
 
         TimeSpan Length { get; }
 
+        bool HasLength { get; }
+
         string Title { get; }
 
         Uri Uri { get; }

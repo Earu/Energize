@@ -500,7 +500,7 @@ namespace Energize.Services.Listeners.Music
             if (obj == null) return null;
 
             bool isRadio = obj is RadioTrack;
-            ply.TrackPlayer.Message = await this.MessageSender.SendAsync(chan ?? ply.TextChannel, ply.TrackPlayer.Embed, isRadio ? ThumbnailType.Radio : ThumbnailType.Music);
+            ply.TrackPlayer.Message = await this.MessageSender.SendAsync(chan ?? ply.TextChannel, ply.TrackPlayer.Embed);
             this.AddPlayerReactions(ply.TrackPlayer.Message, isRadio);
             return ply.TrackPlayer.Message;
         }
