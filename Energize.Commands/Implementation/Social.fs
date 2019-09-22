@@ -193,8 +193,11 @@ module Social =
         let dbGuild = awaitResult (dbctx.Instance.GetOrCreateGuildAsync(guild.Id))
         let msgs =
             if dbGuild.HasHallOfShames then
-                await (fame.RemoveFameChannelAsync(dbGuild, ctx.message))
-                [ ctx.sendOK None "Successfully disabled and removed the fame channel" ]
+                let succ = awaitResult (fame.RemoveFameChannelAsync(dbGuild, ctx.message))
+                if succ then
+                    [ ctx.sendOK None "Successfully disabled and removed the fame channel" ]
+                else
+                    [ ctx.sendWarn None "Could not disable and remove the fame channel, probably missing permissions" ]
             else
                 let chan = awaitResult (fame.CreateAndSaveFameChannelAsync(dbGuild, ctx.message))
                 match chan |> Option.ofObj with
