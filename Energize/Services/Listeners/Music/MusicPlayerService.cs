@@ -784,7 +784,8 @@ namespace Energize.Services.Listeners.Music
             }
         }
 
-        [DiscordEvent("ShardDisconnected")]
+        // Not needed anymore since custom player updated event is fired
+        /*[DiscordEvent("ShardDisconnected")]
         public async Task OnShardDisconnected(Exception _, DiscordSocketClient client)
         {
             int count = 0;
@@ -802,6 +803,6 @@ namespace Energize.Services.Listeners.Music
             }
 
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
-        }
+        }*/
     }
 }
