@@ -76,6 +76,15 @@ namespace Energize.Essentials.TrackTypes
 
         public TimeSpan Length => this.InnerTrack?.Length ?? TimeSpan.Zero;
 
+        public bool HasLength
+        {
+            get
+            {
+                TimeSpan len = this.InnerTrack?.Length ?? TimeSpan.MaxValue;
+                return len > TimeSpan.Zero && len < TimeSpan.MaxValue;
+            }
+        }
+
         public string Title => this.SpotifyInfo.Name ?? this.InnerTrack?.Title;
 
         public Uri Uri => this.SpotifyInfo.Uri ?? this.InnerTrack?.Uri;

@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using System;
-using Victoria.Queue;
 
 namespace Victoria.Entities
 {
@@ -34,9 +33,20 @@ namespace Victoria.Entities
         [JsonIgnore]
         public TimeSpan Length
         {
-            get => TimeSpan.FromMilliseconds(this.TrackLength);
+            get {
+                if (this.TrackLength <= 0)
+                    return TimeSpan.Zero;
+                
+                if (this.TrackLength >= TimeSpan.MaxValue.Ticks || double.IsInfinity(this.TrackLength))
+                    return TimeSpan.MaxValue;
+
+                return TimeSpan.FromMilliseconds(this.TrackLength);
+            }
             set => this.TrackLength = value.Milliseconds;
         }
+
+        [JsonIgnore]
+        public bool HasLength => this.Length < TimeSpan.MaxValue && this.Length > TimeSpan.Zero;
 
         [JsonProperty("length")]
         internal long TrackLength { get; set; }
@@ -53,9 +63,7 @@ namespace Victoria.Entities
         /// <summary>
         /// 
         /// </summary>
-        public void ResetPosition()
-        {
-            this.Position = TimeSpan.Zero;
-        }
+        public void ResetPosition() 
+            => this.Position = TimeSpan.Zero;
     }
 }
