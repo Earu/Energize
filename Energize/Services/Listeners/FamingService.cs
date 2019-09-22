@@ -60,7 +60,7 @@ namespace Energize.Services.Listeners
             return null;
         }
 
-        public async Task RemoveFameChannelAsync(IDiscordGuild dbGuild, IMessage msg)
+        public async Task<bool> RemoveFameChannelAsync(IDiscordGuild dbGuild, IMessage msg)
         {
             if (msg.Author is SocketGuildUser guildUser)
             {
@@ -73,8 +73,12 @@ namespace Energize.Services.Listeners
                         await chan.DeleteAsync();
                     dbGuild.HasHallOfShames = false;
                     dbGuild.HallOfShameID = 0;
+
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private async Task<ITextChannel> GetOrCreateFameChannelAsync(IMessage msg)
