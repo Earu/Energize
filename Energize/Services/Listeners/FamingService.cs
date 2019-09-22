@@ -17,28 +17,31 @@ namespace Energize.Services.Listeners
         private static readonly Emoji Star2Emote = new Emoji("🌟");
 
         private readonly ServiceManager ServiceManager;
-        private readonly MessageSender MessageSender;
 
         public FamingService(EnergizeClient client)
         {
             this.ServiceManager = client.ServiceManager;
-            this.MessageSender = client.MessageSender;
         }
 
         private async Task<ITextChannel> CreateFameChannelAsync(IMessage msg)
         {
             string name = "⭐hall-of-fames⭐";
             string desc = $"Memorable, unique messages. Adds a message when reacting with a ⭐ to a message.";
-            if (msg.Author is SocketGuildUser guildUser && guildUser.GuildPermissions.ManageChannels)
+            if (msg.Author is SocketGuildUser guildUser)
             {
-                RestTextChannel chan = await guildUser.Guild.CreateTextChannelAsync(name);
-                OverwritePermissions basePerms = new OverwritePermissions(mentionEveryone: PermValue.Deny, sendMessages: PermValue.Deny, sendTTSMessages: PermValue.Deny);
-                OverwritePermissions botPerms = new OverwritePermissions(sendMessages: PermValue.Allow, addReactions: PermValue.Allow, embedLinks: PermValue.Allow, manageWebhooks: PermValue.Allow);
-                await chan.AddPermissionOverwriteAsync(guildUser.Guild.EveryoneRole, basePerms);
-                await chan.AddPermissionOverwriteAsync(guildUser.Guild.CurrentUser, botPerms);
-                await chan.ModifyAsync(prop => prop.Topic = desc);
+                IGuild guild = guildUser.Guild;
+                IGuildUser botUser = await guild.GetCurrentUserAsync();
+                if (botUser.GuildPermissions.ManageChannels)
+                {
+                    RestTextChannel chan = await guildUser.Guild.CreateTextChannelAsync(name);
+                    OverwritePermissions basePerms = new OverwritePermissions(mentionEveryone: PermValue.Deny, sendMessages: PermValue.Deny, sendTTSMessages: PermValue.Deny);
+                    OverwritePermissions botPerms = new OverwritePermissions(sendMessages: PermValue.Allow, addReactions: PermValue.Allow, embedLinks: PermValue.Allow, manageWebhooks: PermValue.Allow);
+                    await chan.AddPermissionOverwriteAsync(guildUser.Guild.EveryoneRole, basePerms);
+                    await chan.AddPermissionOverwriteAsync(guildUser.Guild.CurrentUser, botPerms);
+                    await chan.ModifyAsync(prop => prop.Topic = desc);
 
-                return chan;
+                    return chan;
+                }
             }
 
             return null;
@@ -59,12 +62,13 @@ namespace Energize.Services.Listeners
 
         public async Task RemoveFameChannelAsync(IDiscordGuild dbGuild, IMessage msg)
         {
-            if (msg.Author is SocketGuildUser guildUser && guildUser.GuildPermissions.ManageChannels)
+            if (msg.Author is SocketGuildUser guildUser)
             {
                 IGuild guild = guildUser.Guild;
-                if (dbGuild.HasHallOfShames)
+                IGuildUser botUser = await guild.GetCurrentUserAsync();
+                if (dbGuild.HasHallOfShames && botUser.GuildPermissions.ManageChannels)
                 {
-                    IGuildChannel chan = await guild.GetChannelAsync(dbGuild.HallOfShameID);
+                    IGuildChannel chan = await ((IGuild)guild).GetChannelAsync(dbGuild.HallOfShameID);
                     if (chan != null)
                         await chan.DeleteAsync();
                     dbGuild.HasHallOfShames = false;
