@@ -225,7 +225,8 @@ namespace Victoria
                         pos = player.CurrentTrack.Position.Add(TimeSpan.FromSeconds(1));
                     }
 
-                    if (player.CurrentTrack.IsStream)
+                    bool hasLen = player.CurrentTrack.HasLength;
+                    if (!hasLen)
                         pos = TimeSpan.Zero;
                     else
                         pos = pos >= player.CurrentTrack.Length ? player.CurrentTrack.Length : pos;
@@ -235,11 +236,11 @@ namespace Victoria
 
                     if (shouldUpdate)
                     {
-                        this.NextPlayerUpdate = DateTimeOffset.Now.AddSeconds(5);
+                        this.NextPlayerUpdate = now.AddSeconds(5);
                         this.OnPlayerUpdated?.Invoke(player, player.CurrentTrack, pos);
                     }
 
-                    if (!player.CurrentTrack.IsStream && pos >= player.CurrentTrack.Length)
+                    if (hasLen && pos >= player.CurrentTrack.Length)
                         this.OnTrackFinished?.Invoke(player, player.CurrentTrack, TrackEndReason.Finished);
                 }
             }
