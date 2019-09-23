@@ -6,6 +6,7 @@ using Energize.Interfaces.DatabaseModels;
 using Energize.Interfaces.Services.Database;
 using Energize.Interfaces.Services.Listeners;
 using Energize.Interfaces.Services.Senders;
+using System;
 using System.Threading.Tasks;
 
 namespace Energize.Services.Listeners
@@ -17,10 +18,14 @@ namespace Energize.Services.Listeners
         private static readonly Emoji Star2Emote = new Emoji("🌟");
 
         private readonly ServiceManager ServiceManager;
+        private readonly MessageSender MessageSender;
+        private readonly Logger Logger;
 
         public FamingService(EnergizeClient client)
         {
             this.ServiceManager = client.ServiceManager;
+            this.MessageSender = client.MessageSender;
+            this.Logger = client.Logger;
         }
 
         private async Task<ITextChannel> CreateFameChannelAsync(IMessage msg)
@@ -62,23 +67,31 @@ namespace Energize.Services.Listeners
 
         public async Task<bool> RemoveFameChannelAsync(IDiscordGuild dbGuild, IMessage msg)
         {
-            if (msg.Author is SocketGuildUser guildUser)
+            try
             {
-                IGuild guild = guildUser.Guild;
-                IGuildUser botUser = await guild.GetCurrentUserAsync();
-                if (dbGuild.HasHallOfShames && botUser.GuildPermissions.ManageChannels)
+                if (msg.Author is SocketGuildUser guildUser)
                 {
-                    IGuildChannel chan = await ((IGuild)guild).GetChannelAsync(dbGuild.HallOfShameID);
-                    if (chan != null)
-                        await chan.DeleteAsync();
-                    dbGuild.HasHallOfShames = false;
-                    dbGuild.HallOfShameID = 0;
+                    IGuild guild = guildUser.Guild;
+                    IGuildUser botUser = await guild.GetCurrentUserAsync();
+                    if (dbGuild.HasHallOfShames && botUser.GuildPermissions.ManageChannels)
+                    {
+                        IGuildChannel chan = await guild.GetChannelAsync(dbGuild.HallOfShameID);
+                        if (chan != null)
+                            await chan.DeleteAsync();
+                        dbGuild.HasHallOfShames = false;
+                        dbGuild.HallOfShameID = 0;
 
-                    return true;
+                        return true;
+                    }
                 }
-            }
 
-            return false;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                this.Logger.Nice("Fame", ConsoleColor.Magenta, $"Could not disable a fame channel: {ex}");
+                return false;
+            }
         }
 
         private async Task<ITextChannel> GetOrCreateFameChannelAsync(IMessage msg)
@@ -115,8 +128,12 @@ namespace Energize.Services.Listeners
                 IWebhookSenderService webhook = this.ServiceManager.GetService<IWebhookSenderService>("Webhook");
                 ulong msgId = await webhook.RepostMessageAsync(chan, msg);
 
-                if (msgId == 0) return;
-                IUserMessage postedMsg = (IUserMessage)await chan.GetMessageAsync(msgId);
+                IUserMessage postedMsg;
+                if (msgId == 0)
+                    postedMsg = await this.MessageSender.RepostMessageAsync(chan, msg);
+                else 
+                    postedMsg = (IUserMessage)await chan.GetMessageAsync(msgId);
+
                 if (postedMsg != null)
                     await postedMsg.AddReactionAsync(Star2Emote);
             }
@@ -133,13 +150,29 @@ namespace Energize.Services.Listeners
             return true;
         }
 
+        private bool ShouldSendMessage(IUserMessage msg)
+        {
+            int count = 0;
+            if (msg.Reactions.TryGetValue(Star2Emote, out ReactionMetadata start2Data))
+                count += start2Data.ReactionCount;
+
+            if (msg.Reactions.TryGetValue(StarEmote, out ReactionMetadata startData))
+                count += startData.ReactionCount;
+
+            if (count == 2)
+                return true;
+
+            return false;
+        }
+
         [DiscordEvent("ReactionAdded")]
         public async Task OnReactionAddedAsync(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel chan, SocketReaction reaction)
         {
             if (!cache.HasValue) return;
             if (!IsValidReaction(chan, reaction, cache.Value.Author.Id)) return;
 
-            await this.SendFameMessageAsync(cache.Value);
+            if (this.ShouldSendMessage(cache.Value))
+                await this.SendFameMessageAsync(cache.Value);
         }
     }
 }
