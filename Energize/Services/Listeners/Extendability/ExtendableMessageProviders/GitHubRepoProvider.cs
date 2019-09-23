@@ -98,7 +98,7 @@ namespace Energize.Services.Listeners.Extendability.ExtendableMessageProviders
 
                 builder
                     .WithField("Default Branch", repo.DefaultBranch)
-                    .WithField("Open Issues", repo.OpenIssuesCount)
+                    .WithField("Opened Issues", repo.OpenIssuesCount)
                     .WithField("Fork", repo.IsFork)
                     .WithField("Archived", repo.IsArchived)
                     .WithField("Disabled", repo.IsDisabled)
