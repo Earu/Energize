@@ -278,7 +278,7 @@ module Voice =
                 let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                 [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, result.Tracks, fun track ->
                     let page = result.Tracks |> Seq.tryFindIndex (fun v -> v.Uri.Equals(track.Uri))
-                    sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] (track.Uri.ToString()) 
+                    sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.input (track.Uri.ToString()) 
                 )) ]
             else
                 [ ctx.sendWarn None "Could not find any songs" ]
@@ -324,7 +324,7 @@ module Voice =
                         let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                         [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, streamUrls, fun streamUrl ->
                             let page = streamUrls |> List.tryFindIndex (fun url -> url.Equals(streamUrl))
-                            sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] streamUrl 
+                            sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.input streamUrl 
                         )) ]
                     else
                         [ ctx.sendWarn None "Could not find any streams" ]
@@ -344,7 +344,7 @@ module Voice =
                     let paginator = ctx.serviceManager.GetService<IPaginatorSenderService>("Paginator")
                     [ awaitResult (paginator.SendPlayerPaginatorAsync(ctx.message, songItems, fun songItem ->
                         let page = songItems |> List.tryFindIndex (fun url -> url.Equals(songItem))
-                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.arguments.[0] songItem.Uri.AbsoluteUri 
+                        sprintf "%s #%d out of %d results for `%s`\n%s" ctx.authorMention (page.Value + 1) len ctx.input songItem.Uri.AbsoluteUri 
                     )) ]
                 else
                     [ ctx.sendWarn None "Could not find any songs" ]
