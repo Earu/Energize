@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <LangVersion>latest</LangVersion>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)/..</RunWorkingDirectory>
     <LangVersion>latest</LangVersion>
