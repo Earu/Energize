@@ -22,10 +22,13 @@ module Voice =
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
         let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
-        let guser = ctx.message.Author :?> IGuildUser
-        match guser.VoiceChannel |> Option.ofObj with
-        | None -> [ ctx.sendWarn None "Not in a voice channel" ]
-        | Some vc -> cb music vc guser
+        let guser = try Some (ctx.message.Author :?> IGuildUser) with _ -> None
+        match guser with
+        | Some guser ->
+            match guser.VoiceChannel |> Option.ofObj with
+            | None -> [ ctx.sendWarn None "Not in a voice channel" ]
+            | Some vc -> cb music vc guser
+        | None -> [ ctx.sendWarn None "There was a problem processing your user data" ]
 
     let private handleSearchResult (music : IMusicPlayerService) (ctx : CommandContext) (res : SearchResult) (vc : IVoiceChannel) (isRadio : bool) =
         match res.LoadType with
