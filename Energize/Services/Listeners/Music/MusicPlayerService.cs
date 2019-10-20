@@ -196,6 +196,15 @@ namespace Energize.Services.Listeners.Music
             this.Logger.Nice("MusicPlayer", ConsoleColor.Yellow, $"Disconnected {count} players");
         }
 
+        public async Task DisconnectUnusedPlayersAsync()
+        {
+            foreach ((ulong _, IEnergizePlayer ply) in this.Players)
+            {
+                if (!ply.IsPlaying || ply.Disconnected || ply.Inactive)
+                    await this.DisconnectAsync(ply.VoiceChannel);
+            }
+        }
+
         public async Task<IUserMessage> AddTrackAsync(IVoiceChannel vc, ITextChannel chan, ILavaTrack lavaTrack)
         {
             IEnergizePlayer ply = await this.ConnectAsync(vc, chan);
