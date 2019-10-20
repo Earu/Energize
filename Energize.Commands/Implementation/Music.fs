@@ -17,7 +17,6 @@ open Energize.Essentials.Helpers
 
 [<CommandModule("Music")>]
 module Voice =
-    let private ytIdRegex = Regex(@"(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})\W", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
     let private spotifyRegex = Regex(@"^(spotify:|https?:\/\/open\.spotify\.com\/)([a-z]+)(\/|:)([^:\/\s\?]+)", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
 
     let private musicAction (ctx : CommandContext) (cb : IMusicPlayerService -> IVoiceChannel -> IGuildUser -> IUserMessage list) =
