@@ -20,6 +20,7 @@ namespace Energize.Interfaces.Services.Listeners
         bool Autoplay { get; set; }
         bool IsLooping { get; set; }
         bool Disconnected { get; set; }
+        bool Inactive { get; set; }
         TrackPlayer TrackPlayer { get; set; }
         bool IsPlaying { get; }
         bool IsPaused { get; }
