@@ -1,15 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
-        <Version></Version>
-        <PackageVersion></PackageVersion>
         <LangVersion>8.0</LangVersion>
-        <TargetFrameworks>netstandard2.0;</TargetFrameworks>
+        <TargetFramework>netcoreapp3.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <RootNamespace>Victoria</RootNamespace>
     </PropertyGroup>
-
     <PropertyGroup>
         <Title>Energize.Victoria</Title>
         <Authors>Yucked</Authors>
@@ -26,14 +22,10 @@
             - Included XML documentation.
         </PackageReleaseNotes>
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
       <NoWarn>1701;1702;1591</NoWarn>
     </PropertyGroup>
-
     <ItemGroup>
         <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1" />
-        <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Threading.Tasks.Extensions" Version="4.6.0-preview.18571.3" />
     </ItemGroup>
-
 </Project>

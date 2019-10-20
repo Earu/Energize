@@ -1,4 +1,4 @@
-image: microsoft/dotnet:latest
+image: microsoft/dotnet:3.0-sdk
 
 stages:
     - build
