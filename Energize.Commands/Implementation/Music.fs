@@ -130,6 +130,15 @@ module Voice =
         | _ when ctx.arguments.[0].StartsWith("spotify") -> playUrl ctx
         | _ -> cb ctx
             
+    [<MaintenanceFreeCommand>]
+    [<CommandConditions(CommandCondition.DevOnly)>]
+    [<Command("clearplayers", "Clears the non playing players", "clearplayers <nothing>")>]
+    let clearPlayers (ctx: CommandContext) = async {
+        let music = ctx.serviceManager.GetService<IMusicPlayerService>("Music")
+        await (music.DisconnectUnusedPlayersAsync())
+        return [ ctx.sendOK None "Cleared unused players" ]
+    }
+
     [<CommandConditions(CommandCondition.GuildOnly)>]
     [<Command("play", "Plays a track/stream from youtube, from a link or from a file", "play <song name|url|FILE>")>]
     let play (ctx : CommandContext) = 

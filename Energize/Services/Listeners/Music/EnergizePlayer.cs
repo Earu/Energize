@@ -29,6 +29,7 @@ namespace Energize.Services.Listeners.Music
             this.Autoplay = false;
             this.IsLooping = false;
             this.Disconnected = false;
+            this.Inactive = false; 
             this.TrackPlayer = null;
             this.CurrentRadio = null;
             this.TimeToLive = 3 * 60 * 1000;
@@ -44,6 +45,7 @@ namespace Energize.Services.Listeners.Music
         public bool Autoplay { get; set; }
         public bool IsLooping { get; set; }
         public bool Disconnected { get; set; }
+        public bool Inactive { get; set; }
         public TrackPlayer TrackPlayer { get; set; }
         public RadioTrack CurrentRadio { get; set; }
 
@@ -72,7 +74,10 @@ namespace Energize.Services.Listeners.Music
             this.TtlTimer.Elapsed += (_, __) =>
             {
                 if (!this.Disconnected)
+                {
+                    this.Inactive = true;
                     this.BecameInactive?.Invoke();
+                }
             };
 
             this.TtlTimer.Start();
