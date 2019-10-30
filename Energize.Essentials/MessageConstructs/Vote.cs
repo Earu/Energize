@@ -13,13 +13,14 @@ namespace Energize.Essentials.MessageConstructs
         private readonly Dictionary<string, int> Choices;
         private readonly List<string> ChoiceIndexes;
         private readonly Dictionary<ulong, int> VoterIds;
+        private readonly Logger Logger;
 
         private bool IsFinished;
         private int TotalVotes;
 
         public event Action<string> VoteFinished;
 
-        public Vote(IUser author, string desc, List<string> choices)
+        public Vote(IUser author, string desc, List<string> choices, Logger logger)
         {
             this.TotalVotes = 0;
             this.Author = author;
@@ -31,6 +32,7 @@ namespace Energize.Essentials.MessageConstructs
 
             this.ChoiceIndexes = choices;
             this.VoterIds = new Dictionary<ulong, int>();
+            this.Logger = logger;
             this.IsFinished = false;
 
             this.UpdateEmbed();
@@ -44,7 +46,14 @@ namespace Energize.Essentials.MessageConstructs
             timer.Elapsed += async (sender, args) =>
             {
                 await this.EndVote();
-                this.VoteFinished?.Invoke(this.GetResult());
+                try
+                {
+                    this.VoteFinished?.Invoke(this.GetResult());
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Danger(ex);
+                }
             };
         }
 
@@ -98,9 +107,16 @@ namespace Energize.Essentials.MessageConstructs
 
         private async Task Update()
         {
-            if (this.Message == null) return;
-            this.UpdateEmbed();
-            await this.Message.ModifyAsync(prop => prop.Embed = this.VoteEmbed);
+            try
+            {
+                if (this.Message == null) return;
+                this.UpdateEmbed();
+                await this.Message.ModifyAsync(prop => prop.Embed = this.VoteEmbed);
+            } 
+            catch (Exception ex)
+            {
+                this.Logger.Danger(ex);
+            }
         }
 
         public async Task AddVote(IUser voter, int choiceindex)
