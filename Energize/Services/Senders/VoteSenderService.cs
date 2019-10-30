@@ -47,7 +47,7 @@ namespace Energize.Services.Senders
         {
             try
             {
-                Vote vote = new Vote(msg.Author, description, choices.ToList());
+                Vote vote = new Vote(msg.Author, description, choices.ToList(), this.Logger);
                 vote.Message = await this.MessageSender.SendAsync(msg, vote.VoteEmbed);
                 vote.VoteFinished += async result =>
                 {

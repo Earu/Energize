@@ -208,41 +208,48 @@ namespace Victoria
         private DateTimeOffset NextPlayerUpdate = DateTimeOffset.MinValue;
         private void OnPlayerUpdateTimer(object _)
         {
-            DateTimeOffset now = DateTimeOffset.Now;
-            bool shouldUpdate = now >= this.NextPlayerUpdate;
-            foreach (LavaPlayer player in this.Players.Values)
+            try
             {
-                if (player.CurrentTrack != null && player.IsPlaying && !player.IsPaused)
+                DateTimeOffset now = DateTimeOffset.Now;
+                bool shouldUpdate = now >= this.NextPlayerUpdate;
+                foreach (LavaPlayer player in this.Players.Values)
                 {
-                    TimeSpan pos;
-                    if (player.CurrentTrack.Position == TimeSpan.Zero)
+                    if (player.CurrentTrack != null && player.IsPlaying && !player.IsPaused)
                     {
-                        TimeSpan diff = (now - player.LastUpdate);
-                        pos = player.CurrentTrack.Position.Add(diff);
+                        TimeSpan pos;
+                        if (player.CurrentTrack.Position == TimeSpan.Zero)
+                        {
+                            TimeSpan diff = now - player.LastUpdate;
+                            pos = player.CurrentTrack.Position.Add(diff);
+                        }
+                        else
+                        {
+                            pos = player.CurrentTrack.Position.Add(TimeSpan.FromSeconds(1));
+                        }
+
+                        bool hasLen = player.CurrentTrack.HasLength;
+                        if (!hasLen)
+                            pos = TimeSpan.Zero;
+                        else
+                            pos = pos >= player.CurrentTrack.Length ? player.CurrentTrack.Length : pos;
+
+                        player.CurrentTrack.Position = pos;
+                        player.LastUpdate = now;
+
+                        if (shouldUpdate)
+                        {
+                            this.NextPlayerUpdate = now.AddSeconds(5);
+                            this.OnPlayerUpdated?.Invoke(player, player.CurrentTrack, pos);
+                        }
+
+                        if (hasLen && pos >= player.CurrentTrack.Length)
+                            this.OnTrackFinished?.Invoke(player, player.CurrentTrack, TrackEndReason.Finished);
                     }
-                    else
-                    {
-                        pos = player.CurrentTrack.Position.Add(TimeSpan.FromSeconds(1));
-                    }
-
-                    bool hasLen = player.CurrentTrack.HasLength;
-                    if (!hasLen)
-                        pos = TimeSpan.Zero;
-                    else
-                        pos = pos >= player.CurrentTrack.Length ? player.CurrentTrack.Length : pos;
-
-                    player.CurrentTrack.Position = pos;
-                    player.LastUpdate = now;
-
-                    if (shouldUpdate)
-                    {
-                        this.NextPlayerUpdate = now.AddSeconds(5);
-                        this.OnPlayerUpdated?.Invoke(player, player.CurrentTrack, pos);
-                    }
-
-                    if (hasLen && pos >= player.CurrentTrack.Length)
-                        this.OnTrackFinished?.Invoke(player, player.CurrentTrack, TrackEndReason.Finished);
                 }
+            } 
+            catch (Exception ex)
+            {
+                this.ShadowLog?.WriteLog(LogSeverity.Error, "Could not update players", ex);
             }
         }
 
