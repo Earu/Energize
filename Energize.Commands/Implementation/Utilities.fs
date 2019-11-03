@@ -356,6 +356,39 @@ module Util =
         return [ ctx.sendRaw inviteUrl ]
     }
 
+    [<CommandConditions(CommandCondition.DevOnly)>]
+    [<MaintenanceFreeCommand>]
+    [<CommandParameters(1)>]
+    [<Command("shell", "Execute a shell cmd", "cmd <bashstring>")>]
+    let shell (ctx: CommandContext) = async {
+        let parts = ctx.input.Split("\s")
+        let proc = 
+            let startInfo = ProcessStartInfo()
+            startInfo.FileName <- parts.[0]
+            startInfo.RedirectStandardError <- true
+            startInfo.RedirectStandardOutput <- true
+            if parts.Length > 1 then
+                startInfo.Arguments <- String.Join("\s", parts.[1..])
+            
+            Process.Start(startInfo) |> Option.ofObj
+        return 
+            match proc with
+            | Some proc ->
+                proc.EnableRaisingEvents <- true
+                proc.BeginOutputReadLine()
+                proc.BeginErrorReadLine()
+
+                let builder = StringBuilder()
+                proc.OutputDataReceived.Add(fun out -> builder.AppendLine(out.Data) |> ignore)
+                proc.ErrorDataReceived.Add(fun err -> builder.AppendLine(err.Data) |> ignore)
+                proc.Exited.Add(fun _ -> 
+                    let output = if builder.Length > 2000 then (sprintf "%s..." (builder.ToString())) else builder.ToString()
+                    ctx.sendRaw (sprintf "```shell\n%s```" output) |> ignore
+                )
+                [ ctx.sendOK None "Executing shell command..." ]
+            | None -> [ ctx.sendWarn None "Could not execute shell command" ]
+        }
+
     [<Command("user", "Gets information about a specific user", "user <user|userid|nothing>")>]
     let user (ctx : CommandContext) = async {
         let user =
