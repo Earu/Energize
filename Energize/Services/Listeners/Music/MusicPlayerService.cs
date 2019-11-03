@@ -49,10 +49,10 @@ namespace Energize.Services.Listeners.Music
             this.LavaClient.OnTrackFinished += this.OnTrackFinished;
             this.LavaClient.Log += async logMsg => this.Logger.Nice("Lavalink", ConsoleColor.Magenta, logMsg.Message);
             this.LavaClient.OnPlayerUpdated += this.OnPlayerUpdated;
-            this.LavaClient.OnSocketClosed += this.OnSocketClosed;
+            //this.LavaClient.OnSocketClosed += this.OnSocketClosed;
         }
 
-        private async Task OnSocketClosed(int errorCode, string reason, bool byRemote)
+        /*private async Task OnSocketClosed(int errorCode, string reason, bool byRemote)
         {
             await this.DisconnectAllPlayersAsync("Music streaming is unavailable at the moment, disconnecting");
             SocketChannel chan = this.DiscordClient.GetChannel(Config.Instance.Discord.BugReportChannelID);
@@ -69,7 +69,7 @@ namespace Energize.Services.Listeners.Music
 
                 await this.MessageSender.SendAsync(chan, builder);
             }
-        }
+        }*/
 
         private async Task OnPlayerUpdated(LavaPlayer lply, ILavaTrack track, TimeSpan position)
         {
