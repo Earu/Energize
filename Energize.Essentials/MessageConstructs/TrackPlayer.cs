@@ -51,7 +51,7 @@ namespace Energize.Essentials.MessageConstructs
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder
-                .WithTitle(track.Title)
+                .WithLimitedTitle(track.Title)
                 .WithField("Author", track.Author)
                 .WithField("Stream", track.IsStream)
                 .WithField("Volume", $"{volume}%")
